@@ -78,6 +78,10 @@ gboolean      devkit_power_damon_local_check_auth (DevkitPowerDaemon     *daemon
 
 gboolean devkit_power_daemon_enumerate_devices (DevkitPowerDaemon     *daemon,
                                                 DBusGMethodInvocation *context);
+gboolean devkit_power_daemon_get_on_battery (DevkitPowerDaemon     *daemon,
+                                             DBusGMethodInvocation *context);
+gboolean devkit_power_daemon_get_low_battery (DevkitPowerDaemon     *daemon,
+                                              DBusGMethodInvocation *context);
 gboolean devkit_power_daemon_suspend (DevkitPowerDaemon     *daemon,
                                       DBusGMethodInvocation *context);
 gboolean devkit_power_daemon_hibernate (DevkitPowerDaemon     *daemon,

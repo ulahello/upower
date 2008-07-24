@@ -44,6 +44,8 @@ enum
         DEVICE_ADDED_SIGNAL,
         DEVICE_REMOVED_SIGNAL,
         DEVICE_CHANGED_SIGNAL,
+        ON_BATTERY_CHANGED_SIGNAL,
+        LOW_BATTERY_CHANGED_SIGNAL,
         LAST_SIGNAL,
 };
 
@@ -57,6 +59,8 @@ struct DevkitPowerDaemonPrivate
         PolKitTracker     *pk_tracker;
 
         GHashTable        *map_native_path_to_device;
+        gboolean           on_battery;
+        gboolean           low_battery;
 
         DevkitClient      *devkit_client;
 };
@@ -161,6 +165,24 @@ devkit_power_daemon_class_init (DevkitPowerDaemonClass *klass)
                               g_cclosure_marshal_VOID__STRING,
                               G_TYPE_NONE, 1, G_TYPE_STRING);
 
+        signals[ON_BATTERY_CHANGED_SIGNAL] =
+                g_signal_new ("on-battery-changed",
+                              G_OBJECT_CLASS_TYPE (klass),
+                              G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
+                              0,
+                              NULL, NULL,
+                              g_cclosure_marshal_VOID__BOOLEAN,
+                              G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+
+        signals[LOW_BATTERY_CHANGED_SIGNAL] =
+                g_signal_new ("low-battery-changed",
+                              G_OBJECT_CLASS_TYPE (klass),
+                              G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
+                              0,
+                              NULL, NULL,
+                              g_cclosure_marshal_VOID__BOOLEAN,
+                              G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+
         dbus_g_object_type_install_info (DEVKIT_TYPE_POWER_DAEMON, &dbus_glib_devkit_power_daemon_object_info);
 
         dbus_g_error_domain_register (DEVKIT_POWER_DAEMON_ERROR,
@@ -172,6 +194,8 @@ static void
 devkit_power_daemon_init (DevkitPowerDaemon *daemon)
 {
         daemon->priv = DEVKIT_POWER_DAEMON_GET_PRIVATE (daemon);
+        daemon->priv->on_battery = FALSE;
+        daemon->priv->low_battery = FALSE;
         daemon->priv->map_native_path_to_device = g_hash_table_new_full (g_str_hash,
                                                                          g_str_equal,
                                                                          g_free,
@@ -365,6 +389,10 @@ device_remove (DevkitPowerDaemon *daemon, DevkitDevice *d)
                 g_object_unref (device);
         }
 }
+
+//TODO: hook into the devices
+//g_signal_emit (daemon, signals[ON_BATTERY_CHANGED_SIGNAL], 0, FALSE);
+//g_signal_emit (daemon, signals[LOW_BATTERY_CHANGED_SIGNAL], 0, FALSE);
 
 static void
 device_event_signal_handler (DevkitClient *client,
@@ -627,6 +655,24 @@ devkit_power_daemon_enumerate_devices (DevkitPowerDaemon     *daemon,
         dbus_g_method_return (context, object_paths);
         g_ptr_array_foreach (object_paths, (GFunc) g_free, NULL);
         g_ptr_array_free (object_paths, TRUE);
+        return TRUE;
+}
+
+gboolean
+devkit_power_daemon_get_on_battery (DevkitPowerDaemon     *daemon,
+                                    DBusGMethodInvocation *context)
+{
+        /* this is cached as it's expensive to check all sources */
+        dbus_g_method_return (context, daemon->priv->on_battery);
+        return TRUE;
+}
+
+gboolean
+devkit_power_daemon_get_low_battery (DevkitPowerDaemon     *daemon,
+                                     DBusGMethodInvocation *context)
+{
+        /* this is cached as it's expensive to check all sources */
+        dbus_g_method_return (context, daemon->priv->low_battery);
         return TRUE;
 }
 

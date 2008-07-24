@@ -71,6 +71,69 @@
     </signal>
 
     <!-- ************************************************************ -->
+    <signal name="OnBatteryChanged">
+      <arg name="on_battery" type="b">
+        <doc:doc><doc:summary>If we are on battery power.</doc:summary></doc:doc>
+      </arg>
+
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Emitted when the main power source of the system has changed.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </signal>
+
+    <!-- ************************************************************ -->
+    <signal name="LowBatteryChanged">
+      <arg name="low_battery" type="b">
+        <doc:doc><doc:summary>If we are critically low on battery power.</doc:summary></doc:doc>
+      </arg>
+
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Emitted when the main power source of the system is critically low in power.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </signal>
+
+    <!-- ************************************************************ -->
+    <method name="GetOnBattery">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="on_battery" type="b">
+        <doc:doc><doc:summary>If we are on battery power.</doc:summary></doc:doc>
+      </arg>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Finds out if we are using battery so we can make policy decisions,
+            for instance not running the indexer when we are on battery power.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </method>
+
+    <!-- ************************************************************ -->
+    <method name="GetLowBattery">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="low_battery" type="b">
+        <doc:doc><doc:summary>If we are critically low on battery power.</doc:summary></doc:doc>
+      </arg>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Finds out if we are critically low on battery so we can make policy
+            decisions, for instance saving documents or turning off network
+            connections.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </method>
+
+    <!-- ************************************************************ -->
 
     <method name="Suspend">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
