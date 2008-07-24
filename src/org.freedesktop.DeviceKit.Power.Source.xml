@@ -214,6 +214,23 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
+    <property name="battery-capacity" type="d" access="read">
+      <doc:doc><doc:description><doc:para>
+            The capacity of the power source expressed as a percentage between 0 and 100.
+            The capacity of the battery will reduce with age.
+            A capacity value less than 75% is usually a sign that you should renew your battery.
+            Typically this value is the same as
+            (<doc:ref type="property" to="Source:battery-full-design">battery-full-design</doc:ref> /
+            <doc:ref type="property" to="Source:battery-full">battery-full</doc:ref>) * 100.
+            However, some primitive power sources are not capable reporting capacity
+            and in this case the battery-capacity property will be unset.
+          </doc:para><doc:para>
+            This property is only valid if the property
+            <doc:ref type="property" to="Source:type">type</doc:ref>
+            has the value "battery".
+      </doc:para></doc:description></doc:doc>
+    </property>
+
     <property name="battery-technology" type="s" access="read">
       <doc:doc><doc:description><doc:para>
             Technology used in the battery; known values are "lithium-ion", "lead-acid",

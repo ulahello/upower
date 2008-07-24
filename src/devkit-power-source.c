@@ -66,6 +66,7 @@ struct DevkitPowerSourcePrivate
         DevkitPowerState battery_state;
         DevkitPowerTechnology battery_technology;
 
+        double battery_capacity;
         double battery_energy;
         double battery_energy_empty;
         double battery_energy_full;
@@ -92,6 +93,7 @@ enum
         PROP_UPDATE_TIME,
         PROP_TYPE,
         PROP_LINE_POWER_ONLINE,
+        PROP_BATTERY_CAPACITY,
         PROP_BATTERY_STATE,
         PROP_BATTERY_ENERGY,
         PROP_BATTERY_ENERGY_EMPTY,
@@ -154,6 +156,9 @@ get_property (GObject         *object,
                 break;
         case PROP_BATTERY_STATE:
                 g_value_set_string (value, devkit_power_convert_state_to_text (source->priv->battery_state));
+                break;
+        case PROP_BATTERY_CAPACITY:
+                g_value_set_double (value, source->priv->battery_capacity);
                 break;
         case PROP_BATTERY_ENERGY:
                 g_value_set_double (value, source->priv->battery_energy);
@@ -254,6 +259,10 @@ devkit_power_source_class_init (DevkitPowerSourceClass *klass)
                 object_class,
                 PROP_BATTERY_STATE,
                 g_param_spec_string ("battery-state", NULL, NULL, NULL, G_PARAM_READABLE));
+        g_object_class_install_property (
+                object_class,
+                PROP_BATTERY_CAPACITY,
+                g_param_spec_double ("battery-capacity", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
         g_object_class_install_property (
                 object_class,
                 PROP_BATTERY_ENERGY_EMPTY,
