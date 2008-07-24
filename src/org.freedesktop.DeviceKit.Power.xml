@@ -16,7 +16,7 @@
       <doc:doc>
         <doc:description>
           <doc:para>
-            Enumerate all disks on the system.
+            Enumerate all power objects on the system.
           </doc:para>
         </doc:description>
       </doc:doc>

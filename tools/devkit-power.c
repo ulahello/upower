@@ -312,7 +312,7 @@ main (int argc, char **argv)
         unsigned int         n;
         static GOptionEntry  entries []     = {
                 { "enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_enumerate, "Enumerate objects paths for devices", NULL },
-                { "monitor", 0, 0, G_OPTION_ARG_NONE, &opt_monitor, "Monitor activity from the disk daemon", NULL },
+                { "monitor", 0, 0, G_OPTION_ARG_NONE, &opt_monitor, "Monitor activity from the power daemon", NULL },
                 { "monitor-detail", 0, 0, G_OPTION_ARG_NONE, &opt_monitor_detail, "Monitor with detail", NULL },
                 { "show-info", 0, 0, G_OPTION_ARG_STRING, &opt_show_info, "Show information about object path", NULL },
                 { NULL }
