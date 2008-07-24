@@ -78,3 +78,65 @@ devkit_power_convert_state_to_text (DevkitPowerState state_enum)
         }
         return state;
 }
+
+const char *
+devkit_power_convert_technology_to_text (DevkitPowerTechnology technology_enum)
+{
+        const char *technology = NULL;
+        switch (technology_enum) {
+        case DEVKIT_POWER_TECHNOLGY_LITHIUM_ION:
+                technology = "lithium-ion";
+                break;
+        case DEVKIT_POWER_TECHNOLGY_LITHIUM_POLYMER:
+                technology = "lithium-polymer";
+                break;
+        case DEVKIT_POWER_TECHNOLGY_LITHIUM_IRON_PHOSPHATE:
+                technology = "lithium-iron-phosphate";
+                break;
+        case DEVKIT_POWER_TECHNOLGY_LEAD_ACID:
+                technology = "lead-acid";
+                break;
+        case DEVKIT_POWER_TECHNOLGY_NICKEL_CADMIUM:
+                technology = "nickel-cadmium";
+                break;
+        case DEVKIT_POWER_TECHNOLGY_NICKEL_METAL_HYDRIDE:
+                technology = "nickel-metal-hydride";
+                break;
+        case DEVKIT_POWER_TECHNOLGY_UNKNOWN:
+                technology = "unknown";
+                break;
+        default:
+                g_assert_not_reached ();
+                break;
+        }
+        return technology;
+}
+
+DevkitPowerTechnology
+devkit_power_convert_acpi_technology_to_enum (const char *type)
+{
+	if (type == NULL) {
+		return DEVKIT_POWER_TECHNOLGY_UNKNOWN;
+	}
+	/* every case combination of Li-Ion is commonly used.. */
+	if (strcasecmp (type, "li-ion") == 0 ||
+	    strcasecmp (type, "lion") == 0) {
+		return DEVKIT_POWER_TECHNOLGY_LITHIUM_ION;
+	}
+	if (strcasecmp (type, "pb") == 0 ||
+	    strcasecmp (type, "pbac") == 0) {
+		return DEVKIT_POWER_TECHNOLGY_LEAD_ACID;
+	}
+	if (strcasecmp (type, "lip") == 0 ||
+	    strcasecmp (type, "lipo") == 0) {
+		return DEVKIT_POWER_TECHNOLGY_LITHIUM_POLYMER;
+	}
+	if (strcasecmp (type, "nimh") == 0) {
+		return DEVKIT_POWER_TECHNOLGY_NICKEL_METAL_HYDRIDE;
+	}
+	if (strcasecmp (type, "lifo") == 0) {
+		return DEVKIT_POWER_TECHNOLGY_LITHIUM_IRON_PHOSPHATE;
+	}
+	return DEVKIT_POWER_TECHNOLGY_UNKNOWN;
+}
+

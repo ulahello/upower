@@ -216,7 +216,8 @@
 
     <property name="battery-technology" type="s" access="read">
       <doc:doc><doc:description><doc:para>
-            Technology used in the battery; known values are "Li-ion".
+            Technology used in the battery; known values are "lithium-ion", "lead-acid",
+            "lithium-polymer", "nickel-metal-hydride", "lithium-iron-phosphate" or "unknown".
           </doc:para><doc:para>
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>

@@ -45,8 +45,20 @@ typedef enum {
         DEVKIT_POWER_STATE_UNKNOWN
 } DevkitPowerState;
 
+typedef enum {
+        DEVKIT_POWER_TECHNOLGY_LITHIUM_ION,
+        DEVKIT_POWER_TECHNOLGY_LITHIUM_POLYMER,
+        DEVKIT_POWER_TECHNOLGY_LITHIUM_IRON_PHOSPHATE,
+        DEVKIT_POWER_TECHNOLGY_LEAD_ACID,
+        DEVKIT_POWER_TECHNOLGY_NICKEL_CADMIUM,
+        DEVKIT_POWER_TECHNOLGY_NICKEL_METAL_HYDRIDE,
+        DEVKIT_POWER_TECHNOLGY_UNKNOWN
+} DevkitPowerTechnology;
+
 const char		*devkit_power_convert_type_to_text		(DevkitPowerType type_enum);
 const char		*devkit_power_convert_state_to_text		(DevkitPowerState state_enum);
+const char		*devkit_power_convert_technology_to_text	(DevkitPowerTechnology technology_enum);
+DevkitPowerTechnology	 devkit_power_convert_acpi_technology_to_enum	(const char *type);
 
 G_END_DECLS
 

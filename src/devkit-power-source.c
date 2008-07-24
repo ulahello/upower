@@ -64,6 +64,7 @@ struct DevkitPowerSourcePrivate
 
         gboolean line_power_online;
         DevkitPowerState battery_state;
+        DevkitPowerTechnology battery_technology;
 
         double battery_energy;
         double battery_energy_empty;
@@ -73,7 +74,6 @@ struct DevkitPowerSourcePrivate
         gint64 battery_time_to_empty;
         gint64 battery_time_to_full;
         double battery_percentage;
-        char *battery_technology;
 };
 
 static void     devkit_power_source_class_init  (DevkitPowerSourceClass *klass);
@@ -181,7 +181,7 @@ get_property (GObject         *object,
                 break;
 
         case PROP_BATTERY_TECHNOLOGY:
-                g_value_set_string (value, source->priv->battery_technology);
+                g_value_set_string (value, devkit_power_convert_technology_to_text (source->priv->battery_technology));
                 break;
 
         default:
@@ -553,10 +553,8 @@ update (DevkitPowerSource *source)
                 char *s;
 
                 s = g_strstrip (sysfs_get_string (source->priv->native_path, "technology"));
-                if (strcmp (s, "Unknown") != 0)
-                        source->priv->battery_technology = s;
-                else
-                        g_free (s);
+                source->priv->battery_technology = devkit_power_convert_acpi_technology_to_enum (s);
+                g_free (s);
 
                 source->priv->vendor = g_strstrip (sysfs_get_string (source->priv->native_path, "manufacturer"));
                 source->priv->model = g_strstrip (sysfs_get_string (source->priv->native_path, "model_name"));
