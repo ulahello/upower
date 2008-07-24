@@ -202,6 +202,18 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
+    <property name="battery-state" type="s" access="read">
+      <doc:doc><doc:description><doc:para>
+            The battery power state.
+            Known values are "fully-charged", "empty", "charging",
+            "discharging" or "unknown".
+          </doc:para><doc:para>
+            This property is only valid if the property
+            <doc:ref type="property" to="Source:type">type</doc:ref>
+            has the value "battery".
+      </doc:para></doc:description></doc:doc>
+    </property>
+
     <property name="battery-technology" type="s" access="read">
       <doc:doc><doc:description><doc:para>
             Technology used in the battery; known values are "Li-ion".

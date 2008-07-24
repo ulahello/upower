@@ -42,6 +42,8 @@
 /*--------------------------------------------------------------------------------------------------------------*/
 #include "devkit-power-source-glue.h"
 
+#define DK_POWER_MIN_CHARGED_PERCENTAGE	60
+
 struct DevkitPowerSourcePrivate
 {
         DBusGConnection *system_bus_connection;
@@ -61,6 +63,7 @@ struct DevkitPowerSourcePrivate
         DevkitPowerType type;
 
         gboolean line_power_online;
+        DevkitPowerState battery_state;
 
         double battery_energy;
         double battery_energy_empty;
@@ -89,6 +92,7 @@ enum
         PROP_UPDATE_TIME,
         PROP_TYPE,
         PROP_LINE_POWER_ONLINE,
+        PROP_BATTERY_STATE,
         PROP_BATTERY_ENERGY,
         PROP_BATTERY_ENERGY_EMPTY,
         PROP_BATTERY_ENERGY_FULL,
@@ -148,7 +152,9 @@ get_property (GObject         *object,
         case PROP_LINE_POWER_ONLINE:
                 g_value_set_boolean (value, source->priv->line_power_online);
                 break;
-
+        case PROP_BATTERY_STATE:
+                g_value_set_string (value, devkit_power_convert_state_to_text (source->priv->battery_state));
+                break;
         case PROP_BATTERY_ENERGY:
                 g_value_set_double (value, source->priv->battery_energy);
                 break;
@@ -244,6 +250,10 @@ devkit_power_source_class_init (DevkitPowerSourceClass *klass)
                 object_class,
                 PROP_BATTERY_ENERGY,
                 g_param_spec_double ("battery-energy", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
+        g_object_class_install_property (
+                object_class,
+                PROP_BATTERY_STATE,
+                g_param_spec_string ("battery-state", NULL, NULL, NULL, G_PARAM_READABLE));
         g_object_class_install_property (
                 object_class,
                 PROP_BATTERY_ENERGY_EMPTY,
@@ -497,11 +507,22 @@ update_battery (DevkitPowerSource *source)
         if (is_charging)
                 source->priv->battery_energy_rate *= -1.0;
 
+        /* get a precise percentage */
         source->priv->battery_percentage = 100.0 * source->priv->battery_energy / source->priv->battery_energy_full;
         if (source->priv->battery_percentage < 0)
                 source->priv->battery_percentage = 0;
         if (source->priv->battery_percentage > 100.0)
                 source->priv->battery_percentage = 100.0;
+
+        /* get the state */
+        if (is_charging)
+                source->priv->battery_state = DEVKIT_POWER_STATE_CHARGING;
+        else if (is_discharging)
+                source->priv->battery_state = DEVKIT_POWER_STATE_DISCHARGING;
+        else if (source->priv->battery_percentage > DK_POWER_MIN_CHARGED_PERCENTAGE)
+                source->priv->battery_state = DEVKIT_POWER_STATE_FULLY_CHARGED;
+        else
+                source->priv->battery_state = DEVKIT_POWER_STATE_EMPTY;
 
         g_free (status);
         return TRUE;

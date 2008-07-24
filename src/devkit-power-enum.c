@@ -54,3 +54,27 @@ devkit_power_convert_type_to_text (DevkitPowerType type_enum)
         }
         return type;
 }
+
+const char *
+devkit_power_convert_state_to_text (DevkitPowerState state_enum)
+{
+        const char *state = NULL;
+        switch (state_enum) {
+        case DEVKIT_POWER_STATE_CHARGING:
+                state = "charging";
+                break;
+       case DEVKIT_POWER_STATE_DISCHARGING:
+                state = "discharging";
+                break;
+       case DEVKIT_POWER_STATE_EMPTY:
+                state = "empty";
+                break;
+       case DEVKIT_POWER_STATE_FULLY_CHARGED:
+                state = "fully-charged";
+                break;
+        default:
+                g_assert_not_reached ();
+                break;
+        }
+        return state;
+}

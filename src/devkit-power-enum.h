@@ -37,7 +37,16 @@ typedef enum {
         DEVKIT_POWER_TYPE_UNKNOWN
 } DevkitPowerType;
 
+typedef enum {
+        DEVKIT_POWER_STATE_CHARGING,
+        DEVKIT_POWER_STATE_DISCHARGING,
+        DEVKIT_POWER_STATE_EMPTY,
+        DEVKIT_POWER_STATE_FULLY_CHARGED,
+        DEVKIT_POWER_STATE_UNKNOWN
+} DevkitPowerState;
+
 const char		*devkit_power_convert_type_to_text		(DevkitPowerType type_enum);
+const char		*devkit_power_convert_state_to_text		(DevkitPowerState state_enum);
 
 G_END_DECLS
 
