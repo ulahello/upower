@@ -35,16 +35,12 @@
 #include <polkit-dbus/polkit-dbus.h>
 
 #include "sysfs-utils.h"
+#include "devkit-power-enum.h"
 #include "devkit-power-source.h"
 #include "devkit-power-marshal.h"
 
 /*--------------------------------------------------------------------------------------------------------------*/
 #include "devkit-power-source-glue.h"
-
-typedef enum {
-        DEVKIT_POWER_SOURCE_TYPE_LINE_POWER,
-        DEVKIT_POWER_SOURCE_TYPE_BATTERY,
-} DevkitPowerSourceType;
 
 struct DevkitPowerSourcePrivate
 {
@@ -62,7 +58,7 @@ struct DevkitPowerSourcePrivate
         char *model;
         char *serial;
         GTimeVal update_time;
-        DevkitPowerSourceType type;
+        DevkitPowerType type;
 
         gboolean line_power_online;
 
@@ -146,8 +142,7 @@ get_property (GObject         *object,
                 g_value_set_uint64 (value, source->priv->update_time.tv_sec);
                 break;
         case PROP_TYPE:
-                g_value_set_string (value, source->priv->type == DEVKIT_POWER_SOURCE_TYPE_LINE_POWER
-                                    ? "line-power" : "battery");
+                g_value_set_string (value, devkit_power_convert_type_to_text (source->priv->type));
                 break;
 
         case PROP_LINE_POWER_ONLINE:
@@ -398,9 +393,10 @@ devkit_power_source_new (DevkitPowerDaemon *daemon, DevkitDevice *d)
         source->priv->native_path = g_strdup (native_path);
 
         if (sysfs_file_exists (native_path, "online")) {
-                source->priv->type = DEVKIT_POWER_SOURCE_TYPE_LINE_POWER;
+                source->priv->type = DEVKIT_POWER_TYPE_LINE_POWER;
         } else {
-                source->priv->type = DEVKIT_POWER_SOURCE_TYPE_BATTERY;
+                /* this is correct, UPS and CSR are not in the kernel */
+                source->priv->type = DEVKIT_POWER_TYPE_BATTERY;
         }
 
         if (!update (source)) {
@@ -549,17 +545,17 @@ update (DevkitPowerSource *source)
         g_get_current_time (&(source->priv->update_time));
 
         switch (source->priv->type) {
-        case DEVKIT_POWER_SOURCE_TYPE_LINE_POWER:
+        case DEVKIT_POWER_TYPE_LINE_POWER:
                 ret = update_line_power (source);
                 break;
-        case DEVKIT_POWER_SOURCE_TYPE_BATTERY:
+        case DEVKIT_POWER_TYPE_BATTERY:
 
                 ret = update_battery (source);
 
                 /* Seems that we don't get change uevents from the
-                 * kernel; set up a timer to poll
+                 * kernel on some BIOS types; set up a timer to poll
                  *
-                 * TODO: perhaps only do this if running on battery.
+                 * TODO: perhaps only do this if we do not get frequent updates.
                  */
                 source->priv->poll_timer_id = g_timeout_add_seconds (30, (GSourceFunc) _poll_battery, source);
 

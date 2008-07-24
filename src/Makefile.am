@@ -41,6 +41,7 @@ devkit_power_daemon_SOURCES = 							\
 	devkit-power-daemon.h			devkit-power-daemon.c		\
 	devkit-power-device.h			devkit-power-device.c		\
 	devkit-power-source.h			devkit-power-source.c		\
+	devkit-power-enum.h			devkit-power-enum.c		\
 	sysfs-utils.h				sysfs-utils.c			\
 	main.c									\
 	$(BUILT_SOURCES)
