@@ -68,7 +68,6 @@ struct DevkitPowerSourcePrivate
 
         double battery_energy;
         double battery_energy_empty;
-        double battery_energy_empty_design;
         double battery_energy_full;
         double battery_energy_full_design;
         double battery_energy_rate;
@@ -96,7 +95,6 @@ enum
         PROP_LINE_POWER_ONLINE,
         PROP_BATTERY_ENERGY,
         PROP_BATTERY_ENERGY_EMPTY,
-        PROP_BATTERY_ENERGY_EMPTY_DESIGN,
         PROP_BATTERY_ENERGY_FULL,
         PROP_BATTERY_ENERGY_FULL_DESIGN,
         PROP_BATTERY_ENERGY_RATE,
@@ -161,9 +159,6 @@ get_property (GObject         *object,
                 break;
         case PROP_BATTERY_ENERGY_EMPTY:
                 g_value_set_double (value, source->priv->battery_energy_empty);
-                break;
-        case PROP_BATTERY_ENERGY_EMPTY_DESIGN:
-                g_value_set_double (value, source->priv->battery_energy_empty_design);
                 break;
         case PROP_BATTERY_ENERGY_FULL:
                 g_value_set_double (value, source->priv->battery_energy_full);
@@ -258,10 +253,6 @@ devkit_power_source_class_init (DevkitPowerSourceClass *klass)
                 object_class,
                 PROP_BATTERY_ENERGY_EMPTY,
                 g_param_spec_double ("battery-energy-empty", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
-        g_object_class_install_property (
-                object_class,
-                PROP_BATTERY_ENERGY_EMPTY_DESIGN,
-                g_param_spec_double ("battery-energy-empty-design", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
         g_object_class_install_property (
                 object_class,
                 PROP_BATTERY_ENERGY_FULL,

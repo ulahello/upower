@@ -128,17 +128,6 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-energy-empty-design" type="d" access="read">
-      <doc:doc><doc:description><doc:para>
-            Amount of energy (measured in Wh) the power source is
-            designed to hold when it's considered to be empty.
-          </doc:para><doc:para>
-            This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
-            has the value "battery".
-      </doc:para></doc:description></doc:doc>
-    </property>
-
     <property name="battery-energy-full" type="d" access="read">
       <doc:doc><doc:description><doc:para>
             Amount of energy (measured in Wh) in the power source when
