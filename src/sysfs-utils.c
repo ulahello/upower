@@ -110,6 +110,24 @@ sysfs_get_int (const char *dir, const char *attribute)
         }
         g_free (filename);
 
+        return result;
+}
+
+gboolean
+sysfs_get_bool (const char *dir, const char *attribute)
+{
+        gboolean result = FALSE;
+        char *contents;
+        char *filename;
+
+        result = 0;
+        filename = g_build_filename (dir, attribute, NULL);
+        if (g_file_get_contents (filename, &contents, NULL, NULL)) {
+                if (strcmp (contents, "1"))
+                        result = TRUE;
+                g_free (contents);
+        }
+        g_free (filename);
 
         return result;
 }

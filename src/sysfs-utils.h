@@ -27,6 +27,7 @@ double    sysfs_get_double    (const char *dir, const char *attribute);
 gboolean  sysfs_file_contains (const char *dir, const char *attribute, const char *string);
 char     *sysfs_get_string    (const char *dir, const char *attribute);
 int       sysfs_get_int       (const char *dir, const char *attribute);
+gboolean  sysfs_get_bool      (const char *dir, const char *attribute);
 guint64   sysfs_get_uint64    (const char *dir, const char *attribute);
 gboolean  sysfs_file_exists   (const char *dir, const char *attribute);
 char     *sysfs_resolve_link  (const char *dir, const char *attribute);
