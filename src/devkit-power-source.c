@@ -546,6 +546,13 @@ update_battery (DevkitPowerSource *source)
 
         /* are we present? */
         source->priv->battery_is_present = sysfs_get_bool (source->priv->native_path, "present");
+        if (!source->priv->battery_is_present) {
+                g_free (source->priv->vendor);
+                g_free (source->priv->model);
+                g_free (source->priv->serial);
+                devkit_power_source_reset_values (source);
+                return TRUE;
+        }
 
         /* initial values */
         if (!source->priv->has_coldplug_values) {
