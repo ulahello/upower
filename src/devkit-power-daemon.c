@@ -629,3 +629,81 @@ devkit_power_daemon_enumerate_devices (DevkitPowerDaemon     *daemon,
         g_ptr_array_free (object_paths, TRUE);
         return TRUE;
 }
+
+gboolean
+devkit_power_daemon_suspend (DevkitPowerDaemon *daemon, DBusGMethodInvocation *context)
+{
+        gboolean ret;
+        GError *error;
+        GError *error_local = NULL;
+        gchar *argv;
+        const gchar *quirks;
+        PolKitCaller *pk_caller;
+
+        pk_caller = devkit_power_damon_local_get_caller_for_context (daemon, context);
+        if (pk_caller == NULL)
+                goto out;
+
+        if (!devkit_power_damon_local_check_auth (daemon, pk_caller,
+                                                  "org.freedesktop.devicekit.power.suspend",
+                                                  context))
+                goto out;
+
+        /* TODO: where from? */
+        quirks = "--quirk-s3-bios --quirk-s3-mode";
+
+        argv = g_strdup_printf ("/usr/sbin/pm-suspend %s", quirks);
+        ret = g_spawn_command_line_async (argv, &error_local);
+        if (!ret) {
+                error = g_error_new (DEVKIT_POWER_DAEMON_ERROR,
+                                     DEVKIT_POWER_DAEMON_ERROR_GENERAL,
+                                     "Cannot spawn: %s", error_local->message);
+                g_error_free (error_local);
+		dbus_g_method_return_error (context, error);
+		goto out;
+        }
+        dbus_g_method_return (context, NULL);
+out:
+        if (pk_caller != NULL)
+                polkit_caller_unref (pk_caller);
+        return TRUE;
+}
+
+gboolean
+devkit_power_daemon_hibernate (DevkitPowerDaemon *daemon, DBusGMethodInvocation *context)
+{
+        gboolean ret;
+        GError *error;
+        GError *error_local = NULL;
+        gchar *argv;
+        const gchar *quirks;
+        PolKitCaller *pk_caller;
+
+        pk_caller = devkit_power_damon_local_get_caller_for_context (daemon, context);
+        if (pk_caller == NULL)
+                goto out;
+
+        if (!devkit_power_damon_local_check_auth (daemon, pk_caller,
+                                                  "org.freedesktop.devicekit.power.hibernate",
+                                                  context))
+                goto out;
+
+        /* TODO: where from? */
+        quirks = "--quirk-s3-bios --quirk-s3-mode";
+
+        argv = g_strdup_printf ("/usr/sbin/pm-hibernate %s", quirks);
+        ret = g_spawn_command_line_async (argv, &error_local);
+        if (!ret) {
+                error = g_error_new (DEVKIT_POWER_DAEMON_ERROR,
+                                     DEVKIT_POWER_DAEMON_ERROR_GENERAL,
+                                     "Cannot spawn: %s", error_local->message);
+                g_error_free (error_local);
+		dbus_g_method_return_error (context, error);
+		goto out;
+        }
+        dbus_g_method_return (context, NULL);
+out:
+        if (pk_caller != NULL)
+                polkit_caller_unref (pk_caller);
+        return TRUE;
+}
