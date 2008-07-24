@@ -63,6 +63,7 @@ struct DevkitPowerSourcePrivate
         DevkitPowerType type;
 
         gboolean line_power_online;
+        gboolean battery_is_present;
         gboolean battery_is_rechargeable;
         DevkitPowerState battery_state;
         DevkitPowerTechnology battery_technology;
@@ -95,6 +96,7 @@ enum
         PROP_TYPE,
         PROP_LINE_POWER_ONLINE,
         PROP_BATTERY_CAPACITY,
+        PROP_BATTERY_IS_PRESENT,
         PROP_BATTERY_IS_RECHARGEABLE,
         PROP_BATTERY_STATE,
         PROP_BATTERY_ENERGY,
@@ -155,6 +157,10 @@ get_property (GObject         *object,
 
         case PROP_LINE_POWER_ONLINE:
                 g_value_set_boolean (value, source->priv->line_power_online);
+                break;
+
+        case PROP_BATTERY_IS_PRESENT:
+                g_value_set_boolean (value, source->priv->battery_is_present);
                 break;
         case PROP_BATTERY_IS_RECHARGEABLE:
                 g_value_set_boolean (value, source->priv->battery_is_rechargeable);
@@ -260,6 +266,10 @@ devkit_power_source_class_init (DevkitPowerSourceClass *klass)
                 object_class,
                 PROP_BATTERY_ENERGY,
                 g_param_spec_double ("battery-energy", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
+        g_object_class_install_property (
+                object_class,
+                PROP_BATTERY_IS_PRESENT,
+                g_param_spec_boolean ("battery-is-present", NULL, NULL, FALSE, G_PARAM_READABLE));
         g_object_class_install_property (
                 object_class,
                 PROP_BATTERY_IS_RECHARGEABLE,
@@ -509,6 +519,9 @@ update_battery (DevkitPowerSource *source)
          *
          *       This is just a very quick hack for now.
          */
+
+        /* are we present? */
+        source->priv->battery_is_present = sysfs_get_bool (source->priv->native_path, "present");
 
         status = g_strstrip (sysfs_get_string (source->priv->native_path, "status"));
         is_charging = strcasecmp (status, "charging") == 0;

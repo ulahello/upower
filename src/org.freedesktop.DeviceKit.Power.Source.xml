@@ -202,6 +202,18 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
+    <property name="battery-is-present" type="b" access="read">
+      <doc:doc><doc:description><doc:para>
+            If the power source is present in the bay.
+            This field is required as some batteries are hot-removable, for example
+            expensive UPS and most laptop batteries.
+          </doc:para><doc:para>
+            This property is only valid if the property
+            <doc:ref type="property" to="Source:type">type</doc:ref>
+            has the value "battery".
+      </doc:para></doc:description></doc:doc>
+    </property>
+
     <property name="battery-state" type="s" access="read">
       <doc:doc><doc:description><doc:para>
             The battery power state.
