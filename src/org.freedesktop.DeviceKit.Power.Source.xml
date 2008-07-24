@@ -214,6 +214,16 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
+    <property name="battery-is-rechargeable" type="b" access="read">
+      <doc:doc><doc:description><doc:para>
+            If the power source is rechargeable.
+          </doc:para><doc:para>
+            This property is only valid if the property
+            <doc:ref type="property" to="Source:type">type</doc:ref>
+            has the value "battery".
+      </doc:para></doc:description></doc:doc>
+    </property>
+
     <property name="battery-capacity" type="d" access="read">
       <doc:doc><doc:description><doc:para>
             The capacity of the power source expressed as a percentage between 0 and 100.

@@ -63,6 +63,7 @@ struct DevkitPowerSourcePrivate
         DevkitPowerType type;
 
         gboolean line_power_online;
+        gboolean battery_is_rechargeable;
         DevkitPowerState battery_state;
         DevkitPowerTechnology battery_technology;
 
@@ -94,6 +95,7 @@ enum
         PROP_TYPE,
         PROP_LINE_POWER_ONLINE,
         PROP_BATTERY_CAPACITY,
+        PROP_BATTERY_IS_RECHARGEABLE,
         PROP_BATTERY_STATE,
         PROP_BATTERY_ENERGY,
         PROP_BATTERY_ENERGY_EMPTY,
@@ -153,6 +155,9 @@ get_property (GObject         *object,
 
         case PROP_LINE_POWER_ONLINE:
                 g_value_set_boolean (value, source->priv->line_power_online);
+                break;
+        case PROP_BATTERY_IS_RECHARGEABLE:
+                g_value_set_boolean (value, source->priv->battery_is_rechargeable);
                 break;
         case PROP_BATTERY_STATE:
                 g_value_set_string (value, devkit_power_convert_state_to_text (source->priv->battery_state));
@@ -255,6 +260,10 @@ devkit_power_source_class_init (DevkitPowerSourceClass *klass)
                 object_class,
                 PROP_BATTERY_ENERGY,
                 g_param_spec_double ("battery-energy", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
+        g_object_class_install_property (
+                object_class,
+                PROP_BATTERY_IS_RECHARGEABLE,
+                g_param_spec_boolean ("battery-is-rechargeable", NULL, NULL, FALSE, G_PARAM_READABLE));
         g_object_class_install_property (
                 object_class,
                 PROP_BATTERY_STATE,
@@ -515,6 +524,9 @@ update_battery (DevkitPowerSource *source)
                 fabs (sysfs_get_double (source->priv->native_path, "current_now") / 1000000.0);
         if (is_charging)
                 source->priv->battery_energy_rate *= -1.0;
+
+        /* assume true for laptops */
+        source->priv->battery_is_rechargeable = TRUE;
 
         /* get a precise percentage */
         source->priv->battery_percentage = 100.0 * source->priv->battery_energy / source->priv->battery_energy_full;
