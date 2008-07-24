@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*-
  *
  * Copyright (C) 2008 David Zeuthen <david@fubar.dk>
+ * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,6 +62,7 @@ struct DevkitPowerSourcePrivate
         char *serial;
         GTimeVal update_time;
         DevkitPowerType type;
+        gboolean has_coldplug_values;
 
         gboolean line_power_online;
         gboolean battery_is_present;
@@ -80,8 +82,9 @@ struct DevkitPowerSourcePrivate
 };
 
 static void     devkit_power_source_class_init  (DevkitPowerSourceClass *klass);
-static void     devkit_power_source_init        (DevkitPowerSource      *seat);
-static void     devkit_power_source_finalize    (GObject     *object);
+static void     devkit_power_source_init        (DevkitPowerSource      *source);
+static void     devkit_power_source_finalize    (GObject                *object);
+static void     devkit_power_source_reset_values(DevkitPowerSource      *source);
 
 static gboolean update (DevkitPowerSource *source);
 
@@ -320,8 +323,7 @@ static void
 devkit_power_source_init (DevkitPowerSource *source)
 {
         source->priv = DEVKIT_POWER_SOURCE_GET_PRIVATE (source);
-        source->priv->battery_time_to_empty = -1;
-        source->priv->battery_time_to_full = -1;
+        devkit_power_source_reset_values (source);
 }
 
 static void
@@ -507,6 +509,28 @@ update_line_power (DevkitPowerSource *source)
         return TRUE;
 }
 
+static void
+devkit_power_source_reset_values (DevkitPowerSource *source)
+{
+        source->priv->battery_energy = -1;
+        source->priv->battery_energy_full = -1;
+        source->priv->battery_energy_full_design = -1;
+        source->priv->battery_energy_rate = -1;
+        source->priv->battery_percentage = -1;
+        source->priv->battery_capacity = -1;
+        source->priv->battery_time_to_empty = -1;
+        source->priv->battery_time_to_full = -1;
+        source->priv->battery_state = DEVKIT_POWER_STATE_UNKNOWN;
+        source->priv->battery_technology = DEVKIT_POWER_TECHNOLGY_UNKNOWN;
+        source->priv->vendor = NULL;
+        source->priv->model = NULL;
+        source->priv->serial = NULL;
+        source->priv->line_power_online = FALSE;
+        source->priv->battery_is_present = FALSE;
+        source->priv->battery_is_rechargeable = FALSE;
+        source->priv->has_coldplug_values = FALSE;
+}
+
 static gboolean
 update_battery (DevkitPowerSource *source)
 {
@@ -523,23 +547,50 @@ update_battery (DevkitPowerSource *source)
         /* are we present? */
         source->priv->battery_is_present = sysfs_get_bool (source->priv->native_path, "present");
 
+        /* initial values */
+        if (!source->priv->has_coldplug_values) {
+                char *technology_native;
+
+                /* the ACPI spec is bad at defining battery type constants */
+                technology_native = g_strstrip (sysfs_get_string (source->priv->native_path, "technology"));
+                source->priv->battery_technology = devkit_power_convert_acpi_technology_to_enum (technology_native);
+                g_free (technology_native);
+
+                source->priv->vendor = g_strstrip (sysfs_get_string (source->priv->native_path, "manufacturer"));
+                source->priv->model = g_strstrip (sysfs_get_string (source->priv->native_path, "model_name"));
+                source->priv->serial = g_strstrip (sysfs_get_string (source->priv->native_path, "serial_number"));
+
+                /* assume true for laptops */
+                source->priv->battery_is_rechargeable = TRUE;
+
+                /* these don't change at runtime */
+                source->priv->battery_energy_full =
+                        sysfs_get_double (source->priv->native_path, "energy_full") / 1000000.0;
+                source->priv->battery_energy_full_design =
+                        sysfs_get_double (source->priv->native_path, "energy_full_design") / 1000000.0;
+
+                /* calculate how broken our battery is */
+                source->priv->battery_capacity = source->priv->battery_energy_full_design /
+                                                 source->priv->battery_energy_full * 100.0f;
+                if (source->priv->battery_capacity < 0)
+                        source->priv->battery_capacity = 0;
+                if (source->priv->battery_capacity > 100.0)
+                        source->priv->battery_capacity = 100.0;
+
+                /* we only coldplug once, as these values will never change */
+                source->priv->has_coldplug_values = TRUE;
+        }
+
         status = g_strstrip (sysfs_get_string (source->priv->native_path, "status"));
         is_charging = strcasecmp (status, "charging") == 0;
         is_discharging = strcasecmp (status, "discharging") == 0;
 
         source->priv->battery_energy =
                 sysfs_get_double (source->priv->native_path, "energy_now") / 1000000.0;
-        source->priv->battery_energy_full =
-                sysfs_get_double (source->priv->native_path, "energy_full") / 1000000.0;
-        source->priv->battery_energy_full_design =
-                sysfs_get_double (source->priv->native_path, "energy_full_design") / 1000000.0;
         source->priv->battery_energy_rate =
                 fabs (sysfs_get_double (source->priv->native_path, "current_now") / 1000000.0);
         if (is_charging)
                 source->priv->battery_energy_rate *= -1.0;
-
-        /* assume true for laptops */
-        source->priv->battery_is_rechargeable = TRUE;
 
         /* get a precise percentage */
         source->priv->battery_percentage = 100.0 * source->priv->battery_energy / source->priv->battery_energy_full;
@@ -580,19 +631,6 @@ update (DevkitPowerSource *source)
         if (source->priv->poll_timer_id > 0) {
                 g_source_remove (source->priv->poll_timer_id);
                 source->priv->poll_timer_id = 0;
-        }
-
-        /* initial values */
-        if (source->priv->vendor == NULL) {
-                char *s;
-
-                s = g_strstrip (sysfs_get_string (source->priv->native_path, "technology"));
-                source->priv->battery_technology = devkit_power_convert_acpi_technology_to_enum (s);
-                g_free (s);
-
-                source->priv->vendor = g_strstrip (sysfs_get_string (source->priv->native_path, "manufacturer"));
-                source->priv->model = g_strstrip (sysfs_get_string (source->priv->native_path, "model_name"));
-                source->priv->serial = g_strstrip (sysfs_get_string (source->priv->native_path, "serial_number"));
         }
 
         g_get_current_time (&(source->priv->update_time));
