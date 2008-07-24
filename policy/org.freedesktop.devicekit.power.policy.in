@@ -20,8 +20,18 @@ file are instantly applied.
   <icon_name>system-suspend</icon_name>
 
   <action id="org.freedesktop.devicekit.power.suspend">
-    <_description>Suspend the system to RAM</_description>
-    <_message>Authentication is required to suspend to system</_message>
+    <_description>Suspend the system</_description>
+    <_message>Authentication is required to suspend the system</_message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.freedesktop.devicekit.power.hibernate">
+    <_description>Hibernate the system</_description>
+    <_message>Authentication is required to hibernate the system</_message>
     <defaults>
       <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>
