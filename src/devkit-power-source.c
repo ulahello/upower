@@ -576,6 +576,10 @@ update_battery (DevkitPowerSource *source)
                 source->priv->battery_energy_full_design =
                         sysfs_get_double (source->priv->native_path, "energy_full_design") / 1000000.0;
 
+                /* the last full cannot be bigger than the design */
+                if (source->priv->battery_energy_full > source->priv->battery_energy_full_design)
+                        source->priv->battery_energy_full = source->priv->battery_energy_full_design;
+
                 /* calculate how broken our battery is */
                 source->priv->battery_capacity = source->priv->battery_energy_full_design /
                                                  source->priv->battery_energy_full * 100.0f;
@@ -596,6 +600,12 @@ update_battery (DevkitPowerSource *source)
                 sysfs_get_double (source->priv->native_path, "energy_now") / 1000000.0;
         source->priv->battery_energy_rate =
                 fabs (sysfs_get_double (source->priv->native_path, "current_now") / 1000000.0);
+
+	/* sanity check to less than 100W */
+	if (source->priv->battery_energy_rate > 100*1000)
+		source->priv->battery_energy_rate = -1;
+
+        /* discharging has a negative rate */
         if (is_charging)
                 source->priv->battery_energy_rate *= -1.0;
 
