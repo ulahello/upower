@@ -595,12 +595,6 @@ update_battery (DevkitPowerSource *source)
         gboolean is_charging;
         gboolean is_discharging;
 
-        /* TODO: this needs to handle lots of special cases when certain
-         *       files exist, it needs to prefer _avg to _now etc. etc. etc.
-         *
-         *       This is just a very quick hack for now.
-         */
-
         /* are we present? */
         source->priv->battery_is_present = sysfs_get_bool (source->priv->native_path, "present");
         if (!source->priv->battery_is_present) {
@@ -668,10 +662,25 @@ update_battery (DevkitPowerSource *source)
 		source->priv->battery_time_to_full = -1;
 	}
 
+        /* get the currect charge */
         source->priv->battery_energy =
-                sysfs_get_double (source->priv->native_path, "energy_now") / 1000000.0;
+                sysfs_get_double (source->priv->native_path, "energy_avg") / 1000000.0;
+        if (source->priv->battery_energy == 0)
+                source->priv->battery_energy =
+                        sysfs_get_double (source->priv->native_path, "energy_now") / 1000000.0;
+
+        /* some batteries don't update last_full attribute */
+        if (source->priv->battery_energy > source->priv->battery_energy_full)
+                source->priv->battery_energy_full = source->priv->battery_energy;
+
         source->priv->battery_energy_rate =
                 fabs (sysfs_get_double (source->priv->native_path, "current_now") / 1000000.0);
+
+	/* ACPI gives out the special 'Ones' value for rate when it's unable
+	 * to calculate the true rate. We should set the rate zero, and wait
+	 * for the BIOS to stabilise. */
+	if (source->priv->battery_energy_rate == 0xffff)
+		source->priv->battery_energy_rate = -1;
 
 	/* sanity check to less than 100W */
 	if (source->priv->battery_energy_rate > 100*1000)
