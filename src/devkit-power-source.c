@@ -80,6 +80,9 @@ struct DevkitPowerSourcePrivate
         gint64 battery_time_to_empty;
         gint64 battery_time_to_full;
         double battery_percentage;
+
+        double battery_energy_old;
+        GTimeVal battery_energy_old_timespec;
 };
 
 static void     devkit_power_source_class_init  (DevkitPowerSourceClass *klass);
@@ -523,6 +526,7 @@ static void
 devkit_power_source_reset_values (DevkitPowerSource *source)
 {
         source->priv->battery_energy = -1;
+        source->priv->battery_energy_old = -1;
         source->priv->battery_energy_full = -1;
         source->priv->battery_energy_full_design = -1;
         source->priv->battery_energy_rate = -1;
@@ -540,6 +544,7 @@ devkit_power_source_reset_values (DevkitPowerSource *source)
         source->priv->power_supply = FALSE;
         source->priv->battery_is_rechargeable = FALSE;
         source->priv->has_coldplug_values = FALSE;
+        source->priv->battery_energy_old_timespec.tv_sec = 0;
 }
 
 gchar *
@@ -592,12 +597,45 @@ devkit_power_source_get_id (DevkitPowerSource *source)
 	return id;
 }
 
+static void
+calculate_battery_rate (DevkitPowerSource *source)
+{
+        guint time;
+        gdouble energy;
+        GTimeVal now;
+
+        if (source->priv->battery_energy < 0)
+                return;
+
+        if (source->priv->battery_energy_old < 0)
+                return;
+
+        if (source->priv->battery_energy_old == source->priv->battery_energy)
+                return;
+
+        /* get the time difference */
+        g_get_current_time (&now);
+        time = now.tv_sec - source->priv->battery_energy_old_timespec.tv_sec;
+
+        if (time == 0)
+                return;
+
+        /* get the difference in charge */
+        energy = source->priv->battery_energy_old - source->priv->battery_energy;
+        if (energy < 0.1)
+                return;
+
+        /* probably okay */
+        source->priv->battery_energy_rate = energy * 3600 / time;
+}
+
 static gboolean
 update_battery (DevkitPowerSource *source)
 {
         char *status;
         gboolean is_charging;
         gboolean is_discharging;
+        DevkitPowerState battery_state;
 
         /* are we present? */
         source->priv->battery_is_present = sysfs_get_bool (source->priv->native_path, "present");
@@ -658,14 +696,6 @@ update_battery (DevkitPowerSource *source)
         if (is_charging && is_discharging)
                 is_discharging = FALSE;
 
-	/* reset the time, as we really can't guess this without profiling */
-	if (is_charging) {
-		source->priv->battery_time_to_empty = -1;
-	}
-	if (is_discharging) {
-		source->priv->battery_time_to_full = -1;
-	}
-
         /* get the currect charge */
         source->priv->battery_energy =
                 sysfs_get_double (source->priv->native_path, "energy_avg") / 1000000.0;
@@ -690,8 +720,13 @@ update_battery (DevkitPowerSource *source)
 	if (source->priv->battery_energy_rate > 100*1000)
 		source->priv->battery_energy_rate = -1;
 
-        /* discharging has a negative rate */
-        if (is_charging)
+        /* the hardware reporting failed -- try to calculate this */
+        if (source->priv->battery_energy_rate < 0) {
+                calculate_battery_rate (source);
+        }
+
+        /* charging has a negative rate */
+        if (source->priv->battery_energy_rate > 0 && is_charging)
                 source->priv->battery_energy_rate *= -1.0;
 
         /* get a precise percentage */
@@ -702,6 +737,8 @@ update_battery (DevkitPowerSource *source)
                 source->priv->battery_percentage = 100.0;
 
         /* calculate a quick and dirty time remaining value */
+        source->priv->battery_time_to_empty = -1;
+        source->priv->battery_time_to_full = -1;
 	if (source->priv->battery_energy_rate > 0) {
 		if (is_discharging) {
 			source->priv->battery_time_to_empty = 3600 * (source->priv->battery_energy /
@@ -721,13 +758,23 @@ update_battery (DevkitPowerSource *source)
 
         /* get the state */
         if (is_charging)
-                source->priv->battery_state = DEVKIT_POWER_STATE_CHARGING;
+                battery_state = DEVKIT_POWER_STATE_CHARGING;
         else if (is_discharging)
-                source->priv->battery_state = DEVKIT_POWER_STATE_DISCHARGING;
+                battery_state = DEVKIT_POWER_STATE_DISCHARGING;
         else if (source->priv->battery_percentage > DK_POWER_MIN_CHARGED_PERCENTAGE)
-                source->priv->battery_state = DEVKIT_POWER_STATE_FULLY_CHARGED;
+                battery_state = DEVKIT_POWER_STATE_FULLY_CHARGED;
         else
-                source->priv->battery_state = DEVKIT_POWER_STATE_EMPTY;
+                battery_state = DEVKIT_POWER_STATE_EMPTY;
+
+        /* set the old status */
+        source->priv->battery_energy_old = source->priv->battery_energy;
+        g_get_current_time (&source->priv->battery_energy_old_timespec);
+
+        /* we changed state */
+        if (source->priv->battery_state != battery_state) {
+                source->priv->battery_energy_old = -1;
+                source->priv->battery_state = battery_state;
+        }
 
         g_free (status);
         return TRUE;
