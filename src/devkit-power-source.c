@@ -556,6 +556,10 @@ devkit_power_source_get_id (DevkitPowerSource *source)
         if (source->priv->type != DEVKIT_POWER_TYPE_BATTERY)
                 return id;
 
+        /* we don't have an ID if we are not present */
+        if (!source->priv->battery_is_present)
+                return id;
+
 	string = g_string_new ("");
 
 	/* in an ideal world, model-capacity-serial */
