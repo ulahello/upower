@@ -531,6 +531,48 @@ devkit_power_source_reset_values (DevkitPowerSource *source)
         source->priv->has_coldplug_values = FALSE;
 }
 
+gchar *
+devkit_power_source_get_id (DevkitPowerSource *source)
+{
+	GString *string;
+	gchar *id = NULL;
+
+        /* only valid for batteries */
+        if (source->priv->type != DEVKIT_POWER_TYPE_BATTERY)
+                return id;
+
+	string = g_string_new ("");
+
+	/* in an ideal world, model-capacity-serial */
+	if (source->priv->model != NULL && strlen (source->priv->model) > 2) {
+		g_string_append (string, source->priv->model);
+		g_string_append_c (string, '-');
+	}
+	if (source->priv->battery_energy_full_design > 0) {
+		g_string_append_printf (string, "%i", (guint) source->priv->battery_energy_full_design);
+		g_string_append_c (string, '-');
+	}
+	if (source->priv->serial != NULL && strlen (source->priv->serial) > 2) {
+		g_string_append (string, source->priv->serial);
+		g_string_append_c (string, '-');
+	}
+
+	/* make sure we are sane */
+	if (string->len == 0) {
+		/* just use something generic */
+		g_string_append (string, "generic_id");
+	} else {
+		/* remove trailing '-' */
+		g_string_set_size (string, string->len - 1);
+	}
+
+	/* the id may have invalid chars that need to be replaced */
+	id = g_string_free (string, FALSE);
+	g_strdelimit (id, "\\\t\"' /", '_');
+
+	return id;
+}
+
 static gboolean
 update_battery (DevkitPowerSource *source)
 {

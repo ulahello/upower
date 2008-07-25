@@ -58,6 +58,7 @@ DevkitPowerSource *devkit_power_source_new        (DevkitPowerDaemon *daemon,
 
 gboolean           devkit_power_source_refresh    (DevkitPowerSource     *power_source,
                                                    DBusGMethodInvocation *context);
+gchar             *devkit_power_source_get_id     (DevkitPowerSource     *power_source);
 
 G_END_DECLS
 
