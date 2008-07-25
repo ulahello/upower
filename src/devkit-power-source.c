@@ -64,6 +64,7 @@ struct DevkitPowerSourcePrivate
         DevkitPowerType type;
         gboolean has_coldplug_values;
 
+        gboolean power_supply;
         gboolean line_power_online;
         gboolean battery_is_present;
         gboolean battery_is_rechargeable;
@@ -98,6 +99,7 @@ enum
         PROP_UPDATE_TIME,
         PROP_TYPE,
         PROP_LINE_POWER_ONLINE,
+        PROP_POWER_SUPPLY,
         PROP_BATTERY_CAPACITY,
         PROP_BATTERY_IS_PRESENT,
         PROP_BATTERY_IS_RECHARGEABLE,
@@ -156,6 +158,10 @@ get_property (GObject         *object,
                 break;
         case PROP_TYPE:
                 g_value_set_string (value, devkit_power_convert_type_to_text (source->priv->type));
+                break;
+
+        case PROP_POWER_SUPPLY:
+                g_value_set_boolean (value, source->priv->power_supply);
                 break;
 
         case PROP_LINE_POWER_ONLINE:
@@ -261,6 +267,10 @@ devkit_power_source_class_init (DevkitPowerSourceClass *klass)
                 object_class,
                 PROP_TYPE,
                 g_param_spec_string ("type", NULL, NULL, NULL, G_PARAM_READABLE));
+        g_object_class_install_property (
+                object_class,
+                PROP_BATTERY_IS_PRESENT,
+                g_param_spec_boolean ("power-supply", NULL, NULL, FALSE, G_PARAM_READABLE));
         g_object_class_install_property (
                 object_class,
                 PROP_LINE_POWER_ONLINE,
@@ -527,6 +537,7 @@ devkit_power_source_reset_values (DevkitPowerSource *source)
         source->priv->serial = NULL;
         source->priv->line_power_online = FALSE;
         source->priv->battery_is_present = FALSE;
+        source->priv->power_supply = FALSE;
         source->priv->battery_is_rechargeable = FALSE;
         source->priv->has_coldplug_values = FALSE;
 }
@@ -599,6 +610,9 @@ update_battery (DevkitPowerSource *source)
         /* initial values */
         if (!source->priv->has_coldplug_values) {
                 char *technology_native;
+
+                /* when we add via sysfs power_supply class then we know this is true */
+                source->priv->power_supply = TRUE;
 
                 /* the ACPI spec is bad at defining battery type constants */
                 technology_native = g_strstrip (sysfs_get_string (source->priv->native_path, "technology"));

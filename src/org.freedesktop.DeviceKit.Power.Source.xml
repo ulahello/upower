@@ -97,6 +97,14 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
+    <property name="power-supply" type="b" access="read">
+      <doc:doc><doc:description><doc:para>
+            If the power device is used to supply the system.
+            This would be set TRUE for laptop batteries and UPS devices,
+            but set FALSE for wireless mice or PDAs.
+          </doc:para></doc:description></doc:doc>
+    </property>
+
     <property name="line-power-online" type="b" access="read">
       <doc:doc><doc:description><doc:para>
             Whether power is currently being provided through line power.
