@@ -656,6 +656,18 @@ update_battery (DevkitPowerSource *source)
         is_charging = strcasecmp (status, "charging") == 0;
         is_discharging = strcasecmp (status, "discharging") == 0;
 
+        /* really broken battery, assume charging */
+        if (is_charging && is_discharging)
+                is_discharging = FALSE;
+
+	/* reset the time, as we really can't guess this without profiling */
+	if (is_charging) {
+		source->priv->battery_time_to_empty = -1;
+	}
+	if (is_discharging) {
+		source->priv->battery_time_to_full = -1;
+	}
+
         source->priv->battery_energy =
                 sysfs_get_double (source->priv->native_path, "energy_now") / 1000000.0;
         source->priv->battery_energy_rate =
@@ -675,6 +687,24 @@ update_battery (DevkitPowerSource *source)
                 source->priv->battery_percentage = 0;
         if (source->priv->battery_percentage > 100.0)
                 source->priv->battery_percentage = 100.0;
+
+        /* calculate a quick and dirty time remaining value */
+	if (source->priv->battery_energy_rate > 0) {
+		if (is_discharging) {
+			source->priv->battery_time_to_empty = 3600 * (source->priv->battery_energy /
+							      source->priv->battery_energy_rate);
+		} else if (is_charging) {
+			source->priv->battery_time_to_full = 3600 *
+				((source->priv->battery_energy_full - source->priv->battery_energy) /
+				source->priv->battery_energy_rate);
+		}
+	}
+	/* check the remaining time is under a set limit, to deal with broken
+	   primary batteries rate */
+	if (source->priv->battery_time_to_empty > (100 * 60 * 60))
+		source->priv->battery_time_to_empty = -1;
+	if (source->priv->battery_time_to_full > (100 * 60 * 60))
+		source->priv->battery_time_to_full = -1;
 
         /* get the state */
         if (is_charging)
