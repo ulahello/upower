@@ -548,6 +548,10 @@ devkit_power_source_get_id (DevkitPowerSource *source)
 	GString *string;
 	gchar *id = NULL;
 
+        /* only valid for devices supplying the system */
+        if (!source->priv->power_supply)
+                return id;
+
         /* only valid for batteries */
         if (source->priv->type != DEVKIT_POWER_TYPE_BATTERY)
                 return id;
