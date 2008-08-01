@@ -32,6 +32,8 @@ bin_PROGRAMS = devkit-power
 devkit_power_SOURCES = 					\
 				dkp-tool.c		\
 	../src/dkp-debug.h	../src/dkp-debug.c	\
+	../src/dkp-object.h	../src/dkp-object.c	\
+	../src/dkp-enum.h	../src/dkp-enum.c	\
 	$(BUILT_SOURCES)
 
 

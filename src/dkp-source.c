@@ -38,6 +38,7 @@
 #include "sysfs-utils.h"
 #include "dkp-debug.h"
 #include "dkp-enum.h"
+#include "dkp-object.h"
 #include "dkp-source.h"
 #include "dkp-marshal.h"
 
@@ -52,36 +53,10 @@ struct DkpSourcePrivate
 	DBusGProxy		*system_bus_proxy;
 	DkpDaemon		*daemon;
 	DevkitDevice		*d;
-
 	gchar			*object_path;
-	gchar			*native_path;
-
 	guint			 poll_timer_id;
-
-	gchar			*vendor;
-	gchar			*model;
-	gchar			*serial;
-	GTimeVal		 update_time;
-	DkpSourceType		 type;
+	DkpObject		*obj;
 	gboolean		 has_coldplug_values;
-
-	gboolean		 power_supply;
-	gboolean		 line_power_online;
-	gboolean		 battery_is_present;
-	gboolean		 battery_is_rechargeable;
-	DkpSourceState		 battery_state;
-	DkpSourceTechnology	 battery_technology;
-
-	gdouble			 battery_capacity;
-	gdouble			 battery_energy;
-	gdouble			 battery_energy_empty;
-	gdouble			 battery_energy_full;
-	gdouble			 battery_energy_full_design;
-	gdouble			 battery_energy_rate;
-	gint64			 battery_time_to_empty;
-	gint64			 battery_time_to_full;
-	gdouble			 battery_percentage;
-
 	gdouble			 battery_energy_old;
 	GTimeVal		 battery_energy_old_timespec;
 };
@@ -140,74 +115,71 @@ static void
 dkp_source_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
 {
 	DkpSource *source = DKP_SOURCE (object);
+	DkpObject *obj = source->priv->obj;
 
 	switch (prop_id) {
 	case PROP_NATIVE_PATH:
-		g_value_set_string (value, source->priv->native_path);
+		g_value_set_string (value, obj->native_path);
 		break;
 	case PROP_VENDOR:
-		g_value_set_string (value, source->priv->vendor);
+		g_value_set_string (value, obj->vendor);
 		break;
 	case PROP_MODEL:
-		g_value_set_string (value, source->priv->model);
+		g_value_set_string (value, obj->model);
 		break;
 	case PROP_SERIAL:
-		g_value_set_string (value, source->priv->serial);
+		g_value_set_string (value, obj->serial);
 		break;
 	case PROP_UPDATE_TIME:
-		g_value_set_uint64 (value, source->priv->update_time.tv_sec);
+		g_value_set_uint64 (value, obj->update_time);
 		break;
 	case PROP_TYPE:
-		g_value_set_string (value, dkp_source_type_to_text (source->priv->type));
+		g_value_set_string (value, dkp_source_type_to_text (obj->type));
 		break;
-
 	case PROP_POWER_SUPPLY:
-		g_value_set_boolean (value, source->priv->power_supply);
+		g_value_set_boolean (value, obj->power_supply);
 		break;
-
 	case PROP_LINE_POWER_ONLINE:
-		g_value_set_boolean (value, source->priv->line_power_online);
+		g_value_set_boolean (value, obj->line_power_online);
 		break;
-
 	case PROP_BATTERY_IS_PRESENT:
-		g_value_set_boolean (value, source->priv->battery_is_present);
+		g_value_set_boolean (value, obj->battery_is_present);
 		break;
 	case PROP_BATTERY_IS_RECHARGEABLE:
-		g_value_set_boolean (value, source->priv->battery_is_rechargeable);
+		g_value_set_boolean (value, obj->battery_is_rechargeable);
 		break;
 	case PROP_BATTERY_STATE:
-		g_value_set_string (value, dkp_source_state_to_text (source->priv->battery_state));
+		g_value_set_string (value, dkp_source_state_to_text (obj->battery_state));
 		break;
 	case PROP_BATTERY_CAPACITY:
-		g_value_set_double (value, source->priv->battery_capacity);
+		g_value_set_double (value, obj->battery_capacity);
 		break;
 	case PROP_BATTERY_ENERGY:
-		g_value_set_double (value, source->priv->battery_energy);
+		g_value_set_double (value, obj->battery_energy);
 		break;
 	case PROP_BATTERY_ENERGY_EMPTY:
-		g_value_set_double (value, source->priv->battery_energy_empty);
+		g_value_set_double (value, obj->battery_energy_empty);
 		break;
 	case PROP_BATTERY_ENERGY_FULL:
-		g_value_set_double (value, source->priv->battery_energy_full);
+		g_value_set_double (value, obj->battery_energy_full);
 		break;
 	case PROP_BATTERY_ENERGY_FULL_DESIGN:
-		g_value_set_double (value, source->priv->battery_energy_full_design);
+		g_value_set_double (value, obj->battery_energy_full_design);
 		break;
 	case PROP_BATTERY_ENERGY_RATE:
-		g_value_set_double (value, source->priv->battery_energy_rate);
+		g_value_set_double (value, obj->battery_energy_rate);
 		break;
 	case PROP_BATTERY_TIME_TO_EMPTY:
-		g_value_set_int64 (value, source->priv->battery_time_to_empty);
+		g_value_set_int64 (value, obj->battery_time_to_empty);
 		break;
 	case PROP_BATTERY_TIME_TO_FULL:
-		g_value_set_int64 (value, source->priv->battery_time_to_full);
+		g_value_set_int64 (value, obj->battery_time_to_full);
 		break;
 	case PROP_BATTERY_PERCENTAGE:
-		g_value_set_double (value, source->priv->battery_percentage);
+		g_value_set_double (value, obj->battery_percentage);
 		break;
-
 	case PROP_BATTERY_TECHNOLOGY:
-		g_value_set_string (value, dkp_source_technology_to_text (source->priv->battery_technology));
+		g_value_set_string (value, dkp_source_technology_to_text (obj->battery_technology));
 		break;
 
 	default:
@@ -247,7 +219,6 @@ dkp_source_class_init (DkpSourceClass *klass)
 		object_class,
 		PROP_NATIVE_PATH,
 		g_param_spec_string ("native-path", NULL, NULL, NULL, G_PARAM_READABLE));
-
 	g_object_class_install_property (
 		object_class,
 		PROP_VENDOR,
@@ -356,12 +327,7 @@ dkp_source_finalize (GObject *object)
 
 	g_object_unref (source->priv->d);
 	g_object_unref (source->priv->daemon);
-
-	g_free (source->priv->native_path);
-
-	g_free (source->priv->vendor);
-	g_free (source->priv->model);
-	g_free (source->priv->serial);
+	dkp_object_free (source->priv->obj);
 
 	if (source->priv->poll_timer_id > 0)
 		g_source_remove (source->priv->poll_timer_id);
@@ -427,7 +393,7 @@ dkp_source_register_power_source (DkpSource *source)
 	}
 	connection = dbus_g_connection_get_connection (source->priv->system_bus_connection);
 
-	source->priv->object_path = dkp_source_compute_object_path (source->priv->native_path);
+	source->priv->object_path = dkp_source_compute_object_path (source->priv->obj->native_path);
 
 	dbus_g_connection_register_g_object (source->priv->system_bus_connection,
 					     source->priv->object_path, G_OBJECT (source));
@@ -456,13 +422,14 @@ dkp_source_new (DkpDaemon *daemon, DevkitDevice *d)
 	source = DKP_SOURCE (g_object_new (DKP_SOURCE_TYPE_SOURCE, NULL));
 	source->priv->d = g_object_ref (d);
 	source->priv->daemon = g_object_ref (daemon);
-	source->priv->native_path = g_strdup (native_path);
+	source->priv->obj = dkp_object_new ();
+	source->priv->obj->native_path = g_strdup (native_path);
 
 	if (sysfs_file_exists (native_path, "online")) {
-		source->priv->type = DKP_SOURCE_TYPE_LINE_POWER;
+		source->priv->obj->type = DKP_SOURCE_TYPE_LINE_POWER;
 	} else {
 		/* this is correct, UPS and CSR are not in the kernel */
-		source->priv->type = DKP_SOURCE_TYPE_BATTERY;
+		source->priv->obj->type = DKP_SOURCE_TYPE_BATTERY;
 	}
 
 	if (!dkp_source_update (source)) {
@@ -487,11 +454,9 @@ out:
 static void
 dkp_source_emit_changed (DkpSource *source)
 {
-	dkp_debug ("emitting changed on %s", source->priv->native_path);
-	g_signal_emit_by_name (source->priv->daemon,
-				  "device-changed",
-				  source->priv->object_path,
-				  NULL);
+	dkp_debug ("emitting changed on %s", source->priv->obj->native_path);
+	g_signal_emit_by_name (source->priv->daemon, "device-changed",
+			       source->priv->object_path, NULL);
 	g_signal_emit (source, signals[CHANGED_SIGNAL], 0);
 }
 
@@ -544,7 +509,8 @@ dkp_source_get_object_path (DkpDevice *device)
 static gboolean
 dkp_source_update_line_power (DkpSource *source)
 {
-	source->priv->line_power_online = sysfs_get_int (source->priv->native_path, "online");
+	DkpObject *obj = source->priv->obj;
+	obj->line_power_online = sysfs_get_int (obj->native_path, "online");
 	return TRUE;
 }
 
@@ -554,26 +520,10 @@ dkp_source_update_line_power (DkpSource *source)
 static void
 dkp_source_reset_values (DkpSource *source)
 {
-	source->priv->battery_energy = -1;
-	source->priv->battery_energy_old = -1;
-	source->priv->battery_energy_full = -1;
-	source->priv->battery_energy_full_design = -1;
-	source->priv->battery_energy_rate = -1;
-	source->priv->battery_percentage = -1;
-	source->priv->battery_capacity = -1;
-	source->priv->battery_time_to_empty = -1;
-	source->priv->battery_time_to_full = -1;
-	source->priv->battery_state = DKP_SOURCE_STATE_UNKNOWN;
-	source->priv->battery_technology = DKP_SOURCE_TECHNOLGY_UNKNOWN;
-	source->priv->vendor = NULL;
-	source->priv->model = NULL;
-	source->priv->serial = NULL;
-	source->priv->line_power_online = FALSE;
-	source->priv->battery_is_present = FALSE;
-	source->priv->power_supply = FALSE;
-	source->priv->battery_is_rechargeable = FALSE;
 	source->priv->has_coldplug_values = FALSE;
+	source->priv->battery_energy_old = -1;
 	source->priv->battery_energy_old_timespec.tv_sec = 0;
+	dkp_object_clear (source->priv->obj);
 }
 
 /**
@@ -582,51 +532,7 @@ dkp_source_reset_values (DkpSource *source)
 gchar *
 dkp_source_get_id (DkpSource *source)
 {
-	GString *string;
-	gchar *id = NULL;
-
-	/* only valid for devices supplying the system */
-	if (!source->priv->power_supply)
-		return id;
-
-	/* only valid for batteries */
-	if (source->priv->type != DKP_SOURCE_TYPE_BATTERY)
-		return id;
-
-	/* we don't have an ID if we are not present */
-	if (!source->priv->battery_is_present)
-		return id;
-
-	string = g_string_new ("");
-
-	/* in an ideal world, model-capacity-serial */
-	if (source->priv->model != NULL && strlen (source->priv->model) > 2) {
-		g_string_append (string, source->priv->model);
-		g_string_append_c (string, '-');
-	}
-	if (source->priv->battery_energy_full_design > 0) {
-		g_string_append_printf (string, "%i", (guint) source->priv->battery_energy_full_design);
-		g_string_append_c (string, '-');
-	}
-	if (source->priv->serial != NULL && strlen (source->priv->serial) > 2) {
-		g_string_append (string, source->priv->serial);
-		g_string_append_c (string, '-');
-	}
-
-	/* make sure we are sane */
-	if (string->len == 0) {
-		/* just use something generic */
-		g_string_append (string, "generic_id");
-	} else {
-		/* remove trailing '-' */
-		g_string_set_size (string, string->len - 1);
-	}
-
-	/* the id may have invalid chars that need to be replaced */
-	id = g_string_free (string, FALSE);
-	g_strdelimit (id, "\\\t\"' /", '_');
-
-	return id;
+	return dkp_object_get_id (source->priv->obj);
 }
 
 /**
@@ -638,14 +544,15 @@ dkp_source_calculate_battery_rate (DkpSource *source)
 	guint time;
 	gdouble energy;
 	GTimeVal now;
+	DkpObject *obj = source->priv->obj;
 
-	if (source->priv->battery_energy < 0)
+	if (obj->battery_energy < 0)
 		return;
 
 	if (source->priv->battery_energy_old < 0)
 		return;
 
-	if (source->priv->battery_energy_old == source->priv->battery_energy)
+	if (source->priv->battery_energy_old == obj->battery_energy)
 		return;
 
 	/* get the time difference */
@@ -656,33 +563,40 @@ dkp_source_calculate_battery_rate (DkpSource *source)
 		return;
 
 	/* get the difference in charge */
-	energy = source->priv->battery_energy_old - source->priv->battery_energy;
+	energy = source->priv->battery_energy_old - obj->battery_energy;
 	if (energy < 0.1)
 		return;
 
 	/* probably okay */
-	source->priv->battery_energy_rate = energy * 3600 / time;
+	obj->battery_energy_rate = energy * 3600 / time;
 }
 
 /**
  * dkp_source_update_battery:
+ *
+ * Return value: TRUE if we changed
  **/
 static gboolean
 dkp_source_update_battery (DkpSource *source)
 {
-	gchar *status;
+	gchar *status = NULL;
+	gboolean ret;
+	gboolean just_added = FALSE;
 	gboolean is_charging;
 	gboolean is_discharging;
 	DkpSourceState battery_state;
+	DkpObject *obj = source->priv->obj;
+	DkpObject *obj_old;
 
-	/* are we present? */
-	source->priv->battery_is_present = sysfs_get_bool (source->priv->native_path, "present");
-	if (!source->priv->battery_is_present) {
-		g_free (source->priv->vendor);
-		g_free (source->priv->model);
-		g_free (source->priv->serial);
+	/* make a copy so we can see if anything changed */
+	obj_old = dkp_object_copy (obj);
+
+	/* have we just been removed? */
+	obj->battery_is_present = sysfs_get_bool (obj->native_path, "present");
+	if (!obj->battery_is_present) {
 		dkp_source_reset_values (source);
-		return TRUE;
+		obj->type = DKP_SOURCE_TYPE_BATTERY;
+		goto out;
 	}
 
 	/* initial values */
@@ -690,43 +604,43 @@ dkp_source_update_battery (DkpSource *source)
 		gchar *technology_native;
 
 		/* when we add via sysfs power_supply class then we know this is true */
-		source->priv->power_supply = TRUE;
+		obj->power_supply = TRUE;
 
 		/* the ACPI spec is bad at defining battery type constants */
-		technology_native = g_strstrip (sysfs_get_string (source->priv->native_path, "technology"));
-		source->priv->battery_technology = dkp_acpi_to_source_technology (technology_native);
+		technology_native = g_strstrip (sysfs_get_string (obj->native_path, "technology"));
+		obj->battery_technology = dkp_acpi_to_source_technology (technology_native);
 		g_free (technology_native);
 
-		source->priv->vendor = g_strstrip (sysfs_get_string (source->priv->native_path, "manufacturer"));
-		source->priv->model = g_strstrip (sysfs_get_string (source->priv->native_path, "model_name"));
-		source->priv->serial = g_strstrip (sysfs_get_string (source->priv->native_path, "serial_number"));
+		obj->vendor = g_strstrip (sysfs_get_string (obj->native_path, "manufacturer"));
+		obj->model = g_strstrip (sysfs_get_string (obj->native_path, "model_name"));
+		obj->serial = g_strstrip (sysfs_get_string (obj->native_path, "serial_number"));
 
 		/* assume true for laptops */
-		source->priv->battery_is_rechargeable = TRUE;
+		obj->battery_is_rechargeable = TRUE;
 
 		/* these don't change at runtime */
-		source->priv->battery_energy_full =
-			sysfs_get_double (source->priv->native_path, "energy_full") / 1000000.0;
-		source->priv->battery_energy_full_design =
-			sysfs_get_double (source->priv->native_path, "energy_full_design") / 1000000.0;
+		obj->battery_energy_full =
+			sysfs_get_double (obj->native_path, "energy_full") / 1000000.0;
+		obj->battery_energy_full_design =
+			sysfs_get_double (obj->native_path, "energy_full_design") / 1000000.0;
 
 		/* the last full cannot be bigger than the design */
-		if (source->priv->battery_energy_full > source->priv->battery_energy_full_design)
-			source->priv->battery_energy_full = source->priv->battery_energy_full_design;
+		if (obj->battery_energy_full > obj->battery_energy_full_design)
+			obj->battery_energy_full = obj->battery_energy_full_design;
 
 		/* calculate how broken our battery is */
-		source->priv->battery_capacity = source->priv->battery_energy_full_design /
-						 source->priv->battery_energy_full * 100.0f;
-		if (source->priv->battery_capacity < 0)
-			source->priv->battery_capacity = 0;
-		if (source->priv->battery_capacity > 100.0)
-			source->priv->battery_capacity = 100.0;
+		obj->battery_capacity = obj->battery_energy_full_design / obj->battery_energy_full * 100.0f;
+		if (obj->battery_capacity < 0)
+			obj->battery_capacity = 0;
+		if (obj->battery_capacity > 100.0)
+			obj->battery_capacity = 100.0;
 
 		/* we only coldplug once, as these values will never change */
 		source->priv->has_coldplug_values = TRUE;
+		just_added = TRUE;
 	}
 
-	status = g_strstrip (sysfs_get_string (source->priv->native_path, "status"));
+	status = g_strstrip (sysfs_get_string (obj->native_path, "status"));
 	is_charging = strcasecmp (status, "charging") == 0;
 	is_discharging = strcasecmp (status, "discharging") == 0;
 
@@ -735,87 +649,93 @@ dkp_source_update_battery (DkpSource *source)
 		is_discharging = FALSE;
 
 	/* get the currect charge */
-	source->priv->battery_energy =
-		sysfs_get_double (source->priv->native_path, "energy_avg") / 1000000.0;
-	if (source->priv->battery_energy == 0)
-		source->priv->battery_energy =
-			sysfs_get_double (source->priv->native_path, "energy_now") / 1000000.0;
+	obj->battery_energy =
+		sysfs_get_double (obj->native_path, "energy_avg") / 1000000.0;
+	if (obj->battery_energy == 0)
+		obj->battery_energy =
+			sysfs_get_double (obj->native_path, "energy_now") / 1000000.0;
 
 	/* some batteries don't update last_full attribute */
-	if (source->priv->battery_energy > source->priv->battery_energy_full)
-		source->priv->battery_energy_full = source->priv->battery_energy;
+	if (obj->battery_energy > obj->battery_energy_full)
+		obj->battery_energy_full = obj->battery_energy;
 
-	source->priv->battery_energy_rate =
-		fabs (sysfs_get_double (source->priv->native_path, "current_now") / 1000000.0);
+	obj->battery_energy_rate =
+		fabs (sysfs_get_double (obj->native_path, "current_now") / 1000000.0);
 
 	/* ACPI gives out the special 'Ones' value for rate when it's unable
 	 * to calculate the true rate. We should set the rate zero, and wait
 	 * for the BIOS to stabilise. */
-	if (source->priv->battery_energy_rate == 0xffff)
-		source->priv->battery_energy_rate = -1;
+	if (obj->battery_energy_rate == 0xffff)
+		obj->battery_energy_rate = -1;
 
 	/* sanity check to less than 100W */
-	if (source->priv->battery_energy_rate > 100*1000)
-		source->priv->battery_energy_rate = -1;
+	if (obj->battery_energy_rate > 100*1000)
+		obj->battery_energy_rate = -1;
 
 	/* the hardware reporting failed -- try to calculate this */
-	if (source->priv->battery_energy_rate < 0) {
+	if (obj->battery_energy_rate < 0) {
 		dkp_source_calculate_battery_rate (source);
 	}
 
 	/* charging has a negative rate */
-	if (source->priv->battery_energy_rate > 0 && is_charging)
-		source->priv->battery_energy_rate *= -1.0;
+	if (obj->battery_energy_rate > 0 && is_charging)
+		obj->battery_energy_rate *= -1.0;
 
 	/* get a precise percentage */
-	source->priv->battery_percentage = 100.0 * source->priv->battery_energy / source->priv->battery_energy_full;
-	if (source->priv->battery_percentage < 0)
-		source->priv->battery_percentage = 0;
-	if (source->priv->battery_percentage > 100.0)
-		source->priv->battery_percentage = 100.0;
+	obj->battery_percentage = 100.0 * obj->battery_energy / obj->battery_energy_full;
+	if (obj->battery_percentage < 0)
+		obj->battery_percentage = 0;
+	if (obj->battery_percentage > 100.0)
+		obj->battery_percentage = 100.0;
 
 	/* calculate a quick and dirty time remaining value */
-	source->priv->battery_time_to_empty = -1;
-	source->priv->battery_time_to_full = -1;
-	if (source->priv->battery_energy_rate > 0) {
+	obj->battery_time_to_empty = -1;
+	obj->battery_time_to_full = -1;
+	if (obj->battery_energy_rate > 0) {
 		if (is_discharging) {
-			source->priv->battery_time_to_empty = 3600 * (source->priv->battery_energy /
-								 source->priv->battery_energy_rate);
+			obj->battery_time_to_empty = 3600 * (obj->battery_energy / obj->battery_energy_rate);
 		} else if (is_charging) {
-			source->priv->battery_time_to_full = 3600 *
-				((source->priv->battery_energy_full - source->priv->battery_energy) /
-				source->priv->battery_energy_rate);
+			obj->battery_time_to_full = 3600 * ((obj->battery_energy_full - obj->battery_energy) / obj->battery_energy_rate);
 		}
 	}
 	/* check the remaining time is under a set limit, to deal with broken
 	   primary batteries rate */
-	if (source->priv->battery_time_to_empty > (100 * 60 * 60))
-		source->priv->battery_time_to_empty = -1;
-	if (source->priv->battery_time_to_full > (100 * 60 * 60))
-		source->priv->battery_time_to_full = -1;
+	if (obj->battery_time_to_empty > (100 * 60 * 60))
+		obj->battery_time_to_empty = -1;
+	if (obj->battery_time_to_full > (100 * 60 * 60))
+		obj->battery_time_to_full = -1;
 
 	/* get the state */
 	if (is_charging)
 		battery_state = DKP_SOURCE_STATE_CHARGING;
 	else if (is_discharging)
 		battery_state = DKP_SOURCE_STATE_DISCHARGING;
-	else if (source->priv->battery_percentage > DK_POWER_MIN_CHARGED_PERCENTAGE)
+	else if (obj->battery_percentage > DK_POWER_MIN_CHARGED_PERCENTAGE)
 		battery_state = DKP_SOURCE_STATE_FULLY_CHARGED;
 	else
 		battery_state = DKP_SOURCE_STATE_EMPTY;
 
 	/* set the old status */
-	source->priv->battery_energy_old = source->priv->battery_energy;
+	source->priv->battery_energy_old = obj->battery_energy;
 	g_get_current_time (&source->priv->battery_energy_old_timespec);
 
 	/* we changed state */
-	if (source->priv->battery_state != battery_state) {
+	if (obj->battery_state != battery_state) {
 		source->priv->battery_energy_old = -1;
-		source->priv->battery_state = battery_state;
+		obj->battery_state = battery_state;
 	}
 
+out:
+	/* did anything change? */
+	ret = !dkp_object_equal (obj, obj_old);
+	dkp_object_free (obj_old);
+
+	/* just for debugging */
+	if (just_added)
+		dkp_object_print (obj);
+
 	g_free (status);
-	return TRUE;
+	return ret;
 }
 
 /**
@@ -824,29 +744,39 @@ dkp_source_update_battery (DkpSource *source)
 static gboolean
 dkp_source_poll_battery (DkpSource *source)
 {
-	dkp_debug ("No updates on source %s for 30 seconds; forcing update", source->priv->native_path);
+	gboolean ret;
+	DkpObject *obj = source->priv->obj;
+
+	dkp_debug ("No updates on source %s for 30 seconds; forcing update", obj->native_path);
 	source->priv->poll_timer_id = 0;
-	dkp_source_update (source);
-	dkp_source_emit_changed (source);
+	ret = dkp_source_update (source);
+	if (ret) {
+		dkp_source_emit_changed (source);
+		dkp_object_print (source->priv->obj);
+	}
 	return FALSE;
 }
 
 /**
  * dkp_source_update:
+ *
+ * Return value: TRUE if we changed
  **/
 static gboolean
 dkp_source_update (DkpSource *source)
 {
 	gboolean ret;
+	GTimeVal time;
 
 	if (source->priv->poll_timer_id > 0) {
 		g_source_remove (source->priv->poll_timer_id);
 		source->priv->poll_timer_id = 0;
 	}
 
-	g_get_current_time (&(source->priv->update_time));
+	g_get_current_time (&time);
+	source->priv->obj->update_time = time.tv_sec;
 
-	switch (source->priv->type) {
+	switch (source->priv->obj->type) {
 	case DKP_SOURCE_TYPE_LINE_POWER:
 		ret = dkp_source_update_line_power (source);
 		break;
