@@ -1,0 +1,9 @@
+.deps
+devkit-power-daemon
+*.o
+*-glue.h
+*-marshal.c
+*-marshal.h
+*.conf
+*.service
+

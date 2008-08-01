@@ -1,0 +1,7 @@
+.deps
+devkit-power
+*-glue.h
+*.o
+*-marshal.c
+*-marshal.h
+
