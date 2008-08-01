@@ -53,6 +53,9 @@ dkp_source_type_to_text (DkpSourceType type_enum)
 	case DKP_SOURCE_TYPE_PHONE:
 		type = "phone";
 		break;
+	case DKP_SOURCE_TYPE_UNKNOWN:
+		type = "unknown";
+		break;
 	default:
 		g_assert_not_reached ();
 		break;
@@ -79,6 +82,9 @@ dkp_source_state_to_text (DkpSourceState state_enum)
 		break;
 	case DKP_SOURCE_STATE_FULLY_CHARGED:
 		state = "fully-charged";
+		break;
+	case DKP_SOURCE_STATE_UNKNOWN:
+		state = "unknown";
 		break;
 	default:
 		g_assert_not_reached ();
