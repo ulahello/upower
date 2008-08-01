@@ -1,4 +1,4 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*-
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
  * Copyright (C) 2008 David Zeuthen <david@fubar.dk>
  * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
@@ -23,96 +23,108 @@
 #include <strings.h>
 #include "dkp-enum.h"
 
+/**
+ * dkp_source_type_to_text:
+ **/
 const char *
 dkp_source_type_to_text (DkpSourceType type_enum)
 {
-        const char *type = NULL;
-        switch (type_enum) {
-        case DKP_SOURCE_TYPE_LINE_POWER:
-                type = "line-power";
-                break;
-       case DKP_SOURCE_TYPE_BATTERY:
-                type = "battery";
-                break;
-       case DKP_SOURCE_TYPE_UPS:
-                type = "ups";
-                break;
-       case DKP_SOURCE_TYPE_MOUSE:
-                type = "mouse";
-                break;
-       case DKP_SOURCE_TYPE_KEYBOARD:
-                type = "keyboard";
-                break;
-       case DKP_SOURCE_TYPE_PDA:
-                type = "pda";
-                break;
-       case DKP_SOURCE_TYPE_PHONE:
-                type = "phone";
-                break;
-        default:
-                g_assert_not_reached ();
-                break;
-        }
-        return type;
+	const char *type = NULL;
+	switch (type_enum) {
+	case DKP_SOURCE_TYPE_LINE_POWER:
+		type = "line-power";
+		break;
+	case DKP_SOURCE_TYPE_BATTERY:
+		type = "battery";
+		break;
+	case DKP_SOURCE_TYPE_UPS:
+		type = "ups";
+		break;
+	case DKP_SOURCE_TYPE_MOUSE:
+		type = "mouse";
+		break;
+	case DKP_SOURCE_TYPE_KEYBOARD:
+		type = "keyboard";
+		break;
+	case DKP_SOURCE_TYPE_PDA:
+		type = "pda";
+		break;
+	case DKP_SOURCE_TYPE_PHONE:
+		type = "phone";
+		break;
+	default:
+		g_assert_not_reached ();
+		break;
+	}
+	return type;
 }
 
+/**
+ * dkp_source_state_to_text:
+ **/
 const char *
 dkp_source_state_to_text (DkpSourceState state_enum)
 {
-        const char *state = NULL;
-        switch (state_enum) {
-        case DKP_SOURCE_STATE_CHARGING:
-                state = "charging";
-                break;
-       case DKP_SOURCE_STATE_DISCHARGING:
-                state = "discharging";
-                break;
-       case DKP_SOURCE_STATE_EMPTY:
-                state = "empty";
-                break;
-       case DKP_SOURCE_STATE_FULLY_CHARGED:
-                state = "fully-charged";
-                break;
-        default:
-                g_assert_not_reached ();
-                break;
-        }
-        return state;
+	const char *state = NULL;
+	switch (state_enum) {
+	case DKP_SOURCE_STATE_CHARGING:
+		state = "charging";
+		break;
+	case DKP_SOURCE_STATE_DISCHARGING:
+		state = "discharging";
+		break;
+	case DKP_SOURCE_STATE_EMPTY:
+		state = "empty";
+		break;
+	case DKP_SOURCE_STATE_FULLY_CHARGED:
+		state = "fully-charged";
+		break;
+	default:
+		g_assert_not_reached ();
+		break;
+	}
+	return state;
 }
 
+/**
+ * dkp_source_technology_to_text:
+ **/
 const char *
 dkp_source_technology_to_text (DkpSourceTechnology technology_enum)
 {
-        const char *technology = NULL;
-        switch (technology_enum) {
-        case DKP_SOURCE_TECHNOLGY_LITHIUM_ION:
-                technology = "lithium-ion";
-                break;
-        case DKP_SOURCE_TECHNOLGY_LITHIUM_POLYMER:
-                technology = "lithium-polymer";
-                break;
-        case DKP_SOURCE_TECHNOLGY_LITHIUM_IRON_PHOSPHATE:
-                technology = "lithium-iron-phosphate";
-                break;
-        case DKP_SOURCE_TECHNOLGY_LEAD_ACID:
-                technology = "lead-acid";
-                break;
-        case DKP_SOURCE_TECHNOLGY_NICKEL_CADMIUM:
-                technology = "nickel-cadmium";
-                break;
-        case DKP_SOURCE_TECHNOLGY_NICKEL_METAL_HYDRIDE:
-                technology = "nickel-metal-hydride";
-                break;
-        case DKP_SOURCE_TECHNOLGY_UNKNOWN:
-                technology = "unknown";
-                break;
-        default:
-                g_assert_not_reached ();
-                break;
-        }
-        return technology;
+	const char *technology = NULL;
+	switch (technology_enum) {
+	case DKP_SOURCE_TECHNOLGY_LITHIUM_ION:
+		technology = "lithium-ion";
+		break;
+	case DKP_SOURCE_TECHNOLGY_LITHIUM_POLYMER:
+		technology = "lithium-polymer";
+		break;
+	case DKP_SOURCE_TECHNOLGY_LITHIUM_IRON_PHOSPHATE:
+		technology = "lithium-iron-phosphate";
+		break;
+	case DKP_SOURCE_TECHNOLGY_LEAD_ACID:
+		technology = "lead-acid";
+		break;
+	case DKP_SOURCE_TECHNOLGY_NICKEL_CADMIUM:
+		technology = "nickel-cadmium";
+		break;
+	case DKP_SOURCE_TECHNOLGY_NICKEL_METAL_HYDRIDE:
+		technology = "nickel-metal-hydride";
+		break;
+	case DKP_SOURCE_TECHNOLGY_UNKNOWN:
+		technology = "unknown";
+		break;
+	default:
+		g_assert_not_reached ();
+		break;
+	}
+	return technology;
 }
 
+/**
+ * dkp_acpi_to_source_technology:
+ **/
 DkpSourceTechnology
 dkp_acpi_to_source_technology (const char *type)
 {

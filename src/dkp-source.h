@@ -1,4 +1,4 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*-
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
  * Copyright (C) 2008 David Zeuthen <david@fubar.dk>
  *
@@ -30,10 +30,10 @@
 
 G_BEGIN_DECLS
 
-#define DKP_SOURCE_TYPE_SOURCE         (dkp_source_get_type ())
-#define DKP_SOURCE(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_SOURCE_TYPE_SOURCE, DkpSource))
-#define DKP_SOURCE_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST((k), DKP_SOURCE_TYPE_SOURCE, DkpSourceClass))
-#define DKP_IS_SOURCE(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_SOURCE_TYPE_SOURCE))
+#define DKP_SOURCE_TYPE_SOURCE  (dkp_source_get_type ())
+#define DKP_SOURCE(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_SOURCE_TYPE_SOURCE, DkpSource))
+#define DKP_SOURCE_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_SOURCE_TYPE_SOURCE, DkpSourceClass))
+#define DKP_IS_SOURCE(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_SOURCE_TYPE_SOURCE))
 #define DKP_IS_SOURCE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), DKP_SOURCE_TYPE_SOURCE))
 #define DKP_SOURCE_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), DKP_SOURCE_TYPE_SOURCE, DkpSourceClass))
 
@@ -41,24 +41,23 @@ typedef struct DkpSourcePrivate DkpSourcePrivate;
 
 typedef struct
 {
-        DkpDevice         parent;
-        DkpSourcePrivate *priv;
+	DkpDevice		 parent;
+	DkpSourcePrivate	*priv;
 } DkpSource;
 
 typedef struct
 {
-        DkpDeviceClass    parent_class;
+	DkpDeviceClass		 parent_class;
 } DkpSourceClass;
 
-GType              dkp_source_get_type   (void);
-DkpSource *dkp_source_new        (DkpDaemon *daemon,
-                                                   DevkitDevice      *d);
+GType		 dkp_source_get_type		(void);
+DkpSource	*dkp_source_new			(DkpDaemon		*daemon,
+						 DevkitDevice		*d);
 
 /* exported methods */
-
-gboolean           dkp_source_refresh    (DkpSource     *power_source,
-                                                   DBusGMethodInvocation *context);
-gchar             *dkp_source_get_id     (DkpSource     *power_source);
+gboolean	 dkp_source_refresh		(DkpSource		*power_source,
+						 DBusGMethodInvocation	*context);
+gchar		*dkp_source_get_id		(DkpSource		*power_source);
 
 G_END_DECLS
 
