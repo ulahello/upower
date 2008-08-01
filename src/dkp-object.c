@@ -185,6 +185,29 @@ dkp_object_equal (const DkpObject *obj1, const DkpObject *obj2)
 }
 
 /**
+ * dkp_strzero:
+ * @text: The text to check
+ *
+ * This function is a much safer way of doing "if (strlen (text) == 0))"
+ * as it does not rely on text being NULL terminated. It's also much
+ * quicker as it only checks the first byte rather than scanning the whole
+ * string just to verify it's not zero length.
+ *
+ * Return value: %TRUE if the string was converted correctly
+ **/
+static gboolean
+dkp_strzero (const gchar *text)
+{
+	if (text == NULL) {
+		return TRUE;
+	}
+	if (text[0] == '\0') {
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/**
  * dkp_object_print:
  **/
 gboolean
@@ -201,9 +224,12 @@ dkp_object_print (const DkpObject *obj)
 	strftime (time_buf, sizeof time_buf, "%c", time_tm);
 
 	g_print ("  native-path:          %s\n", obj->native_path);
-	g_print ("  vendor:               %s\n", obj->vendor);
-	g_print ("  model:                %s\n", obj->model);
-	g_print ("  serial:               %s\n", obj->serial);
+	if (!dkp_strzero (obj->vendor))
+		g_print ("  vendor:               %s\n", obj->vendor);
+	if (!dkp_strzero (obj->model))
+		g_print ("  model:                %s\n", obj->model);
+	if (!dkp_strzero (obj->serial))
+		g_print ("  serial:               %s\n", obj->serial);
 	g_print ("  power supply:         %s\n", obj->power_supply ? "yes" : "no");
 	g_print ("  updated:              %s (%d seconds ago)\n", time_buf, (int) (time (NULL) - obj->update_time));
 	if (obj->type == DKP_SOURCE_TYPE_BATTERY) {

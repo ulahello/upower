@@ -510,7 +510,12 @@ static gboolean
 dkp_source_update_line_power (DkpSource *source)
 {
 	DkpObject *obj = source->priv->obj;
+	obj->power_supply = TRUE;
 	obj->line_power_online = sysfs_get_int (obj->native_path, "online");
+	if (!source->priv->has_coldplug_values) {
+		dkp_object_print (obj);
+		source->priv->has_coldplug_values = TRUE;
+	}
 	return TRUE;
 }
 
