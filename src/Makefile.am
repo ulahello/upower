@@ -15,46 +15,46 @@ INCLUDES = \
 	$(DEVKIT_CFLAGS) \
 	$(GLIB_CFLAGS)
 
-BUILT_SOURCES =								\
-	devkit-power-daemon-glue.h					\
-	devkit-power-source-glue.h					\
-	devkit-power-marshal.h			devkit-power-marshal.c
+BUILT_SOURCES =							\
+	dkp-daemon-glue.h					\
+	dkp-source-glue.h					\
+	dkp-marshal.h			dkp-marshal.c
 
-devkit-power-marshal.h: devkit-power-marshal.list
+dkp-marshal.h: dkp-marshal.list
 	glib-genmarshal $< --prefix=devkit_power_marshal --header > $@
 
-devkit-power-marshal.c: devkit-power-marshal.list
-	echo "#include \"devkit-power-marshal.h\"" > $@ && glib-genmarshal $< --prefix=devkit_power_marshal --body >> $@
+dkp-marshal.c: dkp-marshal.list
+	echo "#include \"dkp-marshal.h\"" > $@ && glib-genmarshal $< --prefix=devkit_power_marshal --body >> $@
 
-devkit-power-daemon-glue.h: org.freedesktop.DeviceKit.Power.xml Makefile.am
-	dbus-binding-tool --prefix=devkit_power_daemon --mode=glib-server --output=devkit-power-daemon-glue.h org.freedesktop.DeviceKit.Power.xml
+dkp-daemon-glue.h: org.freedesktop.DeviceKit.Power.xml Makefile.am
+	dbus-binding-tool --prefix=devkit_power_daemon --mode=glib-server --output=dkp-daemon-glue.h org.freedesktop.DeviceKit.Power.xml
 
-devkit-power-source-glue.h: org.freedesktop.DeviceKit.Power.Source.xml Makefile.am
-	dbus-binding-tool --prefix=devkit_power_source --mode=glib-server --output=devkit-power-source-glue.h org.freedesktop.DeviceKit.Power.Source.xml
+dkp-source-glue.h: org.freedesktop.DeviceKit.Power.Source.xml Makefile.am
+	dbus-binding-tool --prefix=devkit_power_source --mode=glib-server --output=dkp-source-glue.h org.freedesktop.DeviceKit.Power.Source.xml
 
 libexec_PROGRAMS = devkit-power-daemon
 
 dbusifdir = $(datadir)/dbus-1/interfaces
 dbusif_DATA = org.freedesktop.DeviceKit.Power.xml org.freedesktop.DeviceKit.Power.Source.xml
 
-devkit_power_daemon_SOURCES = 							\
-	devkit-power-daemon.h			devkit-power-daemon.c		\
-	devkit-power-device.h			devkit-power-device.c		\
-	devkit-power-source.h			devkit-power-source.c		\
-	devkit-power-enum.h			devkit-power-enum.c		\
-	sysfs-utils.h				sysfs-utils.c			\
-	main.c									\
+devkit_power_daemon_SOURCES = 					\
+	dkp-daemon.h			dkp-daemon.c		\
+	dkp-device.h			dkp-device.c		\
+	dkp-source.h			dkp-source.c		\
+	dkp-enum.h			dkp-enum.c		\
+	sysfs-utils.h			sysfs-utils.c		\
+	main.c							\
 	$(BUILT_SOURCES)
 
-devkit_power_daemon_CPPFLAGS = 				\
-	-I$(top_srcdir)/src				\
-	-DG_LOG_DOMAIN=\"devkit-power-daemon\"		\
-	$(DISABLE_DEPRECATED)				\
+devkit_power_daemon_CPPFLAGS = 					\
+	-I$(top_srcdir)/src					\
+	-DG_LOG_DOMAIN=\"dkp-daemon\"				\
+	$(DISABLE_DEPRECATED)					\
 	$(AM_CPPFLAGS)
 
-devkit_power_daemon_LDADD = 				\
-	$(DBUS_GLIB_LIBS)				\
-	$(POLKIT_DBUS_LIBS)				\
+devkit_power_daemon_LDADD = 					\
+	$(DBUS_GLIB_LIBS)					\
+	$(POLKIT_DBUS_LIBS)					\
 	$(DEVKIT_LIBS)
 
 servicedir       = $(datadir)/dbus-1/system-services
@@ -75,9 +75,10 @@ CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST = org.freedesktop.DeviceKit.Power.xml        	\
 	     org.freedesktop.DeviceKit.Power.Source.xml		\
-	     devkit-power-marshal.list				\
+	     dkp-marshal.list					\
 	     $(service_in_files)                        	\
 	     $(dbusconf_in_files)
 
 clean-local :
 	rm -f *~ $(service_DATA) $(dbusconf_DATA)
+

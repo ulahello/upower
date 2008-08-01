@@ -25,7 +25,7 @@
 #include <polkit-dbus/polkit-dbus.h>
 #include <devkit-gobject.h>
 
-#include "devkit-power-daemon.h"
+#include "dkp-daemon.h"
 
 G_BEGIN_DECLS
 

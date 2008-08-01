@@ -31,11 +31,11 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include <devkit-gobject.h>
 
-#include "devkit-power-daemon.h"
-#include "devkit-power-device.h"
+#include "dkp-daemon.h"
+#include "dkp-device.h"
 
-#include "devkit-power-daemon-glue.h"
-#include "devkit-power-marshal.h"
+#include "dkp-daemon-glue.h"
+#include "dkp-marshal.h"
 
 /*--------------------------------------------------------------------------------------------------------------*/
 

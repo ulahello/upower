@@ -36,12 +36,12 @@
 #include <polkit-dbus/polkit-dbus.h>
 
 #include "sysfs-utils.h"
-#include "devkit-power-enum.h"
-#include "devkit-power-source.h"
-#include "devkit-power-marshal.h"
+#include "dkp-enum.h"
+#include "dkp-source.h"
+#include "dkp-marshal.h"
 
 /*--------------------------------------------------------------------------------------------------------------*/
-#include "devkit-power-source-glue.h"
+#include "dkp-source-glue.h"
 
 #define DK_POWER_MIN_CHARGED_PERCENTAGE	60
 

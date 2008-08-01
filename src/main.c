@@ -38,7 +38,7 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include <devkit-gobject.h>
 
-#include "devkit-power-daemon.h"
+#include "dkp-daemon.h"
 
 #define NAME_TO_CLAIM "org.freedesktop.DeviceKit.Power"
 

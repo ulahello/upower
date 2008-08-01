@@ -34,8 +34,8 @@
 #include <polkit-dbus/polkit-dbus.h>
 
 #include "sysfs-utils.h"
-#include "devkit-power-device.h"
-#include "devkit-power-source.h"
+#include "dkp-device.h"
+#include "dkp-source.h"
 
 static void     devkit_power_device_class_init  (DevkitPowerDeviceClass *klass);
 static void     devkit_power_device_init        (DevkitPowerDevice      *seat);

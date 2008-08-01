@@ -20,7 +20,8 @@
  */
 
 #include <glib.h>
-#include "devkit-power-enum.h"
+#include <strings.h>
+#include "dkp-enum.h"
 
 const char *
 devkit_power_convert_type_to_text (DevkitPowerType type_enum)
