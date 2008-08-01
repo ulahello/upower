@@ -36,6 +36,15 @@ GTK_DOC_CHECK([1.3])
 
 #### gcc warning flags
 
+dnl ---------------------------------------------------------------------------
+dnl - Extra verbose warning switches, disable if needed
+dnl ---------------------------------------------------------------------------
+if test "$GCC" = "yes"; then
+	CPPFLAGS="$CPPFLAGS -Werror -Wcast-align -Wno-uninitialized"
+	CPPFLAGS="$CPPFLAGS -Wall -Wformat-security"
+#	CPPFLAGS="$CPPFLAGS -Wall"
+fi
+
 if test "x$GCC" = "xyes"; then
   changequote(,)dnl
   case " $CFLAGS " in
