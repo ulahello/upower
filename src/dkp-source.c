@@ -41,8 +41,6 @@
 #include "dkp-object.h"
 #include "dkp-source.h"
 #include "dkp-marshal.h"
-
-/*--------------------------------------------------------------------------------------------------------------*/
 #include "dkp-source-glue.h"
 
 #define DK_POWER_MIN_CHARGED_PERCENTAGE	60

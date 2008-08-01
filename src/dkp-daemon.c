@@ -38,8 +38,6 @@
 #include "dkp-daemon-glue.h"
 #include "dkp-marshal.h"
 
-/*--------------------------------------------------------------------------------------------------------------*/
-
 enum
 {
 	DEVICE_ADDED_SIGNAL,
@@ -73,8 +71,6 @@ static void	dkp_daemon_finalize	(GObject	*object);
 G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
 
 #define DKP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_SOURCE_TYPE_DAEMON, DkpDaemonPrivate))
-
-/*--------------------------------------------------------------------------------------------------------------*/
 
 /**
  * dkp_daemon_error_quark:
@@ -642,8 +638,6 @@ dkp_daemon_local_check_auth (DkpDaemon *daemon, PolKitCaller *pk_caller, const c
 	return ret;
 }
 
-/*--------------------------------------------------------------------------------------------------------------*/
-
 #if 0
 /**
  * gpk_daemon_throw_error:
@@ -669,7 +663,6 @@ gpk_daemon_throw_error (DBusGMethodInvocation *context, int error_code, const ch
 }
 #endif
 
-/*--------------------------------------------------------------------------------------------------------------*/
 /* exported methods */
 
 /**
