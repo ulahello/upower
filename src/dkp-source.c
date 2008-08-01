@@ -770,6 +770,7 @@ dkp_source_update (DkpSource *source)
 {
 	gboolean ret;
 	GTimeVal time;
+	DkpObject *obj = source->priv->obj;
 
 	if (source->priv->poll_timer_id > 0) {
 		g_source_remove (source->priv->poll_timer_id);
@@ -777,7 +778,7 @@ dkp_source_update (DkpSource *source)
 	}
 
 	g_get_current_time (&time);
-	source->priv->obj->update_time = time.tv_sec;
+	obj->update_time = time.tv_sec;
 
 	switch (source->priv->obj->type) {
 	case DKP_SOURCE_TYPE_LINE_POWER:
@@ -787,11 +788,10 @@ dkp_source_update (DkpSource *source)
 		ret = dkp_source_update_battery (source);
 		/* Seems that we don't get change uevents from the
 		 * kernel on some BIOS types; set up a timer to poll
-		 *
-		 * TODO: perhaps only do this if we do not get frequent updates.
-		 */
-		source->priv->poll_timer_id = g_timeout_add_seconds (30, (GSourceFunc) dkp_source_poll_battery, source);
-
+		 * if we are charging or discharging */
+		if (obj->battery_state == DKP_SOURCE_STATE_CHARGING ||
+		    obj->battery_state == DKP_SOURCE_STATE_DISCHARGING)
+			source->priv->poll_timer_id = g_timeout_add_seconds (30, (GSourceFunc) dkp_source_poll_battery, source);
 		break;
 	default:
 		g_assert_not_reached ();
