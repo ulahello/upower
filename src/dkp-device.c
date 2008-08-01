@@ -37,56 +37,56 @@
 #include "dkp-device.h"
 #include "dkp-source.h"
 
-static void     devkit_power_device_class_init  (DevkitPowerDeviceClass *klass);
-static void     devkit_power_device_init        (DevkitPowerDevice      *seat);
+static void     dkp_device_class_init  (DkpDeviceClass *klass);
+static void     dkp_device_init        (DkpDevice      *seat);
 
-G_DEFINE_TYPE (DevkitPowerDevice, devkit_power_device, G_TYPE_OBJECT)
+G_DEFINE_TYPE (DkpDevice, dkp_device, G_TYPE_OBJECT)
 
-#define DEVKIT_POWER_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DEVKIT_TYPE_POWER_DEVICE, DevkitPowerDevicePrivate))
+#define DKP_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_SOURCE_TYPE_DEVICE, DkpDevicePrivate))
 
 static void
-devkit_power_device_class_init (DevkitPowerDeviceClass *klass)
+dkp_device_class_init (DkpDeviceClass *klass)
 {
 }
 
 static void
-devkit_power_device_init (DevkitPowerDevice *device)
+dkp_device_init (DkpDevice *device)
 {
 }
 
 void
-devkit_power_device_removed (DevkitPowerDevice *device)
+dkp_device_removed (DkpDevice *device)
 {
-        DevkitPowerDeviceClass *klass = DEVKIT_POWER_DEVICE_GET_CLASS (device);
+        DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
         klass->removed (device);
 }
 
-DevkitPowerDevice *
-devkit_power_device_new (DevkitPowerDaemon *daemon, DevkitDevice *d)
+DkpDevice *
+dkp_device_new (DkpDaemon *daemon, DevkitDevice *d)
 {
         const char *subsys;
-        DevkitPowerDevice *device;
+        DkpDevice *device;
 
         device = NULL;
 
         subsys = devkit_device_get_subsystem (d);
         if (strcmp (subsys, "power_supply") == 0) {
-                device = DEVKIT_POWER_DEVICE (devkit_power_source_new (daemon, d));
+                device = DKP_DEVICE (dkp_source_new (daemon, d));
         }
 
         return device;
 }
 
 gboolean
-devkit_power_device_changed (DevkitPowerDevice *device, DevkitDevice *d, gboolean synthesized)
+dkp_device_changed (DkpDevice *device, DevkitDevice *d, gboolean synthesized)
 {
-        DevkitPowerDeviceClass *klass = DEVKIT_POWER_DEVICE_GET_CLASS (device);
+        DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
         return (klass->changed (device, d, synthesized));
 }
 
 const char *
-devkit_power_device_get_object_path (DevkitPowerDevice *device)
+dkp_device_get_object_path (DkpDevice *device)
 {
-        DevkitPowerDeviceClass *klass = DEVKIT_POWER_DEVICE_GET_CLASS (device);
+        DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
         return (klass->get_object_path (device));
 }

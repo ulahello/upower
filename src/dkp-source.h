@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef __DEVKIT_POWER_SOURCE_H__
-#define __DEVKIT_POWER_SOURCE_H__
+#ifndef __DKP_SOURCE_H__
+#define __DKP_SOURCE_H__
 
 #include <glib-object.h>
 #include <polkit-dbus/polkit-dbus.h>
@@ -30,36 +30,36 @@
 
 G_BEGIN_DECLS
 
-#define DEVKIT_TYPE_POWER_SOURCE         (devkit_power_source_get_type ())
-#define DEVKIT_POWER_SOURCE(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), DEVKIT_TYPE_POWER_SOURCE, DevkitPowerSource))
-#define DEVKIT_POWER_SOURCE_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST((k), DEVKIT_TYPE_POWER_SOURCE, DevkitPowerSourceClass))
-#define DEVKIT_IS_POWER_SOURCE(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), DEVKIT_TYPE_POWER_SOURCE))
-#define DEVKIT_IS_POWER_SOURCE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), DEVKIT_TYPE_POWER_SOURCE))
-#define DEVKIT_POWER_SOURCE_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), DEVKIT_TYPE_POWER_SOURCE, DevkitPowerSourceClass))
+#define DKP_SOURCE_TYPE_SOURCE         (dkp_source_get_type ())
+#define DKP_SOURCE(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_SOURCE_TYPE_SOURCE, DkpSource))
+#define DKP_SOURCE_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST((k), DKP_SOURCE_TYPE_SOURCE, DkpSourceClass))
+#define DKP_IS_SOURCE(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_SOURCE_TYPE_SOURCE))
+#define DKP_IS_SOURCE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), DKP_SOURCE_TYPE_SOURCE))
+#define DKP_SOURCE_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), DKP_SOURCE_TYPE_SOURCE, DkpSourceClass))
 
-typedef struct DevkitPowerSourcePrivate DevkitPowerSourcePrivate;
-
-typedef struct
-{
-        DevkitPowerDevice         parent;
-        DevkitPowerSourcePrivate *priv;
-} DevkitPowerSource;
+typedef struct DkpSourcePrivate DkpSourcePrivate;
 
 typedef struct
 {
-        DevkitPowerDeviceClass    parent_class;
-} DevkitPowerSourceClass;
+        DkpDevice         parent;
+        DkpSourcePrivate *priv;
+} DkpSource;
 
-GType              devkit_power_source_get_type   (void);
-DevkitPowerSource *devkit_power_source_new        (DevkitPowerDaemon *daemon,
+typedef struct
+{
+        DkpDeviceClass    parent_class;
+} DkpSourceClass;
+
+GType              dkp_source_get_type   (void);
+DkpSource *dkp_source_new        (DkpDaemon *daemon,
                                                    DevkitDevice      *d);
 
 /* exported methods */
 
-gboolean           devkit_power_source_refresh    (DevkitPowerSource     *power_source,
+gboolean           dkp_source_refresh    (DkpSource     *power_source,
                                                    DBusGMethodInvocation *context);
-gchar             *devkit_power_source_get_id     (DevkitPowerSource     *power_source);
+gchar             *dkp_source_get_id     (DkpSource     *power_source);
 
 G_END_DECLS
 
-#endif /* __DEVKIT_POWER_SOURCE_H__ */
+#endif /* __DKP_SOURCE_H__ */

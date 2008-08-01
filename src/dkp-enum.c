@@ -24,29 +24,29 @@
 #include "dkp-enum.h"
 
 const char *
-devkit_power_convert_type_to_text (DevkitPowerType type_enum)
+dkp_source_type_to_text (DkpSourceType type_enum)
 {
         const char *type = NULL;
         switch (type_enum) {
-        case DEVKIT_POWER_TYPE_LINE_POWER:
+        case DKP_SOURCE_TYPE_LINE_POWER:
                 type = "line-power";
                 break;
-       case DEVKIT_POWER_TYPE_BATTERY:
+       case DKP_SOURCE_TYPE_BATTERY:
                 type = "battery";
                 break;
-       case DEVKIT_POWER_TYPE_UPS:
+       case DKP_SOURCE_TYPE_UPS:
                 type = "ups";
                 break;
-       case DEVKIT_POWER_TYPE_MOUSE:
+       case DKP_SOURCE_TYPE_MOUSE:
                 type = "mouse";
                 break;
-       case DEVKIT_POWER_TYPE_KEYBOARD:
+       case DKP_SOURCE_TYPE_KEYBOARD:
                 type = "keyboard";
                 break;
-       case DEVKIT_POWER_TYPE_PDA:
+       case DKP_SOURCE_TYPE_PDA:
                 type = "pda";
                 break;
-       case DEVKIT_POWER_TYPE_PHONE:
+       case DKP_SOURCE_TYPE_PHONE:
                 type = "phone";
                 break;
         default:
@@ -57,20 +57,20 @@ devkit_power_convert_type_to_text (DevkitPowerType type_enum)
 }
 
 const char *
-devkit_power_convert_state_to_text (DevkitPowerState state_enum)
+dkp_source_state_to_text (DkpSourceState state_enum)
 {
         const char *state = NULL;
         switch (state_enum) {
-        case DEVKIT_POWER_STATE_CHARGING:
+        case DKP_SOURCE_STATE_CHARGING:
                 state = "charging";
                 break;
-       case DEVKIT_POWER_STATE_DISCHARGING:
+       case DKP_SOURCE_STATE_DISCHARGING:
                 state = "discharging";
                 break;
-       case DEVKIT_POWER_STATE_EMPTY:
+       case DKP_SOURCE_STATE_EMPTY:
                 state = "empty";
                 break;
-       case DEVKIT_POWER_STATE_FULLY_CHARGED:
+       case DKP_SOURCE_STATE_FULLY_CHARGED:
                 state = "fully-charged";
                 break;
         default:
@@ -81,29 +81,29 @@ devkit_power_convert_state_to_text (DevkitPowerState state_enum)
 }
 
 const char *
-devkit_power_convert_technology_to_text (DevkitPowerTechnology technology_enum)
+dkp_source_technology_to_text (DkpSourceTechnology technology_enum)
 {
         const char *technology = NULL;
         switch (technology_enum) {
-        case DEVKIT_POWER_TECHNOLGY_LITHIUM_ION:
+        case DKP_SOURCE_TECHNOLGY_LITHIUM_ION:
                 technology = "lithium-ion";
                 break;
-        case DEVKIT_POWER_TECHNOLGY_LITHIUM_POLYMER:
+        case DKP_SOURCE_TECHNOLGY_LITHIUM_POLYMER:
                 technology = "lithium-polymer";
                 break;
-        case DEVKIT_POWER_TECHNOLGY_LITHIUM_IRON_PHOSPHATE:
+        case DKP_SOURCE_TECHNOLGY_LITHIUM_IRON_PHOSPHATE:
                 technology = "lithium-iron-phosphate";
                 break;
-        case DEVKIT_POWER_TECHNOLGY_LEAD_ACID:
+        case DKP_SOURCE_TECHNOLGY_LEAD_ACID:
                 technology = "lead-acid";
                 break;
-        case DEVKIT_POWER_TECHNOLGY_NICKEL_CADMIUM:
+        case DKP_SOURCE_TECHNOLGY_NICKEL_CADMIUM:
                 technology = "nickel-cadmium";
                 break;
-        case DEVKIT_POWER_TECHNOLGY_NICKEL_METAL_HYDRIDE:
+        case DKP_SOURCE_TECHNOLGY_NICKEL_METAL_HYDRIDE:
                 technology = "nickel-metal-hydride";
                 break;
-        case DEVKIT_POWER_TECHNOLGY_UNKNOWN:
+        case DKP_SOURCE_TECHNOLGY_UNKNOWN:
                 technology = "unknown";
                 break;
         default:
@@ -113,31 +113,31 @@ devkit_power_convert_technology_to_text (DevkitPowerTechnology technology_enum)
         return technology;
 }
 
-DevkitPowerTechnology
-devkit_power_convert_acpi_technology_to_enum (const char *type)
+DkpSourceTechnology
+dkp_acpi_to_source_technology (const char *type)
 {
 	if (type == NULL) {
-		return DEVKIT_POWER_TECHNOLGY_UNKNOWN;
+		return DKP_SOURCE_TECHNOLGY_UNKNOWN;
 	}
 	/* every case combination of Li-Ion is commonly used.. */
 	if (strcasecmp (type, "li-ion") == 0 ||
 	    strcasecmp (type, "lion") == 0) {
-		return DEVKIT_POWER_TECHNOLGY_LITHIUM_ION;
+		return DKP_SOURCE_TECHNOLGY_LITHIUM_ION;
 	}
 	if (strcasecmp (type, "pb") == 0 ||
 	    strcasecmp (type, "pbac") == 0) {
-		return DEVKIT_POWER_TECHNOLGY_LEAD_ACID;
+		return DKP_SOURCE_TECHNOLGY_LEAD_ACID;
 	}
 	if (strcasecmp (type, "lip") == 0 ||
 	    strcasecmp (type, "lipo") == 0) {
-		return DEVKIT_POWER_TECHNOLGY_LITHIUM_POLYMER;
+		return DKP_SOURCE_TECHNOLGY_LITHIUM_POLYMER;
 	}
 	if (strcasecmp (type, "nimh") == 0) {
-		return DEVKIT_POWER_TECHNOLGY_NICKEL_METAL_HYDRIDE;
+		return DKP_SOURCE_TECHNOLGY_NICKEL_METAL_HYDRIDE;
 	}
 	if (strcasecmp (type, "lifo") == 0) {
-		return DEVKIT_POWER_TECHNOLGY_LITHIUM_IRON_PHOSPHATE;
+		return DKP_SOURCE_TECHNOLGY_LITHIUM_IRON_PHOSPHATE;
 	}
-	return DEVKIT_POWER_TECHNOLGY_UNKNOWN;
+	return DKP_SOURCE_TECHNOLGY_UNKNOWN;
 }
 

@@ -45,11 +45,11 @@
 
 #define DK_POWER_MIN_CHARGED_PERCENTAGE	60
 
-struct DevkitPowerSourcePrivate
+struct DkpSourcePrivate
 {
         DBusGConnection *system_bus_connection;
         DBusGProxy      *system_bus_proxy;
-        DevkitPowerDaemon *daemon;
+        DkpDaemon *daemon;
         DevkitDevice *d;
 
         char *object_path;
@@ -61,15 +61,15 @@ struct DevkitPowerSourcePrivate
         char *model;
         char *serial;
         GTimeVal update_time;
-        DevkitPowerType type;
+        DkpSourceType type;
         gboolean has_coldplug_values;
 
         gboolean power_supply;
         gboolean line_power_online;
         gboolean battery_is_present;
         gboolean battery_is_rechargeable;
-        DevkitPowerState battery_state;
-        DevkitPowerTechnology battery_technology;
+        DkpSourceState battery_state;
+        DkpSourceTechnology battery_technology;
 
         double battery_capacity;
         double battery_energy;
@@ -85,12 +85,12 @@ struct DevkitPowerSourcePrivate
         GTimeVal battery_energy_old_timespec;
 };
 
-static void     devkit_power_source_class_init  (DevkitPowerSourceClass *klass);
-static void     devkit_power_source_init        (DevkitPowerSource      *source);
-static void     devkit_power_source_finalize    (GObject                *object);
-static void     devkit_power_source_reset_values(DevkitPowerSource      *source);
+static void     dkp_source_class_init  (DkpSourceClass *klass);
+static void     dkp_source_init        (DkpSource      *source);
+static void     dkp_source_finalize    (GObject                *object);
+static void     dkp_source_reset_values(DkpSource      *source);
 
-static gboolean update (DevkitPowerSource *source);
+static gboolean update (DkpSource *source);
 
 enum
 {
@@ -126,12 +126,12 @@ enum
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (DevkitPowerSource, devkit_power_source, DEVKIT_TYPE_POWER_DEVICE)
-#define DEVKIT_POWER_SOURCE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DEVKIT_TYPE_POWER_SOURCE, DevkitPowerSourcePrivate))
+G_DEFINE_TYPE (DkpSource, dkp_source, DKP_SOURCE_TYPE_DEVICE)
+#define DKP_SOURCE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_SOURCE_TYPE_SOURCE, DkpSourcePrivate))
 
-static const char *devkit_power_source_get_object_path (DevkitPowerDevice *device);
-static void        devkit_power_source_removed         (DevkitPowerDevice *device);
-static gboolean    devkit_power_source_changed         (DevkitPowerDevice *device,
+static const char *dkp_source_get_object_path (DkpDevice *device);
+static void        dkp_source_removed         (DkpDevice *device);
+static gboolean    dkp_source_changed         (DkpDevice *device,
                                                          DevkitDevice      *d,
                                                          gboolean           synthesized);
 
@@ -141,7 +141,7 @@ get_property (GObject         *object,
               GValue          *value,
               GParamSpec      *pspec)
 {
-        DevkitPowerSource *source = DEVKIT_POWER_SOURCE (object);
+        DkpSource *source = DKP_SOURCE (object);
 
         switch (prop_id) {
         case PROP_NATIVE_PATH:
@@ -160,7 +160,7 @@ get_property (GObject         *object,
                 g_value_set_uint64 (value, source->priv->update_time.tv_sec);
                 break;
         case PROP_TYPE:
-                g_value_set_string (value, devkit_power_convert_type_to_text (source->priv->type));
+                g_value_set_string (value, dkp_source_type_to_text (source->priv->type));
                 break;
 
         case PROP_POWER_SUPPLY:
@@ -178,7 +178,7 @@ get_property (GObject         *object,
                 g_value_set_boolean (value, source->priv->battery_is_rechargeable);
                 break;
         case PROP_BATTERY_STATE:
-                g_value_set_string (value, devkit_power_convert_state_to_text (source->priv->battery_state));
+                g_value_set_string (value, dkp_source_state_to_text (source->priv->battery_state));
                 break;
         case PROP_BATTERY_CAPACITY:
                 g_value_set_double (value, source->priv->battery_capacity);
@@ -209,7 +209,7 @@ get_property (GObject         *object,
                 break;
 
         case PROP_BATTERY_TECHNOLOGY:
-                g_value_set_string (value, devkit_power_convert_technology_to_text (source->priv->battery_technology));
+                g_value_set_string (value, dkp_source_technology_to_text (source->priv->battery_technology));
                 break;
 
         default:
@@ -221,18 +221,18 @@ get_property (GObject         *object,
 
 
 static void
-devkit_power_source_class_init (DevkitPowerSourceClass *klass)
+dkp_source_class_init (DkpSourceClass *klass)
 {
         GObjectClass           *object_class = G_OBJECT_CLASS (klass);
-        DevkitPowerDeviceClass *device_class = DEVKIT_POWER_DEVICE_CLASS (klass);
+        DkpDeviceClass *device_class = DKP_DEVICE_CLASS (klass);
 
-        object_class->finalize = devkit_power_source_finalize;
+        object_class->finalize = dkp_source_finalize;
         object_class->get_property = get_property;
-        device_class->changed = devkit_power_source_changed;
-        device_class->removed = devkit_power_source_removed;
-        device_class->get_object_path = devkit_power_source_get_object_path;
+        device_class->changed = dkp_source_changed;
+        device_class->removed = dkp_source_removed;
+        device_class->get_object_path = dkp_source_get_object_path;
 
-        g_type_class_add_private (klass, sizeof (DevkitPowerSourcePrivate));
+        g_type_class_add_private (klass, sizeof (DkpSourcePrivate));
 
         signals[CHANGED_SIGNAL] =
                 g_signal_new ("changed",
@@ -243,7 +243,7 @@ devkit_power_source_class_init (DevkitPowerSourceClass *klass)
                               g_cclosure_marshal_VOID__VOID,
                               G_TYPE_NONE, 0);
 
-        dbus_g_object_type_install_info (DEVKIT_TYPE_POWER_SOURCE, &dbus_glib_devkit_power_source_object_info);
+        dbus_g_object_type_install_info (DKP_SOURCE_TYPE_SOURCE, &dbus_glib_dkp_source_object_info);
 
         g_object_class_install_property (
                 object_class,
@@ -333,21 +333,21 @@ devkit_power_source_class_init (DevkitPowerSourceClass *klass)
 }
 
 static void
-devkit_power_source_init (DevkitPowerSource *source)
+dkp_source_init (DkpSource *source)
 {
-        source->priv = DEVKIT_POWER_SOURCE_GET_PRIVATE (source);
-        devkit_power_source_reset_values (source);
+        source->priv = DKP_SOURCE_GET_PRIVATE (source);
+        dkp_source_reset_values (source);
 }
 
 static void
-devkit_power_source_finalize (GObject *object)
+dkp_source_finalize (GObject *object)
 {
-        DevkitPowerSource *source;
+        DkpSource *source;
 
         g_return_if_fail (object != NULL);
-        g_return_if_fail (DEVKIT_IS_POWER_SOURCE (object));
+        g_return_if_fail (DKP_IS_SOURCE (object));
 
-        source = DEVKIT_POWER_SOURCE (object);
+        source = DKP_SOURCE (object);
         g_return_if_fail (source->priv != NULL);
 
         g_object_unref (source->priv->d);
@@ -362,7 +362,7 @@ devkit_power_source_finalize (GObject *object)
         if (source->priv->poll_timer_id > 0)
                 g_source_remove (source->priv->poll_timer_id);
 
-        G_OBJECT_CLASS (devkit_power_source_parent_class)->finalize (object);
+        G_OBJECT_CLASS (dkp_source_parent_class)->finalize (object);
 }
 
 static char *
@@ -399,7 +399,7 @@ compute_object_path (const char *native_path)
 }
 
 static gboolean
-register_power_source (DevkitPowerSource *source)
+register_power_source (DkpSource *source)
 {
         DBusConnection *connection;
         GError *error = NULL;
@@ -431,25 +431,25 @@ error:
         return FALSE;
 }
 
-DevkitPowerSource *
-devkit_power_source_new (DevkitPowerDaemon *daemon, DevkitDevice *d)
+DkpSource *
+dkp_source_new (DkpDaemon *daemon, DevkitDevice *d)
 {
-        DevkitPowerSource *source;
+        DkpSource *source;
         const char *native_path;
 
         source = NULL;
         native_path = devkit_device_get_native_path (d);
 
-        source = DEVKIT_POWER_SOURCE (g_object_new (DEVKIT_TYPE_POWER_SOURCE, NULL));
+        source = DKP_SOURCE (g_object_new (DKP_SOURCE_TYPE_SOURCE, NULL));
         source->priv->d = g_object_ref (d);
         source->priv->daemon = g_object_ref (daemon);
         source->priv->native_path = g_strdup (native_path);
 
         if (sysfs_file_exists (native_path, "online")) {
-                source->priv->type = DEVKIT_POWER_TYPE_LINE_POWER;
+                source->priv->type = DKP_SOURCE_TYPE_LINE_POWER;
         } else {
                 /* this is correct, UPS and CSR are not in the kernel */
-                source->priv->type = DEVKIT_POWER_TYPE_BATTERY;
+                source->priv->type = DKP_SOURCE_TYPE_BATTERY;
         }
 
         if (!update (source)) {
@@ -458,7 +458,7 @@ devkit_power_source_new (DevkitPowerDaemon *daemon, DevkitDevice *d)
                 goto out;
         }
 
-        if (! register_power_source (DEVKIT_POWER_SOURCE (source))) {
+        if (! register_power_source (DKP_SOURCE (source))) {
                 g_object_unref (source);
                 source = NULL;
                 goto out;
@@ -469,7 +469,7 @@ out:
 }
 
 static void
-emit_changed (DevkitPowerSource *source)
+emit_changed (DkpSource *source)
 {
         g_print ("emitting changed on %s\n", source->priv->native_path);
         g_signal_emit_by_name (source->priv->daemon,
@@ -480,9 +480,9 @@ emit_changed (DevkitPowerSource *source)
 }
 
 static gboolean
-devkit_power_source_changed (DevkitPowerDevice *device, DevkitDevice *d, gboolean synthesized)
+dkp_source_changed (DkpDevice *device, DevkitDevice *d, gboolean synthesized)
 {
-        DevkitPowerSource *source = DEVKIT_POWER_SOURCE (device);
+        DkpSource *source = DKP_SOURCE (device);
         gboolean keep_source;
 
         g_object_unref (source->priv->d);
@@ -502,28 +502,28 @@ out:
 }
 
 void
-devkit_power_source_removed (DevkitPowerDevice *device)
+dkp_source_removed (DkpDevice *device)
 {
 }
 
 static const char *
-devkit_power_source_get_object_path (DevkitPowerDevice *device)
+dkp_source_get_object_path (DkpDevice *device)
 {
-        DevkitPowerSource *source = DEVKIT_POWER_SOURCE (device);
+        DkpSource *source = DKP_SOURCE (device);
         return source->priv->object_path;
 }
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static gboolean
-update_line_power (DevkitPowerSource *source)
+update_line_power (DkpSource *source)
 {
         source->priv->line_power_online = sysfs_get_int (source->priv->native_path, "online");
         return TRUE;
 }
 
 static void
-devkit_power_source_reset_values (DevkitPowerSource *source)
+dkp_source_reset_values (DkpSource *source)
 {
         source->priv->battery_energy = -1;
         source->priv->battery_energy_old = -1;
@@ -534,8 +534,8 @@ devkit_power_source_reset_values (DevkitPowerSource *source)
         source->priv->battery_capacity = -1;
         source->priv->battery_time_to_empty = -1;
         source->priv->battery_time_to_full = -1;
-        source->priv->battery_state = DEVKIT_POWER_STATE_UNKNOWN;
-        source->priv->battery_technology = DEVKIT_POWER_TECHNOLGY_UNKNOWN;
+        source->priv->battery_state = DKP_SOURCE_STATE_UNKNOWN;
+        source->priv->battery_technology = DKP_SOURCE_TECHNOLGY_UNKNOWN;
         source->priv->vendor = NULL;
         source->priv->model = NULL;
         source->priv->serial = NULL;
@@ -548,7 +548,7 @@ devkit_power_source_reset_values (DevkitPowerSource *source)
 }
 
 gchar *
-devkit_power_source_get_id (DevkitPowerSource *source)
+dkp_source_get_id (DkpSource *source)
 {
 	GString *string;
 	gchar *id = NULL;
@@ -558,7 +558,7 @@ devkit_power_source_get_id (DevkitPowerSource *source)
                 return id;
 
         /* only valid for batteries */
-        if (source->priv->type != DEVKIT_POWER_TYPE_BATTERY)
+        if (source->priv->type != DKP_SOURCE_TYPE_BATTERY)
                 return id;
 
         /* we don't have an ID if we are not present */
@@ -598,7 +598,7 @@ devkit_power_source_get_id (DevkitPowerSource *source)
 }
 
 static void
-calculate_battery_rate (DevkitPowerSource *source)
+calculate_battery_rate (DkpSource *source)
 {
         guint time;
         gdouble energy;
@@ -630,12 +630,12 @@ calculate_battery_rate (DevkitPowerSource *source)
 }
 
 static gboolean
-update_battery (DevkitPowerSource *source)
+update_battery (DkpSource *source)
 {
         char *status;
         gboolean is_charging;
         gboolean is_discharging;
-        DevkitPowerState battery_state;
+        DkpSourceState battery_state;
 
         /* are we present? */
         source->priv->battery_is_present = sysfs_get_bool (source->priv->native_path, "present");
@@ -643,7 +643,7 @@ update_battery (DevkitPowerSource *source)
                 g_free (source->priv->vendor);
                 g_free (source->priv->model);
                 g_free (source->priv->serial);
-                devkit_power_source_reset_values (source);
+                dkp_source_reset_values (source);
                 return TRUE;
         }
 
@@ -656,7 +656,7 @@ update_battery (DevkitPowerSource *source)
 
                 /* the ACPI spec is bad at defining battery type constants */
                 technology_native = g_strstrip (sysfs_get_string (source->priv->native_path, "technology"));
-                source->priv->battery_technology = devkit_power_convert_acpi_technology_to_enum (technology_native);
+                source->priv->battery_technology = dkp_acpi_to_source_technology (technology_native);
                 g_free (technology_native);
 
                 source->priv->vendor = g_strstrip (sysfs_get_string (source->priv->native_path, "manufacturer"));
@@ -758,13 +758,13 @@ update_battery (DevkitPowerSource *source)
 
         /* get the state */
         if (is_charging)
-                battery_state = DEVKIT_POWER_STATE_CHARGING;
+                battery_state = DKP_SOURCE_STATE_CHARGING;
         else if (is_discharging)
-                battery_state = DEVKIT_POWER_STATE_DISCHARGING;
+                battery_state = DKP_SOURCE_STATE_DISCHARGING;
         else if (source->priv->battery_percentage > DK_POWER_MIN_CHARGED_PERCENTAGE)
-                battery_state = DEVKIT_POWER_STATE_FULLY_CHARGED;
+                battery_state = DKP_SOURCE_STATE_FULLY_CHARGED;
         else
-                battery_state = DEVKIT_POWER_STATE_EMPTY;
+                battery_state = DKP_SOURCE_STATE_EMPTY;
 
         /* set the old status */
         source->priv->battery_energy_old = source->priv->battery_energy;
@@ -781,7 +781,7 @@ update_battery (DevkitPowerSource *source)
 }
 
 static gboolean
-_poll_battery (DevkitPowerSource *source)
+_poll_battery (DkpSource *source)
 {
         g_warning ("No updates on source %s for 30 seconds; forcing update", source->priv->native_path);
         source->priv->poll_timer_id = 0;
@@ -791,7 +791,7 @@ _poll_battery (DevkitPowerSource *source)
 }
 
 static gboolean
-update (DevkitPowerSource *source)
+update (DkpSource *source)
 {
         gboolean ret;
 
@@ -803,10 +803,10 @@ update (DevkitPowerSource *source)
         g_get_current_time (&(source->priv->update_time));
 
         switch (source->priv->type) {
-        case DEVKIT_POWER_TYPE_LINE_POWER:
+        case DKP_SOURCE_TYPE_LINE_POWER:
                 ret = update_line_power (source);
                 break;
-        case DEVKIT_POWER_TYPE_BATTERY:
+        case DKP_SOURCE_TYPE_BATTERY:
 
                 ret = update_battery (source);
 
@@ -829,7 +829,7 @@ update (DevkitPowerSource *source)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 gboolean
-devkit_power_source_refresh (DevkitPowerSource     *power_source,
+dkp_source_refresh (DkpSource     *power_source,
                              DBusGMethodInvocation *context)
 {
         update (power_source);

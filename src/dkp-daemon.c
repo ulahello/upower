@@ -51,7 +51,7 @@ enum
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
-struct DevkitPowerDaemonPrivate
+struct DkpDaemonPrivate
 {
         DBusGConnection   *system_bus_connection;
         DBusGProxy        *system_bus_proxy;
@@ -65,23 +65,23 @@ struct DevkitPowerDaemonPrivate
         DevkitClient      *devkit_client;
 };
 
-static void     devkit_power_daemon_class_init  (DevkitPowerDaemonClass *klass);
-static void     devkit_power_daemon_init        (DevkitPowerDaemon      *seat);
-static void     devkit_power_daemon_finalize    (GObject     *object);
+static void     dkp_daemon_class_init  (DkpDaemonClass *klass);
+static void     dkp_daemon_init        (DkpDaemon      *seat);
+static void     dkp_daemon_finalize    (GObject     *object);
 
-G_DEFINE_TYPE (DevkitPowerDaemon, devkit_power_daemon, G_TYPE_OBJECT)
+G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
 
-#define DEVKIT_POWER_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DEVKIT_TYPE_POWER_DAEMON, DevkitPowerDaemonPrivate))
+#define DKP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_SOURCE_TYPE_DAEMON, DkpDaemonPrivate))
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
 GQuark
-devkit_power_daemon_error_quark (void)
+dkp_daemon_error_quark (void)
 {
         static GQuark ret = 0;
 
         if (ret == 0) {
-                ret = g_quark_from_static_string ("devkit_power_daemon_error");
+                ret = g_quark_from_static_string ("dkp_daemon_error");
         }
 
         return ret;
@@ -91,7 +91,7 @@ devkit_power_daemon_error_quark (void)
 #define ENUM_ENTRY(NAME, DESC) { NAME, "" #NAME "", DESC }
 
 GType
-devkit_power_daemon_error_get_type (void)
+dkp_daemon_error_get_type (void)
 {
         static GType etype = 0;
 
@@ -99,44 +99,44 @@ devkit_power_daemon_error_get_type (void)
         {
                 static const GEnumValue values[] =
                         {
-                                ENUM_ENTRY (DEVKIT_POWER_DAEMON_ERROR_GENERAL, "GeneralError"),
-                                ENUM_ENTRY (DEVKIT_POWER_DAEMON_ERROR_NOT_SUPPORTED, "NotSupported"),
-                                ENUM_ENTRY (DEVKIT_POWER_DAEMON_ERROR_NO_SUCH_DEVICE, "NoSuchDevice"),
+                                ENUM_ENTRY (DKP_DAEMON_ERROR_GENERAL, "GeneralError"),
+                                ENUM_ENTRY (DKP_DAEMON_ERROR_NOT_SUPPORTED, "NotSupported"),
+                                ENUM_ENTRY (DKP_DAEMON_ERROR_NO_SUCH_DEVICE, "NoSuchDevice"),
                                 { 0, 0, 0 }
                         };
-                g_assert (DEVKIT_POWER_DAEMON_NUM_ERRORS == G_N_ELEMENTS (values) - 1);
-                etype = g_enum_register_static ("DevkitPowerDaemonError", values);
+                g_assert (DKP_DAEMON_NUM_ERRORS == G_N_ELEMENTS (values) - 1);
+                etype = g_enum_register_static ("DkpDaemonError", values);
         }
         return etype;
 }
 
 
 static GObject *
-devkit_power_daemon_constructor (GType                  type,
+dkp_daemon_constructor (GType                  type,
                                  guint                  n_construct_properties,
                                  GObjectConstructParam *construct_properties)
 {
-        DevkitPowerDaemon      *daemon;
-        DevkitPowerDaemonClass *klass;
+        DkpDaemon      *daemon;
+        DkpDaemonClass *klass;
 
-        klass = DEVKIT_POWER_DAEMON_CLASS (g_type_class_peek (DEVKIT_TYPE_POWER_DAEMON));
+        klass = DKP_DAEMON_CLASS (g_type_class_peek (DKP_SOURCE_TYPE_DAEMON));
 
-        daemon = DEVKIT_POWER_DAEMON (
-                G_OBJECT_CLASS (devkit_power_daemon_parent_class)->constructor (type,
+        daemon = DKP_DAEMON (
+                G_OBJECT_CLASS (dkp_daemon_parent_class)->constructor (type,
                                                                                 n_construct_properties,
                                                                                 construct_properties));
         return G_OBJECT (daemon);
 }
 
 static void
-devkit_power_daemon_class_init (DevkitPowerDaemonClass *klass)
+dkp_daemon_class_init (DkpDaemonClass *klass)
 {
         GObjectClass   *object_class = G_OBJECT_CLASS (klass);
 
-        object_class->constructor = devkit_power_daemon_constructor;
-        object_class->finalize = devkit_power_daemon_finalize;
+        object_class->constructor = dkp_daemon_constructor;
+        object_class->finalize = dkp_daemon_finalize;
 
-        g_type_class_add_private (klass, sizeof (DevkitPowerDaemonPrivate));
+        g_type_class_add_private (klass, sizeof (DkpDaemonPrivate));
 
         signals[DEVICE_ADDED_SIGNAL] =
                 g_signal_new ("device-added",
@@ -183,17 +183,17 @@ devkit_power_daemon_class_init (DevkitPowerDaemonClass *klass)
                               g_cclosure_marshal_VOID__BOOLEAN,
                               G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 
-        dbus_g_object_type_install_info (DEVKIT_TYPE_POWER_DAEMON, &dbus_glib_devkit_power_daemon_object_info);
+        dbus_g_object_type_install_info (DKP_SOURCE_TYPE_DAEMON, &dbus_glib_dkp_daemon_object_info);
 
-        dbus_g_error_domain_register (DEVKIT_POWER_DAEMON_ERROR,
+        dbus_g_error_domain_register (DKP_DAEMON_ERROR,
                                       NULL,
-                                      DEVKIT_POWER_DAEMON_TYPE_ERROR);
+                                      DKP_DAEMON_TYPE_ERROR);
 }
 
 static void
-devkit_power_daemon_init (DevkitPowerDaemon *daemon)
+dkp_daemon_init (DkpDaemon *daemon)
 {
-        daemon->priv = DEVKIT_POWER_DAEMON_GET_PRIVATE (daemon);
+        daemon->priv = DKP_DAEMON_GET_PRIVATE (daemon);
         daemon->priv->on_battery = FALSE;
         daemon->priv->low_battery = FALSE;
         daemon->priv->map_native_path_to_device = g_hash_table_new_full (g_str_hash,
@@ -203,14 +203,14 @@ devkit_power_daemon_init (DevkitPowerDaemon *daemon)
 }
 
 static void
-devkit_power_daemon_finalize (GObject *object)
+dkp_daemon_finalize (GObject *object)
 {
-        DevkitPowerDaemon *daemon;
+        DkpDaemon *daemon;
 
         g_return_if_fail (object != NULL);
-        g_return_if_fail (DEVKIT_IS_POWER_DAEMON (object));
+        g_return_if_fail (DKP_IS_DAEMON (object));
 
-        daemon = DEVKIT_POWER_DAEMON (object);
+        daemon = DKP_DAEMON (object);
 
         g_return_if_fail (daemon->priv != NULL);
 
@@ -234,7 +234,7 @@ devkit_power_daemon_finalize (GObject *object)
                 g_hash_table_unref (daemon->priv->map_native_path_to_device);
         }
 
-        G_OBJECT_CLASS (devkit_power_daemon_parent_class)->finalize (object);
+        G_OBJECT_CLASS (dkp_daemon_parent_class)->finalize (object);
 }
 
 static gboolean
@@ -274,7 +274,7 @@ pk_io_remove_watch (PolKitContext *pk_context, int watch_id)
 static DBusHandlerResult
 _filter (DBusConnection *connection, DBusMessage *message, void *user_data)
 {
-        DevkitPowerDaemon *daemon = DEVKIT_POWER_DAEMON (user_data);
+        DkpDaemon *daemon = DKP_DAEMON (user_data);
         const char *interface;
 
         interface = dbus_message_get_interface (message);
@@ -293,19 +293,19 @@ _filter (DBusConnection *connection, DBusMessage *message, void *user_data)
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
-static void device_add (DevkitPowerDaemon *daemon, DevkitDevice *d, gboolean emit_event);
-static void device_remove (DevkitPowerDaemon *daemon, DevkitDevice *d);
+static void device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event);
+static void device_remove (DkpDaemon *daemon, DevkitDevice *d);
 
 static void
-device_changed (DevkitPowerDaemon *daemon, DevkitDevice *d, gboolean synthesized)
+device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesized)
 {
-        DevkitPowerDevice *device;
+        DkpDevice *device;
         const char *native_path;
 
         native_path = devkit_device_get_native_path (d);
         device = g_hash_table_lookup (daemon->priv->map_native_path_to_device, native_path);
         if (device != NULL) {
-                if (!devkit_power_device_changed (device, d, synthesized)) {
+                if (!dkp_device_changed (device, d, synthesized)) {
                         g_print ("changed triggered remove on %s\n", native_path);
                         device_remove (daemon, d);
                 } else {
@@ -330,7 +330,7 @@ device_went_away_remove_cb (gpointer key, gpointer value, gpointer user_data)
 static void
 device_went_away (gpointer user_data, GObject *where_the_object_was)
 {
-        DevkitPowerDaemon *daemon = DEVKIT_POWER_DAEMON (user_data);
+        DkpDaemon *daemon = DKP_DAEMON (user_data);
 
         g_hash_table_foreach_remove (daemon->priv->map_native_path_to_device,
                                      device_went_away_remove_cb,
@@ -338,9 +338,9 @@ device_went_away (gpointer user_data, GObject *where_the_object_was)
 }
 
 static void
-device_add (DevkitPowerDaemon *daemon, DevkitDevice *d, gboolean emit_event)
+device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 {
-        DevkitPowerDevice *device;
+        DkpDevice *device;
         const char *native_path;
 
         native_path = devkit_device_get_native_path (d);
@@ -350,7 +350,7 @@ device_add (DevkitPowerDaemon *daemon, DevkitDevice *d, gboolean emit_event)
                 g_print ("treating add event as change event on %s\n", native_path);
                 device_changed (daemon, d, FALSE);
         } else {
-                device = devkit_power_device_new (daemon, d);
+                device = dkp_device_new (daemon, d);
 
                 if (device != NULL) {
                         /* only take a weak ref; the device will stay on the bus until
@@ -364,7 +364,7 @@ device_add (DevkitPowerDaemon *daemon, DevkitDevice *d, gboolean emit_event)
                         g_print ("added %s\n", native_path);
                         if (emit_event) {
                                 g_signal_emit (daemon, signals[DEVICE_ADDED_SIGNAL], 0,
-                                               devkit_power_device_get_object_path (device));
+                                               dkp_device_get_object_path (device));
                         }
                 } else {
                         g_print ("ignoring add event on %s\n", native_path);
@@ -373,9 +373,9 @@ device_add (DevkitPowerDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 }
 
 static void
-device_remove (DevkitPowerDaemon *daemon, DevkitDevice *d)
+device_remove (DkpDaemon *daemon, DevkitDevice *d)
 {
-        DevkitPowerDevice *device;
+        DkpDevice *device;
         const char *native_path;
 
         native_path = devkit_device_get_native_path (d);
@@ -383,9 +383,9 @@ device_remove (DevkitPowerDaemon *daemon, DevkitDevice *d)
         if (device == NULL) {
                 g_print ("ignoring remove event on %s\n", native_path);
         } else {
-                devkit_power_device_removed (device);
+                dkp_device_removed (device);
                 g_signal_emit (daemon, signals[DEVICE_REMOVED_SIGNAL], 0,
-                               devkit_power_device_get_object_path (device));
+                               dkp_device_get_object_path (device));
                 g_object_unref (device);
         }
 }
@@ -400,7 +400,7 @@ device_event_signal_handler (DevkitClient *client,
                              DevkitDevice *device,
                              gpointer      user_data)
 {
-        DevkitPowerDaemon *daemon = DEVKIT_POWER_DAEMON (user_data);
+        DkpDaemon *daemon = DKP_DAEMON (user_data);
 
         if (strcmp (action, "add") == 0) {
                 device_add (daemon, device, TRUE);
@@ -414,7 +414,7 @@ device_event_signal_handler (DevkitClient *client,
 }
 
 static gboolean
-register_power_daemon (DevkitPowerDaemon *daemon)
+register_power_daemon (DkpDaemon *daemon)
 {
         DBusConnection *connection;
         DBusError dbus_error;
@@ -508,18 +508,18 @@ error:
 }
 
 
-DevkitPowerDaemon *
-devkit_power_daemon_new (void)
+DkpDaemon *
+dkp_daemon_new (void)
 {
-        DevkitPowerDaemon *daemon;
+        DkpDaemon *daemon;
         GError *error = NULL;
         GList *devices;
         GList *l;
         const char *subsystems[] = {"power_supply", NULL};
 
-        daemon = DEVKIT_POWER_DAEMON (g_object_new (DEVKIT_TYPE_POWER_DAEMON, NULL));
+        daemon = DKP_DAEMON (g_object_new (DKP_SOURCE_TYPE_DAEMON, NULL));
 
-        if (!register_power_daemon (DEVKIT_POWER_DAEMON (daemon))) {
+        if (!register_power_daemon (DKP_DAEMON (daemon))) {
                 g_object_unref (daemon);
                 return NULL;
         }
@@ -545,7 +545,7 @@ devkit_power_daemon_new (void)
 }
 
 PolKitCaller *
-devkit_power_damon_local_get_caller_for_context (DevkitPowerDaemon *daemon,
+dkp_daemon_local_get_caller_for_context (DkpDaemon *daemon,
                                                  DBusGMethodInvocation *context)
 {
         const char *sender;
@@ -559,8 +559,8 @@ devkit_power_damon_local_get_caller_for_context (DevkitPowerDaemon *daemon,
                                                               sender,
                                                               &dbus_error);
         if (pk_caller == NULL) {
-                error = g_error_new (DEVKIT_POWER_DAEMON_ERROR,
-                                     DEVKIT_POWER_DAEMON_ERROR_GENERAL,
+                error = g_error_new (DKP_DAEMON_ERROR,
+                                     DKP_DAEMON_ERROR_GENERAL,
                                      "Error getting information about caller: %s: %s",
                                      dbus_error.name, dbus_error.message);
                 dbus_error_free (&dbus_error);
@@ -573,7 +573,7 @@ devkit_power_damon_local_get_caller_for_context (DevkitPowerDaemon *daemon,
 }
 
 gboolean
-devkit_power_damon_local_check_auth (DevkitPowerDaemon     *daemon,
+dkp_daemon_local_check_auth (DkpDaemon     *daemon,
                                      PolKitCaller          *pk_caller,
                                      const char            *action_id,
                                      DBusGMethodInvocation *context)
@@ -624,7 +624,7 @@ throw_error (DBusGMethodInvocation *context, int error_code, const char *format,
         message = g_strdup_vprintf (format, args);
         va_end (args);
 
-        error = g_error_new (DEVKIT_POWER_DAEMON_ERROR,
+        error = g_error_new (DKP_DAEMON_ERROR,
                              error_code,
                              message);
         dbus_g_method_return_error (context, error);
@@ -640,13 +640,13 @@ throw_error (DBusGMethodInvocation *context, int error_code, const char *format,
 static void
 enumerate_cb (gpointer key, gpointer value, gpointer user_data)
 {
-        DevkitPowerDevice *device = DEVKIT_POWER_DEVICE (value);
+        DkpDevice *device = DKP_DEVICE (value);
         GPtrArray *object_paths = user_data;
-        g_ptr_array_add (object_paths, g_strdup (devkit_power_device_get_object_path (device)));
+        g_ptr_array_add (object_paths, g_strdup (dkp_device_get_object_path (device)));
 }
 
 gboolean
-devkit_power_daemon_enumerate_devices (DevkitPowerDaemon     *daemon,
+dkp_daemon_enumerate_devices (DkpDaemon     *daemon,
                                        DBusGMethodInvocation *context)
 {
         GPtrArray *object_paths;
@@ -659,7 +659,7 @@ devkit_power_daemon_enumerate_devices (DevkitPowerDaemon     *daemon,
 }
 
 gboolean
-devkit_power_daemon_get_on_battery (DevkitPowerDaemon     *daemon,
+dkp_daemon_get_on_battery (DkpDaemon     *daemon,
                                     DBusGMethodInvocation *context)
 {
         /* this is cached as it's expensive to check all sources */
@@ -668,7 +668,7 @@ devkit_power_daemon_get_on_battery (DevkitPowerDaemon     *daemon,
 }
 
 gboolean
-devkit_power_daemon_get_low_battery (DevkitPowerDaemon     *daemon,
+dkp_daemon_get_low_battery (DkpDaemon     *daemon,
                                      DBusGMethodInvocation *context)
 {
         /* this is cached as it's expensive to check all sources */
@@ -677,7 +677,7 @@ devkit_power_daemon_get_low_battery (DevkitPowerDaemon     *daemon,
 }
 
 gboolean
-devkit_power_daemon_suspend (DevkitPowerDaemon *daemon, DBusGMethodInvocation *context)
+dkp_daemon_suspend (DkpDaemon *daemon, DBusGMethodInvocation *context)
 {
         gboolean ret;
         GError *error;
@@ -686,11 +686,11 @@ devkit_power_daemon_suspend (DevkitPowerDaemon *daemon, DBusGMethodInvocation *c
         const gchar *quirks;
         PolKitCaller *pk_caller;
 
-        pk_caller = devkit_power_damon_local_get_caller_for_context (daemon, context);
+        pk_caller = dkp_daemon_local_get_caller_for_context (daemon, context);
         if (pk_caller == NULL)
                 goto out;
 
-        if (!devkit_power_damon_local_check_auth (daemon, pk_caller,
+        if (!dkp_daemon_local_check_auth (daemon, pk_caller,
                                                   "org.freedesktop.devicekit.power.suspend",
                                                   context))
                 goto out;
@@ -701,8 +701,8 @@ devkit_power_daemon_suspend (DevkitPowerDaemon *daemon, DBusGMethodInvocation *c
         argv = g_strdup_printf ("/usr/sbin/pm-suspend %s", quirks);
         ret = g_spawn_command_line_async (argv, &error_local);
         if (!ret) {
-                error = g_error_new (DEVKIT_POWER_DAEMON_ERROR,
-                                     DEVKIT_POWER_DAEMON_ERROR_GENERAL,
+                error = g_error_new (DKP_DAEMON_ERROR,
+                                     DKP_DAEMON_ERROR_GENERAL,
                                      "Cannot spawn: %s", error_local->message);
                 g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
@@ -716,7 +716,7 @@ out:
 }
 
 gboolean
-devkit_power_daemon_hibernate (DevkitPowerDaemon *daemon, DBusGMethodInvocation *context)
+dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 {
         gboolean ret;
         GError *error;
@@ -725,11 +725,11 @@ devkit_power_daemon_hibernate (DevkitPowerDaemon *daemon, DBusGMethodInvocation 
         const gchar *quirks;
         PolKitCaller *pk_caller;
 
-        pk_caller = devkit_power_damon_local_get_caller_for_context (daemon, context);
+        pk_caller = dkp_daemon_local_get_caller_for_context (daemon, context);
         if (pk_caller == NULL)
                 goto out;
 
-        if (!devkit_power_damon_local_check_auth (daemon, pk_caller,
+        if (!dkp_daemon_local_check_auth (daemon, pk_caller,
                                                   "org.freedesktop.devicekit.power.hibernate",
                                                   context))
                 goto out;
@@ -740,8 +740,8 @@ devkit_power_daemon_hibernate (DevkitPowerDaemon *daemon, DBusGMethodInvocation 
         argv = g_strdup_printf ("/usr/sbin/pm-hibernate %s", quirks);
         ret = g_spawn_command_line_async (argv, &error_local);
         if (!ret) {
-                error = g_error_new (DEVKIT_POWER_DAEMON_ERROR,
-                                     DEVKIT_POWER_DAEMON_ERROR_GENERAL,
+                error = g_error_new (DKP_DAEMON_ERROR,
+                                     DKP_DAEMON_ERROR_GENERAL,
                                      "Cannot spawn: %s", error_local->message);
                 g_error_free (error_local);
 		dbus_g_method_return_error (context, error);

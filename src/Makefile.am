@@ -21,16 +21,16 @@ BUILT_SOURCES =							\
 	dkp-marshal.h			dkp-marshal.c
 
 dkp-marshal.h: dkp-marshal.list
-	glib-genmarshal $< --prefix=devkit_power_marshal --header > $@
+	glib-genmarshal $< --prefix=dkp_marshal --header > $@
 
 dkp-marshal.c: dkp-marshal.list
-	echo "#include \"dkp-marshal.h\"" > $@ && glib-genmarshal $< --prefix=devkit_power_marshal --body >> $@
+	echo "#include \"dkp-marshal.h\"" > $@ && glib-genmarshal $< --prefix=dkp_marshal --body >> $@
 
 dkp-daemon-glue.h: org.freedesktop.DeviceKit.Power.xml Makefile.am
-	dbus-binding-tool --prefix=devkit_power_daemon --mode=glib-server --output=dkp-daemon-glue.h org.freedesktop.DeviceKit.Power.xml
+	dbus-binding-tool --prefix=dkp_daemon --mode=glib-server --output=dkp-daemon-glue.h org.freedesktop.DeviceKit.Power.xml
 
 dkp-source-glue.h: org.freedesktop.DeviceKit.Power.Source.xml Makefile.am
-	dbus-binding-tool --prefix=devkit_power_source --mode=glib-server --output=dkp-source-glue.h org.freedesktop.DeviceKit.Power.Source.xml
+	dbus-binding-tool --prefix=dkp_source --mode=glib-server --output=dkp-source-glue.h org.freedesktop.DeviceKit.Power.Source.xml
 
 libexec_PROGRAMS = devkit-power-daemon
 

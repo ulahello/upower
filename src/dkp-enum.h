@@ -19,48 +19,48 @@
  *
  */
 
-#ifndef __DEVKIT_POWER_ENUM_H__
-#define __DEVKIT_POWER_ENUM_H__
+#ifndef __DKP_ENUM_H__
+#define __DKP_ENUM_H__
 
 #include <glib.h>
 
 G_BEGIN_DECLS
 
 typedef enum {
-        DEVKIT_POWER_TYPE_LINE_POWER,
-        DEVKIT_POWER_TYPE_BATTERY,
-        DEVKIT_POWER_TYPE_UPS,
-        DEVKIT_POWER_TYPE_MOUSE,
-        DEVKIT_POWER_TYPE_KEYBOARD,
-        DEVKIT_POWER_TYPE_PDA,
-        DEVKIT_POWER_TYPE_PHONE,
-        DEVKIT_POWER_TYPE_UNKNOWN
-} DevkitPowerType;
+        DKP_SOURCE_TYPE_LINE_POWER,
+        DKP_SOURCE_TYPE_BATTERY,
+        DKP_SOURCE_TYPE_UPS,
+        DKP_SOURCE_TYPE_MOUSE,
+        DKP_SOURCE_TYPE_KEYBOARD,
+        DKP_SOURCE_TYPE_PDA,
+        DKP_SOURCE_TYPE_PHONE,
+        DKP_SOURCE_TYPE_UNKNOWN
+} DkpSourceType;
 
 typedef enum {
-        DEVKIT_POWER_STATE_CHARGING,
-        DEVKIT_POWER_STATE_DISCHARGING,
-        DEVKIT_POWER_STATE_EMPTY,
-        DEVKIT_POWER_STATE_FULLY_CHARGED,
-        DEVKIT_POWER_STATE_UNKNOWN
-} DevkitPowerState;
+        DKP_SOURCE_STATE_CHARGING,
+        DKP_SOURCE_STATE_DISCHARGING,
+        DKP_SOURCE_STATE_EMPTY,
+        DKP_SOURCE_STATE_FULLY_CHARGED,
+        DKP_SOURCE_STATE_UNKNOWN
+} DkpSourceState;
 
 typedef enum {
-        DEVKIT_POWER_TECHNOLGY_LITHIUM_ION,
-        DEVKIT_POWER_TECHNOLGY_LITHIUM_POLYMER,
-        DEVKIT_POWER_TECHNOLGY_LITHIUM_IRON_PHOSPHATE,
-        DEVKIT_POWER_TECHNOLGY_LEAD_ACID,
-        DEVKIT_POWER_TECHNOLGY_NICKEL_CADMIUM,
-        DEVKIT_POWER_TECHNOLGY_NICKEL_METAL_HYDRIDE,
-        DEVKIT_POWER_TECHNOLGY_UNKNOWN
-} DevkitPowerTechnology;
+        DKP_SOURCE_TECHNOLGY_LITHIUM_ION,
+        DKP_SOURCE_TECHNOLGY_LITHIUM_POLYMER,
+        DKP_SOURCE_TECHNOLGY_LITHIUM_IRON_PHOSPHATE,
+        DKP_SOURCE_TECHNOLGY_LEAD_ACID,
+        DKP_SOURCE_TECHNOLGY_NICKEL_CADMIUM,
+        DKP_SOURCE_TECHNOLGY_NICKEL_METAL_HYDRIDE,
+        DKP_SOURCE_TECHNOLGY_UNKNOWN
+} DkpSourceTechnology;
 
-const char		*devkit_power_convert_type_to_text		(DevkitPowerType type_enum);
-const char		*devkit_power_convert_state_to_text		(DevkitPowerState state_enum);
-const char		*devkit_power_convert_technology_to_text	(DevkitPowerTechnology technology_enum);
-DevkitPowerTechnology	 devkit_power_convert_acpi_technology_to_enum	(const char *type);
+const char		*dkp_source_type_to_text		(DkpSourceType type_enum);
+const char		*dkp_source_state_to_text		(DkpSourceState state_enum);
+const char		*dkp_source_technology_to_text	(DkpSourceTechnology technology_enum);
+DkpSourceTechnology	 dkp_acpi_to_source_technology	(const char *type);
 
 G_END_DECLS
 
-#endif /* __DEVKIT_POWER_ENUM_H__ */
+#endif /* __DKP_ENUM_H__ */
 

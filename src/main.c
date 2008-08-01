@@ -96,7 +96,7 @@ main (int argc, char **argv)
 {
         GError              *error;
         GMainLoop           *loop;
-        DevkitPowerDaemon   *power_daemon;
+        DkpDaemon   *power_daemon;
         GOptionContext      *context;
         DBusGProxy          *bus_proxy;
         DBusGConnection     *bus;
@@ -138,7 +138,7 @@ main (int argc, char **argv)
 
         g_debug ("Starting devkit-power-daemon version %s", VERSION);
 
-        power_daemon = devkit_power_daemon_new ();
+        power_daemon = dkp_daemon_new ();
 
         if (power_daemon == NULL) {
                 goto out;

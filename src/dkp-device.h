@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef __DEVKIT_POWER_DEVICE_H__
-#define __DEVKIT_POWER_DEVICE_H__
+#ifndef __DKP_DEVICE_H__
+#define __DKP_DEVICE_H__
 
 #include <glib-object.h>
 #include <polkit-dbus/polkit-dbus.h>
@@ -29,40 +29,40 @@
 
 G_BEGIN_DECLS
 
-#define DEVKIT_TYPE_POWER_DEVICE         (devkit_power_device_get_type ())
-#define DEVKIT_POWER_DEVICE(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), DEVKIT_TYPE_POWER_DEVICE, DevkitPowerDevice))
-#define DEVKIT_POWER_DEVICE_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST((k), DEVKIT_TYPE_POWER_DEVICE, DevkitPowerDeviceClass))
-#define DEVKIT_IS_POWER_DEVICE(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), DEVKIT_TYPE_POWER_DEVICE))
-#define DEVKIT_IS_POWER_DEVICE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), DEVKIT_TYPE_POWER_DEVICE))
-#define DEVKIT_POWER_DEVICE_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), DEVKIT_TYPE_POWER_DEVICE, DevkitPowerDeviceClass))
+#define DKP_SOURCE_TYPE_DEVICE         (dkp_device_get_type ())
+#define DKP_DEVICE(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_SOURCE_TYPE_DEVICE, DkpDevice))
+#define DKP_DEVICE_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST((k), DKP_SOURCE_TYPE_DEVICE, DkpDeviceClass))
+#define DKP_IS_DEVICE(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_SOURCE_TYPE_DEVICE))
+#define DKP_IS_DEVICE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), DKP_SOURCE_TYPE_DEVICE))
+#define DKP_DEVICE_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), DKP_SOURCE_TYPE_DEVICE, DkpDeviceClass))
 
 typedef struct
 {
         GObject        parent;
-} DevkitPowerDevice;
+} DkpDevice;
 
 typedef struct
 {
         GObjectClass   parent_class;
 
         /* vtable */
-        gboolean    (*changed)         (DevkitPowerDevice *device,
+        gboolean    (*changed)         (DkpDevice *device,
                                         DevkitDevice      *d,
                                         gboolean           synthesized);
-        void        (*removed)         (DevkitPowerDevice *device);
-        const char *(*get_object_path) (DevkitPowerDevice *device);
-} DevkitPowerDeviceClass;
+        void        (*removed)         (DkpDevice *device);
+        const char *(*get_object_path) (DkpDevice *device);
+} DkpDeviceClass;
 
-GType              devkit_power_device_get_type        (void);
-DevkitPowerDevice *devkit_power_device_new             (DevkitPowerDaemon *daemon,
+GType              dkp_device_get_type        (void);
+DkpDevice *dkp_device_new             (DkpDaemon *daemon,
                                                         DevkitDevice      *d);
-gboolean           devkit_power_device_changed         (DevkitPowerDevice *device,
+gboolean           dkp_device_changed         (DkpDevice *device,
                                                         DevkitDevice      *d,
                                                         gboolean           synthesized);
-void               devkit_power_device_removed         (DevkitPowerDevice *device);
+void               dkp_device_removed         (DkpDevice *device);
 
-const char        *devkit_power_device_get_object_path (DevkitPowerDevice *device);
+const char        *dkp_device_get_object_path (DkpDevice *device);
 
 G_END_DECLS
 
-#endif /* __DEVKIT_POWER_DEVICE_H__ */
+#endif /* __DKP_DEVICE_H__ */
