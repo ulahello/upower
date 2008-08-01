@@ -38,6 +38,7 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include <devkit-gobject.h>
 
+#include "dkp-debug.h"
 #include "dkp-daemon.h"
 
 #define NAME_TO_CLAIM "org.freedesktop.DeviceKit.Power"
@@ -70,20 +71,20 @@ main_acquire_name_on_proxy (DBusGProxy *bus_proxy)
 				 G_TYPE_INVALID);
 	if (!res) {
 		if (error != NULL) {
-			g_warning ("Failed to acquire %s: %s", NAME_TO_CLAIM, error->message);
+			dkp_warning ("Failed to acquire %s: %s", NAME_TO_CLAIM, error->message);
 			g_error_free (error);
 		} else {
-			g_warning ("Failed to acquire %s", NAME_TO_CLAIM);
+			dkp_warning ("Failed to acquire %s", NAME_TO_CLAIM);
 		}
 		goto out;
 	}
 
  	if (result != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER) {
 		if (error != NULL) {
-			g_warning ("Failed to acquire %s: %s", NAME_TO_CLAIM, error->message);
+			dkp_warning ("Failed to acquire %s: %s", NAME_TO_CLAIM, error->message);
 			g_error_free (error);
 		} else {
-			g_warning ("Failed to acquire %s", NAME_TO_CLAIM);
+			dkp_warning ("Failed to acquire %s", NAME_TO_CLAIM);
 		}
 		goto out;
 	}
@@ -100,18 +101,20 @@ main_acquire_name_on_proxy (DBusGProxy *bus_proxy)
 int
 main (int argc, char **argv)
 {
-	GError	 *error;
-	GMainLoop	 *loop;
+	GError *error;
+	GMainLoop *loop;
 	DkpDaemon *power_daemon;
 	GOptionContext *context;
-	DBusGProxy	 *bus_proxy;
+	DBusGProxy *bus_proxy;
 	DBusGConnection *bus;
-	int		  ret;
-	static GOptionEntry  entries []   = {
+	gboolean verbose = FALSE;
+	int ret = 1;
+
+	const GOptionEntry entries[] = {
+		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
+		  _("Show extra debugging information"), NULL },
 		{ NULL }
 	};
-
-	ret = 1;
 
 	g_type_init ();
 
@@ -119,39 +122,36 @@ main (int argc, char **argv)
 	g_option_context_add_main_entries (context, entries, NULL);
 	g_option_context_parse (context, &argc, &argv, NULL);
 	g_option_context_free (context);
+	dkp_debug_init (verbose);
 
 	error = NULL;
 	bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (bus == NULL) {
-		g_warning ("Couldn't connect to system bus: %s", error->message);
+		dkp_warning ("Couldn't connect to system bus: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
 
-	bus_proxy = dbus_g_proxy_new_for_name (bus,
-						  DBUS_SERVICE_DBUS,
-						  DBUS_PATH_DBUS,
-						  DBUS_INTERFACE_DBUS);
+	bus_proxy = dbus_g_proxy_new_for_name (bus, DBUS_SERVICE_DBUS,
+					       DBUS_PATH_DBUS, DBUS_INTERFACE_DBUS);
 	if (bus_proxy == NULL) {
-		g_warning ("Could not construct bus_proxy object; bailing out");
+		dkp_warning ("Could not construct bus_proxy object; bailing out");
 		goto out;
 	}
 
 	if (!main_acquire_name_on_proxy (bus_proxy) ) {
-		g_warning ("Could not acquire name; bailing out");
+		dkp_warning ("Could not acquire name; bailing out");
 		goto out;
 	}
 
-	g_debug ("Starting devkit-power-daemon version %s", VERSION);
+	dkp_debug ("Starting devkit-power-daemon version %s", VERSION);
 
 	power_daemon = dkp_daemon_new ();
 
-	if (power_daemon == NULL) {
+	if (power_daemon == NULL)
 		goto out;
-	}
 
 	loop = g_main_loop_new (NULL, FALSE);
-
 	g_main_loop_run (loop);
 
 	g_object_unref (power_daemon);

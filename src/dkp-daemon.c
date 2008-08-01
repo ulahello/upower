@@ -31,6 +31,7 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include <devkit-gobject.h>
 
+#include "dkp-debug.h"
 #include "dkp-daemon.h"
 #include "dkp-device.h"
 
@@ -290,7 +291,7 @@ static DBusHandlerResult
 gpk_daemon_dbus_filter (DBusConnection *connection, DBusMessage *message, void *user_data)
 {
 	DkpDaemon *daemon = DKP_DAEMON (user_data);
-	const char *interface;
+	const gchar *interface;
 
 	interface = dbus_message_get_interface (message);
 
@@ -318,19 +319,19 @@ static void
 gpk_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesized)
 {
 	DkpDevice *device;
-	const char *native_path;
+	const gchar *native_path;
 
 	native_path = devkit_device_get_native_path (d);
 	device = g_hash_table_lookup (daemon->priv->map_native_path_to_device, native_path);
 	if (device != NULL) {
 		if (!dkp_device_changed (device, d, synthesized)) {
-			g_print ("changed triggered remove on %s\n", native_path);
+			dkp_debug ("changed triggered remove on %s", native_path);
 			gpk_daemon_device_remove (daemon, d);
 		} else {
-			g_print ("changed %s\n", native_path);
+			dkp_debug ("changed %s", native_path);
 		}
 	} else {
-		g_print ("treating change event as add on %s\n", native_path);
+		dkp_debug ("treating change event as add on %s", native_path);
 		gpk_daemon_device_add (daemon, d, TRUE);
 	}
 }
@@ -342,7 +343,7 @@ static gboolean
 gpk_daemon_device_went_away_remove_cb (gpointer key, gpointer value, gpointer user_data)
 {
 	if (value == user_data) {
-		g_print ("removed %s\n", (char *) key);
+		dkp_debug ("removed %s", (char *) key);
 		return TRUE;
 	}
 	return FALSE;
@@ -368,13 +369,13 @@ static void
 gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 {
 	DkpDevice *device;
-	const char *native_path;
+	const gchar *native_path;
 
 	native_path = devkit_device_get_native_path (d);
 	device = g_hash_table_lookup (daemon->priv->map_native_path_to_device, native_path);
 	if (device != NULL) {
 		/* we already have the device; treat as change event */
-		g_print ("treating add event as change event on %s\n", native_path);
+		dkp_debug ("treating add event as change event on %s", native_path);
 		gpk_daemon_device_changed (daemon, d, FALSE);
 	} else {
 		device = dkp_device_new (daemon, d);
@@ -388,13 +389,13 @@ gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 			g_hash_table_insert (daemon->priv->map_native_path_to_device,
 					     g_strdup (native_path),
 					     device);
-			g_print ("added %s\n", native_path);
+			dkp_debug ("added %s", native_path);
 			if (emit_event) {
 				g_signal_emit (daemon, signals[DEVICE_ADDED_SIGNAL], 0,
 					       dkp_device_get_object_path (device));
 			}
 		} else {
-			g_print ("ignoring add event on %s\n", native_path);
+			dkp_debug ("ignoring add event on %s", native_path);
 		}
 	}
 }
@@ -406,12 +407,12 @@ static void
 gpk_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d)
 {
 	DkpDevice *device;
-	const char *native_path;
+	const gchar *native_path;
 
 	native_path = devkit_device_get_native_path (d);
 	device = g_hash_table_lookup (daemon->priv->map_native_path_to_device, native_path);
 	if (device == NULL) {
-		g_print ("ignoring remove event on %s\n", native_path);
+		dkp_debug ("ignoring remove event on %s", native_path);
 	} else {
 		dkp_device_removed (device);
 		g_signal_emit (daemon, signals[DEVICE_REMOVED_SIGNAL], 0,
@@ -442,7 +443,7 @@ gpk_daemon_device_event_signal_handler (DevkitClient *client,
 	} else if (strcmp (action, "change") == 0) {
 		gpk_daemon_device_changed (daemon, device, FALSE);
 	} else {
-		g_warning ("unhandled action '%s' on %s", action, devkit_device_get_native_path (device));
+		dkp_warning ("unhandled action '%s' on %s", action, devkit_device_get_native_path (device));
 	}
 }
 
@@ -455,7 +456,7 @@ gpk_daemon_register_power_daemon (DkpDaemon *daemon)
 	DBusConnection *connection;
 	DBusError dbus_error;
 	GError *error = NULL;
-	const char *subsystems[] = {"power_supply", NULL};
+	const gchar *subsystems[] = {"power_supply", NULL};
 
 	daemon->priv->pk_context = polkit_context_new ();
 	polkit_context_set_io_watch_functions (daemon->priv->pk_context, pk_io_add_watch, pk_io_remove_watch);
@@ -504,7 +505,7 @@ gpk_daemon_register_power_daemon (DkpDaemon *daemon)
 			    &dbus_error);
 
 	if (dbus_error_is_set (&dbus_error)) {
-		g_warning ("Cannot add match rule: %s: %s", dbus_error.name, dbus_error.message);
+		dkp_warning ("Cannot add match rule: %s: %s", dbus_error.name, dbus_error.message);
 		dbus_error_free (&dbus_error);
 		goto error;
 	}
@@ -515,7 +516,7 @@ gpk_daemon_register_power_daemon (DkpDaemon *daemon)
 			    &dbus_error);
 
 	if (dbus_error_is_set (&dbus_error)) {
-		g_warning ("Cannot add match rule: %s: %s", dbus_error.name, dbus_error.message);
+		dkp_warning ("Cannot add match rule: %s: %s", dbus_error.name, dbus_error.message);
 		dbus_error_free (&dbus_error);
 		goto error;
 	}
@@ -524,14 +525,14 @@ gpk_daemon_register_power_daemon (DkpDaemon *daemon)
 					 gpk_daemon_dbus_filter,
 					 daemon,
 					 NULL)) {
-		g_warning ("Cannot add D-Bus filter: %s: %s", dbus_error.name, dbus_error.message);
+		dkp_warning ("Cannot add D-Bus filter: %s: %s", dbus_error.name, dbus_error.message);
 		goto error;
 	}
 
 	/* connect to the DeviceKit daemon */
 	daemon->priv->devkit_client = devkit_client_new (subsystems);
 	if (!devkit_client_connect (daemon->priv->devkit_client, &error)) {
-		g_warning ("Couldn't open connection to DeviceKit daemon: %s", error->message);
+		dkp_warning ("Couldn't open connection to DeviceKit daemon: %s", error->message);
 		g_error_free (error);
 		goto error;
 	}
@@ -553,7 +554,7 @@ dkp_daemon_new (void)
 	GError *error = NULL;
 	GList *devices;
 	GList *l;
-	const char *subsystems[] = {"power_supply", NULL};
+	const gchar *subsystems[] = {"power_supply", NULL};
 
 	daemon = DKP_DAEMON (g_object_new (DKP_SOURCE_TYPE_DAEMON, NULL));
 
@@ -566,7 +567,7 @@ dkp_daemon_new (void)
 							 subsystems,
 							 &error);
 	if (error != NULL) {
-		g_warning ("Cannot enumerate devices: %s", error->message);
+		dkp_warning ("Cannot enumerate devices: %s", error->message);
 		g_error_free (error);
 		g_object_unref (daemon);
 		return NULL;
@@ -587,7 +588,7 @@ dkp_daemon_new (void)
 PolKitCaller *
 dkp_daemon_local_get_caller_for_context (DkpDaemon *daemon, DBusGMethodInvocation *context)
 {
-	const char *sender;
+	const gchar *sender;
 	GError *error;
 	DBusError dbus_error;
 	PolKitCaller *pk_caller;
@@ -617,13 +618,11 @@ dkp_daemon_local_get_caller_for_context (DkpDaemon *daemon, DBusGMethodInvocatio
 gboolean
 dkp_daemon_local_check_auth (DkpDaemon *daemon, PolKitCaller *pk_caller, const char *action_id, DBusGMethodInvocation *context)
 {
-	gboolean ret;
+	gboolean ret = FALSE;
 	GError *error;
 	DBusError d_error;
 	PolKitAction *pk_action;
 	PolKitResult pk_result;
-
-	ret = FALSE;
 
 	pk_action = polkit_action_new ();
 	polkit_action_set_action_id (pk_action, action_id);
@@ -654,7 +653,7 @@ gpk_daemon_throw_error (DBusGMethodInvocation *context, int error_code, const ch
 {
 	GError *error;
 	va_list args;
-	char *message;
+	gchar *message;
 
 	va_start (args, format);
 	message = g_strdup_vprintf (format, args);

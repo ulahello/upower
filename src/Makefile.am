@@ -42,6 +42,7 @@ devkit_power_daemon_SOURCES = 					\
 	dkp-device.h			dkp-device.c		\
 	dkp-source.h			dkp-source.c		\
 	dkp-enum.h			dkp-enum.c		\
+	dkp-debug.h			dkp-debug.c		\
 	sysfs-utils.h			sysfs-utils.c		\
 	main.c							\
 	$(BUILT_SOURCES)

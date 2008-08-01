@@ -34,6 +34,7 @@
 #include <polkit-dbus/polkit-dbus.h>
 
 #include "sysfs-utils.h"
+#include "dkp-debug.h"
 #include "dkp-device.h"
 #include "dkp-source.h"
 
@@ -76,15 +77,20 @@ dkp_device_removed (DkpDevice *device)
 DkpDevice *
 dkp_device_new (DkpDaemon *daemon, DevkitDevice *d)
 {
-	const char *subsys;
+	const gchar *subsys;
 	DkpDevice *device;
+	gchar *id;
 
 	device = NULL;
 
 	subsys = devkit_device_get_subsystem (d);
-	if (strcmp (subsys, "power_supply") == 0)
+	if (strcmp (subsys, "power_supply") == 0) {
 		device = DKP_DEVICE (dkp_source_new (daemon, d));
-
+		id = dkp_source_get_id (DKP_SOURCE (device));
+		if (id != NULL)
+			dkp_debug ("Using device profile id: %s", id);
+		g_free (id);
+	}
 	return device;
 }
 

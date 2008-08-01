@@ -21,6 +21,7 @@
 
 #include <glib.h>
 #include <strings.h>
+#include "dkp-debug.h"
 #include "dkp-enum.h"
 
 /**
@@ -29,7 +30,7 @@
 const char *
 dkp_source_type_to_text (DkpSourceType type_enum)
 {
-	const char *type = NULL;
+	const gchar *type = NULL;
 	switch (type_enum) {
 	case DKP_SOURCE_TYPE_LINE_POWER:
 		type = "line-power";
@@ -65,7 +66,7 @@ dkp_source_type_to_text (DkpSourceType type_enum)
 const char *
 dkp_source_state_to_text (DkpSourceState state_enum)
 {
-	const char *state = NULL;
+	const gchar *state = NULL;
 	switch (state_enum) {
 	case DKP_SOURCE_STATE_CHARGING:
 		state = "charging";
@@ -92,7 +93,7 @@ dkp_source_state_to_text (DkpSourceState state_enum)
 const char *
 dkp_source_technology_to_text (DkpSourceTechnology technology_enum)
 {
-	const char *technology = NULL;
+	const gchar *technology = NULL;
 	switch (technology_enum) {
 	case DKP_SOURCE_TECHNOLGY_LITHIUM_ION:
 		technology = "lithium-ion";

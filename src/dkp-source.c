@@ -36,6 +36,7 @@
 #include <polkit-dbus/polkit-dbus.h>
 
 #include "sysfs-utils.h"
+#include "dkp-debug.h"
 #include "dkp-enum.h"
 #include "dkp-source.h"
 #include "dkp-marshal.h"
@@ -374,8 +375,8 @@ dkp_source_finalize (GObject *object)
 static char *
 dkp_source_compute_object_path_from_basename (const char *native_path_basename)
 {
-	char *basename;
-	char *object_path;
+	gchar *basename;
+	gchar *object_path;
 	unsigned int n;
 
 	/* TODO: need to be more thorough with making proper object
@@ -395,11 +396,11 @@ dkp_source_compute_object_path_from_basename (const char *native_path_basename)
 /**
  * dkp_source_compute_object_path:
  **/
-static char *
+static gchar *
 dkp_source_compute_object_path (const char *native_path)
 {
-	char *basename;
-	char *object_path;
+	gchar *basename;
+	gchar *object_path;
 
 	basename = g_path_get_basename (native_path);
 	object_path = dkp_source_compute_object_path_from_basename (basename);
@@ -447,7 +448,7 @@ DkpSource *
 dkp_source_new (DkpDaemon *daemon, DevkitDevice *d)
 {
 	DkpSource *source;
-	const char *native_path;
+	const gchar *native_path;
 
 	source = NULL;
 	native_path = devkit_device_get_native_path (d);
@@ -486,7 +487,7 @@ out:
 static void
 dkp_source_emit_changed (DkpSource *source)
 {
-	g_print ("emitting changed on %s\n", source->priv->native_path);
+	dkp_debug ("emitting changed on %s", source->priv->native_path);
 	g_signal_emit_by_name (source->priv->daemon,
 				  "device-changed",
 				  source->priv->object_path,
@@ -669,7 +670,7 @@ dkp_source_calculate_battery_rate (DkpSource *source)
 static gboolean
 dkp_source_update_battery (DkpSource *source)
 {
-	char *status;
+	gchar *status;
 	gboolean is_charging;
 	gboolean is_discharging;
 	DkpSourceState battery_state;
@@ -686,7 +687,7 @@ dkp_source_update_battery (DkpSource *source)
 
 	/* initial values */
 	if (!source->priv->has_coldplug_values) {
-		char *technology_native;
+		gchar *technology_native;
 
 		/* when we add via sysfs power_supply class then we know this is true */
 		source->priv->power_supply = TRUE;
@@ -823,7 +824,7 @@ dkp_source_update_battery (DkpSource *source)
 static gboolean
 dkp_source_poll_battery (DkpSource *source)
 {
-	g_warning ("No updates on source %s for 30 seconds; forcing update", source->priv->native_path);
+	dkp_debug ("No updates on source %s for 30 seconds; forcing update", source->priv->native_path);
 	source->priv->poll_timer_id = 0;
 	dkp_source_update (source);
 	dkp_source_emit_changed (source);
@@ -850,9 +851,7 @@ dkp_source_update (DkpSource *source)
 		ret = dkp_source_update_line_power (source);
 		break;
 	case DKP_SOURCE_TYPE_BATTERY:
-
 		ret = dkp_source_update_battery (source);
-
 		/* Seems that we don't get change uevents from the
 		 * kernel on some BIOS types; set up a timer to poll
 		 *
