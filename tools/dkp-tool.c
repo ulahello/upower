@@ -112,7 +112,6 @@ typedef struct
 	gboolean	 line_power_online;
 	gdouble		 battery_energy;
 	gdouble		 battery_energy_empty;
-	gdouble		 battery_energy_empty_design;
 	gdouble		 battery_energy_full;
 	gdouble		 battery_energy_full_design;
 	gdouble		 battery_energy_rate;
@@ -148,8 +147,6 @@ collect_props (const char *key, const GValue *value, DeviceProperties *props)
 		props->battery_energy = g_value_get_double (value);
 	else if (strcmp (key, "battery-energy-empty") == 0)
 		props->battery_energy_empty = g_value_get_double (value);
-	else if (strcmp (key, "battery-energy-empty-design") == 0)
-		props->battery_energy_empty_design = g_value_get_double (value);
 	else if (strcmp (key, "battery-energy-full") == 0)
 		props->battery_energy_full = g_value_get_double (value);
 	else if (strcmp (key, "battery-energy-full-design") == 0)
@@ -270,7 +267,6 @@ do_show_info (const gchar *object_path)
 		g_print ("  battery\n");
 		g_print ("    energy:              %g Wh\n", props->battery_energy);
 		g_print ("    energy-empty:        %g Wh\n", props->battery_energy_empty);
-		g_print ("    energy-empty-design: %g Wh\n", props->battery_energy_empty_design);
 		g_print ("    energy-full:         %g Wh\n", props->battery_energy_full);
 		g_print ("    energy-full-design:  %g Wh\n", props->battery_energy_full_design);
 		g_print ("    energy-rate:         %g W\n", props->battery_energy_rate);
