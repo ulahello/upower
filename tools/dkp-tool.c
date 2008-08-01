@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
  * Copyright (C) 2007 David Zeuthen <david@fubar.dk>
+ * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,6 +47,7 @@
 #include "dkp-daemon-glue.h"
 #include "dkp-marshal.h"
 #include "../src/dkp-debug.h"
+#include "../src/dkp-object.h"
 
 static DBusGConnection *bus = NULL;
 static DBusGProxy *power_proxy = NULL;
@@ -56,131 +58,55 @@ static gboolean opt_monitor = FALSE;
 static gboolean opt_monitor_detail = FALSE;
 static gchar *opt_show_info = FALSE;
 
-static gboolean do_monitor (void);
-static void do_show_info (const gchar *object_path);
+static gboolean dkp_tool_do_monitor (void);
+static void dkp_tool_show_device_info (const gchar *object_path);
 
 /**
- * device_added_signal_handler:
+ * dkp_tool_device_added_cb:
  **/
 static void
-device_added_signal_handler (DBusGProxy *proxy, const gchar *object_path, gpointer user_data)
+dkp_tool_device_added_cb (DBusGProxy *proxy, const gchar *object_path, gpointer user_data)
 {
 	g_print ("added:     %s\n", object_path);
 	if (opt_monitor_detail) {
-		do_show_info (object_path);
+		dkp_tool_show_device_info (object_path);
 		g_print ("\n");
 	}
 }
 
 /**
- * device_changed_signal_handler:
+ * dkp_tool_device_changed_cb:
  **/
 static void
-device_changed_signal_handler (DBusGProxy *proxy, const gchar *object_path, gpointer user_data)
+dkp_tool_device_changed_cb (DBusGProxy *proxy, const gchar *object_path, gpointer user_data)
 {
 	g_print ("changed:     %s\n", object_path);
 	if (opt_monitor_detail) {
 		/* TODO: would be nice to just show the diff */
-		do_show_info (object_path);
+		dkp_tool_show_device_info (object_path);
 		g_print ("\n");
 	}
 }
 
 /**
- * device_removed_signal_handler:
+ * dkp_tool_device_removed_cb:
  **/
 static void
-device_removed_signal_handler (DBusGProxy *proxy, const gchar *object_path, gpointer user_data)
+dkp_tool_device_removed_cb (DBusGProxy *proxy, const gchar *object_path, gpointer user_data)
 {
 	g_print ("removed:   %s\n", object_path);
 }
 
-/* --- SUCKY CODE BEGIN --- */
-
-/* This totally sucks; dbus-bindings-tool and dbus-glib should be able
- * to do this for us.
- */
-
-typedef struct
-{
-	gchar		*native_path;
-	gchar		*vendor;
-	gchar		*model;
-	gchar		*serial;
-	guint64		 update_time;
-	gchar		*type;
-	gboolean	 line_power_online;
-	gdouble		 battery_energy;
-	gdouble		 battery_energy_empty;
-	gdouble		 battery_energy_full;
-	gdouble		 battery_energy_full_design;
-	gdouble		 battery_energy_rate;
-	gint64		 battery_time_to_full;
-	gint64		 battery_time_to_empty;
-	gdouble		 battery_percentage;
-	gchar		*battery_technology;
-} DeviceProperties;
-
 /**
- * collect_props:
+ * dkp_tool_get_device_properties:
  **/
-static void
-collect_props (const char *key, const GValue *value, DeviceProperties *props)
+static GHashTable *
+dkp_tool_get_device_properties (DBusGConnection *bus, const char *object_path)
 {
-	gboolean handled = TRUE;
-
-	if (strcmp (key, "native-path") == 0)
-		props->native_path = g_strdup (g_value_get_string (value));
-	else if (strcmp (key, "vendor") == 0)
-		props->vendor = g_strdup (g_value_get_string (value));
-	else if (strcmp (key, "model") == 0)
-		props->model = g_strdup (g_value_get_string (value));
-	else if (strcmp (key, "serial") == 0)
-		props->serial = g_strdup (g_value_get_string (value));
-	else if (strcmp (key, "update-time") == 0)
-		props->update_time = g_value_get_uint64 (value);
-	else if (strcmp (key, "type") == 0)
-		props->type = g_strdup (g_value_get_string (value));
-	else if (strcmp (key, "line-power-online") == 0)
-		props->line_power_online = g_value_get_boolean (value);
-	else if (strcmp (key, "battery-energy") == 0)
-		props->battery_energy = g_value_get_double (value);
-	else if (strcmp (key, "battery-energy-empty") == 0)
-		props->battery_energy_empty = g_value_get_double (value);
-	else if (strcmp (key, "battery-energy-full") == 0)
-		props->battery_energy_full = g_value_get_double (value);
-	else if (strcmp (key, "battery-energy-full-design") == 0)
-		props->battery_energy_full_design = g_value_get_double (value);
-	else if (strcmp (key, "battery-energy-rate") == 0)
-		props->battery_energy_rate = g_value_get_double (value);
-	else if (strcmp (key, "battery-time-to-full") == 0)
-		props->battery_time_to_full = g_value_get_int64 (value);
-	else if (strcmp (key, "battery-time-to-empty") == 0)
-		props->battery_time_to_empty = g_value_get_int64 (value);
-	else if (strcmp (key, "battery-percentage") == 0)
-		props->battery_percentage = g_value_get_double (value);
-	else if (strcmp (key, "battery-technology") == 0)
-		props->battery_technology = g_strdup (g_value_get_string (value));
-	else
-		handled = FALSE;
-
-	if (!handled)
-		dkp_warning ("unhandled property '%s'", key);
-}
-
-/**
- * device_properties_get:
- **/
-static DeviceProperties *
-device_properties_get (DBusGConnection *bus, const char *object_path)
-{
-	DeviceProperties *props;
 	GError *error;
-	GHashTable *hash_table;
+	GHashTable *hash_table = NULL;
 	DBusGProxy *prop_proxy;
 	const char *ifname = "org.freedesktop.DeviceKit.Power.Device";
-
-	props = g_new0 (DeviceProperties, 1);
 
 	prop_proxy = dbus_g_proxy_new_for_name (bus, "org.freedesktop.DeviceKit.Power",
 						object_path, "org.freedesktop.DBus.Properties");
@@ -191,104 +117,61 @@ device_properties_get (DBusGConnection *bus, const char *object_path)
 				dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_VALUE),
 				&hash_table,
 				G_TYPE_INVALID)) {
-		dkp_warning ("Couldn't call GetAll() to get properties for %s: %s", object_path, error->message);
+		dkp_debug ("Couldn't call GetAll() to get properties for %s: %s", object_path, error->message);
 		g_error_free (error);
 		goto out;
 	}
 
-	g_hash_table_foreach (hash_table, (GHFunc) collect_props, props);
-	g_hash_table_unref (hash_table);
-
 out:
 	g_object_unref (prop_proxy);
-	return props;
+	return hash_table;
 }
 
 /**
- * device_properties_free:
- **/
-static void
-device_properties_free (DeviceProperties *props)
-{
-	g_free (props->native_path);
-	g_free (props->vendor);
-	g_free (props->model);
-	g_free (props->serial);
-	g_free (props->type);
-	g_free (props->battery_technology);
-	g_free (props);
-}
-
-/* --- SUCKY CODE END --- */
-
-/**
- * do_monitor:
+ * dkp_tool_do_monitor:
  **/
 static gboolean
-do_monitor (void)
+dkp_tool_do_monitor (void)
 {
 	g_print ("Monitoring activity from the power daemon. Press Ctrl+C to cancel.\n");
 
 	dbus_g_proxy_connect_signal (power_proxy, "DeviceAdded",
-				     G_CALLBACK (device_added_signal_handler), NULL, NULL);
+				     G_CALLBACK (dkp_tool_device_added_cb), NULL, NULL);
 	dbus_g_proxy_connect_signal (power_proxy, "DeviceRemoved",
-				     G_CALLBACK (device_removed_signal_handler), NULL, NULL);
+				     G_CALLBACK (dkp_tool_device_removed_cb), NULL, NULL);
 	dbus_g_proxy_connect_signal (power_proxy, "DeviceChanged",
-				     G_CALLBACK (device_changed_signal_handler), NULL, NULL);
+				     G_CALLBACK (dkp_tool_device_changed_cb), NULL, NULL);
 	g_main_loop_run (loop);
 
 	return FALSE;
 }
 
 /**
- * do_show_info:
+ * dkp_tool_show_device_info:
  **/
 static void
-do_show_info (const gchar *object_path)
+dkp_tool_show_device_info (const gchar *object_path)
 {
-	DeviceProperties *props;
-	struct tm *time_tm;
-	time_t t;
-	gchar time_buf[256];
+	GHashTable *hash;
+	DkpObject *obj;
 
-	props = device_properties_get (bus, object_path);
-
-	t = (time_t) props->update_time;
-	time_tm = localtime (&t);
-	strftime (time_buf, sizeof time_buf, "%c", time_tm);
-
-	g_print ("Showing information for %s\n", object_path);
-	g_print ("  native-path:          %s\n", props->native_path);
-	g_print ("  vendor:               %s\n", props->vendor);
-	g_print ("  model:                %s\n", props->model);
-	g_print ("  serial:               %s\n", props->serial);
-	g_print ("  updated:              %s (%d seconds ago)\n", time_buf, (int) (time (NULL) - props->update_time));
-	if (strcmp (props->type, "battery") == 0) {
-		g_print ("  battery\n");
-		g_print ("    energy:              %g Wh\n", props->battery_energy);
-		g_print ("    energy-empty:        %g Wh\n", props->battery_energy_empty);
-		g_print ("    energy-full:         %g Wh\n", props->battery_energy_full);
-		g_print ("    energy-full-design:  %g Wh\n", props->battery_energy_full_design);
-		g_print ("    energy-rate:         %g W\n", props->battery_energy_rate);
-		g_print ("    time to full:        ");
-		if (props->battery_time_to_full >= 0)
-			g_print ("%d seconds\n", (int) props->battery_time_to_full);
-		else
-			g_print ("unknown\n");
-		g_print ("    time to empty:       ");
-		if (props->battery_time_to_empty >= 0)
-			g_print ("%d seconds\n", (int) props->battery_time_to_empty);
-		else
-			g_print ("unknown\n");
-		g_print ("    percentage:          %g%%\n", props->battery_percentage);
-		g_print ("    technology:          %s\n", props->battery_technology);
-	} else if (strcmp (props->type, "line-power") == 0) {
-		g_print ("  line-power\n");
-		g_print ("    online:             %s\n", props->line_power_online ? "yes" : "no");
-	} else {
-		g_print ("  unknown power source type '%s'\n", props->type);
+	/* get all the properties */
+	hash = dkp_tool_get_device_properties (bus, object_path);
+	if (hash == NULL) {
+		g_print ("Cannot get device properties for %s\n", object_path);
+		return;
 	}
-	device_properties_free (props);
+
+	/* create an object and copy properties */
+	obj = dkp_object_new ();
+	dkp_object_set_from_map (obj, hash);
+
+	/* print to screen */
+	dkp_object_print (obj);
+
+	/* tidy up */
+	dkp_object_free (obj);
+	g_hash_table_unref (hash);
 }
 
 /**
@@ -349,10 +232,10 @@ main (int argc, char **argv)
 		g_ptr_array_foreach (devices, (GFunc) g_free, NULL);
 		g_ptr_array_free (devices, TRUE);
 	} else if (opt_monitor || opt_monitor_detail) {
-		if (!do_monitor ())
+		if (!dkp_tool_do_monitor ())
 			goto out;
 	} else if (opt_show_info != NULL) {
-		do_show_info (opt_show_info);
+		dkp_tool_show_device_info (opt_show_info);
 	}
 
 	ret = 0;
