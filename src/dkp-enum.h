@@ -55,9 +55,12 @@ typedef enum {
 	DKP_SOURCE_TECHNOLGY_UNKNOWN
 } DkpSourceTechnology;
 
-const char	*dkp_source_type_to_text	(DkpSourceType		 type_enum);
-const char	*dkp_source_state_to_text	(DkpSourceState		 state_enum);
-const char	*dkp_source_technology_to_text	(DkpSourceTechnology	 technology_enum);
+const gchar	*dkp_source_type_to_text	(DkpSourceType		 type_enum);
+const gchar	*dkp_source_state_to_text	(DkpSourceState		 state_enum);
+const gchar	*dkp_source_technology_to_text	(DkpSourceTechnology	 technology_enum);
+DkpSourceType	 dkp_source_type_from_text	(const gchar		*type);
+DkpSourceState	 dkp_source_state_from_text	(const gchar		*state);
+DkpSourceTechnology dkp_source_technology_from_text (const gchar	*technology);
 DkpSourceTechnology dkp_acpi_to_source_technology (const char		*type);
 
 G_END_DECLS

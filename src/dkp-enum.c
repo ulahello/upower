@@ -20,14 +20,14 @@
  */
 
 #include <glib.h>
-#include <strings.h>
+#include <string.h>
 #include "dkp-debug.h"
 #include "dkp-enum.h"
 
 /**
  * dkp_source_type_to_text:
  **/
-const char *
+const gchar *
 dkp_source_type_to_text (DkpSourceType type_enum)
 {
 	const gchar *type = NULL;
@@ -64,9 +64,34 @@ dkp_source_type_to_text (DkpSourceType type_enum)
 }
 
 /**
+ * dkp_source_type_from_text:
+ **/
+DkpSourceType
+dkp_source_type_from_text (const gchar *type)
+{
+	if (type == NULL)
+		return DKP_SOURCE_TYPE_UNKNOWN;
+	if (strcmp (type, "line-power") == 0)
+		return DKP_SOURCE_TYPE_LINE_POWER;
+	if (strcmp (type, "battery") == 0)
+		return DKP_SOURCE_TYPE_BATTERY;
+	if (strcmp (type, "ups") == 0)
+		return DKP_SOURCE_TYPE_UPS;
+	if (strcmp (type, "mouse") == 0)
+		return DKP_SOURCE_TYPE_MOUSE;
+	if (strcmp (type, "keyboard") == 0)
+		return DKP_SOURCE_TYPE_KEYBOARD;
+	if (strcmp (type, "pda") == 0)
+		return DKP_SOURCE_TYPE_PDA;
+	if (strcmp (type, "phone") == 0)
+		return DKP_SOURCE_TYPE_PHONE;
+	return DKP_SOURCE_TYPE_UNKNOWN;
+}
+
+/**
  * dkp_source_state_to_text:
  **/
-const char *
+const gchar *
 dkp_source_state_to_text (DkpSourceState state_enum)
 {
 	const gchar *state = NULL;
@@ -94,9 +119,28 @@ dkp_source_state_to_text (DkpSourceState state_enum)
 }
 
 /**
+ * dkp_source_state_from_text:
+ **/
+DkpSourceState
+dkp_source_state_from_text (const gchar *state)
+{
+	if (state == NULL)
+		return DKP_SOURCE_STATE_UNKNOWN;
+	if (strcmp (state, "charging") == 0)
+		return DKP_SOURCE_STATE_CHARGING;
+	if (strcmp (state, "discharging") == 0)
+		return DKP_SOURCE_STATE_DISCHARGING;
+	if (strcmp (state, "empty") == 0)
+		return DKP_SOURCE_STATE_EMPTY;
+	if (strcmp (state, "fully-charged") == 0)
+		return DKP_SOURCE_STATE_FULLY_CHARGED;
+	return DKP_SOURCE_STATE_UNKNOWN;
+}
+
+/**
  * dkp_source_technology_to_text:
  **/
-const char *
+const gchar *
 dkp_source_technology_to_text (DkpSourceTechnology technology_enum)
 {
 	const gchar *technology = NULL;
@@ -130,10 +174,33 @@ dkp_source_technology_to_text (DkpSourceTechnology technology_enum)
 }
 
 /**
+ * dkp_source_technology_from_text:
+ **/
+DkpSourceTechnology
+dkp_source_technology_from_text (const gchar *technology)
+{
+	if (technology == NULL)
+		return DKP_SOURCE_TECHNOLGY_UNKNOWN;
+	if (strcmp (technology, "lithium-ion") == 0)
+		return DKP_SOURCE_TECHNOLGY_LITHIUM_ION;
+	if (strcmp (technology, "lithium-polymer") == 0)
+		return DKP_SOURCE_TECHNOLGY_LITHIUM_POLYMER;
+	if (strcmp (technology, "lithium-iron-phosphate") == 0)
+		return DKP_SOURCE_TECHNOLGY_LITHIUM_IRON_PHOSPHATE;
+	if (strcmp (technology, "lead-acid") == 0)
+		return DKP_SOURCE_TECHNOLGY_LEAD_ACID;
+	if (strcmp (technology, "nickel-cadmium") == 0)
+		return DKP_SOURCE_TECHNOLGY_NICKEL_CADMIUM;
+	if (strcmp (technology, "nickel-metal-hydride") == 0)
+		return DKP_SOURCE_TECHNOLGY_NICKEL_METAL_HYDRIDE;
+	return DKP_SOURCE_TECHNOLGY_UNKNOWN;
+}
+
+/**
  * dkp_acpi_to_source_technology:
  **/
 DkpSourceTechnology
-dkp_acpi_to_source_technology (const char *type)
+dkp_acpi_to_source_technology (const gchar *type)
 {
 	if (type == NULL) {
 		return DKP_SOURCE_TECHNOLGY_UNKNOWN;
