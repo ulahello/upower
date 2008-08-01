@@ -145,6 +145,7 @@ doc/version.xml
 doc/man/Makefile
 doc/dbus/Makefile
 policy/Makefile
+libdevkit-power/Makefile
 po/Makefile.in
 ])
 

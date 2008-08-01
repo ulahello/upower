@@ -46,8 +46,8 @@
 
 #include "dkp-daemon-glue.h"
 #include "dkp-marshal.h"
-#include "../src/dkp-debug.h"
-#include "../src/dkp-object.h"
+#include "dkp-debug.h"
+#include "dkp-object.h"
 
 static DBusGConnection *bus = NULL;
 static DBusGProxy *power_proxy = NULL;

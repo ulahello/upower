@@ -10,9 +10,12 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
+	-I$(top_srcdir)/libdevkit-power \
 	$(DBUS_GLIB_CFLAGS) \
 	$(POLKIT_DBUS_CFLAGS) \
 	$(GLIB_CFLAGS)
+
+DEVKIT_POWER_LIBS = $(top_builddir)/libdevkit-power/libdevkit-power.la
 
 BUILT_SOURCES =						\
 	dkp-daemon-glue.h				\
@@ -31,9 +34,6 @@ bin_PROGRAMS = devkit-power
 
 devkit_power_SOURCES = 					\
 				dkp-tool.c		\
-	../src/dkp-debug.h	../src/dkp-debug.c	\
-	../src/dkp-object.h	../src/dkp-object.c	\
-	../src/dkp-enum.h	../src/dkp-enum.c	\
 	$(BUILT_SOURCES)
 
 
@@ -44,6 +44,7 @@ devkit_power_CPPFLAGS = 				\
 
 devkit_power_LDADD = 					\
 	$(DBUS_GLIB_LIBS)				\
+	$(DEVKIT_POWER_LIBS)				\
 	$(POLKIT_DBUS_LIBS)
 
 CLEANFILES = $(BUILT_SOURCES)

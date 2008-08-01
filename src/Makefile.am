@@ -10,10 +10,13 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
+	-I$(top_srcdir)/libdevkit-power \
 	$(DBUS_GLIB_CFLAGS) \
 	$(POLKIT_DBUS_CFLAGS) \
 	$(DEVKIT_CFLAGS) \
 	$(GLIB_CFLAGS)
+
+DEVKIT_POWER_LIBS = $(top_builddir)/libdevkit-power/libdevkit-power.la
 
 BUILT_SOURCES =							\
 	dkp-daemon-glue.h					\
@@ -41,9 +44,6 @@ devkit_power_daemon_SOURCES = 					\
 	dkp-daemon.h			dkp-daemon.c		\
 	dkp-device.h			dkp-device.c		\
 	dkp-source.h			dkp-source.c		\
-	dkp-enum.h			dkp-enum.c		\
-	dkp-debug.h			dkp-debug.c		\
-	dkp-object.h			dkp-object.c		\
 	sysfs-utils.h			sysfs-utils.c		\
 	main.c							\
 	$(BUILT_SOURCES)
@@ -57,6 +57,7 @@ devkit_power_daemon_CPPFLAGS = 					\
 devkit_power_daemon_LDADD = 					\
 	$(DBUS_GLIB_LIBS)					\
 	$(POLKIT_DBUS_LIBS)					\
+	$(DEVKIT_POWER_LIBS)					\
 	$(DEVKIT_LIBS)
 
 servicedir       = $(datadir)/dbus-1/system-services
