@@ -29,6 +29,9 @@
 #endif
 
 #include <string.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <glib.h>
 #include <glib/gi18n-lib.h>
@@ -42,6 +45,7 @@
 #include "dkp-daemon.h"
 
 #define NAME_TO_CLAIM "org.freedesktop.DeviceKit.Power"
+static GMainLoop *loop = NULL;
 
 /**
  * main_acquire_name_on_proxy:
@@ -96,13 +100,27 @@ main_acquire_name_on_proxy (DBusGProxy *bus_proxy)
 }
 
 /**
+ * dkp_main_sigint_handler:
+ **/
+static void
+dkp_main_sigint_handler (int sig)
+{
+	dkp_debug ("Handling SIGINT");
+
+	/* restore default */
+	signal (SIGINT, SIG_DFL);
+
+	/* cleanup */
+	g_main_loop_quit (loop);
+}
+
+/**
  * main:
  **/
 int
 main (int argc, char **argv)
 {
 	GError *error;
-	GMainLoop *loop;
 	DkpDaemon *power_daemon;
 	GOptionContext *context;
 	DBusGProxy *bus_proxy;
@@ -143,6 +161,9 @@ main (int argc, char **argv)
 		dkp_warning ("Could not acquire name; bailing out");
 		goto out;
 	}
+
+	/* do stuff on ctrl-c */
+	signal (SIGINT, dkp_main_sigint_handler);
 
 	dkp_debug ("Starting devkit-power-daemon version %s", VERSION);
 
