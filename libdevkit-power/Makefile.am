@@ -11,6 +11,8 @@ noinst_LTLIBRARIES =						\
 libdevkit_power_la_SOURCES =					\
 	dkp-debug.c						\
 	dkp-debug.h						\
+	dkp-history-obj.h					\
+	dkp-history-obj.c					\
 	dkp-enum.c						\
 	dkp-enum.h						\
 	dkp-object.c						\

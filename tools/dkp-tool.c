@@ -48,6 +48,7 @@
 #include "dkp-marshal.h"
 #include "dkp-debug.h"
 #include "dkp-object.h"
+#include "dkp-history-obj.h"
 
 static DBusGConnection *bus = NULL;
 static DBusGProxy *power_proxy = NULL;
@@ -159,6 +160,8 @@ dkp_tool_get_device_stats (DBusGConnection *bus, const char *object_path, const 
 	GValueArray *gva;
 	GValue *gv;
 	guint i;
+	DkpHistoryObj *obj;
+	GPtrArray *array;
 
 	proxy = dbus_g_proxy_new_for_name (bus, "org.freedesktop.DeviceKit.Power",
 						object_path, "org.freedesktop.DeviceKit.Power.Source");
@@ -186,28 +189,34 @@ dkp_tool_get_device_stats (DBusGConnection *bus, const char *object_path, const 
 	if (gvalue_ptr_array->len == 0)
 		goto out;
 
-	guint timeval;
-	gdouble value;
-	const gchar *state;
-
-	g_print ("  statistics (%s)\n", type);
-	for (i=0; i< gvalue_ptr_array->len; i++) {
+	/* convert */
+	array = g_ptr_array_sized_new (gvalue_ptr_array->len);
+	for (i=0; i<gvalue_ptr_array->len; i++) {
 		gva = (GValueArray *) g_ptr_array_index (gvalue_ptr_array, i);
+		obj = dkp_history_obj_new ();
 		/* 0 */
 		gv = g_value_array_get_nth (gva, 0);
-		timeval = g_value_get_uint (gv);
+		obj->time = g_value_get_uint (gv);
 		g_value_unset (gv);
 		/* 1 */
 		gv = g_value_array_get_nth (gva, 1);
-		value = g_value_get_double (gv);
+		obj->value = g_value_get_double (gv);
 		g_value_unset (gv);
 		/* 2 */
 		gv = g_value_array_get_nth (gva, 2);
-		state = g_value_get_string (gv);
-		g_print ("    %lu seconds\t%.2lf (%s)\n", time (NULL) - timeval, value, state);
+		obj->state = dkp_source_state_from_text (g_value_get_string (gv));
 		g_value_unset (gv);
+		g_ptr_array_add (array, obj);
 		g_value_array_free (gva);
 	}
+
+	/* print */
+	g_print ("  statistics (%s)\n", type);
+	for (i=0; i<array->len; i++) {
+		obj = (DkpHistoryObj *) g_ptr_array_index (array, i);
+		g_print ("    %lu seconds\t%.2lf (%s)\n", time (NULL) - obj->time, obj->value, dkp_source_state_to_text (obj->state));
+	}
+	g_ptr_array_free (array, TRUE);
 
 out:
 	if (gvalue_ptr_array != NULL)
