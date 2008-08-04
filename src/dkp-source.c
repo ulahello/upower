@@ -904,6 +904,13 @@ dkp_source_get_statistics (DkpSource *source, const gchar *type, guint timespan,
 		goto out;
 	}
 
+	/* maybe the device doesn't support histories */
+	if (array == NULL) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device has no history");
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
 	/* copy data to dbus struct */
 	complex = g_ptr_array_sized_new (array->len);
 	for (i=0; i<array->len; i++) {
