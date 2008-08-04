@@ -14,9 +14,6 @@
           with the algorithms.
         </doc:para>
         <doc:para>
-          TODO: do we need to export voltage and other things? Do we need to export raw data?
-        </doc:para>
-        <doc:para>
           Unless otherwise noted, an empty string or the value 0 in a
           property means not set.
         </doc:para>
@@ -25,10 +22,8 @@
 
 
     <!-- ************************************************************ -->
-
     <method name="Refresh">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -43,7 +38,6 @@
     </method>
 
     <!-- ************************************************************ -->
-
     <signal name="Changed">
       <doc:doc>
         <doc:description>
@@ -55,7 +49,6 @@
     </signal>
 
     <!-- ************************************************************ -->
-
     <property name="native-path" type="s" access="read">
       <doc:doc><doc:description><doc:para>
             OS specific native path of the power source. On Linux this
