@@ -184,11 +184,13 @@ main (int argc, char **argv)
 	GOptionContext *context;
 	GError *error = NULL;
 	gboolean verbose = FALSE;
+	gboolean opt_dump = FALSE;
 	unsigned int n;
 
 	const GOptionEntry entries[] = {
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, _("Show extra debugging information"), NULL },
 		{ "enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_enumerate, _("Enumerate objects paths for devices"), NULL },
+		{ "dump", 0, 0, G_OPTION_ARG_NONE, &opt_dump, _("Dump all parameters for all objects"), NULL },
 		{ "monitor", 0, 0, G_OPTION_ARG_NONE, &opt_monitor, _("Monitor activity from the power daemon"), NULL },
 		{ "monitor-detail", 0, 0, G_OPTION_ARG_NONE, &opt_monitor_detail, _("Monitor with detail"), NULL },
 		{ "show-info", 0, 0, G_OPTION_ARG_STRING, &opt_show_info, _("Show information about object path"), NULL },
@@ -218,7 +220,9 @@ main (int argc, char **argv)
 	dbus_g_proxy_add_signal (power_proxy, "DeviceRemoved", G_TYPE_STRING, G_TYPE_INVALID);
 	dbus_g_proxy_add_signal (power_proxy, "DeviceChanged", G_TYPE_STRING, G_TYPE_INVALID);
 
-	if (opt_enumerate) {
+	if (opt_dump) {
+		dkp_warning ("dump not supported");
+	} else if (opt_enumerate) {
 		GPtrArray *devices;
 		if (!org_freedesktop_DeviceKit_Power_enumerate_devices (power_proxy, &devices, &error)) {
 			dkp_warning ("Couldn't enumerate devices: %s", error->message);
