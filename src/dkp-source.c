@@ -618,8 +618,6 @@ dkp_source_update_battery (DkpSource *source)
 	gchar *status = NULL;
 	gboolean ret;
 	gboolean just_added = FALSE;
-	gboolean is_charging;
-	gboolean is_discharging;
 	DkpSourceState battery_state;
 	DkpObject *obj = source->priv->obj;
 	DkpObject *obj_old;
@@ -677,12 +675,18 @@ dkp_source_update_battery (DkpSource *source)
 	}
 
 	status = g_strstrip (sysfs_get_string (obj->native_path, "status"));
-	is_charging = strcasecmp (status, "charging") == 0;
-	is_discharging = strcasecmp (status, "discharging") == 0;
-
-	/* really broken battery, assume charging */
-	if (is_charging && is_discharging)
-		is_discharging = FALSE;
+	if (strcasecmp (status, "charging") == 0)
+		battery_state = DKP_SOURCE_STATE_CHARGING;
+	else if (strcasecmp (status, "discharging") == 0)
+		battery_state = DKP_SOURCE_STATE_DISCHARGING;
+	else if (strcasecmp (status, "full") == 0)
+		battery_state = DKP_SOURCE_STATE_FULLY_CHARGED;
+	else if (strcasecmp (status, "empty") == 0)
+		battery_state = DKP_SOURCE_STATE_EMPTY;
+	else {
+		dkp_warning ("unknown status string: %s", status);
+		battery_state = DKP_SOURCE_STATE_UNKNOWN;
+	}
 
 	/* get the currect charge */
 	obj->battery_energy =
@@ -714,7 +718,7 @@ dkp_source_update_battery (DkpSource *source)
 	}
 
 	/* charging has a negative rate */
-	if (obj->battery_energy_rate > 0 && is_charging)
+	if (obj->battery_energy_rate > 0 && battery_state == DKP_SOURCE_STATE_CHARGING)
 		obj->battery_energy_rate *= -1.0;
 
 	/* get a precise percentage */
@@ -728,9 +732,9 @@ dkp_source_update_battery (DkpSource *source)
 	obj->battery_time_to_empty = -1;
 	obj->battery_time_to_full = -1;
 	if (obj->battery_energy_rate > 0) {
-		if (is_discharging) {
+		if (battery_state == DKP_SOURCE_STATE_DISCHARGING) {
 			obj->battery_time_to_empty = 3600 * (obj->battery_energy / obj->battery_energy_rate);
-		} else if (is_charging) {
+		} else if (battery_state == DKP_SOURCE_STATE_CHARGING) {
 			obj->battery_time_to_full = 3600 * ((obj->battery_energy_full - obj->battery_energy) / obj->battery_energy_rate);
 		}
 	}
@@ -740,16 +744,6 @@ dkp_source_update_battery (DkpSource *source)
 		obj->battery_time_to_empty = -1;
 	if (obj->battery_time_to_full > (100 * 60 * 60))
 		obj->battery_time_to_full = -1;
-
-	/* get the state */
-	if (is_charging)
-		battery_state = DKP_SOURCE_STATE_CHARGING;
-	else if (is_discharging)
-		battery_state = DKP_SOURCE_STATE_DISCHARGING;
-	else if (obj->battery_percentage > DK_POWER_MIN_CHARGED_PERCENTAGE)
-		battery_state = DKP_SOURCE_STATE_FULLY_CHARGED;
-	else
-		battery_state = DKP_SOURCE_STATE_EMPTY;
 
 	/* set the old status */
 	source->priv->battery_energy_old = obj->battery_energy;
