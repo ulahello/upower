@@ -303,9 +303,7 @@ main (int argc, char **argv)
 	dbus_g_proxy_add_signal (power_proxy, "DeviceRemoved", G_TYPE_STRING, G_TYPE_INVALID);
 	dbus_g_proxy_add_signal (power_proxy, "DeviceChanged", G_TYPE_STRING, G_TYPE_INVALID);
 
-	if (opt_dump) {
-		dkp_warning ("dump not supported");
-	} else if (opt_enumerate) {
+	if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
 		if (!org_freedesktop_DeviceKit_Power_enumerate_devices (power_proxy, &devices, &error)) {
 			dkp_warning ("Couldn't enumerate devices: %s", error->message);
@@ -314,7 +312,12 @@ main (int argc, char **argv)
 		}
 		for (n = 0; n < devices->len; n++) {
 			gchar *object_path = devices->pdata[n];
-			g_print ("%s\n", object_path);
+			if (opt_enumerate)
+				g_print ("%s\n", object_path);
+			else {
+				g_print ("Device: %s\n", object_path);
+				dkp_tool_show_device_info (object_path);
+			}
 		}
 		g_ptr_array_foreach (devices, (GFunc) g_free, NULL);
 		g_ptr_array_free (devices, TRUE);
