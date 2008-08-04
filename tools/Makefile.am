@@ -30,12 +30,11 @@ dkp-marshal.c: $(top_srcdir)/src/dkp-marshal.list
 dkp-daemon-glue.h: $(top_srcdir)/src/org.freedesktop.DeviceKit.Power.xml Makefile.am
 	dbus-binding-tool --prefix=devkit_power_daemon --mode=glib-client --output=dkp-daemon-glue.h $(top_srcdir)/src/org.freedesktop.DeviceKit.Power.xml
 
-bin_PROGRAMS = devkit-power
+bin_PROGRAMS = devkit-power devkit-battery-power
 
 devkit_power_SOURCES = 					\
-				dkp-tool.c		\
+	dkp-tool.c					\
 	$(BUILT_SOURCES)
-
 
 devkit_power_CPPFLAGS = 				\
 	-DG_LOG_DOMAIN=\"devkit-power\"		        \
@@ -43,6 +42,20 @@ devkit_power_CPPFLAGS = 				\
 	$(AM_CPPFLAGS)
 
 devkit_power_LDADD = 					\
+	$(DBUS_GLIB_LIBS)				\
+	$(DEVKIT_POWER_LIBS)				\
+	$(POLKIT_DBUS_LIBS)
+
+devkit_battery_power_SOURCES = 				\
+	dkp-battery-power.c				\
+	$(BUILT_SOURCES)
+
+devkit_battery_power_CPPFLAGS = 			\
+	-DG_LOG_DOMAIN=\"devkit-power\"		        \
+	$(DISABLE_DEPRECATED)				\
+	$(AM_CPPFLAGS)
+
+devkit_battery_power_LDADD = 				\
 	$(DBUS_GLIB_LIBS)				\
 	$(DEVKIT_POWER_LIBS)				\
 	$(POLKIT_DBUS_LIBS)
