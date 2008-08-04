@@ -11,6 +11,7 @@ INCLUDES = \
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
 	-I$(top_srcdir)/libdevkit-power \
+	$(GIO_CFLAGS) \
 	$(DBUS_GLIB_CFLAGS) \
 	$(POLKIT_DBUS_CFLAGS) \
 	$(DEVKIT_CFLAGS) \
@@ -44,6 +45,8 @@ devkit_power_daemon_SOURCES = 					\
 	dkp-daemon.h			dkp-daemon.c		\
 	dkp-device.h			dkp-device.c		\
 	dkp-source.h			dkp-source.c		\
+	dkp-history.h			dkp-history.c		\
+	dkp-history-obj.h		dkp-history-obj.c	\
 	sysfs-utils.h			sysfs-utils.c		\
 	main.c							\
 	$(BUILT_SOURCES)
@@ -55,6 +58,7 @@ devkit_power_daemon_CPPFLAGS = 					\
 	$(AM_CPPFLAGS)
 
 devkit_power_daemon_LDADD = 					\
+	$(GIO_LIBS)						\
 	$(DBUS_GLIB_LIBS)					\
 	$(POLKIT_DBUS_LIBS)					\
 	$(DEVKIT_POWER_LIBS)					\

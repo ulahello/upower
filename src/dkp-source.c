@@ -40,6 +40,7 @@
 #include "dkp-enum.h"
 #include "dkp-object.h"
 #include "dkp-source.h"
+#include "dkp-history.h"
 #include "dkp-marshal.h"
 #include "dkp-source-glue.h"
 
@@ -51,6 +52,7 @@ struct DkpSourcePrivate
 	DBusGProxy		*system_bus_proxy;
 	DkpDaemon		*daemon;
 	DevkitDevice		*d;
+	DkpHistory		*history;
 	gchar			*object_path;
 	guint			 poll_timer_id;
 	DkpObject		*obj;
@@ -325,6 +327,7 @@ dkp_source_finalize (GObject *object)
 
 	g_object_unref (source->priv->d);
 	g_object_unref (source->priv->daemon);
+	g_object_unref (source->priv->history);
 	dkp_object_free (source->priv->obj);
 
 	if (source->priv->poll_timer_id > 0)
@@ -413,6 +416,7 @@ dkp_source_new (DkpDaemon *daemon, DevkitDevice *d)
 {
 	DkpSource *source;
 	const gchar *native_path;
+	gchar *id;
 
 	source = NULL;
 	native_path = devkit_device_get_native_path (d);
@@ -422,6 +426,7 @@ dkp_source_new (DkpDaemon *daemon, DevkitDevice *d)
 	source->priv->daemon = g_object_ref (daemon);
 	source->priv->obj = dkp_object_new ();
 	source->priv->obj->native_path = g_strdup (native_path);
+	source->priv->history = dkp_history_new ();
 
 	if (sysfs_file_exists (native_path, "online")) {
 		source->priv->obj->type = DKP_SOURCE_TYPE_LINE_POWER;
@@ -441,6 +446,15 @@ dkp_source_new (DkpDaemon *daemon, DevkitDevice *d)
 		source = NULL;
 		goto out;
 	}
+
+	/* get the id so we can load the old history */
+	id = dkp_object_get_id (source->priv->obj);
+	if (id == NULL) {
+		dkp_debug ("cannot get device ID, not loading history");
+		goto out;
+	}
+	dkp_history_set_id (source->priv->history, id);
+	g_free (id);
 
 out:
 	return source;
@@ -508,12 +522,31 @@ static gboolean
 dkp_source_update_line_power (DkpSource *source)
 {
 	DkpObject *obj = source->priv->obj;
+	DkpObject *obj_old;
+	gboolean ret;
+
+	/* make a copy so we can see if anything changed */
+	obj_old = dkp_object_copy (obj);
+
+	/* force true */
 	obj->power_supply = TRUE;
+
+	/* get new AC value */
 	obj->line_power_online = sysfs_get_int (obj->native_path, "online");
+
+	/* initial value */
 	if (!source->priv->has_coldplug_values) {
 		dkp_object_print (obj);
 		source->priv->has_coldplug_values = TRUE;
+		goto out;
 	}
+
+	/* print difference */
+	ret = !dkp_object_equal (obj, obj_old);
+	if (ret)
+		dkp_object_diff (obj_old, obj);
+out:
+	dkp_object_free (obj_old);
 	return TRUE;
 }
 
@@ -731,11 +764,20 @@ dkp_source_update_battery (DkpSource *source)
 out:
 	/* did anything change? */
 	ret = !dkp_object_equal (obj, obj_old);
+	if (!just_added && ret)
+		dkp_object_diff (obj_old, obj);
 	dkp_object_free (obj_old);
 
 	/* just for debugging */
 	if (just_added)
 		dkp_object_print (obj);
+
+	/* save new history */
+	if (ret) {
+		dkp_history_set_state (source->priv->history, obj->battery_state);
+		dkp_history_set_charge_data (source->priv->history, obj->battery_percentage);
+		dkp_history_set_rate_data (source->priv->history, obj->battery_energy_rate);
+	}
 
 	g_free (status);
 	return ret;
@@ -755,7 +797,6 @@ dkp_source_poll_battery (DkpSource *source)
 	ret = dkp_source_update (source);
 	if (ret) {
 		dkp_source_emit_changed (source);
-		dkp_object_print (source->priv->obj);
 	}
 	return FALSE;
 }
