@@ -49,6 +49,29 @@
     </signal>
 
     <!-- ************************************************************ -->
+    <method name="GetStatistics">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="type" direction="in" type="s">
+        <doc:doc><doc:summary>The type of statistics.
+        Valid types are <literal>rate</literal> or <literal>charge</literal>.</doc:summary></doc:doc>
+      </arg>
+      <arg name="timespan" direction="in" type="u">
+        <doc:doc><doc:summary>The amount of data to return in seconds, or 0 for all.</doc:summary></doc:doc>
+      </arg>
+      <arg name="data" direction="out" type="a(uds)">
+        <doc:doc><doc:summary>The data for the power device.</doc:summary></doc:doc>
+      </arg>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Gets statistics for the power device that may be interesting
+            to show on a graph in the session.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </method>
+
+    <!-- ************************************************************ -->
     <property name="native-path" type="s" access="read">
       <doc:doc><doc:description><doc:para>
             OS specific native path of the power source. On Linux this

@@ -50,14 +50,30 @@ typedef struct
 	DkpDeviceClass		 parent_class;
 } DkpSourceClass;
 
+typedef enum
+{
+	DKP_SOURCE_ERROR_GENERAL,
+	DKP_SOURCE_NUM_ERRORS
+} DkpSourceError;
+
+#define DKP_SOURCE_ERROR dkp_source_error_quark ()
+
+GType dkp_source_error_get_type (void);
+#define DKP_SOURCE_TYPE_ERROR (dkp_source_error_get_type ())
+
+GQuark		 dkp_source_error_quark		(void);
 GType		 dkp_source_get_type		(void);
 DkpSource	*dkp_source_new			(DkpDaemon		*daemon,
 						 DevkitDevice		*d);
 
 /* exported methods */
-gboolean	 dkp_source_refresh		(DkpSource		*power_source,
+gboolean	 dkp_source_refresh		(DkpSource		*source,
 						 DBusGMethodInvocation	*context);
-gchar		*dkp_source_get_id		(DkpSource		*power_source);
+gchar		*dkp_source_get_id		(DkpSource		*source);
+gboolean	 dkp_source_get_statistics	(DkpSource		*source,
+						 const gchar		*type,
+						 guint			 timespan,
+						 DBusGMethodInvocation	*context);
 
 G_END_DECLS
 

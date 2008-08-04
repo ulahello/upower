@@ -41,6 +41,7 @@
 #include "dkp-object.h"
 #include "dkp-source.h"
 #include "dkp-history.h"
+#include "dkp-history-obj.h"
 #include "dkp-marshal.h"
 #include "dkp-source-glue.h"
 
@@ -107,6 +108,44 @@ G_DEFINE_TYPE (DkpSource, dkp_source, DKP_SOURCE_TYPE_DEVICE)
 static const char *dkp_source_get_object_path (DkpDevice *device);
 static void	dkp_source_removed	 (DkpDevice *device);
 static gboolean	dkp_source_changed	 (DkpDevice *device, DevkitDevice *d, gboolean synthesized);
+
+/**
+ * dkp_source_error_quark:
+ **/
+GQuark
+dkp_source_error_quark (void)
+{
+	static GQuark ret = 0;
+
+	if (ret == 0) {
+		ret = g_quark_from_static_string ("dkp_source_error");
+	}
+
+	return ret;
+}
+
+#define ENUM_ENTRY(NAME, DESC) { NAME, "" #NAME "", DESC }
+
+/**
+ * dkp_source_error_get_type:
+ **/
+GType
+dkp_source_error_get_type (void)
+{
+	static GType etype = 0;
+
+	if (etype == 0)
+	{
+		static const GEnumValue values[] =
+			{
+				ENUM_ENTRY (DKP_SOURCE_ERROR_GENERAL, "GeneralError"),
+				{ 0, 0, 0 }
+			};
+		g_assert (DKP_SOURCE_NUM_ERRORS == G_N_ELEMENTS (values) - 1);
+		etype = g_enum_register_static ("DkpSourceError", values);
+	}
+	return etype;
+}
 
 /**
  * dkp_source_get_property:
@@ -299,6 +338,8 @@ dkp_source_class_init (DkpSourceClass *klass)
 		object_class,
 		PROP_BATTERY_TECHNOLOGY,
 		g_param_spec_string ("battery-technology", NULL, NULL, NULL, G_PARAM_READABLE));
+
+	dbus_g_error_domain_register (DKP_SOURCE_ERROR, NULL, DKP_SOURCE_TYPE_ERROR);
 }
 
 /**
@@ -376,10 +417,10 @@ dkp_source_compute_object_path (const char *native_path)
 }
 
 /**
- * dkp_source_register_power_source:
+ * dkp_source_register_source:
  **/
 static gboolean
-dkp_source_register_power_source (DkpSource *source)
+dkp_source_register_source (DkpSource *source)
 {
 	DBusConnection *connection;
 	GError *error = NULL;
@@ -441,7 +482,7 @@ dkp_source_new (DkpDaemon *daemon, DevkitDevice *d)
 		goto out;
 	}
 
-	if (!dkp_source_register_power_source (DKP_SOURCE (source))) {
+	if (!dkp_source_register_source (DKP_SOURCE (source))) {
 		g_object_unref (source);
 		source = NULL;
 		goto out;
@@ -836,13 +877,58 @@ dkp_source_update (DkpSource *source)
 	return ret;
 }
 
+#define DKP_DBUS_STRUCT_UINT_DOUBLE_STRING (dbus_g_type_get_struct ("GValueArray", \
+	G_TYPE_UINT, G_TYPE_DOUBLE, G_TYPE_STRING, G_TYPE_INVALID))
+
+/**
+ * dkp_source_get_statistics:
+ **/
+gboolean
+dkp_source_get_statistics (DkpSource *source, const gchar *type, guint timespan, DBusGMethodInvocation *context)
+{
+	GError *error;
+	GPtrArray *array;
+	GPtrArray *complex;
+	const DkpHistoryObj *obj;
+	GValue *value;
+	guint i;
+
+	/* get the correct data */
+	if (strcmp (type, "rate") == 0)
+		array = dkp_history_get_rate_data (source->priv->history, timespan);
+	else if (strcmp (type, "charge") == 0)
+		array = dkp_history_get_charge_data (source->priv->history, timespan);
+	else {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "type '%s' not recognised", type);
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
+	/* copy data to dbus struct */
+	complex = g_ptr_array_sized_new (array->len);
+	for (i=0; i<array->len; i++) {
+		obj = (const DkpHistoryObj *) g_ptr_array_index (array, i);
+		value = g_new0 (GValue, 1);
+		g_value_init (value, DKP_DBUS_STRUCT_UINT_DOUBLE_STRING);
+		g_value_take_boxed (value, dbus_g_type_specialized_construct (DKP_DBUS_STRUCT_UINT_DOUBLE_STRING));
+		dbus_g_type_struct_set (value, 0, obj->time, 1, obj->value, 2, dkp_source_state_to_text (obj->state), -1);
+		g_ptr_array_add (complex, g_value_get_boxed (value));
+		g_free (value);
+	}
+
+	g_ptr_array_free (array, TRUE);
+	dbus_g_method_return (context, complex);
+out:
+	return TRUE;
+}
+
 /**
  * dkp_source_refresh:
  **/
 gboolean
-dkp_source_refresh (DkpSource *power_source, DBusGMethodInvocation *context)
+dkp_source_refresh (DkpSource *source, DBusGMethodInvocation *context)
 {
-	dkp_source_update (power_source);
+	dkp_source_update (source);
 	dbus_g_method_return (context);
 	return TRUE;
 }
