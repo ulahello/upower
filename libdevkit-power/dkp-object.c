@@ -208,6 +208,25 @@ dkp_strzero (const gchar *text)
 }
 
 /**
+ * dkp_object_seconds_to_time:
+ **/
+static gchar *
+dkp_object_seconds_to_time (guint seconds)
+{
+	gfloat value = seconds;
+	if (value < 60)
+		return g_strdup_printf ("%.0f seconds", value);
+	value /= 60.0;
+	if (value < 60)
+		return g_strdup_printf ("%.1f minutes", value);
+	value /= 60.0;
+	if (value < 60)
+		return g_strdup_printf ("%.1f hours", value);
+	value /= 24.0;
+	return g_strdup_printf ("%.1f days", value);
+}
+
+/**
  * dkp_object_print:
  **/
 gboolean
@@ -217,6 +236,7 @@ dkp_object_print (const DkpObject *obj)
 	struct tm *time_tm;
 	time_t t;
 	gchar time_buf[256];
+	gchar *time_str;
 
 	/* get a human readable time */
 	t = (time_t) obj->update_time;
@@ -243,14 +263,18 @@ dkp_object_print (const DkpObject *obj)
 		g_print ("    energy-full-design:  %g Wh\n", obj->battery_energy_full_design);
 		g_print ("    energy-rate:         %g W\n", obj->battery_energy_rate);
 		g_print ("    time to full:        ");
-		if (obj->battery_time_to_full >= 0)
-			g_print ("%d seconds\n", (int) obj->battery_time_to_full);
-		else
+		if (obj->battery_time_to_full >= 0) {
+			time_str = dkp_object_seconds_to_time (obj->battery_time_to_full);
+			g_print ("%s\n", time_str);
+			g_free (time_str);
+		} else
 			g_print ("unknown\n");
 		g_print ("    time to empty:       ");
-		if (obj->battery_time_to_empty >= 0)
-			g_print ("%d seconds\n", (int) obj->battery_time_to_empty);
-		else
+		if (obj->battery_time_to_empty >= 0) {
+			time_str = dkp_object_seconds_to_time (obj->battery_time_to_empty);
+			g_print ("%s\n", time_str);
+			g_free (time_str);
+		} else
 			g_print ("unknown\n");
 		g_print ("    percentage:          %g%%\n", obj->battery_percentage);
 		g_print ("    capacity:            %g%%\n", obj->battery_capacity);
