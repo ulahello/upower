@@ -65,21 +65,28 @@ static GPtrArray *
 dkp_history_copy_array_timespan (GPtrArray *array, guint timespan)
 {
 	guint i;
-	DkpHistoryObj *obj;
+	const DkpHistoryObj *obj;
 	DkpHistoryObj *obj_new;
 	GPtrArray *array_new;
-	GTimeVal timeval;
+	guint start;
 
-	g_get_current_time (&timeval);
+	/* no data */
+	if (array->len == 0)
+		return NULL;
+
 	array_new = g_ptr_array_new ();
 
-	for (i=0; i<array->len; i++) {
-		obj = (DkpHistoryObj *) g_ptr_array_index (array, i);
-		if (timeval.tv_sec - obj->time < timespan) {
+	/* treat the timespan like a range, and search backwards */
+	obj = (const DkpHistoryObj *) g_ptr_array_index (array, array->len-1);
+	start = obj->time;
+	for (i=array->len-1; i>0; i--) {
+		g_debug ("i=%i", i);
+		obj = (const DkpHistoryObj *) g_ptr_array_index (array, i);
+		if (start - obj->time < timespan) {
 			obj_new = dkp_history_obj_copy (obj);
 			g_ptr_array_add (array_new, obj_new);
 		}
-	}
+	}	
 
 	return array_new;
 }
