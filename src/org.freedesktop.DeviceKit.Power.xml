@@ -103,7 +103,7 @@
     <!-- ************************************************************ -->
     <method name="GetOnBattery">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-      <arg name="on_battery" type="b">
+      <arg name="on_battery" direction="out" type="b">
         <doc:doc><doc:summary>If we are on battery power.</doc:summary></doc:doc>
       </arg>
       <doc:doc>
@@ -119,7 +119,7 @@
     <!-- ************************************************************ -->
     <method name="GetLowBattery">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-      <arg name="low_battery" type="b">
+      <arg name="low_battery" direction="out" type="b">
         <doc:doc><doc:summary>If we are critically low on battery power.</doc:summary></doc:doc>
       </arg>
       <doc:doc>
