@@ -105,13 +105,13 @@ dkp_tool_get_device_properties (DBusGConnection *bus, const char *object_path)
 {
 	GError *error;
 	GHashTable *hash_table = NULL;
-	DBusGProxy *prop_proxy;
+	DBusGProxy *proxy;
 	const char *ifname = "org.freedesktop.DeviceKit.Power.Device";
 
-	prop_proxy = dbus_g_proxy_new_for_name (bus, "org.freedesktop.DeviceKit.Power",
+	proxy = dbus_g_proxy_new_for_name (bus, "org.freedesktop.DeviceKit.Power",
 						object_path, "org.freedesktop.DBus.Properties");
 	error = NULL;
-	if (!dbus_g_proxy_call (prop_proxy, "GetAll", &error,
+	if (!dbus_g_proxy_call (proxy, "GetAll", &error,
 				G_TYPE_STRING, ifname,
 				G_TYPE_INVALID,
 				dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_VALUE),
@@ -123,7 +123,7 @@ dkp_tool_get_device_properties (DBusGConnection *bus, const char *object_path)
 	}
 
 out:
-	g_object_unref (prop_proxy);
+	g_object_unref (proxy);
 	return hash_table;
 }
 
@@ -144,6 +144,76 @@ dkp_tool_do_monitor (void)
 	g_main_loop_run (loop);
 
 	return FALSE;
+}
+
+/**
+ * dkp_tool_get_device_stats:
+ **/
+static gboolean
+dkp_tool_get_device_stats (DBusGConnection *bus, const char *object_path, const gchar *type, guint timespec)
+{
+	GError *error = NULL;
+	DBusGProxy *proxy;
+	GType g_type_gvalue_array;
+	GPtrArray *gvalue_ptr_array = NULL;
+	GValueArray *gva;
+	GValue *gv;
+	guint i;
+
+	proxy = dbus_g_proxy_new_for_name (bus, "org.freedesktop.DeviceKit.Power",
+						object_path, "org.freedesktop.DeviceKit.Power.Source");
+
+	g_type_gvalue_array = dbus_g_type_get_collection ("GPtrArray",
+					dbus_g_type_get_struct("GValueArray",
+						G_TYPE_UINT,
+						G_TYPE_DOUBLE,
+						G_TYPE_STRING,
+						G_TYPE_INVALID));
+
+	error = NULL;
+	if (!dbus_g_proxy_call (proxy, "GetStatistics", &error,
+				G_TYPE_STRING, type,
+				G_TYPE_UINT, timespec,
+				G_TYPE_INVALID,
+				g_type_gvalue_array, &gvalue_ptr_array,
+				G_TYPE_INVALID)) {
+		dkp_debug ("GetStatistics(%s,%i) on %s failed: %s", type, timespec, object_path, error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* no data */
+	if (gvalue_ptr_array->len == 0)
+		goto out;
+
+	guint timeval;
+	gdouble value;
+	const gchar *state;
+
+	g_print ("  statistics (%s)\n", type);
+	for (i=0; i< gvalue_ptr_array->len; i++) {
+		gva = (GValueArray *) g_ptr_array_index (gvalue_ptr_array, i);
+		/* 0 */
+		gv = g_value_array_get_nth (gva, 0);
+		timeval = g_value_get_uint (gv);
+		g_value_unset (gv);
+		/* 1 */
+		gv = g_value_array_get_nth (gva, 1);
+		value = g_value_get_double (gv);
+		g_value_unset (gv);
+		/* 2 */
+		gv = g_value_array_get_nth (gva, 2);
+		state = g_value_get_string (gv);
+		g_print ("    %lu seconds\t%.2lf (%s)\n", time (NULL) - timeval, value, state);
+		g_value_unset (gv);
+		g_value_array_free (gva);
+	}
+
+out:
+	if (gvalue_ptr_array != NULL)
+		g_ptr_array_free (gvalue_ptr_array, TRUE);
+	g_object_unref (proxy);
+	return TRUE;
 }
 
 /**
@@ -168,6 +238,10 @@ dkp_tool_show_device_info (const gchar *object_path)
 
 	/* print to screen */
 	dkp_object_print (obj);
+
+	/* if we can, get stats */
+	dkp_tool_get_device_stats (bus, object_path, "charge", 120);
+	dkp_tool_get_device_stats (bus, object_path, "rate", 120);
 
 	/* tidy up */
 	dkp_object_free (obj);
