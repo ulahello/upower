@@ -56,6 +56,8 @@ gboolean	 dkp_object_free		(DkpObject		*obj);
 gchar		*dkp_object_get_id		(DkpObject		*obj);
 DkpObject	*dkp_object_copy		(const DkpObject	*cobj);
 gboolean	 dkp_object_print		(const DkpObject	*obj);
+gboolean	 dkp_object_diff		(const DkpObject	*old,
+						 const DkpObject	*obj);
 gboolean	 dkp_object_equal		(const DkpObject	*obj1,
 						 const DkpObject	*obj2);
 gboolean	 dkp_object_set_from_map	(DkpObject		*obj,
