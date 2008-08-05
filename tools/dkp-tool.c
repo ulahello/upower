@@ -27,29 +27,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <pwd.h>
-#include <grp.h>
-
 #include <glib.h>
 #include <glib/gi18n-lib.h>
-#include <glib-object.h>
 
-#include <dbus/dbus-glib.h>
-#include <dbus/dbus-glib-lowlevel.h>
-
-#include <polkit-dbus/polkit-dbus.h>
-
-#include "dkp-daemon-glue.h"
 #include "dkp-marshal.h"
 #include "dkp-debug.h"
-#include "dkp-object.h"
-#include "dkp-history-obj.h"
-
 #include "dkp-client.h"
 #include "dkp-client-device.h"
 
