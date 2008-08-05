@@ -162,9 +162,10 @@ dkp_tool_get_device_stats (DBusGConnection *bus, const char *object_path, const 
 	guint i;
 	DkpHistoryObj *obj;
 	GPtrArray *array;
+	gboolean ret;
 
 	proxy = dbus_g_proxy_new_for_name (bus, "org.freedesktop.DeviceKit.Power",
-						object_path, "org.freedesktop.DeviceKit.Power.Source");
+					   object_path, "org.freedesktop.DeviceKit.Power.Source");
 
 	g_type_gvalue_array = dbus_g_type_get_collection ("GPtrArray",
 					dbus_g_type_get_struct("GValueArray",
@@ -173,13 +174,14 @@ dkp_tool_get_device_stats (DBusGConnection *bus, const char *object_path, const 
 						G_TYPE_STRING,
 						G_TYPE_INVALID));
 
-	error = NULL;
-	if (!dbus_g_proxy_call (proxy, "GetStatistics", &error,
+	/* get compound data */
+	ret = dbus_g_proxy_call (proxy, "GetStatistics", &error,
 				G_TYPE_STRING, type,
 				G_TYPE_UINT, timespec,
 				G_TYPE_INVALID,
 				g_type_gvalue_array, &gvalue_ptr_array,
-				G_TYPE_INVALID)) {
+				G_TYPE_INVALID);
+	if (!ret) {
 		dkp_debug ("GetStatistics(%s,%i) on %s failed: %s", type, timespec, object_path, error->message);
 		g_error_free (error);
 		goto out;
@@ -258,6 +260,29 @@ dkp_tool_show_device_info (const gchar *object_path)
 }
 
 /**
+ * dkp_tool_enumerate_devices:
+ **/
+static GPtrArray *
+dkp_tool_enumerate_devices (DBusGProxy *proxy)
+{
+	gboolean ret;
+	GError *error = NULL;
+	GPtrArray *devices = NULL;
+	GType g_type_array;
+
+	g_type_array = dbus_g_type_get_collection ("GPtrArray", DBUS_TYPE_G_OBJECT_PATH);
+	ret = dbus_g_proxy_call (proxy, "EnumerateDevices", &error,
+				 G_TYPE_INVALID,
+				 g_type_array, &devices,
+				 G_TYPE_INVALID);
+	if (!ret) {
+		dkp_warning ("Couldn't enumerate devices: %s", error->message);
+		g_error_free (error);
+	}
+	return devices;
+}
+
+/**
  * main:
  **/
 int
@@ -272,7 +297,7 @@ main (int argc, char **argv)
 
 	const GOptionEntry entries[] = {
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, _("Show extra debugging information"), NULL },
-		{ "enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_enumerate, _("Enumerate objects paths for devices"), NULL },
+		{ "enumerate", 'e', 0, G_OPTION_ARG_NONE, &opt_enumerate, _("Enumerate objects paths for devices"), NULL },
 		{ "dump", 0, 0, G_OPTION_ARG_NONE, &opt_dump, _("Dump all parameters for all objects"), NULL },
 		{ "monitor", 0, 0, G_OPTION_ARG_NONE, &opt_monitor, _("Monitor activity from the power daemon"), NULL },
 		{ "monitor-detail", 0, 0, G_OPTION_ARG_NONE, &opt_monitor_detail, _("Monitor with detail"), NULL },
@@ -305,13 +330,12 @@ main (int argc, char **argv)
 
 	if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
-		if (!org_freedesktop_DeviceKit_Power_enumerate_devices (power_proxy, &devices, &error)) {
-			dkp_warning ("Couldn't enumerate devices: %s", error->message);
-			g_error_free (error);
+		const gchar *object_path;
+		devices = dkp_tool_enumerate_devices (power_proxy);
+		if (devices == NULL)
 			goto out;
-		}
-		for (n = 0; n < devices->len; n++) {
-			gchar *object_path = devices->pdata[n];
+		for (n=0; n < devices->len; n++) {
+			object_path = (const gchar *) g_ptr_array_index (devices, n);
 			if (opt_enumerate)
 				g_print ("%s\n", object_path);
 			else {
