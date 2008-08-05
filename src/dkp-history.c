@@ -31,10 +31,10 @@
 #include "dkp-history-obj.h"
 
 static void	dkp_history_class_init	(DkpHistoryClass	*klass);
-static void	dkp_history_init	(DkpHistory		*profile);
+static void	dkp_history_init	(DkpHistory		*history);
 static void	dkp_history_finalize	(GObject		*object);
 
-#define DKP_HISTORY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DK_TYPE_HISTORY, DkpHistoryPrivate))
+#define DKP_HISTORY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_HISTORY, DkpHistoryPrivate))
 
 #define DKP_HISTORY_DATA_DIR		"/home/hughsie/Desktop"
 #define DKP_HISTORY_SAVE_INTERVAL	5 /* seconds */
@@ -94,12 +94,15 @@ dkp_history_copy_array_timespan (GPtrArray *array, guint timespan)
  * dkp_history_get_charge_data:
  **/
 GPtrArray *
-dkp_history_get_charge_data (DkpHistory *profile, guint timespan)
+dkp_history_get_charge_data (DkpHistory *history, guint timespan)
 {
 	GPtrArray *array;
-	if (profile->priv->id == NULL)
+
+	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
+
+	if (history->priv->id == NULL)
 		return NULL;
-	array = dkp_history_copy_array_timespan (profile->priv->data_charge, timespan);
+	array = dkp_history_copy_array_timespan (history->priv->data_charge, timespan);
 	return array;
 }
 
@@ -107,12 +110,15 @@ dkp_history_get_charge_data (DkpHistory *profile, guint timespan)
  * dkp_history_get_rate_data:
  **/
 GPtrArray *
-dkp_history_get_rate_data (DkpHistory *profile, guint timespan)
+dkp_history_get_rate_data (DkpHistory *history, guint timespan)
 {
 	GPtrArray *array;
-	if (profile->priv->id == NULL)
+
+	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
+
+	if (history->priv->id == NULL)
 		return NULL;
-	array = dkp_history_copy_array_timespan (profile->priv->data_rate, timespan);
+	array = dkp_history_copy_array_timespan (history->priv->data_rate, timespan);
 	return array;
 }
 
@@ -120,12 +126,12 @@ dkp_history_get_rate_data (DkpHistory *profile, guint timespan)
  * dkp_history_load_data:
  **/
 static gchar *
-dkp_history_get_filename (DkpHistory *profile, const gchar *type)
+dkp_history_get_filename (DkpHistory *history, const gchar *type)
 {
 	gchar *path;
 	gchar *filename;
 
-	filename = g_strdup_printf ("profile-%s-%s.dat", type, profile->priv->id);
+	filename = g_strdup_printf ("history-%s-%s.dat", type, history->priv->id);
 	path = g_build_filename (DKP_HISTORY_DATA_DIR, "DeviceKit-power", filename, NULL);
 	g_free (filename);
 	return path;
@@ -187,18 +193,24 @@ out:
  * dkp_history_save_data:
  **/
 static gboolean
-dkp_history_save_data (DkpHistory *profile)
+dkp_history_save_data (DkpHistory *history)
 {
 	gchar *filename;
 
-	/* load rate history from disk */
-	filename = dkp_history_get_filename (profile, "rate");
-	dkp_history_save_data_array (filename, profile->priv->data_rate);
+	/* we have an ID? */
+	if (history->priv->id == NULL) {
+		dkp_warning ("no ID, cannot save");
+		return FALSE;
+	}
+
+	/* save rate history to disk */
+	filename = dkp_history_get_filename (history, "rate");
+	dkp_history_save_data_array (filename, history->priv->data_rate);
 	g_free (filename);
 
-	/* load charge history from disk */
-	filename = dkp_history_get_filename (profile, "charge");
-	dkp_history_save_data_array (filename, profile->priv->data_charge);
+	/* save charge history to disk */
+	filename = dkp_history_get_filename (history, "charge");
+	dkp_history_save_data_array (filename, history->priv->data_charge);
 	g_free (filename);
 
 	return TRUE;
@@ -208,9 +220,9 @@ dkp_history_save_data (DkpHistory *profile)
  * dkp_history_schedule_save_cb:
  **/
 static gboolean
-dkp_history_schedule_save_cb (DkpHistory *profile)
+dkp_history_schedule_save_cb (DkpHistory *history)
 {
-	dkp_history_save_data (profile);
+	dkp_history_save_data (history);
 	return FALSE;
 }
 
@@ -218,22 +230,22 @@ dkp_history_schedule_save_cb (DkpHistory *profile)
  * dkp_history_is_low_power:
  **/
 static gboolean
-dkp_history_is_low_power (DkpHistory *profile)
+dkp_history_is_low_power (DkpHistory *history)
 {
 	guint length;
 	const DkpHistoryObj *obj;
 
 	/* current status is always up to date */
-	if (profile->priv->state != DKP_SOURCE_STATE_DISCHARGING)
+	if (history->priv->state != DKP_SOURCE_STATE_DISCHARGING)
 		return FALSE;
 
 	/* have we got any data? */
-	length = profile->priv->data_charge->len;
+	length = history->priv->data_charge->len;
 	if (length == 0)
 		return FALSE;
 
 	/* get the last saved charge object */
-	obj = (const DkpHistoryObj *) g_ptr_array_index (profile->priv->data_charge, length-1);
+	obj = (const DkpHistoryObj *) g_ptr_array_index (history->priv->data_charge, length-1);
 	if (obj->state != DKP_SOURCE_STATE_DISCHARGING)
 		return FALSE;
 
@@ -249,30 +261,30 @@ dkp_history_is_low_power (DkpHistory *profile)
  * dkp_history_schedule_save:
  **/
 static gboolean
-dkp_history_schedule_save (DkpHistory *profile)
+dkp_history_schedule_save (DkpHistory *history)
 {
 	gboolean ret;
 
 	/* if low power, then don't batch up save requests */
-	ret = dkp_history_is_low_power (profile);
+	ret = dkp_history_is_low_power (history);
 	if (ret) {
-		dkp_history_save_data (profile);
+		dkp_history_save_data (history);
 		return TRUE;
 	}
 
 	/* we already have one saved, cancel and reschedule */
-	if (profile->priv->save_id != 0) {
+	if (history->priv->save_id != 0) {
 		dkp_debug ("deferring as others queued");
-		g_source_remove (profile->priv->save_id);
-		profile->priv->save_id = g_timeout_add_seconds (DKP_HISTORY_SAVE_INTERVAL,
-								(GSourceFunc) dkp_history_schedule_save_cb, profile);
+		g_source_remove (history->priv->save_id);
+		history->priv->save_id = g_timeout_add_seconds (DKP_HISTORY_SAVE_INTERVAL,
+								(GSourceFunc) dkp_history_schedule_save_cb, history);
 		return TRUE;
 	}
 
 	/* nothing scheduled, do new */
 	dkp_debug ("saving in %i seconds", DKP_HISTORY_SAVE_INTERVAL);
-	profile->priv->save_id = g_timeout_add_seconds (DKP_HISTORY_SAVE_INTERVAL,
-							(GSourceFunc) dkp_history_schedule_save_cb, profile);
+	history->priv->save_id = g_timeout_add_seconds (DKP_HISTORY_SAVE_INTERVAL,
+							(GSourceFunc) dkp_history_schedule_save_cb, history);
 
 	return TRUE;
 }
@@ -331,18 +343,18 @@ out:
  * dkp_history_load_data:
  **/
 static gboolean
-dkp_history_load_data (DkpHistory *profile)
+dkp_history_load_data (DkpHistory *history)
 {
 	gchar *filename;
 
 	/* load rate history from disk */
-	filename = dkp_history_get_filename (profile, "rate");
-	dkp_history_load_data_array (filename, profile->priv->data_rate);
+	filename = dkp_history_get_filename (history, "rate");
+	dkp_history_load_data_array (filename, history->priv->data_rate);
 	g_free (filename);
 
 	/* load charge history from disk */
-	filename = dkp_history_get_filename (profile, "charge");
-	dkp_history_load_data_array (filename, profile->priv->data_charge);
+	filename = dkp_history_get_filename (history, "charge");
+	dkp_history_load_data_array (filename, history->priv->data_charge);
 	g_free (filename);
 
 	return TRUE;
@@ -352,19 +364,21 @@ dkp_history_load_data (DkpHistory *profile)
  * dkp_history_set_id:
  **/
 gboolean
-dkp_history_set_id (DkpHistory *profile, const gchar *id)
+dkp_history_set_id (DkpHistory *history, const gchar *id)
 {
 	gboolean ret;
 
-	if (profile->priv->id != NULL)
+	g_return_val_if_fail (DKP_IS_HISTORY (history), FALSE);
+
+	if (history->priv->id != NULL)
 		return FALSE;
 	if (id == NULL)
 		return FALSE;
 
 	dkp_debug ("using id: %s", id);
-	profile->priv->id = g_strdup (id);
+	history->priv->id = g_strdup (id);
 	/* load all previous data */
-	ret = dkp_history_load_data (profile);
+	ret = dkp_history_load_data (history);
 	return ret;
 }
 
@@ -372,11 +386,13 @@ dkp_history_set_id (DkpHistory *profile, const gchar *id)
  * dkp_history_set_state:
  **/
 gboolean
-dkp_history_set_state (DkpHistory *profile, DkpSourceState state)
+dkp_history_set_state (DkpHistory *history, DkpSourceState state)
 {
-	if (profile->priv->id == NULL)
+	g_return_val_if_fail (DKP_IS_HISTORY (history), FALSE);
+
+	if (history->priv->id == NULL)
 		return FALSE;
-	profile->priv->state = state;
+	history->priv->state = state;
 	return TRUE;
 }
 
@@ -384,24 +400,26 @@ dkp_history_set_state (DkpHistory *profile, DkpSourceState state)
  * dkp_history_set_charge_data:
  **/
 gboolean
-dkp_history_set_charge_data (DkpHistory *profile, gdouble percentage)
+dkp_history_set_charge_data (DkpHistory *history, gdouble percentage)
 {
 	DkpHistoryObj *obj;
 
-	if (profile->priv->id == NULL)
+	g_return_val_if_fail (DKP_IS_HISTORY (history), FALSE);
+
+	if (history->priv->id == NULL)
 		return FALSE;
-	if (profile->priv->state == DKP_SOURCE_STATE_UNKNOWN)
+	if (history->priv->state == DKP_SOURCE_STATE_UNKNOWN)
 		return FALSE;
-	if (profile->priv->percentage_last == percentage)
+	if (history->priv->percentage_last == percentage)
 		return FALSE;
 
 	/* add to array and schedule save file */
-	obj = dkp_history_obj_create (percentage, profile->priv->state);
-	g_ptr_array_add (profile->priv->data_charge, obj);
-	dkp_history_schedule_save (profile);
+	obj = dkp_history_obj_create (percentage, history->priv->state);
+	g_ptr_array_add (history->priv->data_charge, obj);
+	dkp_history_schedule_save (history);
 
 	/* save last value */
-	profile->priv->percentage_last = percentage;
+	history->priv->percentage_last = percentage;
 
 	return TRUE;
 }
@@ -410,24 +428,26 @@ dkp_history_set_charge_data (DkpHistory *profile, gdouble percentage)
  * dkp_history_set_rate_data:
  **/
 gboolean
-dkp_history_set_rate_data (DkpHistory *profile, gdouble rate)
+dkp_history_set_rate_data (DkpHistory *history, gdouble rate)
 {
 	DkpHistoryObj *obj;
 
-	if (profile->priv->id == NULL)
+	g_return_val_if_fail (DKP_IS_HISTORY (history), FALSE);
+
+	if (history->priv->id == NULL)
 		return FALSE;
-	if (profile->priv->state == DKP_SOURCE_STATE_UNKNOWN)
+	if (history->priv->state == DKP_SOURCE_STATE_UNKNOWN)
 		return FALSE;
-	if (profile->priv->rate_last == rate)
+	if (history->priv->rate_last == rate)
 		return FALSE;
 
 	/* add to array and schedule save file */
-	obj = dkp_history_obj_create (rate, profile->priv->state);
-	g_ptr_array_add (profile->priv->data_rate, obj);
-	dkp_history_schedule_save (profile);
+	obj = dkp_history_obj_create (rate, history->priv->state);
+	g_ptr_array_add (history->priv->data_rate, obj);
+	dkp_history_schedule_save (history);
 
 	/* save last value */
-	profile->priv->rate_last = rate;
+	history->priv->rate_last = rate;
 
 	return TRUE;
 }
@@ -446,19 +466,19 @@ dkp_history_class_init (DkpHistoryClass *klass)
 
 /**
  * dkp_history_init:
- * @profile: This class instance
+ * @history: This class instance
  **/
 static void
-dkp_history_init (DkpHistory *profile)
+dkp_history_init (DkpHistory *history)
 {
-	profile->priv = DKP_HISTORY_GET_PRIVATE (profile);
-	profile->priv->id = NULL;
-	profile->priv->rate_last = 0;
-	profile->priv->percentage_last = 0;
-	profile->priv->state = DKP_SOURCE_STATE_UNKNOWN;
-	profile->priv->data_rate = g_ptr_array_new ();
-	profile->priv->data_charge = g_ptr_array_new ();
-	profile->priv->save_id = 0;
+	history->priv = DKP_HISTORY_GET_PRIVATE (history);
+	history->priv->id = NULL;
+	history->priv->rate_last = 0;
+	history->priv->percentage_last = 0;
+	history->priv->state = DKP_SOURCE_STATE_UNKNOWN;
+	history->priv->data_rate = g_ptr_array_new ();
+	history->priv->data_charge = g_ptr_array_new ();
+	history->priv->save_id = 0;
 }
 
 /**
@@ -468,20 +488,20 @@ dkp_history_init (DkpHistory *profile)
 static void
 dkp_history_finalize (GObject *object)
 {
-	DkpHistory *profile;
+	DkpHistory *history;
 
-	g_return_if_fail (DK_IS_HISTORY (object));
+	g_return_if_fail (DKP_IS_HISTORY (object));
 
-	profile = DKP_HISTORY (object);
+	history = DKP_HISTORY (object);
 
 	/* save */
-	dkp_history_save_data (profile);
+	dkp_history_save_data (history);
 
-	g_ptr_array_free (profile->priv->data_rate, TRUE);
-	g_ptr_array_free (profile->priv->data_charge, TRUE);
-	g_free (profile->priv->id);
+	g_ptr_array_free (history->priv->data_rate, TRUE);
+	g_ptr_array_free (history->priv->data_charge, TRUE);
+	g_free (history->priv->id);
 
-	g_return_if_fail (profile->priv != NULL);
+	g_return_if_fail (history->priv != NULL);
 
 	G_OBJECT_CLASS (dkp_history_parent_class)->finalize (object);
 }
@@ -494,8 +514,8 @@ dkp_history_finalize (GObject *object)
 DkpHistory *
 dkp_history_new (void)
 {
-	DkpHistory *profile;
-	profile = g_object_new (DK_TYPE_HISTORY, NULL);
-	return DKP_HISTORY (profile);
+	DkpHistory *history;
+	history = g_object_new (DKP_TYPE_HISTORY, NULL);
+	return DKP_HISTORY (history);
 }
 

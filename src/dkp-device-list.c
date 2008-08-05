@@ -33,7 +33,7 @@ static void	dkp_device_list_class_init	(DkpDeviceListClass	*klass);
 static void	dkp_device_list_init		(DkpDeviceList		*list);
 static void	dkp_device_list_finalize	(GObject		*object);
 
-#define DKP_DEVICE_LIST_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DK_TYPE_DEVICE_LIST, DkpDeviceListPrivate))
+#define DKP_DEVICE_LIST_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_DEVICE_LIST, DkpDeviceListPrivate))
 
 struct DkpDeviceListPrivate
 {
@@ -55,6 +55,8 @@ dkp_device_list_lookup (DkpDeviceList *list, DevkitDevice *d)
 	DkpDevice *device;
 	const gchar *native_path;
 
+	g_return_val_if_fail (DKP_IS_DEVICE_LIST (list), NULL);
+
 	/* does device exist in db? */
 	native_path = devkit_device_get_native_path (d);
 	device = g_hash_table_lookup (list->priv->map_native_path_to_device, native_path);
@@ -71,6 +73,11 @@ gboolean
 dkp_device_list_insert (DkpDeviceList *list, DevkitDevice *d, DkpDevice *device)
 {
 	const gchar *native_path;
+
+	g_return_val_if_fail (DKP_IS_DEVICE_LIST (list), FALSE);
+	g_return_val_if_fail (d != NULL, FALSE);
+	g_return_val_if_fail (device != NULL, FALSE);
+
 	native_path = devkit_device_get_native_path (d);
 	g_hash_table_insert (list->priv->map_native_path_to_device,
 			     g_strdup (native_path), device);
@@ -98,6 +105,9 @@ dkp_device_list_remove_cb (gpointer key, gpointer value, gpointer user_data)
 gboolean
 dkp_device_list_remove (DkpDeviceList *list, DkpDevice *device)
 {
+	g_return_val_if_fail (DKP_IS_DEVICE_LIST (list), FALSE);
+	g_return_val_if_fail (device != NULL, FALSE);
+
 	/* remove the device from the db */
 	g_hash_table_foreach_remove (list->priv->map_native_path_to_device,
 				     dkp_device_list_remove_cb, device);
@@ -113,6 +123,7 @@ dkp_device_list_remove (DkpDeviceList *list, DkpDevice *device)
 const GPtrArray	*
 dkp_device_list_get_array (DkpDeviceList *list)
 {
+	g_return_val_if_fail (DKP_IS_DEVICE_LIST (list), NULL);
 	return list->priv->array;
 }
 
@@ -149,7 +160,7 @@ dkp_device_list_finalize (GObject *object)
 {
 	DkpDeviceList *list;
 
-	g_return_if_fail (DK_IS_DEVICE_LIST (object));
+	g_return_if_fail (DKP_IS_DEVICE_LIST (object));
 
 	list = DKP_DEVICE_LIST (object);
 	g_ptr_array_free (list->priv->array, TRUE);
@@ -167,7 +178,7 @@ DkpDeviceList *
 dkp_device_list_new (void)
 {
 	DkpDeviceList *list;
-	list = g_object_new (DK_TYPE_DEVICE_LIST, NULL);
+	list = g_object_new (DKP_TYPE_DEVICE_LIST, NULL);
 	return DKP_DEVICE_LIST (list);
 }
 
