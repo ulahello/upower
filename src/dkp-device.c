@@ -79,17 +79,12 @@ dkp_device_new (DkpDaemon *daemon, DevkitDevice *d)
 {
 	const gchar *subsys;
 	DkpDevice *device;
-	gchar *id;
 
 	device = NULL;
 
 	subsys = devkit_device_get_subsystem (d);
 	if (strcmp (subsys, "power_supply") == 0) {
 		device = DKP_DEVICE (dkp_source_new (daemon, d));
-		id = dkp_source_get_id (DKP_SOURCE (device));
-		if (id != NULL)
-			dkp_debug ("Using device profile id: %s", id);
-		g_free (id);
 	}
 	return device;
 }
