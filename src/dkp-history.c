@@ -322,9 +322,15 @@ dkp_history_load_data_array (const gchar *filename, GPtrArray *array)
 
 	/* split by line ending */
 	parts = g_strsplit (data, "\n", 0);
-	length = g_strv_length (parts) - 1;
+	length = g_strv_length (parts);
+	if (length == 0) {
+		dkp_debug ("no data in %s", filename);
+		goto out;
+	}
+
+	/* add valid entries */
 	dkp_debug ("loading %i items of data from %s", length, filename);
-	for (i=0; i<length; i++) {
+	for (i=0; i<length-1; i++) {
 		obj = dkp_history_obj_from_string (parts[i]);
 		if (obj != NULL)
 			g_ptr_array_add (array, obj);
