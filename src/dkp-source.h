@@ -75,6 +75,10 @@ gboolean	 dkp_source_get_statistics	(DkpSource		*source,
 						 guint			 timespan,
 						 DBusGMethodInvocation	*context);
 
+/* needed for the on_battery and low_battery logic */
+gboolean	 dkp_source_get_on_battery	(DkpSource		*source);
+gboolean	 dkp_source_get_low_battery	(DkpSource		*source);
+
 G_END_DECLS
 
 #endif /* __DKP_SOURCE_H__ */

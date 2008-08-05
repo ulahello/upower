@@ -196,7 +196,9 @@ static void
 dkp_daemon_init (DkpDaemon *daemon)
 {
 	daemon->priv = DKP_DAEMON_GET_PRIVATE (daemon);
+	/* as soon as _any_ battery goes discharging, this is true */
 	daemon->priv->on_battery = FALSE;
+	/* as soon as _all_ batteries are low, this is true */
 	daemon->priv->low_battery = FALSE;
 	daemon->priv->map_native_path_to_device = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 }

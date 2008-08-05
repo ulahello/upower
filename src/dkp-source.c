@@ -613,6 +613,34 @@ dkp_source_get_id (DkpSource *source)
 }
 
 /**
+ * dkp_source_get_on_battery:
+ **/
+gboolean
+dkp_source_get_on_battery (DkpSource *source)
+{
+	if (source->priv->obj->type != DKP_SOURCE_TYPE_BATTERY)
+		return FALSE;
+	if (source->priv->obj->battery_state != DKP_SOURCE_STATE_DISCHARGING)
+		return FALSE;
+	return TRUE;
+}
+
+/**
+ * dkp_source_get_low_battery:
+ **/
+gboolean
+dkp_source_get_low_battery (DkpSource *source)
+{
+	gboolean ret;
+	ret = dkp_source_get_on_battery (source);
+	if (!ret)
+		return FALSE;
+	if (source->priv->obj->battery_percentage > 10)
+		return FALSE;
+	return TRUE;
+}
+
+/**
  * dkp_source_calculate_battery_rate:
  **/
 static void
