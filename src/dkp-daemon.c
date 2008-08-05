@@ -34,6 +34,7 @@
 #include "dkp-debug.h"
 #include "dkp-daemon.h"
 #include "dkp-device.h"
+#include "dkp-source.h"
 #include "dkp-device-list.h"
 
 #include "dkp-daemon-glue.h"
@@ -68,6 +69,8 @@ struct DkpDaemonPrivate
 static void	dkp_daemon_class_init	(DkpDaemonClass *klass);
 static void	dkp_daemon_init		(DkpDaemon	*seat);
 static void	dkp_daemon_finalize	(GObject	*object);
+static gboolean	dkp_daemon_get_on_battery_local (DkpDaemon *daemon);
+static gboolean	dkp_daemon_get_low_battery_local (DkpDaemon *daemon);
 
 G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
 
@@ -197,11 +200,6 @@ static void
 dkp_daemon_init (DkpDaemon *daemon)
 {
 	daemon->priv = DKP_DAEMON_GET_PRIVATE (daemon);
-	/* as soon as _any_ battery goes discharging, this is true */
-	daemon->priv->on_battery = FALSE;
-	/* as soon as _all_ batteries are low, this is true */
-	daemon->priv->low_battery = FALSE;
-	daemon->priv->list = dkp_device_list_new ();
 }
 
 /**
@@ -312,12 +310,83 @@ static void gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean 
 static void gpk_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d);
 
 /**
+ * dkp_daemon_get_on_battery_local:
+ *
+ * As soon as _any_ battery goes discharging, this is true
+ **/
+static gboolean
+dkp_daemon_get_on_battery_local (DkpDaemon *daemon)
+{
+	guint i;
+	gboolean ret;
+	gboolean result = FALSE;
+	gboolean on_battery;
+	DkpDevice *device;
+	const GPtrArray *array;
+
+	/* ask each device */
+	array = dkp_device_list_get_array (daemon->priv->list);
+	for (i=0; i<array->len; i++) {
+		device = (DkpDevice *) g_ptr_array_index (array, i);
+		ret = dkp_source_get_on_battery (DKP_SOURCE (device), &on_battery);
+		if (ret && on_battery) {
+			result = TRUE;
+			break;
+		}
+	}
+	return result;
+}
+
+/**
+ * dkp_daemon_get_low_battery_local:
+ *
+ * As soon as _all_ batteries are low, this is true
+ **/
+static gboolean
+dkp_daemon_get_low_battery_local (DkpDaemon *daemon)
+{
+	guint i;
+	gboolean ret;
+	gboolean result = TRUE;
+	gboolean low_battery;
+	DkpDevice *device;
+	const GPtrArray *array;
+
+	/* ask each device */
+	array = dkp_device_list_get_array (daemon->priv->list);
+	for (i=0; i<array->len; i++) {
+		device = (DkpDevice *) g_ptr_array_index (array, i);
+		ret = dkp_source_get_low_battery (DKP_SOURCE (device), &low_battery);
+		if (ret && !low_battery) {
+			result = FALSE;
+			break;
+		}
+	}
+	return result;
+}
+
+/**
  * gpk_daemon_device_changed:
  **/
 static void
 gpk_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesized)
 {
 	DkpDevice *device;
+	gboolean ret;
+
+	/* check if the on_battery and low_battery state has changed */
+	ret = dkp_daemon_get_on_battery_local (daemon);
+	if (ret != daemon->priv->on_battery) {
+		daemon->priv->on_battery = ret;
+		dkp_debug ("now on_battery = %s", ret ? "yes" : "no");
+		g_signal_emit (daemon, signals[ON_BATTERY_CHANGED_SIGNAL], 0, ret);
+	}
+	ret = dkp_daemon_get_low_battery_local (daemon);
+	if (ret != daemon->priv->low_battery) {
+		daemon->priv->low_battery = ret;
+		dkp_debug ("now low_battery = %s", ret ? "yes" : "no");
+		g_signal_emit (daemon, signals[LOW_BATTERY_CHANGED_SIGNAL], 0, ret);
+	}
 
 	/* does the device exist in the db? */
 	device = dkp_device_list_lookup (daemon->priv->list, d);
@@ -398,10 +467,6 @@ gpk_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d)
 		g_object_unref (device);
 	}
 }
-
-//TODO: hook into the devices
-//g_signal_emit (daemon, signals[ON_BATTERY_CHANGED_SIGNAL], 0, FALSE);
-//g_signal_emit (daemon, signals[LOW_BATTERY_CHANGED_SIGNAL], 0, FALSE);
 
 /**
  * gpk_daemon_device_event_signal_handler:
@@ -536,6 +601,7 @@ dkp_daemon_new (void)
 
 	daemon = DKP_DAEMON (g_object_new (DKP_SOURCE_TYPE_DAEMON, NULL));
 
+	daemon->priv->list = dkp_device_list_new ();
 	if (!gpk_daemon_register_power_daemon (DKP_DAEMON (daemon))) {
 		g_object_unref (daemon);
 		return NULL;
@@ -550,12 +616,16 @@ dkp_daemon_new (void)
 		g_object_unref (daemon);
 		return NULL;
 	}
+
 	for (l = devices; l != NULL; l = l->next) {
 		DevkitDevice *device = l->data;
 		gpk_daemon_device_add (daemon, device, FALSE);
 	}
 	g_list_foreach (devices, (GFunc) g_object_unref, NULL);
 	g_list_free (devices);
+
+	daemon->priv->on_battery = dkp_daemon_get_on_battery_local (daemon);
+	daemon->priv->low_battery = dkp_daemon_get_low_battery_local (daemon);
 
 	return daemon;
 }

@@ -69,15 +69,16 @@ DkpSource	*dkp_source_new			(DkpDaemon		*daemon,
 /* exported methods */
 gboolean	 dkp_source_refresh		(DkpSource		*source,
 						 DBusGMethodInvocation	*context);
-gchar		*dkp_source_get_id		(DkpSource		*source);
 gboolean	 dkp_source_get_statistics	(DkpSource		*source,
 						 const gchar		*type,
 						 guint			 timespan,
 						 DBusGMethodInvocation	*context);
 
 /* needed for the on_battery and low_battery logic */
-gboolean	 dkp_source_get_on_battery	(DkpSource		*source);
-gboolean	 dkp_source_get_low_battery	(DkpSource		*source);
+gboolean	 dkp_source_get_on_battery	(DkpSource		*source,
+						 gboolean		*on_battery);
+gboolean	 dkp_source_get_low_battery	(DkpSource		*source,
+						 gboolean		*low_battery);
 
 G_END_DECLS
 

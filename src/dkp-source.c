@@ -469,6 +469,7 @@ dkp_source_new (DkpDaemon *daemon, DevkitDevice *d)
 	source->priv->obj->native_path = g_strdup (native_path);
 	source->priv->history = dkp_history_new ();
 
+	/* detect what kind of device we are */
 	if (sysfs_file_exists (native_path, "online")) {
 		source->priv->obj->type = DKP_SOURCE_TYPE_LINE_POWER;
 	} else {
@@ -476,13 +477,17 @@ dkp_source_new (DkpDaemon *daemon, DevkitDevice *d)
 		source->priv->obj->type = DKP_SOURCE_TYPE_BATTERY;
 	}
 
+	/* coldplug */
 	if (!dkp_source_update (source)) {
+		dkp_warning ("coldplug of %s failed", source->priv->obj->native_path);
 		g_object_unref (source);
 		source = NULL;
 		goto out;
 	}
 
+	/* register on the bus */
 	if (!dkp_source_register_source (DKP_SOURCE (source))) {
+		dkp_warning ("failed to register on the bus");
 		g_object_unref (source);
 		source = NULL;
 		goto out;
@@ -490,11 +495,8 @@ dkp_source_new (DkpDaemon *daemon, DevkitDevice *d)
 
 	/* get the id so we can load the old history */
 	id = dkp_object_get_id (source->priv->obj);
-	if (id == NULL) {
-		dkp_debug ("cannot get device ID, not loading history");
-		goto out;
-	}
-	dkp_history_set_id (source->priv->history, id);
+	if (id != NULL)
+		dkp_history_set_id (source->priv->history, id);
 	g_free (id);
 
 out:
@@ -604,24 +606,20 @@ dkp_source_reset_values (DkpSource *source)
 }
 
 /**
- * dkp_source_get_id:
- **/
-gchar *
-dkp_source_get_id (DkpSource *source)
-{
-	return dkp_object_get_id (source->priv->obj);
-}
-
-/**
  * dkp_source_get_on_battery:
  **/
 gboolean
-dkp_source_get_on_battery (DkpSource *source)
+dkp_source_get_on_battery (DkpSource *source, gboolean *on_battery)
 {
+	g_return_val_if_fail (DKP_IS_SOURCE (source), FALSE);
+	g_return_val_if_fail (on_battery != NULL, FALSE);
+
 	if (source->priv->obj->type != DKP_SOURCE_TYPE_BATTERY)
 		return FALSE;
-	if (source->priv->obj->battery_state != DKP_SOURCE_STATE_DISCHARGING)
+	if (!source->priv->obj->battery_is_present)
 		return FALSE;
+
+	*on_battery = (source->priv->obj->battery_state == DKP_SOURCE_STATE_DISCHARGING);
 	return TRUE;
 }
 
@@ -629,14 +627,26 @@ dkp_source_get_on_battery (DkpSource *source)
  * dkp_source_get_low_battery:
  **/
 gboolean
-dkp_source_get_low_battery (DkpSource *source)
+dkp_source_get_low_battery (DkpSource *source, gboolean *low_battery)
 {
 	gboolean ret;
-	ret = dkp_source_get_on_battery (source);
+	gboolean on_battery;
+
+	g_return_val_if_fail (DKP_IS_SOURCE (source), FALSE);
+	g_return_val_if_fail (low_battery != NULL, FALSE);
+
+	/* reuse the common checks */
+	ret = dkp_source_get_on_battery (source, &on_battery);
 	if (!ret)
 		return FALSE;
-	if (source->priv->obj->battery_percentage > 10)
-		return FALSE;
+
+	/* shortcut */
+	if (!on_battery) {
+		*low_battery = FALSE;
+		return TRUE;
+	}
+
+	*low_battery = (source->priv->obj->battery_percentage < 10);
 	return TRUE;
 }
 
@@ -921,6 +931,9 @@ dkp_source_get_statistics (DkpSource *source, const gchar *type, guint timespan,
 	GValue *value;
 	guint i;
 
+	g_return_val_if_fail (DKP_IS_SOURCE (source), FALSE);
+	g_return_val_if_fail (type != NULL, FALSE);
+
 	/* get the correct data */
 	if (strcmp (type, "rate") == 0)
 		array = dkp_history_get_rate_data (source->priv->history, timespan);
@@ -963,6 +976,8 @@ out:
 gboolean
 dkp_source_refresh (DkpSource *source, DBusGMethodInvocation *context)
 {
+	g_return_val_if_fail (DKP_IS_SOURCE (source), FALSE);
+
 	dkp_source_update (source);
 	dbus_g_method_return (context);
 	return TRUE;
