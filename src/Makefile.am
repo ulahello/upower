@@ -44,6 +44,7 @@ dbusif_DATA = org.freedesktop.DeviceKit.Power.xml org.freedesktop.DeviceKit.Powe
 devkit_power_daemon_SOURCES = 					\
 	dkp-daemon.h			dkp-daemon.c		\
 	dkp-device.h			dkp-device.c		\
+	dkp-device-list.h		dkp-device-list.c	\
 	dkp-source.h			dkp-source.c		\
 	dkp-history.h			dkp-history.c		\
 	sysfs-utils.h			sysfs-utils.c		\

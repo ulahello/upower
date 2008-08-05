@@ -34,6 +34,7 @@
 #include "dkp-debug.h"
 #include "dkp-daemon.h"
 #include "dkp-device.h"
+#include "dkp-device-list.h"
 
 #include "dkp-daemon-glue.h"
 #include "dkp-marshal.h"
@@ -57,7 +58,7 @@ struct DkpDaemonPrivate
 	PolKitContext		*pk_context;
 	PolKitTracker		*pk_tracker;
 
-	GHashTable		*map_native_path_to_device;
+	DkpDeviceList		*list;
 	gboolean		 on_battery;
 	gboolean		 low_battery;
 
@@ -200,7 +201,7 @@ dkp_daemon_init (DkpDaemon *daemon)
 	daemon->priv->on_battery = FALSE;
 	/* as soon as _all_ batteries are low, this is true */
 	daemon->priv->low_battery = FALSE;
-	daemon->priv->map_native_path_to_device = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+	daemon->priv->list = dkp_device_list_new ();
 }
 
 /**
@@ -233,8 +234,8 @@ dkp_daemon_finalize (GObject *object)
 	if (daemon->priv->devkit_client != NULL)
 		g_object_unref (daemon->priv->devkit_client);
 
-	if (daemon->priv->map_native_path_to_device != NULL)
-		g_hash_table_unref (daemon->priv->map_native_path_to_device);
+	if (daemon->priv->list != NULL)
+		g_object_unref (daemon->priv->list);
 
 	G_OBJECT_CLASS (dkp_daemon_parent_class)->finalize (object);
 }
@@ -317,47 +318,31 @@ static void
 gpk_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesized)
 {
 	DkpDevice *device;
-	const gchar *native_path;
 
-	native_path = devkit_device_get_native_path (d);
-	device = g_hash_table_lookup (daemon->priv->map_native_path_to_device, native_path);
+	/* does the device exist in the db? */
+	device = dkp_device_list_lookup (daemon->priv->list, d);
 	if (device != NULL) {
 		if (!dkp_device_changed (device, d, synthesized)) {
-			dkp_debug ("changed triggered remove on %s", native_path);
+			dkp_debug ("changed triggered remove on %s", dkp_device_get_object_path (device));
 			gpk_daemon_device_remove (daemon, d);
 		} else {
-			dkp_debug ("changed %s", native_path);
+			dkp_debug ("changed %s", dkp_device_get_object_path (device));
 		}
 	} else {
-		dkp_debug ("treating change event as add on %s", native_path);
+		dkp_debug ("treating change event as add on %s", dkp_device_get_object_path (device));
 		gpk_daemon_device_add (daemon, d, TRUE);
 	}
-}
-
-/**
- * gpk_daemon_device_went_away_remove_cb:
- **/
-static gboolean
-gpk_daemon_device_went_away_remove_cb (gpointer key, gpointer value, gpointer user_data)
-{
-	if (value == user_data) {
-		dkp_debug ("removed %s", (char *) key);
-		return TRUE;
-	}
-	return FALSE;
 }
 
 /**
  * gpk_daemon_device_went_away:
  **/
 static void
-gpk_daemon_device_went_away (gpointer user_data, GObject *where_the_object_was)
+gpk_daemon_device_went_away (gpointer user_data, GObject *_device)
 {
 	DkpDaemon *daemon = DKP_DAEMON (user_data);
-
-	g_hash_table_foreach_remove (daemon->priv->map_native_path_to_device,
-				     gpk_daemon_device_went_away_remove_cb,
-				     where_the_object_was);
+	DkpDevice *device = DKP_DEVICE (_device);
+	dkp_device_list_remove (daemon->priv->list, device);
 }
 
 /**
@@ -367,13 +352,12 @@ static void
 gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 {
 	DkpDevice *device;
-	const gchar *native_path;
 
-	native_path = devkit_device_get_native_path (d);
-	device = g_hash_table_lookup (daemon->priv->map_native_path_to_device, native_path);
+	/* does device exist in db? */
+	device = dkp_device_list_lookup (daemon->priv->list, d);
 	if (device != NULL) {
 		/* we already have the device; treat as change event */
-		dkp_debug ("treating add event as change event on %s", native_path);
+		dkp_debug ("treating add event as change event on %s", dkp_device_get_object_path (device));
 		gpk_daemon_device_changed (daemon, d, FALSE);
 	} else {
 		device = dkp_device_new (daemon, d);
@@ -384,16 +368,13 @@ gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 			 * dbus-glib, no cookie for you.
 			 */
 			g_object_weak_ref (G_OBJECT (device), gpk_daemon_device_went_away, daemon);
-			g_hash_table_insert (daemon->priv->map_native_path_to_device,
-					     g_strdup (native_path),
-					     device);
-			dkp_debug ("added %s", native_path);
+			dkp_device_list_insert (daemon->priv->list, d, device);
 			if (emit_event) {
 				g_signal_emit (daemon, signals[DEVICE_ADDED_SIGNAL], 0,
 					       dkp_device_get_object_path (device));
 			}
 		} else {
-			dkp_debug ("ignoring add event on %s", native_path);
+			dkp_debug ("ignoring add event on %s", dkp_device_get_object_path (device));
 		}
 	}
 }
@@ -405,12 +386,11 @@ static void
 gpk_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d)
 {
 	DkpDevice *device;
-	const gchar *native_path;
 
-	native_path = devkit_device_get_native_path (d);
-	device = g_hash_table_lookup (daemon->priv->map_native_path_to_device, native_path);
+	/* does device exist in db? */
+	device = dkp_device_list_lookup (daemon->priv->list, d);
 	if (device == NULL) {
-		dkp_debug ("ignoring remove event on %s", native_path);
+		dkp_debug ("ignoring remove event on %s", dkp_device_get_object_path (device));
 	} else {
 		dkp_device_removed (device);
 		g_signal_emit (daemon, signals[DEVICE_REMOVED_SIGNAL], 0,
@@ -668,26 +648,28 @@ gpk_daemon_throw_error (DBusGMethodInvocation *context, int error_code, const ch
 /* exported methods */
 
 /**
- * gpk_daemon_enumerate_cb:
- **/
-static void
-gpk_daemon_enumerate_cb (gpointer key, gpointer value, gpointer user_data)
-{
-	DkpDevice *device = DKP_DEVICE (value);
-	GPtrArray *object_paths = user_data;
-	g_ptr_array_add (object_paths, g_strdup (dkp_device_get_object_path (device)));
-}
-
-/**
  * dkp_daemon_enumerate_devices:
  **/
 gboolean
 dkp_daemon_enumerate_devices (DkpDaemon *daemon, DBusGMethodInvocation *context)
 {
+	guint i;
+	const GPtrArray *array;
 	GPtrArray *object_paths;
+	DkpDevice *device;
+
+	/* build a pointer array of the object paths */
 	object_paths = g_ptr_array_new ();
-	g_hash_table_foreach (daemon->priv->map_native_path_to_device, gpk_daemon_enumerate_cb, object_paths);
+	array = dkp_device_list_get_array (daemon->priv->list);
+	for (i=0; i<array->len; i++) {
+		device = (DkpDevice *) g_ptr_array_index (array, i);
+		g_ptr_array_add (object_paths, g_strdup (dkp_device_get_object_path (device)));
+	}
+
+	/* return it on the bus */
 	dbus_g_method_return (context, object_paths);
+
+	/* free */
 	g_ptr_array_foreach (object_paths, (GFunc) g_free, NULL);
 	g_ptr_array_free (object_paths, TRUE);
 	return TRUE;
