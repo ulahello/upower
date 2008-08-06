@@ -36,11 +36,7 @@
 #include "dkp-client-device.h"
 
 static GMainLoop *loop;
-
-static gboolean opt_enumerate = FALSE;
-static gboolean opt_monitor = FALSE;
 static gboolean opt_monitor_detail = FALSE;
-static gchar *opt_show_info = FALSE;
 
 /**
  * dkp_tool_device_added_cb:
@@ -103,6 +99,9 @@ main (int argc, char **argv)
 	GOptionContext *context;
 	gboolean verbose = FALSE;
 	gboolean opt_dump = FALSE;
+	gboolean opt_enumerate = FALSE;
+	gboolean opt_monitor = FALSE;
+	gchar *opt_show_info = FALSE;
 	unsigned int n;
 
 	DkpClient *client;
