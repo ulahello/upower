@@ -330,7 +330,7 @@ dkp_daemon_get_on_battery_local (DkpDaemon *daemon)
 	array = dkp_device_list_get_array (daemon->priv->list);
 	for (i=0; i<array->len; i++) {
 		device = (DkpDevice *) g_ptr_array_index (array, i);
-		ret = dkp_source_get_on_battery (DKP_SOURCE (device), &on_battery);
+		ret = dkp_device_get_on_battery (device, &on_battery);
 		if (ret && on_battery) {
 			result = TRUE;
 			break;
@@ -358,7 +358,7 @@ dkp_daemon_get_low_battery_local (DkpDaemon *daemon)
 	array = dkp_device_list_get_array (daemon->priv->list);
 	for (i=0; i<array->len; i++) {
 		device = (DkpDevice *) g_ptr_array_index (array, i);
-		ret = dkp_source_get_low_battery (DKP_SOURCE (device), &low_battery);
+		ret = dkp_device_get_low_battery (device, &low_battery);
 		if (ret && !low_battery) {
 			result = FALSE;
 			break;

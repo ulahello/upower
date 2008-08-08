@@ -105,9 +105,11 @@ static guint signals[LAST_SIGNAL] = { 0 };
 G_DEFINE_TYPE (DkpSource, dkp_source, DKP_SOURCE_TYPE_DEVICE)
 #define DKP_SOURCE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_SOURCE_TYPE_SOURCE, DkpSourcePrivate))
 
-static const char *dkp_source_get_object_path (DkpDevice *device);
-static void	dkp_source_removed	 (DkpDevice *device);
-static gboolean	dkp_source_changed	 (DkpDevice *device, DevkitDevice *d, gboolean synthesized);
+static const char	*dkp_source_get_object_path	(DkpDevice *device);
+static gboolean		 dkp_source_get_on_battery	(DkpDevice *device, gboolean *on_battery);
+static gboolean		 dkp_source_get_low_battery	(DkpDevice *device, gboolean *low_battery);
+static void		 dkp_source_removed	 	(DkpDevice *device);
+static gboolean		 dkp_source_changed	 	(DkpDevice *device, DevkitDevice *d, gboolean synthesized);
 
 /**
  * dkp_source_error_quark:
@@ -241,6 +243,8 @@ dkp_source_class_init (DkpSourceClass *klass)
 	device_class->changed = dkp_source_changed;
 	device_class->removed = dkp_source_removed;
 	device_class->get_object_path = dkp_source_get_object_path;
+	device_class->get_on_battery = dkp_source_get_on_battery;
+	device_class->get_low_battery = dkp_source_get_low_battery;
 
 	g_type_class_add_private (klass, sizeof (DkpSourcePrivate));
 
@@ -608,9 +612,11 @@ dkp_source_reset_values (DkpSource *source)
 /**
  * dkp_source_get_on_battery:
  **/
-gboolean
-dkp_source_get_on_battery (DkpSource *source, gboolean *on_battery)
+static gboolean
+dkp_source_get_on_battery (DkpDevice *device, gboolean *on_battery)
 {
+	DkpSource *source = DKP_SOURCE (device);
+
 	g_return_val_if_fail (DKP_IS_SOURCE (source), FALSE);
 	g_return_val_if_fail (on_battery != NULL, FALSE);
 
@@ -626,17 +632,18 @@ dkp_source_get_on_battery (DkpSource *source, gboolean *on_battery)
 /**
  * dkp_source_get_low_battery:
  **/
-gboolean
-dkp_source_get_low_battery (DkpSource *source, gboolean *low_battery)
+static gboolean
+dkp_source_get_low_battery (DkpDevice *device, gboolean *low_battery)
 {
 	gboolean ret;
 	gboolean on_battery;
+	DkpSource *source = DKP_SOURCE (device);
 
 	g_return_val_if_fail (DKP_IS_SOURCE (source), FALSE);
 	g_return_val_if_fail (low_battery != NULL, FALSE);
 
 	/* reuse the common checks */
-	ret = dkp_source_get_on_battery (source, &on_battery);
+	ret = dkp_source_get_on_battery (device, &on_battery);
 	if (!ret)
 		return FALSE;
 

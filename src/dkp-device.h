@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
  * Copyright (C) 2008 David Zeuthen <david@fubar.dk>
+ * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,11 +47,15 @@ typedef struct
 	GObjectClass	 parent_class;
 
 	/* vtable */
-	gboolean	(*changed)		(DkpDevice	*device,
+	gboolean	 (*changed)		(DkpDevice	*device,
 						 DevkitDevice	*d,
 						 gboolean	 synthesized);
-	void		(*removed)		(DkpDevice	*device);
-	const char	*(*get_object_path)	(DkpDevice	*device);
+	void		 (*removed)		(DkpDevice	*device);
+	const gchar	*(*get_object_path)	(DkpDevice	*device);
+	gboolean	 (*get_on_battery)	(DkpDevice	*device,
+						 gboolean	*on_battery);
+	gboolean	 (*get_low_battery)	(DkpDevice	*device,
+						 gboolean	*low_battery);
 } DkpDeviceClass;
 
 GType		 dkp_device_get_type		(void);
@@ -60,7 +65,11 @@ gboolean	 dkp_device_changed	 	(DkpDevice	*device,
 						 DevkitDevice	*d,
 						 gboolean	 synthesized);
 void		 dkp_device_removed	 	(DkpDevice	*device);
-const char	*dkp_device_get_object_path	(DkpDevice	*device);
+const gchar	*dkp_device_get_object_path	(DkpDevice	*device);
+gboolean	 dkp_device_get_on_battery	(DkpDevice	*device,
+						 gboolean	*on_battery);
+gboolean	 dkp_device_get_low_battery	(DkpDevice	*device,
+						 gboolean	*low_battery);
 
 G_END_DECLS
 

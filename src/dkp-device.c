@@ -102,9 +102,30 @@ dkp_device_changed (DkpDevice *device, DevkitDevice *d, gboolean synthesized)
 /**
  * dkp_device_get_object_path:
  **/
-const char *
+const gchar *
 dkp_device_get_object_path (DkpDevice *device)
 {
 	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
-	return (klass->get_object_path (device));
+	return klass->get_object_path (device);
 }
+
+/**
+ * dkp_device_get_on_battery:
+ **/
+gboolean
+dkp_device_get_on_battery (DkpDevice *device, gboolean *on_battery)
+{
+	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+	return klass->get_on_battery (device, on_battery);
+}
+
+/**
+ * dkp_device_get_low_battery:
+ **/
+gboolean
+dkp_device_get_low_battery (DkpDevice *device, gboolean *low_battery)
+{
+	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+	return klass->get_low_battery (device, low_battery);
+}
+
