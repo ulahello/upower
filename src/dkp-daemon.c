@@ -50,6 +50,8 @@ enum
 	LAST_SIGNAL,
 };
 
+static const gchar *subsystems[] = {"power_supply", "usb", NULL};
+
 static guint signals[LAST_SIGNAL] = { 0 };
 
 struct DkpDaemonPrivate
@@ -443,7 +445,7 @@ gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 					       dkp_device_get_object_path (device));
 			}
 		} else {
-			dkp_debug ("ignoring add event on %s", dkp_device_get_object_path (device));
+			dkp_debug ("ignoring add event on %s", devkit_device_get_native_path (d));
 		}
 	}
 }
@@ -499,7 +501,6 @@ gpk_daemon_register_power_daemon (DkpDaemon *daemon)
 	DBusConnection *connection;
 	DBusError dbus_error;
 	GError *error = NULL;
-	const gchar *subsystems[] = {"power_supply", NULL};
 
 	daemon->priv->pk_context = polkit_context_new ();
 	polkit_context_set_io_watch_functions (daemon->priv->pk_context, pk_io_add_watch, pk_io_remove_watch);
@@ -597,7 +598,6 @@ dkp_daemon_new (void)
 	GError *error = NULL;
 	GList *devices;
 	GList *l;
-	const gchar *subsystems[] = {"power_supply", NULL};
 
 	daemon = DKP_DAEMON (g_object_new (DKP_SOURCE_TYPE_DAEMON, NULL));
 
@@ -607,9 +607,7 @@ dkp_daemon_new (void)
 		return NULL;
 	}
 
-	devices = devkit_client_enumerate_by_subsystem (daemon->priv->devkit_client,
-							 subsystems,
-							 &error);
+	devices = devkit_client_enumerate_by_subsystem (daemon->priv->devkit_client, subsystems, &error);
 	if (error != NULL) {
 		dkp_warning ("Cannot enumerate devices: %s", error->message);
 		g_error_free (error);
