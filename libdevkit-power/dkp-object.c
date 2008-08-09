@@ -424,15 +424,15 @@ dkp_object_new (void)
 }
 
 /**
- * dkp_object_clear:
+ * dkp_object_free_internal:
  **/
-gboolean
-dkp_object_clear (DkpObject *obj)
+static gboolean
+dkp_object_free_internal (DkpObject *obj)
 {
-	if (obj == NULL)
-		return FALSE;
-	dkp_object_free (obj);
-	dkp_object_clear_internal (obj);
+	g_free (obj->vendor);
+	g_free (obj->model);
+	g_free (obj->serial);
+	g_free (obj->native_path);
 	return TRUE;
 }
 
@@ -444,11 +444,21 @@ dkp_object_free (DkpObject *obj)
 {
 	if (obj == NULL)
 		return FALSE;
-	g_free (obj->vendor);
-	g_free (obj->model);
-	g_free (obj->serial);
-	g_free (obj->native_path);
+	dkp_object_free_internal (obj);
 	g_free (obj);
+	return TRUE;
+}
+
+/**
+ * dkp_object_clear:
+ **/
+gboolean
+dkp_object_clear (DkpObject *obj)
+{
+	if (obj == NULL)
+		return FALSE;
+	dkp_object_free_internal (obj);
+	dkp_object_clear_internal (obj);
 	return TRUE;
 }
 
