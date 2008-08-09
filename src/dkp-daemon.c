@@ -34,7 +34,7 @@
 #include "dkp-debug.h"
 #include "dkp-daemon.h"
 #include "dkp-device.h"
-#include "dkp-source.h"
+#include "dkp-supply.h"
 #include "dkp-device-list.h"
 
 #include "dkp-daemon-glue.h"
@@ -76,7 +76,7 @@ static gboolean	dkp_daemon_get_low_battery_local (DkpDaemon *daemon);
 
 G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
 
-#define DKP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_SOURCE_TYPE_DAEMON, DkpDaemonPrivate))
+#define DKP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_DAEMON, DkpDaemonPrivate))
 
 /**
  * dkp_daemon_error_quark:
@@ -85,16 +85,12 @@ GQuark
 dkp_daemon_error_quark (void)
 {
 	static GQuark ret = 0;
-
-	if (ret == 0) {
+	if (ret == 0)
 		ret = g_quark_from_static_string ("dkp_daemon_error");
-	}
-
 	return ret;
 }
 
 #define ENUM_ENTRY(NAME, DESC) { NAME, "" #NAME "", DESC }
-
 /**
  * dkp_daemon_error_get_type:
  **/
@@ -127,7 +123,7 @@ dkp_daemon_constructor (GType type, guint n_construct_properties, GObjectConstru
 	DkpDaemon *daemon;
 	DkpDaemonClass *klass;
 
-	klass = DKP_DAEMON_CLASS (g_type_class_peek (DKP_SOURCE_TYPE_DAEMON));
+	klass = DKP_DAEMON_CLASS (g_type_class_peek (DKP_TYPE_DAEMON));
 	daemon = DKP_DAEMON (G_OBJECT_CLASS (dkp_daemon_parent_class)->constructor (type, n_construct_properties, construct_properties));
 	return G_OBJECT (daemon);
 }
@@ -190,7 +186,7 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 			      g_cclosure_marshal_VOID__BOOLEAN,
 			      G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 
-	dbus_g_object_type_install_info (DKP_SOURCE_TYPE_DAEMON, &dbus_glib_dkp_daemon_object_info);
+	dbus_g_object_type_install_info (DKP_TYPE_DAEMON, &dbus_glib_dkp_daemon_object_info);
 
 	dbus_g_error_domain_register (DKP_DAEMON_ERROR, NULL, DKP_DAEMON_TYPE_ERROR);
 }
@@ -308,7 +304,7 @@ gpk_daemon_dbus_filter (DBusConnection *connection, DBusMessage *message, void *
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
-static void gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event);
+static gboolean gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event);
 static void gpk_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d);
 
 /**
@@ -416,13 +412,45 @@ gpk_daemon_device_went_away (gpointer user_data, GObject *_device)
 	dkp_device_list_remove (daemon->priv->list, device);
 }
 
+#include "dkp-supply.h"
+
+/**
+ * gpk_daemon_device_get:
+ **/
+static DkpDevice *
+gpk_daemon_device_get (DevkitDevice *d)
+{
+	const gchar *type;
+	const gchar *subsys;
+	const gchar *native_path;
+	DkpDevice *device = NULL;
+
+	subsys = devkit_device_get_subsystem (d);
+	if (strcmp (subsys, "power_supply") == 0) {
+		/* always add */
+		device = DKP_DEVICE (dkp_supply_new ());
+	} else if (strcmp (subsys, "usb") == 0) {
+		/* see if this is a CSR mouse or keyboard */
+		type = devkit_device_get_property (d, "ID_BATTERY_TYPE");
+		if (type != NULL)
+			//device = DKP_DEVICE (dkp_csr_new ());
+			dkp_warning ("should add %s !!", devkit_device_get_native_path (d));
+	} else {
+		native_path = devkit_device_get_native_path (d);
+		dkp_warning ("native path %s (%s) ignoring", native_path, subsys);
+	}
+
+	return device;
+}
+
 /**
  * gpk_daemon_device_add:
  **/
-static void
+static gboolean
 gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 {
 	DkpDevice *device;
+	gboolean ret = FALSE;
 
 	/* does device exist in db? */
 	device = dkp_device_list_lookup (daemon->priv->list, d);
@@ -431,12 +459,21 @@ gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 		dkp_debug ("treating add event as change event on %s", dkp_device_get_object_path (device));
 		gpk_daemon_device_changed (daemon, d, FALSE);
 	} else {
-		device = dkp_device_new (daemon, d);
 
-		if (device != NULL) {
+		/* get the right sort of device */
+		device = gpk_daemon_device_get (d);
+		if (device == NULL) {
+			dkp_debug ("ignoring add event on %s", devkit_device_get_native_path (d));
+			goto out;
+		}
+
+		/* coldplug */
+		ret = dkp_device_coldplug (device, daemon, d);
+
+		/* only if coldplug succeeded */
+		if (ret) {
 			/* only take a weak ref; the device will stay on the bus until
-			 * it's unreffed. So if we ref it, it'll never go away. Stupid
-			 * dbus-glib, no cookie for you.
+			 * it's unreffed. So if we ref it, it'll never go away.
 			 */
 			g_object_weak_ref (G_OBJECT (device), gpk_daemon_device_went_away, daemon);
 			dkp_device_list_insert (daemon->priv->list, d, device);
@@ -445,9 +482,12 @@ gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 					       dkp_device_get_object_path (device));
 			}
 		} else {
-			dkp_debug ("ignoring add event on %s", devkit_device_get_native_path (d));
+			g_object_unref (device);
+			dkp_debug ("coldplugging failed: %s", devkit_device_get_native_path (d));
 		}
 	}
+out:
+	return ret;
 }
 
 /**
@@ -599,7 +639,7 @@ dkp_daemon_new (void)
 	GList *devices;
 	GList *l;
 
-	daemon = DKP_DAEMON (g_object_new (DKP_SOURCE_TYPE_DAEMON, NULL));
+	daemon = DKP_DAEMON (g_object_new (DKP_TYPE_DAEMON, NULL));
 
 	daemon->priv->list = dkp_device_list_new ();
 	if (!gpk_daemon_register_power_daemon (DKP_DAEMON (daemon))) {
@@ -844,3 +884,4 @@ out:
 		polkit_caller_unref (pk_caller);
 	return TRUE;
 }
+

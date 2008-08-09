@@ -21,7 +21,7 @@ DEVKIT_POWER_LIBS = $(top_builddir)/libdevkit-power/libdevkit-power.la
 
 BUILT_SOURCES =							\
 	dkp-daemon-glue.h					\
-	dkp-source-glue.h					\
+	dkp-device-glue.h					\
 	dkp-marshal.h			dkp-marshal.c
 
 dkp-marshal.h: dkp-marshal.list
@@ -33,19 +33,19 @@ dkp-marshal.c: dkp-marshal.list
 dkp-daemon-glue.h: org.freedesktop.DeviceKit.Power.xml Makefile.am
 	dbus-binding-tool --prefix=dkp_daemon --mode=glib-server --output=dkp-daemon-glue.h org.freedesktop.DeviceKit.Power.xml
 
-dkp-source-glue.h: org.freedesktop.DeviceKit.Power.Source.xml Makefile.am
-	dbus-binding-tool --prefix=dkp_source --mode=glib-server --output=dkp-source-glue.h org.freedesktop.DeviceKit.Power.Source.xml
+dkp-device-glue.h: org.freedesktop.DeviceKit.Power.Device.xml Makefile.am
+	dbus-binding-tool --prefix=dkp_device --mode=glib-server --output=dkp-device-glue.h org.freedesktop.DeviceKit.Power.Device.xml
 
 libexec_PROGRAMS = devkit-power-daemon
 
 dbusifdir = $(datadir)/dbus-1/interfaces
-dbusif_DATA = org.freedesktop.DeviceKit.Power.xml org.freedesktop.DeviceKit.Power.Source.xml
+dbusif_DATA = org.freedesktop.DeviceKit.Power.xml org.freedesktop.DeviceKit.Power.Device.xml
 
 devkit_power_daemon_SOURCES = 					\
 	dkp-daemon.h			dkp-daemon.c		\
 	dkp-device.h			dkp-device.c		\
 	dkp-device-list.h		dkp-device-list.c	\
-	dkp-source.h			dkp-source.c		\
+	dkp-supply.h			dkp-supply.c		\
 	dkp-history.h			dkp-history.c		\
 	sysfs-utils.h			sysfs-utils.c		\
 	main.c							\
@@ -85,7 +85,7 @@ CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST =						\
 	org.freedesktop.DeviceKit.Power.xml        	\
-	org.freedesktop.DeviceKit.Power.Source.xml	\
+	org.freedesktop.DeviceKit.Power.Device.xml	\
 	dkp-marshal.list				\
 	95-devkit-power.rules				\
 	$(service_in_files)                        	\

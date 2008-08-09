@@ -1,10 +1,10 @@
 <!DOCTYPE node PUBLIC
 "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd" [
-  <!ENTITY ERROR_GENERAL "org.freedesktop.DeviceKit.Power.Source.GeneralError">
+  <!ENTITY ERROR_GENERAL "org.freedesktop.DeviceKit.Power.Device.GeneralError">
 ]>
 <node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
-  <interface name="org.freedesktop.DeviceKit.Power.Source">
+  <interface name="org.freedesktop.DeviceKit.Power.Device">
     <doc:doc>
       <doc:description>
         <doc:para>

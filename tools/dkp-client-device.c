@@ -146,7 +146,7 @@ dkp_client_device_set_object_path (DkpClientDevice *device, const gchar *object_
 
 	/* connect to the correct path for all the other methods */
 	proxy_source = dbus_g_proxy_new_for_name (device->priv->bus, "org.freedesktop.DeviceKit.Power",
-						  object_path, "org.freedesktop.DeviceKit.Power.Source");
+						  object_path, "org.freedesktop.DeviceKit.Power.Device");
 	if (proxy_source == NULL) {
 		dkp_warning ("Couldn't connect to proxy");
 		goto out;

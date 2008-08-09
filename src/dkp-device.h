@@ -25,21 +25,26 @@
 #include <glib-object.h>
 #include <polkit-dbus/polkit-dbus.h>
 #include <devkit-gobject.h>
+#include <dbus/dbus-glib.h>
+#include "dkp-object.h"
 
 #include "dkp-daemon.h"
 
 G_BEGIN_DECLS
 
-#define DKP_SOURCE_TYPE_DEVICE	(dkp_device_get_type ())
-#define DKP_DEVICE(o)	   	(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_SOURCE_TYPE_DEVICE, DkpDevice))
-#define DKP_DEVICE_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_SOURCE_TYPE_DEVICE, DkpDeviceClass))
-#define DKP_IS_DEVICE(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_SOURCE_TYPE_DEVICE))
-#define DKP_IS_DEVICE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), DKP_SOURCE_TYPE_DEVICE))
-#define DKP_DEVICE_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), DKP_SOURCE_TYPE_DEVICE, DkpDeviceClass))
+#define DKP_TYPE_DEVICE	(dkp_device_get_type ())
+#define DKP_DEVICE(o)	   	(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_DEVICE, DkpDevice))
+#define DKP_DEVICE_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_DEVICE, DkpDeviceClass))
+#define DKP_IS_DEVICE(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_DEVICE))
+#define DKP_IS_DEVICE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_DEVICE))
+#define DKP_DEVICE_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_DEVICE, DkpDeviceClass))
+
+typedef struct DkpDevicePrivate DkpDevicePrivate;
 
 typedef struct
 {
-	GObject		 parent;
+	GObject			 parent;
+	DkpDevicePrivate	*priv;
 } DkpDevice;
 
 typedef struct
@@ -47,29 +52,53 @@ typedef struct
 	GObjectClass	 parent_class;
 
 	/* vtable */
-	gboolean	 (*changed)		(DkpDevice	*device,
-						 DevkitDevice	*d,
-						 gboolean	 synthesized);
-	void		 (*removed)		(DkpDevice	*device);
-	const gchar	*(*get_object_path)	(DkpDevice	*device);
+	gboolean	 (*coldplug)		(DkpDevice	*device);
+	gboolean	 (*refresh)		(DkpDevice	*device);
+	const gchar	*(*get_id)		(DkpDevice	*device);
 	gboolean	 (*get_on_battery)	(DkpDevice	*device,
 						 gboolean	*on_battery);
 	gboolean	 (*get_low_battery)	(DkpDevice	*device,
 						 gboolean	*low_battery);
+	GPtrArray	*(*get_stats)		(DkpDevice	*device,
+						 const gchar	*type,
+						 guint		 timespan);
 } DkpDeviceClass;
 
+typedef enum
+{
+	DKP_DEVICE_ERROR_GENERAL,
+	DKP_DEVICE_NUM_ERRORS
+} DkpDeviceError;
+
+#define DKP_DEVICE_ERROR dkp_device_error_quark ()
+#define DKP_DEVICE_TYPE_ERROR (dkp_device_error_get_type ())
+
+GQuark		 dkp_device_error_quark		(void);
+GType		 dkp_device_error_get_type	(void);
 GType		 dkp_device_get_type		(void);
-DkpDevice	*dkp_device_new			(DkpDaemon	*daemon,
+gboolean	 dkp_device_coldplug		(DkpDevice	*device,
+						 DkpDaemon	*daemon,
 						 DevkitDevice	*d);
 gboolean	 dkp_device_changed	 	(DkpDevice	*device,
 						 DevkitDevice	*d,
 						 gboolean	 synthesized);
 void		 dkp_device_removed	 	(DkpDevice	*device);
+DkpObject	*dkp_device_get_obj		(DkpDevice	*device);
+DevkitDevice	*dkp_device_get_d		(DkpDevice	*device);
 const gchar	*dkp_device_get_object_path	(DkpDevice	*device);
 gboolean	 dkp_device_get_on_battery	(DkpDevice	*device,
 						 gboolean	*on_battery);
 gboolean	 dkp_device_get_low_battery	(DkpDevice	*device,
 						 gboolean	*low_battery);
+void		 dkp_device_emit_changed	(DkpDevice	*device);
+
+/* exported methods */
+gboolean	 dkp_device_refresh		(DkpDevice		*device,
+						 DBusGMethodInvocation	*context);
+gboolean	 dkp_device_get_statistics	(DkpDevice		*device,
+						 const gchar		*type,
+						 guint			 timespan,
+						 DBusGMethodInvocation	*context);
 
 G_END_DECLS
 
