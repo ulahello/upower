@@ -39,7 +39,7 @@
 #include "dkp-supply.h"
 #include "dkp-history.h"
 
-#define DK_POWER_MIN_CHARGED_PERCENTAGE	60
+#define DKP_SUPPLY_REFRESH_TIMEOUT	30L
 
 struct DkpSupplyPrivate
 {
@@ -450,7 +450,9 @@ dkp_supply_refresh (DkpDevice *device)
 		 * if we are charging or discharging */
 		if (obj->battery_state == DKP_SOURCE_STATE_CHARGING ||
 		    obj->battery_state == DKP_SOURCE_STATE_DISCHARGING)
-			supply->priv->poll_timer_id = g_timeout_add_seconds (30, (GSourceFunc) dkp_supply_poll_battery, supply);
+			supply->priv->poll_timer_id =
+				g_timeout_add_seconds (DKP_SUPPLY_REFRESH_TIMEOUT,
+						       (GSourceFunc) dkp_supply_poll_battery, supply);
 		break;
 	default:
 		g_assert_not_reached ();
