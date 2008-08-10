@@ -284,6 +284,8 @@ dkp_object_print (const DkpObject *obj)
 		g_print ("  serial:               %s\n", obj->serial);
 	g_print ("  power supply:         %s\n", dkp_object_bool_to_text (obj->power_supply));
 	g_print ("  updated:              %s (%d seconds ago)\n", time_buf, (int) (time (NULL) - obj->update_time));
+	g_print ("  %s\n", dkp_source_type_to_text (obj->type));
+
 	if (obj->type == DKP_SOURCE_TYPE_BATTERY) {
 		g_print ("  battery\n");
 		g_print ("    present:             %s\n", dkp_object_bool_to_text (obj->battery_is_present));
@@ -310,6 +312,11 @@ dkp_object_print (const DkpObject *obj)
 	} else if (obj->type == DKP_SOURCE_TYPE_LINE_POWER) {
 		g_print ("  line-power\n");
 		g_print ("    online:             %s\n", dkp_object_bool_to_text (obj->line_power_online));
+	} else if (obj->type == DKP_SOURCE_TYPE_MOUSE || obj->type == DKP_SOURCE_TYPE_KEYBOARD) {
+		g_print ("    present:             %s\n", dkp_object_bool_to_text (obj->battery_is_present));
+		g_print ("    rechargeable:        %s\n", dkp_object_bool_to_text (obj->battery_is_rechargeable));
+		g_print ("    state:               %s\n", dkp_source_state_to_text (obj->battery_state));
+		g_print ("    percentage:          %g%%\n", obj->battery_percentage);
 	} else {
 		g_print ("  unknown power source type '%s'\n", dkp_source_type_to_text (obj->type));
 		ret = FALSE;
@@ -335,8 +342,8 @@ dkp_object_diff (const DkpObject *old, const DkpObject *obj)
 	if (!dkp_strequal (obj->serial, old->serial))
 		g_print ("  serial:               %s -> %s\n", old->serial, obj->serial);
 
+	g_print ("  %s\n", dkp_source_type_to_text (obj->type));
 	if (obj->type == DKP_SOURCE_TYPE_BATTERY) {
-		g_print ("  battery\n");
 		if (old->battery_is_present != obj->battery_is_present)
 			g_print ("    present:             %s -> %s\n",
 				 dkp_object_bool_to_text (old->battery_is_present),
@@ -399,11 +406,27 @@ dkp_object_diff (const DkpObject *old, const DkpObject *obj)
 				 dkp_source_technology_to_text (old->battery_technology),
 				 dkp_source_technology_to_text (obj->battery_technology));
 	} else if (obj->type == DKP_SOURCE_TYPE_LINE_POWER) {
-		g_print ("  line-power\n");
 		if (old->line_power_online != obj->line_power_online)
 			g_print ("    online:             %s -> %s\n",
 				 dkp_object_bool_to_text (old->line_power_online),
 				 dkp_object_bool_to_text (obj->line_power_online));
+	} else if (obj->type == DKP_SOURCE_TYPE_MOUSE || obj->type == DKP_SOURCE_TYPE_KEYBOARD) {
+		if (old->battery_is_present != obj->battery_is_present)
+			g_print ("    present:             %s -> %s\n",
+				 dkp_object_bool_to_text (old->battery_is_present),
+				 dkp_object_bool_to_text (obj->battery_is_present));
+		if (old->battery_is_rechargeable != obj->battery_is_rechargeable)
+			g_print ("    rechargeable:        %s -> %s\n",
+				 dkp_object_bool_to_text (old->battery_is_rechargeable),
+				 dkp_object_bool_to_text (obj->battery_is_rechargeable));
+		if (old->battery_state != obj->battery_state)
+			g_print ("    state:               %s -> %s\n",
+				 dkp_source_state_to_text (old->battery_state),
+				 dkp_source_state_to_text (obj->battery_state));
+		if (old->battery_percentage != obj->battery_percentage)
+			g_print ("    percentage:          %g%% -> %g%%\n",
+				 old->battery_percentage,
+				 obj->battery_percentage);
 	} else {
 		g_print ("  unknown power source type '%s'\n", dkp_source_type_to_text (obj->type));
 		ret = FALSE;
