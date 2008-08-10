@@ -291,6 +291,13 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, guint timespan,
 	GValue *value;
 	guint i;
 
+	/* doesn't even try to support this */
+	if (klass->get_stats == NULL) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device does not support getting stats");
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
 	array = klass->get_stats (device, type, timespan);
 	/* maybe the device doesn't support histories */
 	if (array == NULL) {
