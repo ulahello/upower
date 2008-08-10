@@ -46,6 +46,7 @@ devkit_power_daemon_SOURCES = 					\
 	dkp-device.h			dkp-device.c		\
 	dkp-device-list.h		dkp-device-list.c	\
 	dkp-supply.h			dkp-supply.c		\
+	dkp-csr.h			dkp-csr.c		\
 	dkp-history.h			dkp-history.c		\
 	sysfs-utils.h			sysfs-utils.c		\
 	main.c							\
@@ -58,6 +59,7 @@ devkit_power_daemon_CPPFLAGS = 					\
 	$(AM_CPPFLAGS)
 
 devkit_power_daemon_LDADD = 					\
+	-lusb							\
 	$(GIO_LIBS)						\
 	$(DBUS_GLIB_LIBS)					\
 	$(POLKIT_DBUS_LIBS)					\

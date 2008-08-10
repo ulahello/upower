@@ -35,6 +35,7 @@
 #include "dkp-daemon.h"
 #include "dkp-device.h"
 #include "dkp-supply.h"
+#include "dkp-csr.h"
 #include "dkp-device-list.h"
 
 #include "dkp-daemon-glue.h"
@@ -433,8 +434,7 @@ gpk_daemon_device_get (DevkitDevice *d)
 		/* see if this is a CSR mouse or keyboard */
 		type = devkit_device_get_property (d, "ID_BATTERY_TYPE");
 		if (type != NULL)
-			//device = DKP_DEVICE (dkp_csr_new ());
-			dkp_warning ("should add %s !!", devkit_device_get_native_path (d));
+			device = DKP_DEVICE (dkp_csr_new ());
 	} else {
 		native_path = devkit_device_get_native_path (d);
 		dkp_warning ("native path %s (%s) ignoring", native_path, subsys);

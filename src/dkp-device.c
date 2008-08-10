@@ -229,21 +229,35 @@ dkp_device_removed (DkpDevice *device)
 
 /**
  * dkp_device_get_on_battery:
+ *
+ * Note: Only implement for system devices, i.e. ones supplying the system
  **/
 gboolean
 dkp_device_get_on_battery (DkpDevice *device, gboolean *on_battery)
 {
 	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+
+	/* no support */
+	if (klass->get_stats == NULL)
+		return FALSE;
+
 	return klass->get_on_battery (device, on_battery);
 }
 
 /**
  * dkp_device_get_low_battery:
+ *
+ * Note: Only implement for system devices, i.e. ones supplying the system
  **/
 gboolean
 dkp_device_get_low_battery (DkpDevice *device, gboolean *low_battery)
 {
 	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+
+	/* no support */
+	if (klass->get_low_battery == NULL)
+		return FALSE;
+
 	return klass->get_low_battery (device, low_battery);
 }
 
@@ -431,41 +445,35 @@ dkp_device_emit_changed (DkpDevice *device)
 }
 
 /**
- * dkp_device_compute_object_path_from_basename:
- **/
-static char *
-dkp_device_compute_object_path_from_basename (const char *native_path_basename)
-{
-	gchar *basename;
-	gchar *object_path;
-	unsigned int n;
-
-	/* TODO: need to be more thorough with making proper object
-	 * names that won't make D-Bus crash. This is just to cope
-	 * with dm-0...
-	 */
-	basename = g_path_get_basename (native_path_basename);
-	for (n = 0; basename[n] != '\0'; n++)
-		if (basename[n] == '-')
-			basename[n] = '_';
-	object_path = g_build_filename ("/devices/", basename, NULL);
-	g_free (basename);
-
-	return object_path;
-}
-
-/**
  * dkp_device_compute_object_path:
  **/
 static gchar *
-dkp_device_compute_object_path (const char *native_path)
+dkp_device_compute_object_path (DkpDevice *device)
 {
 	gchar *basename;
+	gchar *id;
 	gchar *object_path;
+	const gchar *native_path;
+	const gchar *type;
+	guint i;
 
+	type = dkp_source_type_to_text (device->priv->obj->type);
+	native_path = device->priv->obj->native_path;
 	basename = g_path_get_basename (native_path);
-	object_path = dkp_device_compute_object_path_from_basename (basename);
+	id = g_strjoin ("_", type, basename, NULL);
+
+	/* make DBUS valid path */
+	for (i=0; id[i] != '\0'; i++) {
+		if (id[i] == '-')
+			id[i] = '_';
+		if (id[i] == '.')
+			id[i] = 'x';
+	}
+	object_path = g_build_filename ("/devices", id, NULL);
+
 	g_free (basename);
+	g_free (id);
+
 	return object_path;
 }
 
@@ -477,7 +485,8 @@ dkp_device_register_device (DkpDevice *device)
 {
 	gboolean ret = TRUE;
 
-	device->priv->object_path = dkp_device_compute_object_path (device->priv->obj->native_path);
+	device->priv->object_path = dkp_device_compute_object_path (device);
+	dkp_warning ("object path = %s", device->priv->object_path);
 	dbus_g_connection_register_g_object (device->priv->system_bus_connection,
 					     device->priv->object_path, G_OBJECT (device));
 	device->priv->system_bus_proxy = dbus_g_proxy_new_for_name (device->priv->system_bus_connection,
