@@ -71,7 +71,7 @@ dkp_history_obj_equal (const DkpHistoryObj *obj1, const DkpHistoryObj *obj2)
 gboolean
 dkp_history_obj_print (const DkpHistoryObj *obj)
 {
-	g_print ("%i\t%.3f\t%s", obj->time, obj->value, dkp_source_state_to_text (obj->state));
+	g_print ("%i\t%.3f\t%s", obj->time, obj->value, dkp_device_state_to_text (obj->state));
 	return TRUE;
 }
 
@@ -116,7 +116,7 @@ dkp_history_obj_free (DkpHistoryObj *obj)
  * dkp_history_obj_create:
  **/
 DkpHistoryObj *
-dkp_history_obj_create (gdouble value, DkpSourceState state)
+dkp_history_obj_create (gdouble value, DkpDeviceState state)
 {
 	DkpHistoryObj *obj;
 	GTimeVal timeval;
@@ -154,7 +154,7 @@ dkp_history_obj_from_string (const gchar *text)
 	obj = dkp_history_obj_new ();
 	obj->time = atoi (parts[0]);
 	obj->value = atof (parts[1]);
-	obj->state = dkp_source_state_from_text (parts[2]);	
+	obj->state = dkp_device_state_from_text (parts[2]);
 out:
 	g_strfreev (parts);
 	return obj;
@@ -168,6 +168,6 @@ dkp_history_obj_to_string (const DkpHistoryObj *obj)
 {
 	if (obj == NULL)
 		return NULL;
-	return g_strdup_printf ("%i\t%.3f\t%s", obj->time, obj->value, dkp_source_state_to_text (obj->state));
+	return g_strdup_printf ("%i\t%.3f\t%s", obj->time, obj->value, dkp_device_state_to_text (obj->state));
 }
 

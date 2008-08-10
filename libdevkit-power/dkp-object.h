@@ -36,9 +36,9 @@ typedef struct {
 	gboolean		 line_power_online;
 	gboolean		 battery_is_present;
 	gboolean		 battery_is_rechargeable;
-	DkpSourceType		 type;
-	DkpSourceState		 battery_state;
-	DkpSourceTechnology	 battery_technology;
+	DkpDeviceType		 type;
+	DkpDeviceState		 battery_state;
+	DkpDeviceTechnology	 battery_technology;
 	gdouble			 battery_capacity;
 	gdouble			 battery_energy;
 	gdouble			 battery_energy_empty;

@@ -82,7 +82,7 @@ static void
 dkp_supply_reset_values (DkpSupply *supply)
 {
 	gchar *native_path;
-	DkpSourceType type;
+	DkpDeviceType type;
 	DkpDevice *device = DKP_DEVICE (supply);
 	DkpObject *obj = dkp_device_get_obj (device);
 
@@ -112,12 +112,12 @@ dkp_supply_get_on_battery (DkpDevice *device, gboolean *on_battery)
 	g_return_val_if_fail (DKP_IS_SUPPLY (supply), FALSE);
 	g_return_val_if_fail (on_battery != NULL, FALSE);
 
-	if (obj->type != DKP_SOURCE_TYPE_BATTERY)
+	if (obj->type != DKP_DEVICE_TYPE_BATTERY)
 		return FALSE;
 	if (!obj->battery_is_present)
 		return FALSE;
 
-	*on_battery = (obj->battery_state == DKP_SOURCE_STATE_DISCHARGING);
+	*on_battery = (obj->battery_state == DKP_DEVICE_STATE_DISCHARGING);
 	return TRUE;
 }
 
@@ -197,7 +197,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 {
 	gchar *status = NULL;
 	gboolean ret = TRUE;
-	DkpSourceState battery_state;
+	DkpDeviceState battery_state;
 	DkpDevice *device = DKP_DEVICE (supply);
 	DkpObject *obj = dkp_device_get_obj (device);
 
@@ -205,7 +205,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	obj->battery_is_present = sysfs_get_bool (obj->native_path, "present");
 	if (!obj->battery_is_present) {
 		dkp_supply_reset_values (supply);
-		obj->type = DKP_SOURCE_TYPE_BATTERY;
+		obj->type = DKP_DEVICE_TYPE_BATTERY;
 		goto out;
 	}
 
@@ -218,7 +218,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 
 		/* the ACPI spec is bad at defining battery type constants */
 		technology_native = g_strstrip (sysfs_get_string (obj->native_path, "technology"));
-		obj->battery_technology = dkp_acpi_to_source_technology (technology_native);
+		obj->battery_technology = dkp_acpi_to_device_technology (technology_native);
 		g_free (technology_native);
 
 		obj->vendor = g_strstrip (sysfs_get_string (obj->native_path, "manufacturer"));
@@ -251,16 +251,16 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 
 	status = g_strstrip (sysfs_get_string (obj->native_path, "status"));
 	if (strcasecmp (status, "charging") == 0)
-		battery_state = DKP_SOURCE_STATE_CHARGING;
+		battery_state = DKP_DEVICE_STATE_CHARGING;
 	else if (strcasecmp (status, "discharging") == 0)
-		battery_state = DKP_SOURCE_STATE_DISCHARGING;
+		battery_state = DKP_DEVICE_STATE_DISCHARGING;
 	else if (strcasecmp (status, "full") == 0)
-		battery_state = DKP_SOURCE_STATE_FULLY_CHARGED;
+		battery_state = DKP_DEVICE_STATE_FULLY_CHARGED;
 	else if (strcasecmp (status, "empty") == 0)
-		battery_state = DKP_SOURCE_STATE_EMPTY;
+		battery_state = DKP_DEVICE_STATE_EMPTY;
 	else {
 		dkp_warning ("unknown status string: %s", status);
-		battery_state = DKP_SOURCE_STATE_UNKNOWN;
+		battery_state = DKP_DEVICE_STATE_UNKNOWN;
 	}
 
 	/* get the currect charge */
@@ -293,7 +293,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	}
 
 	/* charging has a negative rate */
-	if (obj->battery_energy_rate > 0 && battery_state == DKP_SOURCE_STATE_CHARGING)
+	if (obj->battery_energy_rate > 0 && battery_state == DKP_DEVICE_STATE_CHARGING)
 		obj->battery_energy_rate *= -1.0;
 
 	/* get a precise percentage */
@@ -307,9 +307,9 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	obj->battery_time_to_empty = -1;
 	obj->battery_time_to_full = -1;
 	if (obj->battery_energy_rate > 0) {
-		if (battery_state == DKP_SOURCE_STATE_DISCHARGING) {
+		if (battery_state == DKP_DEVICE_STATE_DISCHARGING) {
 			obj->battery_time_to_empty = 3600 * (obj->battery_energy / obj->battery_energy_rate);
-		} else if (battery_state == DKP_SOURCE_STATE_CHARGING) {
+		} else if (battery_state == DKP_DEVICE_STATE_CHARGING) {
 			obj->battery_time_to_full = 3600 * ((obj->battery_energy_full - obj->battery_energy) / obj->battery_energy_rate);
 		}
 	}
@@ -403,10 +403,10 @@ dkp_supply_coldplug (DkpDevice *device)
 		dkp_error ("could not get native path");
 
 	if (sysfs_file_exists (native_path, "online")) {
-		obj->type = DKP_SOURCE_TYPE_LINE_POWER;
+		obj->type = DKP_DEVICE_TYPE_LINE_POWER;
 	} else {
 		/* this is correct, UPS and CSR are not in the kernel */
-		obj->type = DKP_SOURCE_TYPE_BATTERY;
+		obj->type = DKP_DEVICE_TYPE_BATTERY;
 	}
 
 	/* get the id so we can load the old history */
@@ -440,16 +440,16 @@ dkp_supply_refresh (DkpDevice *device)
 	obj->update_time = time.tv_sec;
 
 	switch (obj->type) {
-	case DKP_SOURCE_TYPE_LINE_POWER:
+	case DKP_DEVICE_TYPE_LINE_POWER:
 		ret = dkp_supply_refresh_line_power (supply);
 		break;
-	case DKP_SOURCE_TYPE_BATTERY:
+	case DKP_DEVICE_TYPE_BATTERY:
 		ret = dkp_supply_refresh_battery (supply);
 		/* Seems that we don't get change uevents from the
 		 * kernel on some BIOS types; set up a timer to poll
 		 * if we are charging or discharging */
-		if (obj->battery_state == DKP_SOURCE_STATE_CHARGING ||
-		    obj->battery_state == DKP_SOURCE_STATE_DISCHARGING)
+		if (obj->battery_state == DKP_DEVICE_STATE_CHARGING ||
+		    obj->battery_state == DKP_DEVICE_STATE_DISCHARGING)
 			supply->priv->poll_timer_id =
 				g_timeout_add_seconds (DKP_SUPPLY_REFRESH_TIMEOUT,
 						       (GSourceFunc) dkp_supply_poll_battery, supply);

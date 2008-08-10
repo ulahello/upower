@@ -162,7 +162,7 @@ dkp_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 		g_value_set_uint64 (value, obj->update_time);
 		break;
 	case PROP_TYPE:
-		g_value_set_string (value, dkp_source_type_to_text (obj->type));
+		g_value_set_string (value, dkp_device_type_to_text (obj->type));
 		break;
 	case PROP_POWER_SUPPLY:
 		g_value_set_boolean (value, obj->power_supply);
@@ -177,7 +177,7 @@ dkp_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 		g_value_set_boolean (value, obj->battery_is_rechargeable);
 		break;
 	case PROP_BATTERY_STATE:
-		g_value_set_string (value, dkp_source_state_to_text (obj->battery_state));
+		g_value_set_string (value, dkp_device_state_to_text (obj->battery_state));
 		break;
 	case PROP_BATTERY_CAPACITY:
 		g_value_set_double (value, obj->battery_capacity);
@@ -207,7 +207,7 @@ dkp_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 		g_value_set_double (value, obj->battery_percentage);
 		break;
 	case PROP_BATTERY_TECHNOLOGY:
-		g_value_set_string (value, dkp_source_technology_to_text (obj->battery_technology));
+		g_value_set_string (value, dkp_device_technology_to_text (obj->battery_technology));
 		break;
 
 	default:
@@ -327,7 +327,7 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, guint timespan,
 		value = g_new0 (GValue, 1);
 		g_value_init (value, DKP_DBUS_STRUCT_UINT_DOUBLE_STRING);
 		g_value_take_boxed (value, dbus_g_type_specialized_construct (DKP_DBUS_STRUCT_UINT_DOUBLE_STRING));
-		dbus_g_type_struct_set (value, 0, obj->time, 1, obj->value, 2, dkp_source_state_to_text (obj->state), -1);
+		dbus_g_type_struct_set (value, 0, obj->time, 1, obj->value, 2, dkp_device_state_to_text (obj->state), -1);
 		g_ptr_array_add (complex, g_value_get_boxed (value));
 		g_free (value);
 	}
@@ -457,7 +457,7 @@ dkp_device_compute_object_path (DkpDevice *device)
 	const gchar *type;
 	guint i;
 
-	type = dkp_source_type_to_text (device->priv->obj->type);
+	type = dkp_device_type_to_text (device->priv->obj->type);
 	native_path = device->priv->obj->native_path;
 	basename = g_path_get_basename (native_path);
 	id = g_strjoin ("_", type, basename, NULL);
@@ -486,7 +486,7 @@ dkp_device_register_device (DkpDevice *device)
 	gboolean ret = TRUE;
 
 	device->priv->object_path = dkp_device_compute_object_path (device);
-	dkp_warning ("object path = %s", device->priv->object_path);
+	dkp_debug ("object path = %s", device->priv->object_path);
 	dbus_g_connection_register_g_object (device->priv->system_bus_connection,
 					     device->priv->object_path, G_OBJECT (device));
 	device->priv->system_bus_proxy = dbus_g_proxy_new_for_name (device->priv->system_bus_connection,

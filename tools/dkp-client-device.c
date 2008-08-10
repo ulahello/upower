@@ -42,7 +42,7 @@ struct DkpClientDevicePrivate
 	gchar			*object_path;
 	DkpObject		*obj;
 	DBusGConnection		*bus;
-	DBusGProxy		*proxy_source;
+	DBusGProxy		*proxy_device;
 	DBusGProxy		*proxy_props;
 };
 
@@ -118,7 +118,7 @@ dkp_client_device_set_object_path (DkpClientDevice *device, const gchar *object_
 {
 	GError *error = NULL;
 	gboolean ret = FALSE;
-	DBusGProxy *proxy_source;
+	DBusGProxy *proxy_device;
 	DBusGProxy *proxy_props;
 
 	g_return_val_if_fail (DKP_IS_CLIENT_DEVICE (device), FALSE);
@@ -145,21 +145,21 @@ dkp_client_device_set_object_path (DkpClientDevice *device, const gchar *object_
 	}
 
 	/* connect to the correct path for all the other methods */
-	proxy_source = dbus_g_proxy_new_for_name (device->priv->bus, "org.freedesktop.DeviceKit.Power",
+	proxy_device = dbus_g_proxy_new_for_name (device->priv->bus, "org.freedesktop.DeviceKit.Power",
 						  object_path, "org.freedesktop.DeviceKit.Power.Device");
-	if (proxy_source == NULL) {
+	if (proxy_device == NULL) {
 		dkp_warning ("Couldn't connect to proxy");
 		goto out;
 	}
 
 	/* listen to Changed */
-	dbus_g_proxy_add_signal (proxy_source, "Changed", G_TYPE_INVALID);
-	dbus_g_proxy_connect_signal (proxy_source, "Changed",
+	dbus_g_proxy_add_signal (proxy_device, "Changed", G_TYPE_INVALID);
+	dbus_g_proxy_connect_signal (proxy_device, "Changed",
 				     G_CALLBACK (dkp_client_device_changed_cb), device, NULL);
 
 	/* yay */
 	dkp_debug ("using object_path: %s", object_path);
-	device->priv->proxy_source = proxy_source;
+	device->priv->proxy_device = proxy_device;
 	device->priv->proxy_props = proxy_props;
 	device->priv->object_path = g_strdup (object_path);
 
@@ -218,10 +218,10 @@ dkp_client_device_refresh (DkpClientDevice *device)
 	gboolean ret;
 
 	g_return_val_if_fail (DKP_IS_CLIENT_DEVICE (device), FALSE);
-	g_return_val_if_fail (device->priv->proxy_source != NULL, FALSE);
+	g_return_val_if_fail (device->priv->proxy_device != NULL, FALSE);
 
 	/* just refresh the device */
-	ret = dbus_g_proxy_call (device->priv->proxy_source, "Refresh", &error,
+	ret = dbus_g_proxy_call (device->priv->proxy_device, "Refresh", &error,
 				 G_TYPE_INVALID, G_TYPE_INVALID);
 	if (!ret) {
 		dkp_debug ("Refresh() on %s failed: %s", device->priv->object_path, error->message);
@@ -260,7 +260,7 @@ dkp_client_device_get_statistics (const DkpClientDevice *device, const gchar *ty
 						G_TYPE_INVALID));
 
 	/* get compound data */
-	ret = dbus_g_proxy_call (device->priv->proxy_source, "GetStatistics", &error,
+	ret = dbus_g_proxy_call (device->priv->proxy_device, "GetStatistics", &error,
 				 G_TYPE_STRING, type,
 				 G_TYPE_UINT, timespec,
 				 G_TYPE_INVALID,
@@ -292,7 +292,7 @@ dkp_client_device_get_statistics (const DkpClientDevice *device, const gchar *ty
 		g_value_unset (gv);
 		/* 2 */
 		gv = g_value_array_get_nth (gva, 2);
-		obj->state = dkp_source_state_from_text (g_value_get_string (gv));
+		obj->state = dkp_device_state_from_text (g_value_get_string (gv));
 		g_value_unset (gv);
 		g_ptr_array_add (array, obj);
 		g_value_array_free (gva);
@@ -340,7 +340,7 @@ dkp_client_device_init (DkpClientDevice *device)
 {
 	device->priv = DKP_CLIENT_DEVICE_GET_PRIVATE (device);
 	device->priv->object_path = NULL;
-	device->priv->proxy_source = NULL;
+	device->priv->proxy_device = NULL;
 	device->priv->proxy_props = NULL;
 	device->priv->obj = dkp_object_new ();
 }
@@ -360,8 +360,8 @@ dkp_client_device_finalize (GObject *object)
 
 	g_free (device->priv->object_path);
 	dkp_object_free (device->priv->obj);
-	if (device->priv->proxy_source != NULL)
-		g_object_unref (device->priv->proxy_source);
+	if (device->priv->proxy_device != NULL)
+		g_object_unref (device->priv->proxy_device);
 	if (device->priv->proxy_props != NULL)
 		g_object_unref (device->priv->proxy_props);
 	dbus_g_connection_unref (device->priv->bus);

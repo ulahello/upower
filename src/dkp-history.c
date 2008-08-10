@@ -44,7 +44,7 @@ struct DkpHistoryPrivate
 	gchar			*id;
 	gdouble			 rate_last;
 	gdouble			 percentage_last;
-	DkpSourceState		 state;
+	DkpDeviceState		 state;
 	GPtrArray		*data_rate;
 	GPtrArray		*data_charge;
 	guint			 save_id;
@@ -236,7 +236,7 @@ dkp_history_is_low_power (DkpHistory *history)
 	const DkpHistoryObj *obj;
 
 	/* current status is always up to date */
-	if (history->priv->state != DKP_SOURCE_STATE_DISCHARGING)
+	if (history->priv->state != DKP_DEVICE_STATE_DISCHARGING)
 		return FALSE;
 
 	/* have we got any data? */
@@ -246,7 +246,7 @@ dkp_history_is_low_power (DkpHistory *history)
 
 	/* get the last saved charge object */
 	obj = (const DkpHistoryObj *) g_ptr_array_index (history->priv->data_charge, length-1);
-	if (obj->state != DKP_SOURCE_STATE_DISCHARGING)
+	if (obj->state != DKP_DEVICE_STATE_DISCHARGING)
 		return FALSE;
 
 	/* high enough */
@@ -392,7 +392,7 @@ dkp_history_set_id (DkpHistory *history, const gchar *id)
  * dkp_history_set_state:
  **/
 gboolean
-dkp_history_set_state (DkpHistory *history, DkpSourceState state)
+dkp_history_set_state (DkpHistory *history, DkpDeviceState state)
 {
 	g_return_val_if_fail (DKP_IS_HISTORY (history), FALSE);
 
@@ -414,7 +414,7 @@ dkp_history_set_charge_data (DkpHistory *history, gdouble percentage)
 
 	if (history->priv->id == NULL)
 		return FALSE;
-	if (history->priv->state == DKP_SOURCE_STATE_UNKNOWN)
+	if (history->priv->state == DKP_DEVICE_STATE_UNKNOWN)
 		return FALSE;
 	if (history->priv->percentage_last == percentage)
 		return FALSE;
@@ -442,7 +442,7 @@ dkp_history_set_rate_data (DkpHistory *history, gdouble rate)
 
 	if (history->priv->id == NULL)
 		return FALSE;
-	if (history->priv->state == DKP_SOURCE_STATE_UNKNOWN)
+	if (history->priv->state == DKP_DEVICE_STATE_UNKNOWN)
 		return FALSE;
 	if (history->priv->rate_last == rate)
 		return FALSE;
@@ -481,7 +481,7 @@ dkp_history_init (DkpHistory *history)
 	history->priv->id = NULL;
 	history->priv->rate_last = 0;
 	history->priv->percentage_last = 0;
-	history->priv->state = DKP_SOURCE_STATE_UNKNOWN;
+	history->priv->state = DKP_DEVICE_STATE_UNKNOWN;
 	history->priv->data_rate = g_ptr_array_new ();
 	history->priv->data_charge = g_ptr_array_new ();
 	history->priv->save_id = 0;

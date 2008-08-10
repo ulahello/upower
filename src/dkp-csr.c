@@ -148,12 +148,12 @@ dkp_csr_coldplug (DkpDevice *device)
 	/* get the type */
 	type = devkit_device_get_property (d, "ID_BATTERY_TYPE");
 	if (strcmp (type, "mouse") == 0)
-		obj->type = DKP_SOURCE_TYPE_MOUSE;
+		obj->type = DKP_DEVICE_TYPE_MOUSE;
 	if (strcmp (type, "keyboard") == 0)
-		obj->type = DKP_SOURCE_TYPE_KEYBOARD;
+		obj->type = DKP_DEVICE_TYPE_KEYBOARD;
 
 	/* nothing known */
-	if (obj->type == DKP_SOURCE_TYPE_UNKNOWN) {
+	if (obj->type == DKP_DEVICE_TYPE_UNKNOWN) {
 		dkp_warning ("not a mouse or keyboard");
 		ret = FALSE;
 		goto out;
@@ -180,7 +180,7 @@ dkp_csr_coldplug (DkpDevice *device)
 	obj->power_supply = FALSE;
 	obj->battery_is_present = TRUE;
 	obj->battery_is_rechargeable = TRUE;
-	obj->battery_state = DKP_SOURCE_STATE_DISCHARGING;
+	obj->battery_state = DKP_DEVICE_STATE_DISCHARGING;
 
 	/* try to get the usb device */
 	csr->priv->device = dkp_csr_find_device (csr);

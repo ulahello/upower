@@ -32,7 +32,7 @@
 static void
 dkp_object_clear_internal (DkpObject *obj)
 {
-	obj->type = DKP_SOURCE_TYPE_UNKNOWN;
+	obj->type = DKP_DEVICE_TYPE_UNKNOWN;
 	obj->update_time = 0;
 	obj->battery_energy = -1;
 	obj->battery_energy_full = -1;
@@ -42,8 +42,8 @@ dkp_object_clear_internal (DkpObject *obj)
 	obj->battery_capacity = -1;
 	obj->battery_time_to_empty = -1;
 	obj->battery_time_to_full = -1;
-	obj->battery_state = DKP_SOURCE_STATE_UNKNOWN;
-	obj->battery_technology = DKP_SOURCE_TECHNOLGY_UNKNOWN;
+	obj->battery_state = DKP_DEVICE_STATE_UNKNOWN;
+	obj->battery_technology = DKP_DEVICE_TECHNOLGY_UNKNOWN;
 	obj->vendor = NULL;
 	obj->model = NULL;
 	obj->serial = NULL;
@@ -73,7 +73,7 @@ dkp_object_collect_props (const char *key, const GValue *value, DkpObject *obj)
 	else if (strcmp (key, "update-time") == 0)
 		obj->update_time = g_value_get_uint64 (value);
 	else if (strcmp (key, "type") == 0)
-		obj->type = dkp_source_type_from_text (g_value_get_string (value));
+		obj->type = dkp_device_type_from_text (g_value_get_string (value));
 	else if (strcmp (key, "line-power-online") == 0)
 		obj->line_power_online = g_value_get_boolean (value);
 	else if (strcmp (key, "battery-energy") == 0)
@@ -93,7 +93,7 @@ dkp_object_collect_props (const char *key, const GValue *value, DkpObject *obj)
 	else if (strcmp (key, "battery-percentage") == 0)
 		obj->battery_percentage = g_value_get_double (value);
 	else if (strcmp (key, "battery-technology") == 0)
-		obj->battery_technology = dkp_source_technology_from_text (g_value_get_string (value));
+		obj->battery_technology = dkp_device_technology_from_text (g_value_get_string (value));
 	else if (strcmp (key, "battery-is-present") == 0)
 		obj->battery_is_present = g_value_get_boolean (value);
 	else if (strcmp (key, "battery-is-rechargeable") == 0)
@@ -103,7 +103,7 @@ dkp_object_collect_props (const char *key, const GValue *value, DkpObject *obj)
 	else if (strcmp (key, "battery-capacity") == 0)
 		obj->battery_capacity = g_value_get_double (value);
 	else if (strcmp (key, "battery-state") == 0)
-		obj->battery_state = dkp_source_state_from_text (g_value_get_string (value));
+		obj->battery_state = dkp_device_state_from_text (g_value_get_string (value));
 	else
 		handled = FALSE;
 
@@ -284,13 +284,13 @@ dkp_object_print (const DkpObject *obj)
 		g_print ("  serial:               %s\n", obj->serial);
 	g_print ("  power supply:         %s\n", dkp_object_bool_to_text (obj->power_supply));
 	g_print ("  updated:              %s (%d seconds ago)\n", time_buf, (int) (time (NULL) - obj->update_time));
-	g_print ("  %s\n", dkp_source_type_to_text (obj->type));
+	g_print ("  %s\n", dkp_device_type_to_text (obj->type));
 
-	if (obj->type == DKP_SOURCE_TYPE_BATTERY) {
+	if (obj->type == DKP_DEVICE_TYPE_BATTERY) {
 		g_print ("  battery\n");
 		g_print ("    present:             %s\n", dkp_object_bool_to_text (obj->battery_is_present));
 		g_print ("    rechargeable:        %s\n", dkp_object_bool_to_text (obj->battery_is_rechargeable));
-		g_print ("    state:               %s\n", dkp_source_state_to_text (obj->battery_state));
+		g_print ("    state:               %s\n", dkp_device_state_to_text (obj->battery_state));
 		g_print ("    energy:              %g Wh\n", obj->battery_energy);
 		g_print ("    energy-empty:        %g Wh\n", obj->battery_energy_empty);
 		g_print ("    energy-full:         %g Wh\n", obj->battery_energy_full);
@@ -308,17 +308,17 @@ dkp_object_print (const DkpObject *obj)
 		}
 		g_print ("    percentage:          %g%%\n", obj->battery_percentage);
 		g_print ("    capacity:            %g%%\n", obj->battery_capacity);
-		g_print ("    technology:          %s\n", dkp_source_technology_to_text (obj->battery_technology));
-	} else if (obj->type == DKP_SOURCE_TYPE_LINE_POWER) {
+		g_print ("    technology:          %s\n", dkp_device_technology_to_text (obj->battery_technology));
+	} else if (obj->type == DKP_DEVICE_TYPE_LINE_POWER) {
 		g_print ("  line-power\n");
 		g_print ("    online:             %s\n", dkp_object_bool_to_text (obj->line_power_online));
-	} else if (obj->type == DKP_SOURCE_TYPE_MOUSE || obj->type == DKP_SOURCE_TYPE_KEYBOARD) {
+	} else if (obj->type == DKP_DEVICE_TYPE_MOUSE || obj->type == DKP_DEVICE_TYPE_KEYBOARD) {
 		g_print ("    present:             %s\n", dkp_object_bool_to_text (obj->battery_is_present));
 		g_print ("    rechargeable:        %s\n", dkp_object_bool_to_text (obj->battery_is_rechargeable));
-		g_print ("    state:               %s\n", dkp_source_state_to_text (obj->battery_state));
+		g_print ("    state:               %s\n", dkp_device_state_to_text (obj->battery_state));
 		g_print ("    percentage:          %g%%\n", obj->battery_percentage);
 	} else {
-		g_print ("  unknown power source type '%s'\n", dkp_source_type_to_text (obj->type));
+		g_print ("  unknown device type '%s'\n", dkp_device_type_to_text (obj->type));
 		ret = FALSE;
 	}
 	return ret;
@@ -342,8 +342,8 @@ dkp_object_diff (const DkpObject *old, const DkpObject *obj)
 	if (!dkp_strequal (obj->serial, old->serial))
 		g_print ("  serial:               %s -> %s\n", old->serial, obj->serial);
 
-	g_print ("  %s\n", dkp_source_type_to_text (obj->type));
-	if (obj->type == DKP_SOURCE_TYPE_BATTERY) {
+	g_print ("  %s\n", dkp_device_type_to_text (obj->type));
+	if (obj->type == DKP_DEVICE_TYPE_BATTERY) {
 		if (old->battery_is_present != obj->battery_is_present)
 			g_print ("    present:             %s -> %s\n",
 				 dkp_object_bool_to_text (old->battery_is_present),
@@ -354,8 +354,8 @@ dkp_object_diff (const DkpObject *old, const DkpObject *obj)
 				 dkp_object_bool_to_text (obj->battery_is_rechargeable));
 		if (old->battery_state != obj->battery_state)
 			g_print ("    state:               %s -> %s\n",
-				 dkp_source_state_to_text (old->battery_state),
-				 dkp_source_state_to_text (obj->battery_state));
+				 dkp_device_state_to_text (old->battery_state),
+				 dkp_device_state_to_text (obj->battery_state));
 		if (old->battery_energy != obj->battery_energy)
 			g_print ("    energy:              %g -> %g Wh\n",
 				 old->battery_energy,
@@ -403,14 +403,14 @@ dkp_object_diff (const DkpObject *old, const DkpObject *obj)
 				 obj->battery_capacity);
 		if (old->battery_technology != obj->battery_technology)
 			g_print ("    technology:          %s -> %s\n",
-				 dkp_source_technology_to_text (old->battery_technology),
-				 dkp_source_technology_to_text (obj->battery_technology));
-	} else if (obj->type == DKP_SOURCE_TYPE_LINE_POWER) {
+				 dkp_device_technology_to_text (old->battery_technology),
+				 dkp_device_technology_to_text (obj->battery_technology));
+	} else if (obj->type == DKP_DEVICE_TYPE_LINE_POWER) {
 		if (old->line_power_online != obj->line_power_online)
 			g_print ("    online:             %s -> %s\n",
 				 dkp_object_bool_to_text (old->line_power_online),
 				 dkp_object_bool_to_text (obj->line_power_online));
-	} else if (obj->type == DKP_SOURCE_TYPE_MOUSE || obj->type == DKP_SOURCE_TYPE_KEYBOARD) {
+	} else if (obj->type == DKP_DEVICE_TYPE_MOUSE || obj->type == DKP_DEVICE_TYPE_KEYBOARD) {
 		if (old->battery_is_present != obj->battery_is_present)
 			g_print ("    present:             %s -> %s\n",
 				 dkp_object_bool_to_text (old->battery_is_present),
@@ -421,14 +421,14 @@ dkp_object_diff (const DkpObject *old, const DkpObject *obj)
 				 dkp_object_bool_to_text (obj->battery_is_rechargeable));
 		if (old->battery_state != obj->battery_state)
 			g_print ("    state:               %s -> %s\n",
-				 dkp_source_state_to_text (old->battery_state),
-				 dkp_source_state_to_text (obj->battery_state));
+				 dkp_device_state_to_text (old->battery_state),
+				 dkp_device_state_to_text (obj->battery_state));
 		if (old->battery_percentage != obj->battery_percentage)
 			g_print ("    percentage:          %g%% -> %g%%\n",
 				 old->battery_percentage,
 				 obj->battery_percentage);
 	} else {
-		g_print ("  unknown power source type '%s'\n", dkp_source_type_to_text (obj->type));
+		g_print ("  unknown device type '%s'\n", dkp_device_type_to_text (obj->type));
 		ret = FALSE;
 	}
 	return ret;
@@ -499,7 +499,7 @@ dkp_object_get_id (DkpObject *obj)
 		return id;
 
 	/* only valid for batteries */
-	if (obj->type != DKP_SOURCE_TYPE_BATTERY)
+	if (obj->type != DKP_DEVICE_TYPE_BATTERY)
 		return id;
 
 	/* we don't have an ID if we are not present */

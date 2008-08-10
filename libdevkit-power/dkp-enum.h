@@ -27,41 +27,41 @@
 G_BEGIN_DECLS
 
 typedef enum {
-	DKP_SOURCE_TYPE_LINE_POWER,
-	DKP_SOURCE_TYPE_BATTERY,
-	DKP_SOURCE_TYPE_UPS,
-	DKP_SOURCE_TYPE_MOUSE,
-	DKP_SOURCE_TYPE_KEYBOARD,
-	DKP_SOURCE_TYPE_PDA,
-	DKP_SOURCE_TYPE_PHONE,
-	DKP_SOURCE_TYPE_UNKNOWN
-} DkpSourceType;
+	DKP_DEVICE_TYPE_LINE_POWER,
+	DKP_DEVICE_TYPE_BATTERY,
+	DKP_DEVICE_TYPE_UPS,
+	DKP_DEVICE_TYPE_MOUSE,
+	DKP_DEVICE_TYPE_KEYBOARD,
+	DKP_DEVICE_TYPE_PDA,
+	DKP_DEVICE_TYPE_PHONE,
+	DKP_DEVICE_TYPE_UNKNOWN
+} DkpDeviceType;
 
 typedef enum {
-	DKP_SOURCE_STATE_CHARGING,
-	DKP_SOURCE_STATE_DISCHARGING,
-	DKP_SOURCE_STATE_EMPTY,
-	DKP_SOURCE_STATE_FULLY_CHARGED,
-	DKP_SOURCE_STATE_UNKNOWN
-} DkpSourceState;
+	DKP_DEVICE_STATE_CHARGING,
+	DKP_DEVICE_STATE_DISCHARGING,
+	DKP_DEVICE_STATE_EMPTY,
+	DKP_DEVICE_STATE_FULLY_CHARGED,
+	DKP_DEVICE_STATE_UNKNOWN
+} DkpDeviceState;
 
 typedef enum {
-	DKP_SOURCE_TECHNOLGY_LITHIUM_ION,
-	DKP_SOURCE_TECHNOLGY_LITHIUM_POLYMER,
-	DKP_SOURCE_TECHNOLGY_LITHIUM_IRON_PHOSPHATE,
-	DKP_SOURCE_TECHNOLGY_LEAD_ACID,
-	DKP_SOURCE_TECHNOLGY_NICKEL_CADMIUM,
-	DKP_SOURCE_TECHNOLGY_NICKEL_METAL_HYDRIDE,
-	DKP_SOURCE_TECHNOLGY_UNKNOWN
-} DkpSourceTechnology;
+	DKP_DEVICE_TECHNOLGY_LITHIUM_ION,
+	DKP_DEVICE_TECHNOLGY_LITHIUM_POLYMER,
+	DKP_DEVICE_TECHNOLGY_LITHIUM_IRON_PHOSPHATE,
+	DKP_DEVICE_TECHNOLGY_LEAD_ACID,
+	DKP_DEVICE_TECHNOLGY_NICKEL_CADMIUM,
+	DKP_DEVICE_TECHNOLGY_NICKEL_METAL_HYDRIDE,
+	DKP_DEVICE_TECHNOLGY_UNKNOWN
+} DkpDeviceTechnology;
 
-const gchar	*dkp_source_type_to_text	(DkpSourceType		 type_enum);
-const gchar	*dkp_source_state_to_text	(DkpSourceState		 state_enum);
-const gchar	*dkp_source_technology_to_text	(DkpSourceTechnology	 technology_enum);
-DkpSourceType	 dkp_source_type_from_text	(const gchar		*type);
-DkpSourceState	 dkp_source_state_from_text	(const gchar		*state);
-DkpSourceTechnology dkp_source_technology_from_text (const gchar	*technology);
-DkpSourceTechnology dkp_acpi_to_source_technology (const char		*type);
+const gchar	*dkp_device_type_to_text	(DkpDeviceType		 type_enum);
+const gchar	*dkp_device_state_to_text	(DkpDeviceState		 state_enum);
+const gchar	*dkp_device_technology_to_text	(DkpDeviceTechnology	 technology_enum);
+DkpDeviceType	 dkp_device_type_from_text	(const gchar		*type);
+DkpDeviceState	 dkp_device_state_from_text	(const gchar		*state);
+DkpDeviceTechnology dkp_device_technology_from_text (const gchar	*technology);
+DkpDeviceTechnology dkp_acpi_to_device_technology (const char		*type);
 
 G_END_DECLS
 

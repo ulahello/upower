@@ -30,7 +30,7 @@ typedef struct
 {
 	guint			 time;
 	gdouble			 value;
-	DkpSourceState		 state;
+	DkpDeviceState		 state;
 } DkpHistoryObj;
 
 DkpHistoryObj	*dkp_history_obj_new		(void);
@@ -39,7 +39,7 @@ gboolean	 dkp_history_obj_free		(DkpHistoryObj		*obj);
 DkpHistoryObj	*dkp_history_obj_copy		(const DkpHistoryObj	*cobj);
 gboolean	 dkp_history_obj_print		(const DkpHistoryObj	*obj);
 DkpHistoryObj	*dkp_history_obj_create		(gdouble		 value,
-						 DkpSourceState		 state);
+						 DkpDeviceState		 state);
 gboolean	 dkp_history_obj_equal		(const DkpHistoryObj	*obj1,
 						 const DkpHistoryObj	*obj2);
 DkpHistoryObj	*dkp_history_obj_from_string	(const gchar		*text);
