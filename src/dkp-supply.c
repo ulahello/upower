@@ -409,14 +409,15 @@ dkp_supply_coldplug (DkpDevice *device)
 		obj->type = DKP_DEVICE_TYPE_BATTERY;
 	}
 
+	/* coldplug values */
+	dkp_supply_refresh (device);
+
 	/* get the id so we can load the old history */
 	id = dkp_object_get_id (obj);
 	if (id != NULL)
 		dkp_history_set_id (supply->priv->history, id);
 	g_free (id);
 
-	/* coldplug */
-	dkp_supply_refresh (device);
 	return TRUE;
 }
 
