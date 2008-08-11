@@ -2,6 +2,9 @@
 
 SUBDIRS = libdevkit-power src doc tools policy po
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = devicekit-power.pc
+
 # Creating ChangeLog from git log (taken from cairo/Makefile.am):
 ChangeLog: $(srcdir)/ChangeLog
 
