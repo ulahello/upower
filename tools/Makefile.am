@@ -34,10 +34,6 @@ bin_PROGRAMS = devkit-power devkit-power-on-battery
 
 devkit_power_SOURCES = 					\
 	dkp-tool.c					\
-	dkp-client.c					\
-	dkp-client.h					\
-	dkp-client-device.c				\
-	dkp-client-device.h				\
 	$(BUILT_SOURCES)
 
 devkit_power_CPPFLAGS = 				\
