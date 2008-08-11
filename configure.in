@@ -130,6 +130,10 @@ PKG_CHECK_MODULES(GIO, [gio-2.0 >= 2.16.1])
 AC_SUBST(GIO_CFLAGS)
 AC_SUBST(GIO_LIBS)
 
+dnl Check libusb
+AC_CHECK_HEADERS(usb.h, , [AC_MSG_ERROR([Can't find usb.h. Please install libusb.])])
+AC_CHECK_LIB([usb], [usb_find_devices], [], [AC_MSG_ERROR([Can't use libusb.])])
+
 if test "x$GCC" = "xyes"; then
   LDFLAGS="-Wl,--as-needed $LDFLAGS"
 fi
