@@ -192,6 +192,35 @@ dkp_client_device_get_object (const DkpClientDevice *device)
 }
 
 /**
+ * dkp_client_device_print_stats:
+ **/
+static gboolean
+dkp_client_device_print_stats (const DkpClientDevice *device, const gchar *type)
+{
+	guint i;
+	GPtrArray *array;
+	DkpHistoryObj *obj;
+	gboolean ret = FALSE;
+
+	/* get a fair chunk of data */
+	array = dkp_client_device_get_statistics (device, type, 120);
+	if (array == NULL)
+		goto out;
+
+	/* pretty print */
+	g_print ("  Statistics (%s):\n", type);
+	for (i=0; i<array->len; i++) {
+		obj = (DkpHistoryObj *) g_ptr_array_index (array, i);
+		g_print ("    %i\t%.3f\t%s\n", obj->time, obj->value, dkp_device_state_to_text (obj->state));
+	}
+	g_ptr_array_foreach (array, (GFunc) dkp_history_obj_free, NULL);
+	g_ptr_array_free (array, TRUE);
+	ret = TRUE;
+out:
+	return ret;
+}
+
+/**
  * dkp_client_device_print:
  **/
 gboolean
@@ -203,8 +232,9 @@ dkp_client_device_print (const DkpClientDevice *device)
 	dkp_object_print (device->priv->obj);
 
 	/* if we can, get stats */
-	dkp_client_device_get_statistics (device, "charge", 120);
-	dkp_client_device_get_statistics (device, "rate", 120);
+	dkp_client_device_print_stats (device, "charge");
+	dkp_client_device_print_stats (device, "rate");
+
 	return TRUE;
 }
 

@@ -285,9 +285,7 @@ dkp_object_print (const DkpObject *obj)
 	g_print ("  power supply:         %s\n", dkp_object_bool_to_text (obj->power_supply));
 	g_print ("  updated:              %s (%d seconds ago)\n", time_buf, (int) (time (NULL) - obj->update_time));
 	g_print ("  %s\n", dkp_device_type_to_text (obj->type));
-
 	if (obj->type == DKP_DEVICE_TYPE_BATTERY) {
-		g_print ("  battery\n");
 		g_print ("    present:             %s\n", dkp_object_bool_to_text (obj->battery_is_present));
 		g_print ("    rechargeable:        %s\n", dkp_object_bool_to_text (obj->battery_is_rechargeable));
 		g_print ("    state:               %s\n", dkp_device_state_to_text (obj->battery_state));
@@ -310,7 +308,6 @@ dkp_object_print (const DkpObject *obj)
 		g_print ("    capacity:            %g%%\n", obj->battery_capacity);
 		g_print ("    technology:          %s\n", dkp_device_technology_to_text (obj->battery_technology));
 	} else if (obj->type == DKP_DEVICE_TYPE_LINE_POWER) {
-		g_print ("  line-power\n");
 		g_print ("    online:             %s\n", dkp_object_bool_to_text (obj->line_power_online));
 	} else if (obj->type == DKP_DEVICE_TYPE_MOUSE || obj->type == DKP_DEVICE_TYPE_KEYBOARD) {
 		g_print ("    present:             %s\n", dkp_object_bool_to_text (obj->battery_is_present));
