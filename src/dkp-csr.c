@@ -163,6 +163,13 @@ dkp_csr_coldplug (DkpDevice *device)
 	csr->priv->bus_num = sysfs_get_int (obj->native_path, "busnum");
 	csr->priv->dev_num = sysfs_get_int (obj->native_path, "devnum");
 
+	/* get correct bus numbers? */
+	if (csr->priv->bus_num == 0 || csr->priv->dev_num == 0) {
+		dkp_warning ("unable to get bus or device numbers");
+		ret = FALSE;
+		goto out;
+	}
+
 	/* get optional quirk parameters */
 	ret = devkit_device_has_property (d, "ID_CSR_HAS_SMS");
 	if (ret)
@@ -216,6 +223,11 @@ dkp_csr_refresh (DkpDevice *device)
 
 	/* Which of subdevices to address */
 	addr = csr->priv->is_dual ? 1<<8 : 0;
+
+	if (csr->priv->device == NULL) {
+		dkp_warning ("no device!");
+		return FALSE;
+	}
 
 	/* open USB device */
 	handle = usb_open (csr->priv->device);
