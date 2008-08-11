@@ -170,6 +170,14 @@ dkp_csr_coldplug (DkpDevice *device)
 		goto out;
 	}
 
+	/* try to get the usb device */
+	csr->priv->device = dkp_csr_find_device (csr);
+	if (csr->priv->device == NULL) {
+		dkp_debug ("failed to get device %p", csr);
+		ret = FALSE;
+		goto out;
+	}
+
 	/* get optional quirk parameters */
 	ret = devkit_device_has_property (d, "ID_CSR_HAS_SMS");
 	if (ret)
@@ -188,14 +196,6 @@ dkp_csr_coldplug (DkpDevice *device)
 	obj->battery_is_present = TRUE;
 	obj->battery_is_rechargeable = TRUE;
 	obj->battery_state = DKP_DEVICE_STATE_DISCHARGING;
-
-	/* try to get the usb device */
-	csr->priv->device = dkp_csr_find_device (csr);
-	if (csr->priv->device == NULL) {
-		dkp_warning ("failed to get %p", csr);
-		ret = FALSE;
-		goto out;
-	}
 
 	/* coldplug */
 	ret = dkp_csr_refresh (device);
