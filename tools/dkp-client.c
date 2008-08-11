@@ -31,8 +31,8 @@
 #include "dkp-client-device.h"
 
 static void	dkp_client_class_init	(DkpClientClass	*klass);
-static void	dkp_client_init	(DkpClient		*client);
-static void	dkp_client_finalize	(GObject		*object);
+static void	dkp_client_init		(DkpClient	*client);
+static void	dkp_client_finalize	(GObject	*object);
 
 #define DKP_CLIENT_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_CLIENT, DkpClientPrivate))
 
@@ -167,6 +167,26 @@ dkp_client_class_init (DkpClientClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = dkp_client_finalize;
+
+	signals [DKP_CLIENT_ADDED] =
+		g_signal_new ("added",
+			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (DkpClientClass, added),
+			      NULL, NULL, g_cclosure_marshal_VOID__POINTER,
+			      G_TYPE_NONE, 1, G_TYPE_POINTER);
+	signals [DKP_CLIENT_REMOVED] =
+		g_signal_new ("removed",
+			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (DkpClientClass, removed),
+			      NULL, NULL, g_cclosure_marshal_VOID__POINTER,
+			      G_TYPE_NONE, 1, G_TYPE_POINTER);
+	signals [DKP_CLIENT_CHANGED] =
+		g_signal_new ("changed",
+			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (DkpClientClass, changed),
+			      NULL, NULL, g_cclosure_marshal_VOID__POINTER,
+			      G_TYPE_NONE, 1, G_TYPE_POINTER);
+
 	g_type_class_add_private (klass, sizeof (DkpClientPrivate));
 }
 
