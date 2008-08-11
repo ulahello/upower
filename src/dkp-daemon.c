@@ -390,12 +390,8 @@ gpk_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesi
 	/* does the device exist in the db? */
 	device = dkp_device_list_lookup (daemon->priv->list, d);
 	if (device != NULL) {
-		if (!dkp_device_changed (device, d, synthesized)) {
-			dkp_debug ("changed triggered remove on %s", dkp_device_get_object_path (device));
-			gpk_daemon_device_remove (daemon, d);
-		} else {
-			dkp_debug ("changed %s", dkp_device_get_object_path (device));
-		}
+		dkp_debug ("changed %s", dkp_device_get_object_path (device));
+		dkp_device_changed (device, d, synthesized);
 	} else {
 		dkp_debug ("treating change event as add on %s", dkp_device_get_object_path (device));
 		gpk_daemon_device_add (daemon, d, TRUE);
@@ -412,8 +408,6 @@ gpk_daemon_device_went_away (gpointer user_data, GObject *_device)
 	DkpDevice *device = DKP_DEVICE (_device);
 	dkp_device_list_remove (daemon->priv->list, device);
 }
-
-#include "dkp-supply.h"
 
 /**
  * gpk_daemon_device_get:
@@ -501,7 +495,7 @@ gpk_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d)
 	/* does device exist in db? */
 	device = dkp_device_list_lookup (daemon->priv->list, d);
 	if (device == NULL) {
-		dkp_debug ("ignoring remove event on %s", dkp_device_get_object_path (device));
+		dkp_debug ("ignoring remove event on %s", devkit_device_get_native_path (d));
 	} else {
 		dkp_device_removed (device);
 		g_signal_emit (daemon, signals[DEVICE_REMOVED_SIGNAL], 0,
@@ -514,18 +508,19 @@ gpk_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d)
  * gpk_daemon_device_event_signal_handler:
  **/
 static void
-gpk_daemon_device_event_signal_handler (DevkitClient *client,
-			     const char *action,
-			     DevkitDevice *device,
-			     gpointer      user_data)
+gpk_daemon_device_event_signal_handler (DevkitClient *client, const char *action,
+					DevkitDevice *device, gpointer user_data)
 {
 	DkpDaemon *daemon = DKP_DAEMON (user_data);
 
 	if (strcmp (action, "add") == 0) {
+		dkp_debug ("add %s", devkit_device_get_native_path (device));
 		gpk_daemon_device_add (daemon, device, TRUE);
 	} else if (strcmp (action, "remove") == 0) {
+		dkp_debug ("remove %s", devkit_device_get_native_path (device));
 		gpk_daemon_device_remove (daemon, device);
 	} else if (strcmp (action, "change") == 0) {
+		dkp_debug ("change %s", devkit_device_get_native_path (device));
 		gpk_daemon_device_changed (daemon, device, FALSE);
 	} else {
 		dkp_warning ("unhandled action '%s' on %s", action, devkit_device_get_native_path (device));

@@ -405,24 +405,24 @@ dkp_device_refresh (DkpDevice *device, DBusGMethodInvocation *context)
 gboolean
 dkp_device_changed (DkpDevice *device, DevkitDevice *d, gboolean synthesized)
 {
-	gboolean keep_device;
+	gboolean changed;
 
 	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 
 	g_object_unref (device->priv->d);
 	device->priv->d = g_object_ref (d);
 
-	keep_device = dkp_device_refresh_internal (device);
+	changed = dkp_device_refresh_internal (device);
 
 	/* this 'change' event might prompt us to remove the supply */
-	if (!keep_device)
+	if (!changed)
 		goto out;
 
 	/* no, it's good .. keep it */
 	dkp_device_emit_changed (device);
 
 out:
-	return keep_device;
+	return changed;
 }
 
 /**
