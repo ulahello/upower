@@ -36,7 +36,6 @@ static void	dkp_history_finalize	(GObject		*object);
 
 #define DKP_HISTORY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_HISTORY, DkpHistoryPrivate))
 
-#define DKP_HISTORY_DATA_DIR		"/home/hughsie/Desktop"
 #define DKP_HISTORY_SAVE_INTERVAL	5 /* seconds */
 
 struct DkpHistoryPrivate
@@ -132,7 +131,7 @@ dkp_history_get_filename (DkpHistory *history, const gchar *type)
 	gchar *filename;
 
 	filename = g_strdup_printf ("history-%s-%s.dat", type, history->priv->id);
-	path = g_build_filename (DKP_HISTORY_DATA_DIR, "DeviceKit-power", filename, NULL);
+	path = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "DeviceKit-power", filename, NULL);
 	g_free (filename);
 	return path;
 }
