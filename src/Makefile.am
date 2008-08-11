@@ -83,6 +83,9 @@ $(dbusconf_DATA): $(dbusconf_in_files) Makefile
 udevrulesdir = $(sysconfdir)/udev/rules.d
 udevrules_DATA = 95-devkit-power.rules
 
+install-data-hook:
+	$(mkinstalldirs) $(DESTDIR)$(localstatedir)/lib/DeviceKit-power
+
 CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST =						\
