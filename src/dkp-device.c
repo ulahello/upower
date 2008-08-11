@@ -224,6 +224,7 @@ dkp_device_removed (DkpDevice *device)
 {
 	//DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
 	//klass->removed (device);
+	g_return_if_fail (DKP_IS_DEVICE (device));
 	dkp_warning ("do something here?");
 }
 
@@ -236,6 +237,8 @@ gboolean
 dkp_device_get_on_battery (DkpDevice *device, gboolean *on_battery)
 {
 	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+
+	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 
 	/* no support */
 	if (klass->get_stats == NULL)
@@ -254,6 +257,8 @@ dkp_device_get_low_battery (DkpDevice *device, gboolean *low_battery)
 {
 	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
 
+	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
+
 	/* no support */
 	if (klass->get_low_battery == NULL)
 		return FALSE;
@@ -270,6 +275,8 @@ dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, DevkitDevice *d)
 	gboolean ret;
 	const gchar *native_path;
 	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+
+	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 
 	/* save */
 	device->priv->d = g_object_ref (d);
@@ -304,6 +311,8 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, guint timespan,
 	const DkpHistoryObj *obj;
 	GValue *value;
 	guint i;
+
+	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 
 	/* doesn't even try to support this */
 	if (klass->get_stats == NULL) {
@@ -381,6 +390,9 @@ gboolean
 dkp_device_refresh (DkpDevice *device, DBusGMethodInvocation *context)
 {
 	gboolean ret;
+
+	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
+
 	ret = dkp_device_refresh_internal (device);
 	dbus_g_method_return (context);
 	return ret;
@@ -394,6 +406,8 @@ gboolean
 dkp_device_changed (DkpDevice *device, DevkitDevice *d, gboolean synthesized)
 {
 	gboolean keep_device;
+
+	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 
 	g_object_unref (device->priv->d);
 	device->priv->d = g_object_ref (d);
@@ -417,18 +431,21 @@ out:
 const gchar *
 dkp_device_get_object_path (DkpDevice *device)
 {
+	g_return_val_if_fail (DKP_IS_DEVICE (device), NULL);
 	return device->priv->object_path;
 }
 
 DkpObject *
 dkp_device_get_obj (DkpDevice *device)
 {
+	g_return_val_if_fail (DKP_IS_DEVICE (device), NULL);
 	return device->priv->obj;
 }
 
 DevkitDevice *
 dkp_device_get_d (DkpDevice *device)
 {
+	g_return_val_if_fail (DKP_IS_DEVICE (device), NULL);
 	return device->priv->d;
 }
 
@@ -438,6 +455,8 @@ dkp_device_get_d (DkpDevice *device)
 void
 dkp_device_emit_changed (DkpDevice *device)
 {
+	g_return_if_fail (DKP_IS_DEVICE (device));
+
 	dkp_debug ("emitting changed on %s", device->priv->obj->native_path);
 	g_signal_emit_by_name (device->priv->daemon, "device-changed",
 			       device->priv->object_path, NULL);
@@ -551,7 +570,6 @@ dkp_device_class_init (DkpDeviceClass *klass)
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->get_property = dkp_device_get_property;
 	object_class->finalize = dkp_device_finalize;
-
 
 	g_type_class_add_private (klass, sizeof (DkpDevicePrivate));
 
