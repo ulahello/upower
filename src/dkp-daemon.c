@@ -36,6 +36,7 @@
 #include "dkp-device.h"
 #include "dkp-supply.h"
 #include "dkp-csr.h"
+#include "dkp-hid.h"
 #include "dkp-device-list.h"
 
 #include "dkp-daemon-glue.h"
@@ -429,6 +430,13 @@ gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 
 		/* see if this is a CSR mouse or keyboard */
 		device = DKP_DEVICE (dkp_csr_new ());
+		ret = dkp_device_coldplug (device, daemon, d);
+		if (ret)
+			goto out;
+		g_object_unref (device);
+
+		/* try to detect a HID UPS */
+		device = DKP_DEVICE (dkp_hid_new ());
 		ret = dkp_device_coldplug (device, daemon, d);
 		if (ret)
 			goto out;

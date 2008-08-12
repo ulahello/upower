@@ -47,6 +47,7 @@ devkit_power_daemon_SOURCES = 					\
 	dkp-device-list.h		dkp-device-list.c	\
 	dkp-supply.h			dkp-supply.c		\
 	dkp-csr.h			dkp-csr.c		\
+	dkp-hid.h			dkp-hid.c		\
 	dkp-history.h			dkp-history.c		\
 	sysfs-utils.h			sysfs-utils.c		\
 	main.c							\
