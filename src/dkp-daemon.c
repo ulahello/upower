@@ -413,27 +413,35 @@ gpk_daemon_device_went_away (gpointer user_data, GObject *_device)
  * gpk_daemon_device_get:
  **/
 static DkpDevice *
-gpk_daemon_device_get (DevkitDevice *d)
+gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 {
-	const gchar *type;
 	const gchar *subsys;
 	const gchar *native_path;
 	DkpDevice *device = NULL;
+	gboolean ret;
 
 	subsys = devkit_device_get_subsystem (d);
 	if (strcmp (subsys, "power_supply") == 0) {
 		/* always add */
 		device = DKP_DEVICE (dkp_supply_new ());
+
 	} else if (strcmp (subsys, "usb") == 0) {
+
 		/* see if this is a CSR mouse or keyboard */
-		type = devkit_device_get_property (d, "ID_BATTERY_TYPE");
-		if (type != NULL)
-			device = DKP_DEVICE (dkp_csr_new ());
+		device = DKP_DEVICE (dkp_csr_new ());
+		ret = dkp_device_coldplug (device, daemon, d);
+		if (ret)
+			goto out;
+		g_object_unref (device);
+
+		/* no valid USB object ;-( */
+		device = NULL;
+
 	} else {
 		native_path = devkit_device_get_native_path (d);
 		dkp_warning ("native path %s (%s) ignoring", native_path, subsys);
 	}
-
+out:
 	return device;
 }
 
@@ -444,7 +452,7 @@ static gboolean
 gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 {
 	DkpDevice *device;
-	gboolean ret = FALSE;
+	gboolean ret = TRUE;
 
 	/* does device exist in db? */
 	device = dkp_device_list_lookup (daemon->priv->list, d);
@@ -455,29 +463,20 @@ gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 	} else {
 
 		/* get the right sort of device */
-		device = gpk_daemon_device_get (d);
+		device = gpk_daemon_device_get (daemon, d);
 		if (device == NULL) {
 			dkp_debug ("ignoring add event on %s", devkit_device_get_native_path (d));
+			ret = FALSE;
 			goto out;
 		}
-
-		/* coldplug */
-		ret = dkp_device_coldplug (device, daemon, d);
-
-		/* only if coldplug succeeded */
-		if (ret) {
-			/* only take a weak ref; the device will stay on the bus until
-			 * it's unreffed. So if we ref it, it'll never go away.
-			 */
-			g_object_weak_ref (G_OBJECT (device), gpk_daemon_device_went_away, daemon);
-			dkp_device_list_insert (daemon->priv->list, d, device);
-			if (emit_event) {
-				g_signal_emit (daemon, signals[DEVICE_ADDED_SIGNAL], 0,
-					       dkp_device_get_object_path (device));
-			}
-		} else {
-			g_object_unref (device);
-			dkp_debug ("coldplugging failed: %s", devkit_device_get_native_path (d));
+		/* only take a weak ref; the device will stay on the bus until
+		 * it's unreffed. So if we ref it, it'll never go away.
+		 */
+		g_object_weak_ref (G_OBJECT (device), gpk_daemon_device_went_away, daemon);
+		dkp_device_list_insert (daemon->priv->list, d, device);
+		if (emit_event) {
+			g_signal_emit (daemon, signals[DEVICE_ADDED_SIGNAL], 0,
+				       dkp_device_get_object_path (device));
 		}
 	}
 out:
