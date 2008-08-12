@@ -487,6 +487,8 @@ dkp_device_compute_object_path (DkpDevice *device)
 			id[i] = '_';
 		if (id[i] == '.')
 			id[i] = 'x';
+		if (id[i] == ':')
+			id[i] = 'o';
 	}
 	object_path = g_build_filename ("/devices", id, NULL);
 
