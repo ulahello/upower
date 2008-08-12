@@ -52,28 +52,37 @@
 #include "dkp-object.h"
 #include "dkp-hid.h"
 
-#define DKP_HID_REFRESH_TIMEOUT		30L
+#define DKP_HID_REFRESH_TIMEOUT			30l
 
-#define DKP_HID_USAGE			0x840000
-#define DKP_HID_SERIAL			0x8400fe
-#define DKP_HID_CHEMISTRY		0x850089
-#define DKP_HID_CAPACITY_MODE		0x85002c
-#define DKP_HID_BATTERY_VOLTAGE		0x840030
-#define DKP_HID_BELOW_RCL		0x840042
-#define DKP_HID_SHUTDOWN_IMMINENT	0x840069
-#define DKP_HID_PRODUCT			0x8400fe
-#define DKP_HID_SERIAL_NUMBER		0x8400ff
-#define DKP_HID_CHARGING		0x850044
-#define DKP_HID_DISCHARGING 		0x850045
-#define DKP_HID_REMAINING_CAPACITY	0x850066
-#define DKP_HID_RUNTIME_TO_EMPTY	0x850068
-#define DKP_HID_AC_PRESENT		0x8500d0
-#define DKP_HID_BATTERY_PRESENT		0x8500d1
-#define DKP_HID_DESIGN_CAPACITY		0x850083
-#define DKP_HID_DEVICE_NAME		0x850088
-#define DKP_HID_DEVICE_CHEMISTRY	0x850089
-#define DKP_HID_RECHARGEABLE		0x85008b
-#define DKP_HID_OEM_INFORMATION		0x85008f
+#define DKP_HID_USAGE				0x840000
+#define DKP_HID_SERIAL				0x8400fe
+#define DKP_HID_CHEMISTRY			0x850089
+#define DKP_HID_CAPACITY_MODE			0x85002c
+#define DKP_HID_BATTERY_VOLTAGE			0x840030
+#define DKP_HID_BELOW_RCL			0x840042
+#define DKP_HID_SHUTDOWN_IMMINENT		0x840069
+#define DKP_HID_PRODUCT				0x8400fe
+#define DKP_HID_SERIAL_NUMBER			0x8400ff
+#define DKP_HID_CHARGING			0x850044
+#define DKP_HID_DISCHARGING 			0x850045
+#define DKP_HID_REMAINING_CAPACITY		0x850066
+#define DKP_HID_RUNTIME_TO_EMPTY		0x850068
+#define DKP_HID_AC_PRESENT			0x8500d0
+#define DKP_HID_BATTERY_PRESENT			0x8500d1
+#define DKP_HID_DESIGN_CAPACITY			0x850083
+#define DKP_HID_DEVICE_NAME			0x850088
+#define DKP_HID_DEVICE_CHEMISTRY		0x850089
+#define DKP_HID_RECHARGEABLE			0x85008b
+#define DKP_HID_OEM_INFORMATION			0x85008f
+
+#define DKP_HID_PAGE_GENERIC_DESKTOP		0x01
+#define DKP_HID_PAGE_CONSUMER_PRODUCT		0x0c
+#define DKP_HID_PAGE_USB_MONITOR		0x80
+#define DKP_HID_PAGE_USB_ENUMERATED_VALUES	0x81
+#define DKP_HID_PAGE_VESA_VIRTUAL_CONTROLS	0x82
+#define DKP_HID_PAGE_RESERVED_MONITOR		0x83
+#define DKP_HID_PAGE_POWER_DEVICE		0x84
+#define DKP_HID_PAGE_BATTERY_SYSTEM		0x85
 
 struct DkpHidPrivate
 {
@@ -101,19 +110,19 @@ dkp_hid_is_ups (DkpHid *hid)
 
 	/* get device info */
 	retval = ioctl (hid->priv->fd, HIDIOCGDEVINFO, &device_info);
-	if (retval < 0)
-		dkp_debug ("error: %s", strerror (errno));
+	if (retval < 0) {
+		dkp_debug ("HIDIOCGDEVINFO failed: %s", strerror (errno));
 		goto out;
+	}
 
-	/* can we use UPS? */
+	/* can we use the hid device as a UPS? */
 	for (i = 0; i < device_info.num_applications; i++) {
-		retval = ioctl(hid->priv->fd, HIDIOCAPPLICATION, i);
-		if ((retval & 0xff0000) == DKP_HID_USAGE) {
+		retval = ioctl (hid->priv->fd, HIDIOCAPPLICATION, i);
+		if (retval >> 16 == DKP_HID_PAGE_POWER_DEVICE) {
 			ret = TRUE;
 			goto out;
 		}
 	}
-
 out:
 	return ret;
 }
@@ -267,9 +276,7 @@ dkp_hid_coldplug (DkpDevice *device)
 	DkpHid *hid = DKP_HID (device);
 	DevkitDevice *d;
 	gboolean ret = FALSE;
-	gchar *device_file = NULL;
-	guint dev_num;
-	guint bus_num;
+	const gchar *device_file;
 	DkpObject *obj = dkp_device_get_obj (device);
 
 	/* detect what kind of device we are */
@@ -277,19 +284,15 @@ dkp_hid_coldplug (DkpDevice *device)
 	if (d == NULL)
 		dkp_error ("could not get device");
 
-	/* get what USB device we are */
-	bus_num = sysfs_get_int (obj->native_path, "busnum");
-	dev_num = sysfs_get_int (obj->native_path, "devnum");
-
-	/* get correct bus numbers? */
-	if (bus_num == 0 || dev_num == 0) {
-		dkp_debug ("unable to get HID bus or device numbers");
+	/* get the device file */
+	device_file = devkit_device_get_device_file (d);
+	if (device_file == NULL) {
+		dkp_debug ("could not get device file for HID device");
 		goto out;
 	}
 
 	/* connect to the device */
-	device_file = g_strdup_printf ("/dev/bus/usb/%03i/%03i", bus_num, dev_num);
-	hid->priv->fd = open (device_file, O_RDWR);
+	hid->priv->fd = open (device_file, O_RDONLY | O_NONBLOCK);
 	if (hid->priv->fd < 0) {
 		dkp_debug ("cannot open device file %s", device_file);
 		goto out;
@@ -302,6 +305,7 @@ dkp_hid_coldplug (DkpDevice *device)
 		goto out;
 	}
 
+	/* hardcode some values */
 	obj->type = DKP_DEVICE_TYPE_UPS;
 	obj->battery_is_rechargeable = TRUE;
 	obj->power_supply = TRUE;
@@ -313,7 +317,6 @@ dkp_hid_coldplug (DkpDevice *device)
 	/* coldplug */
 	ret = dkp_hid_refresh (device);
 out:
-	g_free (device_file);
 	return ret;
 }
 
