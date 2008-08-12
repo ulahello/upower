@@ -38,7 +38,6 @@
 #include "dkp-enum.h"
 #include "dkp-object.h"
 #include "dkp-csr.h"
-#include "dkp-history.h"
 
 #define DKP_CSR_REFRESH_TIMEOUT		30L
 
@@ -136,7 +135,7 @@ dkp_csr_coldplug (DkpDevice *device)
 {
 	DkpCsr *csr = DKP_CSR (device);
 	DevkitDevice *d;
-	gboolean ret = TRUE;
+	gboolean ret = FALSE;
 	const gchar *type;
 	DkpObject *obj = dkp_device_get_obj (device);
 
@@ -147,6 +146,12 @@ dkp_csr_coldplug (DkpDevice *device)
 
 	/* get the type */
 	type = devkit_device_get_property (d, "ID_BATTERY_TYPE");
+	if (type == NULL) {
+		dkp_debug ("not a CSR device");
+		goto out;
+	}
+
+	/* which one? */
 	if (strcmp (type, "mouse") == 0)
 		obj->type = DKP_DEVICE_TYPE_MOUSE;
 	if (strcmp (type, "keyboard") == 0)
@@ -154,8 +159,7 @@ dkp_csr_coldplug (DkpDevice *device)
 
 	/* nothing known */
 	if (obj->type == DKP_DEVICE_TYPE_UNKNOWN) {
-		dkp_warning ("not a mouse or keyboard");
-		ret = FALSE;
+		dkp_debug ("not a recognised csr device");
 		goto out;
 	}
 
@@ -166,7 +170,6 @@ dkp_csr_coldplug (DkpDevice *device)
 	/* get correct bus numbers? */
 	if (csr->priv->bus_num == 0 || csr->priv->dev_num == 0) {
 		dkp_warning ("unable to get bus or device numbers");
-		ret = FALSE;
 		goto out;
 	}
 
@@ -174,7 +177,6 @@ dkp_csr_coldplug (DkpDevice *device)
 	csr->priv->device = dkp_csr_find_device (csr);
 	if (csr->priv->device == NULL) {
 		dkp_debug ("failed to get device %p", csr);
-		ret = FALSE;
 		goto out;
 	}
 
@@ -199,6 +201,13 @@ dkp_csr_coldplug (DkpDevice *device)
 
 	/* coldplug */
 	ret = dkp_csr_refresh (device);
+	if (!ret)
+		goto out;
+
+	/* set up a poll */
+	csr->priv->poll_timer_id = g_timeout_add_seconds (DKP_CSR_REFRESH_TIMEOUT,
+							  (GSourceFunc) dkp_csr_poll, csr);
+
 out:
 	return ret;
 }
@@ -279,8 +288,7 @@ dkp_csr_init (DkpCsr *csr)
 	csr->priv->has_sms = FALSE;
 	csr->priv->has_res = FALSE;
 	csr->priv->raw_value = -1;
-	csr->priv->poll_timer_id = g_timeout_add_seconds (DKP_CSR_REFRESH_TIMEOUT,
-							  (GSourceFunc) dkp_csr_poll, csr);
+	csr->priv->poll_timer_id = 0;
 }
 
 /**
