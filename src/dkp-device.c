@@ -286,15 +286,16 @@ dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, DevkitDevice *d)
 	device->priv->obj->native_path = g_strdup (native_path);
 
 	/* coldplug source */
-	dkp_debug ("coldplug %s", native_path);
 	ret = klass->coldplug (device);
+	if (!ret)
+		goto out;
+
 	/* only put on the bus if we succeeded */
-	if (ret)
-		dkp_device_register_device (device);
+	dkp_device_register_device (device);
 
 	/* force a refresh */
 	dkp_device_refresh_internal (device);
-
+out:
 	return ret;
 }
 
