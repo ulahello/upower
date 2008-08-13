@@ -423,8 +423,16 @@ gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 
 	subsys = devkit_device_get_subsystem (d);
 	if (strcmp (subsys, "power_supply") == 0) {
-		/* always add */
+
+		/* are we a valid power supply */
 		device = DKP_DEVICE (dkp_supply_new ());
+		ret = dkp_device_coldplug (device, daemon, d);
+		if (ret)
+			goto out;
+		g_object_unref (device);
+
+		/* no valid power supply object */
+		device = NULL;
 
 	} else if (strcmp (subsys, "usb") == 0) {
 
