@@ -291,10 +291,15 @@ dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, DevkitDevice *d)
 		goto out;
 
 	/* only put on the bus if we succeeded */
-	dkp_device_register_device (device);
+	ret = dkp_device_register_device (device);
+	if (!ret)
+		goto out;
 
 	/* force a refresh */
-	dkp_device_refresh_internal (device);
+	ret = dkp_device_refresh_internal (device);
+	if (!ret)
+		goto out;
+
 out:
 	return ret;
 }
