@@ -95,7 +95,8 @@ EXTRA_DIST =							\
 	org.freedesktop.DeviceKit.Power.xml        		\
 	org.freedesktop.DeviceKit.Power.Device.xml		\
 	dkp-marshal.list					\
-	95-devkit-power.rules					\
+	95-devkit-power-csr.rules				\
+	95-devkit-power-hid.rules				\
 	$(service_in_files)                        		\
 	$(dbusconf_in_files)
 
