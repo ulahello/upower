@@ -5,4 +5,5 @@ devkit-power-on-battery
 *.o
 *-marshal.c
 *-marshal.h
+.libs
 

@@ -82,19 +82,21 @@ $(dbusconf_DATA): $(dbusconf_in_files) Makefile
 	cp $< $@
 
 udevrulesdir = $(sysconfdir)/udev/rules.d
-udevrules_DATA = 95-devkit-power.rules
+udevrules_DATA = 						\
+	95-devkit-power-hid.rules        			\
+	95-devkit-power-csr.rules
 
 install-data-hook:
 	$(mkinstalldirs) $(DESTDIR)$(localstatedir)/lib/DeviceKit-power
 
 CLEANFILES = $(BUILT_SOURCES)
 
-EXTRA_DIST =						\
-	org.freedesktop.DeviceKit.Power.xml        	\
-	org.freedesktop.DeviceKit.Power.Device.xml	\
-	dkp-marshal.list				\
-	95-devkit-power.rules				\
-	$(service_in_files)                        	\
+EXTRA_DIST =							\
+	org.freedesktop.DeviceKit.Power.xml        		\
+	org.freedesktop.DeviceKit.Power.Device.xml		\
+	dkp-marshal.list					\
+	95-devkit-power.rules					\
+	$(service_in_files)                        		\
 	$(dbusconf_in_files)
 
 clean-local :

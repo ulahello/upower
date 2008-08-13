@@ -6,4 +6,5 @@ devkit-power-daemon
 *-marshal.h
 *.conf
 *.service
+.libs
 

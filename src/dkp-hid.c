@@ -277,12 +277,20 @@ dkp_hid_coldplug (DkpDevice *device)
 	DevkitDevice *d;
 	gboolean ret = FALSE;
 	const gchar *device_file;
+	const gchar *type;
 	DkpObject *obj = dkp_device_get_obj (device);
 
 	/* detect what kind of device we are */
 	d = dkp_device_get_d (device);
 	if (d == NULL)
 		dkp_error ("could not get device");
+
+	/* get the type */
+	type = devkit_device_get_property (d, "ID_BATTERY_TYPE");
+	if (type == NULL || strcmp (type, "ups") != 0) {
+		dkp_debug ("not a UPS device");
+		goto out;
+	}
 
 	/* get the device file */
 	device_file = devkit_device_get_device_file (d);
@@ -311,11 +319,16 @@ dkp_hid_coldplug (DkpDevice *device)
 	obj->power_supply = TRUE;
 	obj->battery_is_present = TRUE;
 
+	/* try and get from udev if UPS is being difficult */
+	if (obj->vendor == NULL)
+		obj->vendor = g_strdup (devkit_device_get_property (d, "ID_VENDOR"));
+
 	/* coldplug everything */
 	dkp_hid_get_all_data (hid);
 
 	/* coldplug */
 	ret = dkp_hid_refresh (device);
+
 out:
 	return ret;
 }
@@ -326,6 +339,7 @@ out:
 static gboolean
 dkp_hid_refresh (DkpDevice *device)
 {
+	gboolean set = FALSE;
 	gboolean ret = FALSE;
 	GTimeVal time;
 	guint i;
@@ -338,14 +352,21 @@ dkp_hid_refresh (DkpDevice *device)
 	g_get_current_time (&time);
 	obj->update_time = time.tv_sec;
 
-	/* read any data */
+	/* read any data -- it's okay if there's nothing as we are non-blocking */
 	rd = read (hid->priv->fd, ev, sizeof (ev));
-	if (rd < (int) sizeof (ev[0]))
+	if (rd < (int) sizeof (ev[0])) {
+		ret = TRUE;
 		goto out;
+	}
 
 	/* process each event */
-	for (i=0; i < rd / sizeof (ev[0]); i++)
-		ret = dkp_hid_set_obj (hid, ev[i].hid, ev[i].value);
+	for (i=0; i < rd / sizeof (ev[0]); i++) {
+		set = dkp_hid_set_obj (hid, ev[i].hid, ev[i].value);
+
+		/* if only takes one match to make refresh a success */
+		if (set)
+			ret = TRUE;
+	}
 out:
 	return ret;
 }
