@@ -8,10 +8,10 @@ INCLUDES = \
 lib_LTLIBRARIES =						\
 	libdevkit-power.la
 
-libdevkit_power_includedir = $(includedir)/DeviceKit-power/dkp-gobject
+libdevkit_power_includedir = $(includedir)/DeviceKit/devkit-power
 
 libdevkit_power_include_HEADERS =				\
-	dkp-object.h
+	dkp-object.h						\
 	dkp-client.h						\
 	dkp-history-obj.h					\
 	dkp-client-device.h					\
