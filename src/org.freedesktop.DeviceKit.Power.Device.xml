@@ -59,7 +59,31 @@
         <doc:doc><doc:summary>The amount of data to return in seconds, or 0 for all.</doc:summary></doc:doc>
       </arg>
       <arg name="data" direction="out" type="a(uds)">
-        <doc:doc><doc:summary>The data for the power device.</doc:summary></doc:doc>
+        <doc:doc><doc:summary>
+            The statistics data for the power device. Each element contains
+            the following members:
+            <doc:list>
+              <doc:item>
+                <doc:term>time</doc:term>
+                <doc:definition>
+                  The time value in seconds from the <literal>gettimeofday()</literal> method.
+                </doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>value</doc:term>
+                <doc:definition>
+                  The data value, for instance the rate in W or the charge in %.
+                </doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>state</doc:term>
+                <doc:definition>
+                  The state of the device, for instance <literal>charging</literal> or
+                  <literal>discharging</literal>.
+                </doc:definition>
+              </doc:item>
+            </doc:list>
+        </doc:summary></doc:doc>
       </arg>
       <doc:doc>
         <doc:description>
