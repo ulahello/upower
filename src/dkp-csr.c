@@ -145,7 +145,7 @@ dkp_csr_coldplug (DkpDevice *device)
 		dkp_error ("could not get device");
 
 	/* get the type */
-	type = devkit_device_get_property (d, "ID_BATTERY_TYPE");
+	type = devkit_device_get_property (d, "DKP_ID_BATTERY_TYPE");
 	if (type == NULL) {
 		dkp_debug ("not a CSR device");
 		goto out;
