@@ -1,46 +1,46 @@
 ##############################################################################################################
 # Uninterruptable Power Supplies with USBHID interface
 #
-SYSFS{idVendor}=="0463", ENV{ID_VENDOR}="MGE Systems"
-SYSFS{idVendor}=="051d", ENV{ID_VENDOR}="APC"
-SYSFS{idVendor}=="0764", ENV{ID_VENDOR}="CyberPower"
-SYSFS{idVendor}=="09ae", ENV{ID_VENDOR}="Tripp Lite"
-SYSFS{idVendor}=="050d", ENV{ID_VENDOR}="Belkin"
-SYSFS{idVendor}=="06da", ENV{ID_VENDOR}="Liebert"
-SYSFS{idVendor}=="0925", ENV{ID_VENDOR}="Kebo"
+ATTR{idVendor}=="0463", ENV{ID_VENDOR}="MGE Systems"
+ATTR{idVendor}=="051d", ENV{ID_VENDOR}="APC"
+ATTR{idVendor}=="0764", ENV{ID_VENDOR}="CyberPower"
+ATTR{idVendor}=="09ae", ENV{ID_VENDOR}="Tripp Lite"
+ATTR{idVendor}=="050d", ENV{ID_VENDOR}="Belkin"
+ATTR{idVendor}=="06da", ENV{ID_VENDOR}="Liebert"
+ATTR{idVendor}=="0925", ENV{ID_VENDOR}="Kebo"
 
 # MGE UPS SYSTEMS
-SYSFS{idVendor}=="0463", SYSFS{idProduct}=="0001", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="0463", SYSFS{idProduct}=="0xffff", ENV{DKP_ID_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="0463", ATTR{idProduct}=="0001", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="0463", ATTR{idProduct}=="0xffff", ENV{DKP_BATTERY_TYPE}="ups"
 
 # APC
-SYSFS{idVendor}=="051d", SYSFS{idProduct}=="0002", ENV{DKP_ID_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="051d", ATTR{idProduct}=="0002", ENV{DKP_BATTERY_TYPE}="ups"
 
 # CyberPower
-SYSFS{idVendor}=="0764", SYSFS{idProduct}=="0005", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="0764", SYSFS{idProduct}=="0x0501", ENV{DKP_ID_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="0764", ATTR{idProduct}=="0005", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="0764", ATTR{idProduct}=="0x0501", ENV{DKP_BATTERY_TYPE}="ups"
 
 # Tripp Lite
-SYSFS{idVendor}=="09ae", SYSFS{idProduct}=="1003", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="09ae", SYSFS{idProduct}=="0x2005", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="09ae", SYSFS{idProduct}=="0x2007", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="09ae", SYSFS{idProduct}=="0x3012", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="09ae", SYSFS{idProduct}=="0x4002", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="09ae", SYSFS{idProduct}=="0x4003", ENV{DKP_ID_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="09ae", ATTR{idProduct}=="1003", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="09ae", ATTR{idProduct}=="0x2005", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="09ae", ATTR{idProduct}=="0x2007", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="09ae", ATTR{idProduct}=="0x3012", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="09ae", ATTR{idProduct}=="0x4002", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="09ae", ATTR{idProduct}=="0x4003", ENV{DKP_BATTERY_TYPE}="ups"
 
 # Belkin
-SYSFS{idVendor}=="050d", SYSFS{idProduct}=="0375", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="050d", SYSFS{idProduct}=="0x0551", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="050d", SYSFS{idProduct}=="0x0751", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="050d", SYSFS{idProduct}=="0x0900", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="050d", SYSFS{idProduct}=="0x0910", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="050d", SYSFS{idProduct}=="0x0912", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="050d", SYSFS{idProduct}=="0x0980", ENV{DKP_ID_BATTERY_TYPE}="ups"
-SYSFS{idVendor}=="050d", SYSFS{idProduct}=="0x1100", ENV{DKP_ID_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0375", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0x0551", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0x0751", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0x0900", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0x0910", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0x0912", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0x0980", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0x1100", ENV{DKP_BATTERY_TYPE}="ups"
 
 # Liebert
-SYSFS{idVendor}=="06da", SYSFS{idProduct}=="ffff", ENV{DKP_ID_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="06da", ATTR{idProduct}=="ffff", ENV{DKP_BATTERY_TYPE}="ups"
 
 # Kebo
-SYSFS{idVendor}=="0925", SYSFS{idProduct}=="1234", ENV{DKP_ID_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="0925", ATTR{idProduct}=="1234", ENV{DKP_BATTERY_TYPE}="ups"
 

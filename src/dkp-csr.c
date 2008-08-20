@@ -55,8 +55,6 @@ struct DkpCsrPrivate
 {
 	guint			 poll_timer_id;
 	gboolean		 is_dual;
-	gboolean		 has_sms;
-	gboolean		 has_res;
 	guint			 bus_num;
 	guint			 dev_num;
 	gint			 raw_value;
@@ -145,7 +143,7 @@ dkp_csr_coldplug (DkpDevice *device)
 		dkp_error ("could not get device");
 
 	/* get the type */
-	type = devkit_device_get_property (d, "DKP_ID_BATTERY_TYPE");
+	type = devkit_device_get_property (d, "DKP_BATTERY_TYPE");
 	if (type == NULL) {
 		dkp_debug ("not a CSR device");
 		goto out;
@@ -181,16 +179,10 @@ dkp_csr_coldplug (DkpDevice *device)
 	}
 
 	/* get optional quirk parameters */
-	ret = devkit_device_has_property (d, "ID_CSR_HAS_SMS");
+	ret = devkit_device_has_property (d, "DKP_CSR_DUAL");
 	if (ret)
-		csr->priv->has_sms = devkit_device_get_property_as_boolean (d, "ID_CSR_HAS_SMS");
-	ret = devkit_device_has_property (d, "ID_CSR_HAS_RES");
-	if (ret)
-		csr->priv->has_res = devkit_device_get_property_as_boolean (d, "ID_CSR_HAS_RES");
-	ret = devkit_device_has_property (d, "ID_CSR_IS_DUAL");
-	if (ret)
-		csr->priv->is_dual = devkit_device_get_property_as_boolean (d, "ID_CSR_IS_DUAL");
-	dkp_debug ("has_sms=%i, has_res=%i, is_dual=%i", csr->priv->has_sms, csr->priv->has_res, csr->priv->is_dual);
+		csr->priv->is_dual = devkit_device_get_property_as_boolean (d, "DKP_CSR_DUAL");
+	dkp_debug ("is_dual=%i", csr->priv->is_dual);
 
 	obj->vendor = g_strdup (devkit_device_get_property (d, "ID_VENDOR"));
 	obj->model = g_strdup (devkit_device_get_property (d, "ID_PRODUCT"));
@@ -230,7 +222,9 @@ dkp_csr_refresh (DkpDevice *device)
 	g_get_current_time (&time);
 	obj->update_time = time.tv_sec;
 
-	/* Which of subdevices to address */
+	/* For dual receivers C502, C504 and C505, the mouse is the
+	 * second device and uses an addr of 1 in the value and index
+	 * fields' high byte */
 	addr = csr->priv->is_dual ? 1<<8 : 0;
 
 	if (csr->priv->device == NULL) {
@@ -253,13 +247,13 @@ dkp_csr_refresh (DkpDevice *device)
 		goto out;
 	}
 
-	/* are we busy? */
+	/* is a C504 receiver busy? */
 	if (CSR_P0 == 0x3b && CSR_P4 == 0) {
 		dkp_debug ("receiver busy");
 		goto out;
 	}
 
-	/* process the result */
+	/* get battery status */
 	csr->priv->raw_value = CSR_P5 & 0x07;
 	dkp_debug ("charge level: %d", csr->priv->raw_value);
 		if (csr->priv->raw_value != 0) {
@@ -285,8 +279,6 @@ dkp_csr_init (DkpCsr *csr)
 	usb_find_devices ();
 
 	csr->priv->is_dual = FALSE;
-	csr->priv->has_sms = FALSE;
-	csr->priv->has_res = FALSE;
 	csr->priv->raw_value = -1;
 	csr->priv->poll_timer_id = 0;
 }

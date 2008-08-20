@@ -286,7 +286,7 @@ dkp_hid_coldplug (DkpDevice *device)
 		dkp_error ("could not get device");
 
 	/* get the type */
-	type = devkit_device_get_property (d, "DKP_ID_BATTERY_TYPE");
+	type = devkit_device_get_property (d, "DKP_BATTERY_TYPE");
 	if (type == NULL || strcmp (type, "ups") != 0) {
 		dkp_debug ("not a UPS device");
 		goto out;

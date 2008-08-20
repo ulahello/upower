@@ -1,20 +1,18 @@
 ##############################################################################################################
 # Logitech Mice with CSR battery readouts
 #
-# These are proprietary properties defining the behavior:
-#  ID_CSR_IS_DUAL
-#  ID_CSR_HAS_SMA
-#  ID_CSR_HAS_RES
+# These are properties defining the behavior:
+#  DKP_CSR_DUAL (Dual Receiver)
 #
-SYSFS{idVendor}=="046d", ENV{ID_VENDOR}="Logitech, Inc."
-SYSFS{idVendor}=="046d", SYSFS{idProduct}=="c505", ENV{ID_PRODUCT}="Cordless Keyboard+Mouse Receiver", ENV{DKP_ID_BATTERY_TYPE}="keyboard"
-SYSFS{idVendor}=="046d", SYSFS{idProduct}=="c50e", ENV{ID_PRODUCT}="MX1000 Laser Mouse", ENV{DKP_ID_BATTERY_TYPE}="mouse"
-SYSFS{idVendor}=="046d", SYSFS{idProduct}=="c510", ENV{ID_PRODUCT}="Cordless Click! Mouse", ENV{DKP_ID_BATTERY_TYPE}="mouse"
-SYSFS{idVendor}=="046d", SYSFS{idProduct}=="c512", ENV{ID_PRODUCT}="Cordless Keyboard+Mouse Receiver", ENV{DKP_ID_BATTERY_TYPE}="keyboard"
-SYSFS{idVendor}=="046d", SYSFS{idProduct}=="c501", ENV{ID_PRODUCT}="Mouse Receiver", ENV{DKP_ID_BATTERY_TYPE}="mouse"
-SYSFS{idVendor}=="046d", SYSFS{idProduct}=="c502", ENV{ID_PRODUCT}="Logitech Dual Receiver", ENV{DKP_ID_BATTERY_TYPE}="mouse", ENV{ID_CSR_IS_DUAL}="1"
-SYSFS{idVendor}=="046d", SYSFS{idProduct}=="c504", ENV{ID_PRODUCT}="Cordless Freedom Optical Mouse", ENV{DKP_ID_BATTERY_TYPE}="mouse", ENV{ID_CSR_IS_DUAL}="1"
-SYSFS{idVendor}=="046d", SYSFS{idProduct}=="c506", ENV{ID_PRODUCT}="MX700 Optical Mouse", ENV{DKP_ID_BATTERY_TYPE}="mouse", ENV{ID_CSR_HAS_SMS}="1"
-SYSFS{idVendor}=="046d", SYSFS{idProduct}=="c508", ENV{ID_PRODUCT}="Cordless Optical TrackMan", ENV{DKP_ID_BATTERY_TYPE}="mouse", ENV{ID_CSR_HAS_SMS}="1"
-SYSFS{idVendor}=="046d", SYSFS{idProduct}=="c702", ENV{ID_PRODUCT}="Cordless Presenter", ENV{DKP_ID_BATTERY_TYPE}="mouse"
+ATTR{idVendor}=="046d", ENV{ID_VENDOR}="Logitech, Inc."
+ATTR{idVendor}=="046d", ATTR{idProduct}=="c501", ENV{ID_PRODUCT}="Mouse Receiver", ENV{DKP_BATTERY_TYPE}="mouse"
+ATTR{idVendor}=="046d", ATTR{idProduct}=="c502", ENV{ID_PRODUCT}="Dual Receiver", ENV{DKP_BATTERY_TYPE}="mouse", ENV{DKP_CSR_DUAL}="1"
+ATTR{idVendor}=="046d", ATTR{idProduct}=="c504", ENV{ID_PRODUCT}="Freedom Optical", ENV{DKP_BATTERY_TYPE}="mouse", ENV{DKP_CSR_DUAL}="1"
+ATTR{idVendor}=="046d", ATTR{idProduct}=="c505", ENV{ID_PRODUCT}="Elite Duo", ENV{DKP_BATTERY_TYPE}="keyboard"
+ATTR{idVendor}=="046d", ATTR{idProduct}=="c506", ENV{ID_PRODUCT}="MX700 Optical Mouse", ENV{DKP_BATTERY_TYPE}="mouse"
+ATTR{idVendor}=="046d", ATTR{idProduct}=="c508", ENV{ID_PRODUCT}="Optical TrackMan", ENV{DKP_BATTERY_TYPE}="mouse"
+ATTR{idVendor}=="046d", ATTR{idProduct}=="c50e", ENV{ID_PRODUCT}="MX1000 Laser Mouse", ENV{DKP_BATTERY_TYPE}="mouse"
+ATTR{idVendor}=="046d", ATTR{idProduct}=="c510", ENV{ID_PRODUCT}="Click! Mouse", ENV{DKP_BATTERY_TYPE}="mouse"
+ATTR{idVendor}=="046d", ATTR{idProduct}=="c512", ENV{ID_PRODUCT}="Keyboard+Mouse Receiver", ENV{DKP_BATTERY_TYPE}="keyboard"
+ATTR{idVendor}=="046d", ATTR{idProduct}=="c702", ENV{ID_PRODUCT}="Presenter", ENV{DKP_BATTERY_TYPE}="mouse"
 
