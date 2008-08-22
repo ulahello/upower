@@ -47,6 +47,7 @@ devkit_power_daemon_SOURCES = 					\
 	dkp-device-list.h		dkp-device-list.c	\
 	dkp-supply.h			dkp-supply.c		\
 	dkp-csr.h			dkp-csr.c		\
+	dkp-wup.h			dkp-wup.c		\
 	dkp-hid.h			dkp-hid.c		\
 	dkp-history.h			dkp-history.c		\
 	sysfs-utils.h			sysfs-utils.c		\
@@ -83,6 +84,7 @@ $(dbusconf_DATA): $(dbusconf_in_files) Makefile
 
 udevrulesdir = $(sysconfdir)/udev/rules.d
 udevrules_DATA = 						\
+	95-devkit-power-wup.rules        			\
 	95-devkit-power-hid.rules        			\
 	95-devkit-power-csr.rules
 
@@ -97,6 +99,7 @@ EXTRA_DIST =							\
 	dkp-marshal.list					\
 	95-devkit-power-csr.rules				\
 	95-devkit-power-hid.rules				\
+	95-devkit-power-wup.rules				\
 	$(service_in_files)                        		\
 	$(dbusconf_in_files)
 

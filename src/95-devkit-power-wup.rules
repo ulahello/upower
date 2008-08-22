@@ -1,0 +1,6 @@
+##############################################################################################################
+# Watts Up? Pro Devices
+#
+ATTR{idVendor}=="0000", ENV{ID_VENDOR}="Watts Up, Inc."
+ATTR{idVendor}=="0000", ATTR{idProduct}=="0000", ENV{ID_PRODUCT}="Watts Up? Pro", ENV{DKP_MONITOR_TYPE}="wup"
+
