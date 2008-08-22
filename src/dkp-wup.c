@@ -321,7 +321,7 @@ dkp_wup_coldplug (DkpDevice *device)
 	g_free (data);
 
 	/* hardcode some values */
-	obj->type = DKP_DEVICE_TYPE_UPS;
+	obj->type = DKP_DEVICE_TYPE_MONITOR;
 	obj->battery_is_rechargeable = FALSE;
 	obj->power_supply = FALSE;
 	obj->battery_is_present = FALSE;

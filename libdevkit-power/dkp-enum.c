@@ -41,6 +41,9 @@ dkp_device_type_to_text (DkpDeviceType type_enum)
 	case DKP_DEVICE_TYPE_UPS:
 		type = "ups";
 		break;
+	case DKP_DEVICE_TYPE_MONITOR:
+		type = "monitor";
+		break;
 	case DKP_DEVICE_TYPE_MOUSE:
 		type = "mouse";
 		break;
@@ -77,6 +80,8 @@ dkp_device_type_from_text (const gchar *type)
 		return DKP_DEVICE_TYPE_BATTERY;
 	if (strcmp (type, "ups") == 0)
 		return DKP_DEVICE_TYPE_UPS;
+	if (strcmp (type, "monitor") == 0)
+		return DKP_DEVICE_TYPE_MONITOR;
 	if (strcmp (type, "mouse") == 0)
 		return DKP_DEVICE_TYPE_MOUSE;
 	if (strcmp (type, "keyboard") == 0)
