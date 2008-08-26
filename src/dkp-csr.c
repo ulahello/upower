@@ -187,9 +187,9 @@ dkp_csr_coldplug (DkpDevice *device)
 	obj->vendor = g_strdup (devkit_device_get_property (d, "ID_VENDOR"));
 	obj->model = g_strdup (devkit_device_get_property (d, "ID_PRODUCT"));
 	obj->power_supply = FALSE;
-	obj->battery_is_present = TRUE;
-	obj->battery_is_rechargeable = TRUE;
-	obj->battery_state = DKP_DEVICE_STATE_DISCHARGING;
+	obj->is_present = TRUE;
+	obj->is_rechargeable = TRUE;
+	obj->state = DKP_DEVICE_STATE_DISCHARGING;
 
 	/* coldplug */
 	ret = dkp_csr_refresh (device);
@@ -257,8 +257,8 @@ dkp_csr_refresh (DkpDevice *device)
 	csr->priv->raw_value = CSR_P5 & 0x07;
 	dkp_debug ("charge level: %d", csr->priv->raw_value);
 		if (csr->priv->raw_value != 0) {
-			obj->battery_percentage = (100.0 / 7.0) * csr->priv->raw_value;
-			dkp_debug ("percentage=%f", obj->battery_percentage);
+			obj->percentage = (100.0 / 7.0) * csr->priv->raw_value;
+			dkp_debug ("percentage=%f", obj->percentage);
 	}
 
 out:

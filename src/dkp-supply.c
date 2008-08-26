@@ -46,8 +46,8 @@ struct DkpSupplyPrivate
 	DkpHistory		*history;
 	guint			 poll_timer_id;
 	gboolean		 has_coldplug_values;
-	gdouble			 battery_energy_old;
-	GTimeVal		 battery_energy_old_timespec;
+	gdouble			 energy_old;
+	GTimeVal		 energy_old_timespec;
 };
 
 static void	dkp_supply_class_init	(DkpSupplyClass	*klass);
@@ -70,7 +70,7 @@ dkp_supply_refresh_line_power (DkpSupply *supply)
 	obj->power_supply = TRUE;
 
 	/* get new AC value */
-	obj->line_power_online = sysfs_get_int (obj->native_path, "online");
+	obj->online = sysfs_get_int (obj->native_path, "online");
 
 	return TRUE;
 }
@@ -91,8 +91,8 @@ dkp_supply_reset_values (DkpSupply *supply)
 	native_path = g_strdup (obj->native_path);
 
 	supply->priv->has_coldplug_values = FALSE;
-	supply->priv->battery_energy_old = -1;
-	supply->priv->battery_energy_old_timespec.tv_sec = 0;
+	supply->priv->energy_old = -1;
+	supply->priv->energy_old_timespec.tv_sec = 0;
 	dkp_object_clear (obj);
 
 	/* restore the saved stuff */
@@ -114,10 +114,10 @@ dkp_supply_get_on_battery (DkpDevice *device, gboolean *on_battery)
 
 	if (obj->type != DKP_DEVICE_TYPE_BATTERY)
 		return FALSE;
-	if (!obj->battery_is_present)
+	if (!obj->is_present)
 		return FALSE;
 
-	*on_battery = (obj->battery_state == DKP_DEVICE_STATE_DISCHARGING);
+	*on_battery = (obj->state == DKP_DEVICE_STATE_DISCHARGING);
 	return TRUE;
 }
 
@@ -146,15 +146,15 @@ dkp_supply_get_low_battery (DkpDevice *device, gboolean *low_battery)
 		return TRUE;
 	}
 
-	*low_battery = (obj->battery_percentage < 10);
+	*low_battery = (obj->percentage < 10);
 	return TRUE;
 }
 
 /**
- * dkp_supply_calculate_battery_rate:
+ * dkp_supply_calculate_rate:
  **/
 static void
-dkp_supply_calculate_battery_rate (DkpSupply *supply)
+dkp_supply_calculate_rate (DkpSupply *supply)
 {
 	guint time;
 	gdouble energy;
@@ -162,29 +162,29 @@ dkp_supply_calculate_battery_rate (DkpSupply *supply)
 	DkpDevice *device = DKP_DEVICE (supply);
 	DkpObject *obj = dkp_device_get_obj (device);
 
-	if (obj->battery_energy < 0)
+	if (obj->energy < 0)
 		return;
 
-	if (supply->priv->battery_energy_old < 0)
+	if (supply->priv->energy_old < 0)
 		return;
 
-	if (supply->priv->battery_energy_old == obj->battery_energy)
+	if (supply->priv->energy_old == obj->energy)
 		return;
 
 	/* get the time difference */
 	g_get_current_time (&now);
-	time = now.tv_sec - supply->priv->battery_energy_old_timespec.tv_sec;
+	time = now.tv_sec - supply->priv->energy_old_timespec.tv_sec;
 
 	if (time == 0)
 		return;
 
 	/* get the difference in charge */
-	energy = supply->priv->battery_energy_old - obj->battery_energy;
+	energy = supply->priv->energy_old - obj->energy;
 	if (energy < 0.1)
 		return;
 
 	/* probably okay */
-	obj->battery_energy_rate = energy * 3600 / time;
+	obj->energy_rate = energy * 3600 / time;
 }
 
 /**
@@ -197,13 +197,13 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 {
 	gchar *status = NULL;
 	gboolean ret = TRUE;
-	DkpDeviceState battery_state;
+	DkpDeviceState state;
 	DkpDevice *device = DKP_DEVICE (supply);
 	DkpObject *obj = dkp_device_get_obj (device);
 
 	/* have we just been removed? */
-	obj->battery_is_present = sysfs_get_bool (obj->native_path, "present");
-	if (!obj->battery_is_present) {
+	obj->is_present = sysfs_get_bool (obj->native_path, "present");
+	if (!obj->is_present) {
 		dkp_supply_reset_values (supply);
 		obj->type = DKP_DEVICE_TYPE_BATTERY;
 		goto out;
@@ -218,7 +218,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 
 		/* the ACPI spec is bad at defining battery type constants */
 		technology_native = g_strstrip (sysfs_get_string (obj->native_path, "technology"));
-		obj->battery_technology = dkp_acpi_to_device_technology (technology_native);
+		obj->technology = dkp_acpi_to_device_technology (technology_native);
 		g_free (technology_native);
 
 		obj->vendor = g_strstrip (sysfs_get_string (obj->native_path, "manufacturer"));
@@ -226,24 +226,24 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		obj->serial = g_strstrip (sysfs_get_string (obj->native_path, "serial_number"));
 
 		/* assume true for laptops */
-		obj->battery_is_rechargeable = TRUE;
+		obj->is_rechargeable = TRUE;
 
 		/* these don't change at runtime */
-		obj->battery_energy_full =
+		obj->energy_full =
 			sysfs_get_double (obj->native_path, "energy_full") / 1000000.0;
-		obj->battery_energy_full_design =
+		obj->energy_full_design =
 			sysfs_get_double (obj->native_path, "energy_full_design") / 1000000.0;
 
 		/* the last full cannot be bigger than the design */
-		if (obj->battery_energy_full > obj->battery_energy_full_design)
-			obj->battery_energy_full = obj->battery_energy_full_design;
+		if (obj->energy_full > obj->energy_full_design)
+			obj->energy_full = obj->energy_full_design;
 
 		/* calculate how broken our battery is */
-		obj->battery_capacity = obj->battery_energy_full_design / obj->battery_energy_full * 100.0f;
-		if (obj->battery_capacity < 0)
-			obj->battery_capacity = 0;
-		if (obj->battery_capacity > 100.0)
-			obj->battery_capacity = 100.0;
+		obj->capacity = obj->energy_full_design / obj->energy_full * 100.0f;
+		if (obj->capacity < 0)
+			obj->capacity = 0;
+		if (obj->capacity > 100.0)
+			obj->capacity = 100.0;
 
 		/* we only coldplug once, as these values will never change */
 		supply->priv->has_coldplug_values = TRUE;
@@ -251,86 +251,86 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 
 	status = g_strstrip (sysfs_get_string (obj->native_path, "status"));
 	if (strcasecmp (status, "charging") == 0)
-		battery_state = DKP_DEVICE_STATE_CHARGING;
+		state = DKP_DEVICE_STATE_CHARGING;
 	else if (strcasecmp (status, "discharging") == 0)
-		battery_state = DKP_DEVICE_STATE_DISCHARGING;
+		state = DKP_DEVICE_STATE_DISCHARGING;
 	else if (strcasecmp (status, "full") == 0)
-		battery_state = DKP_DEVICE_STATE_FULLY_CHARGED;
+		state = DKP_DEVICE_STATE_FULLY_CHARGED;
 	else if (strcasecmp (status, "empty") == 0)
-		battery_state = DKP_DEVICE_STATE_EMPTY;
+		state = DKP_DEVICE_STATE_EMPTY;
 	else {
 		dkp_warning ("unknown status string: %s", status);
-		battery_state = DKP_DEVICE_STATE_UNKNOWN;
+		state = DKP_DEVICE_STATE_UNKNOWN;
 	}
 
 	/* get the currect charge */
-	obj->battery_energy =
+	obj->energy =
 		sysfs_get_double (obj->native_path, "energy_avg") / 1000000.0;
-	if (obj->battery_energy == 0)
-		obj->battery_energy =
+	if (obj->energy == 0)
+		obj->energy =
 			sysfs_get_double (obj->native_path, "energy_now") / 1000000.0;
 
 	/* some batteries don't update last_full attribute */
-	if (obj->battery_energy > obj->battery_energy_full)
-		obj->battery_energy_full = obj->battery_energy;
+	if (obj->energy > obj->energy_full)
+		obj->energy_full = obj->energy;
 
-	obj->battery_energy_rate =
+	obj->energy_rate =
 		fabs (sysfs_get_double (obj->native_path, "current_now") / 1000000.0);
 
 	/* ACPI gives out the special 'Ones' value for rate when it's unable
 	 * to calculate the true rate. We should set the rate zero, and wait
 	 * for the BIOS to stabilise. */
-	if (obj->battery_energy_rate == 0xffff)
-		obj->battery_energy_rate = -1;
+	if (obj->energy_rate == 0xffff)
+		obj->energy_rate = -1;
 
 	/* sanity check to less than 100W */
-	if (obj->battery_energy_rate > 100*1000)
-		obj->battery_energy_rate = -1;
+	if (obj->energy_rate > 100*1000)
+		obj->energy_rate = -1;
 
 	/* the hardware reporting failed -- try to calculate this */
-	if (obj->battery_energy_rate < 0) {
-		dkp_supply_calculate_battery_rate (supply);
+	if (obj->energy_rate < 0) {
+		dkp_supply_calculate_rate (supply);
 	}
 
 	/* get a precise percentage */
-	obj->battery_percentage = 100.0 * obj->battery_energy / obj->battery_energy_full;
-	if (obj->battery_percentage < 0)
-		obj->battery_percentage = 0;
-	if (obj->battery_percentage > 100.0)
-		obj->battery_percentage = 100.0;
+	obj->percentage = 100.0 * obj->energy / obj->energy_full;
+	if (obj->percentage < 0)
+		obj->percentage = 0;
+	if (obj->percentage > 100.0)
+		obj->percentage = 100.0;
 
 	/* calculate a quick and dirty time remaining value */
-	obj->battery_time_to_empty = -1;
-	obj->battery_time_to_full = -1;
-	if (obj->battery_energy_rate > 0) {
-		if (battery_state == DKP_DEVICE_STATE_DISCHARGING) {
-			obj->battery_time_to_empty = 3600 * (obj->battery_energy / obj->battery_energy_rate);
-		} else if (battery_state == DKP_DEVICE_STATE_CHARGING) {
-			obj->battery_time_to_full = 3600 * ((obj->battery_energy_full - obj->battery_energy) / obj->battery_energy_rate);
+	obj->time_to_empty = -1;
+	obj->time_to_full = -1;
+	if (obj->energy_rate > 0) {
+		if (state == DKP_DEVICE_STATE_DISCHARGING) {
+			obj->time_to_empty = 3600 * (obj->energy / obj->energy_rate);
+		} else if (state == DKP_DEVICE_STATE_CHARGING) {
+			obj->time_to_full = 3600 * ((obj->energy_full - obj->energy) / obj->energy_rate);
 		}
 	}
 	/* check the remaining time is under a set limit, to deal with broken
 	   primary batteries rate */
-	if (obj->battery_time_to_empty > (100 * 60 * 60))
-		obj->battery_time_to_empty = -1;
-	if (obj->battery_time_to_full > (100 * 60 * 60))
-		obj->battery_time_to_full = -1;
+	if (obj->time_to_empty > (100 * 60 * 60))
+		obj->time_to_empty = -1;
+	if (obj->time_to_full > (100 * 60 * 60))
+		obj->time_to_full = -1;
 
 	/* set the old status */
-	supply->priv->battery_energy_old = obj->battery_energy;
-	g_get_current_time (&supply->priv->battery_energy_old_timespec);
+	supply->priv->energy_old = obj->energy;
+	g_get_current_time (&supply->priv->energy_old_timespec);
 
 	/* we changed state */
-	if (obj->battery_state != battery_state) {
-		supply->priv->battery_energy_old = -1;
-		obj->battery_state = battery_state;
+	if (obj->state != state) {
+		supply->priv->energy_old = -1;
+		obj->state = state;
 	}
 
 out:
 	/* save new history */
-	dkp_history_set_state (supply->priv->history, obj->battery_state);
-	dkp_history_set_charge_data (supply->priv->history, obj->battery_percentage);
-	dkp_history_set_rate_data (supply->priv->history, obj->battery_energy_rate);
+	dkp_history_set_state (supply->priv->history, obj->state);
+	dkp_history_set_charge_data (supply->priv->history, obj->percentage);
+	dkp_history_set_rate_data (supply->priv->history, obj->energy_rate);
 
 	g_free (status);
 	return ret;
@@ -445,8 +445,8 @@ dkp_supply_refresh (DkpDevice *device)
 		/* Seems that we don't get change uevents from the
 		 * kernel on some BIOS types; set up a timer to poll
 		 * if we are charging or discharging */
-		if (obj->battery_state == DKP_DEVICE_STATE_CHARGING ||
-		    obj->battery_state == DKP_DEVICE_STATE_DISCHARGING)
+		if (obj->state == DKP_DEVICE_STATE_CHARGING ||
+		    obj->state == DKP_DEVICE_STATE_DISCHARGING)
 			supply->priv->poll_timer_id =
 				g_timeout_add_seconds (DKP_SUPPLY_REFRESH_TIMEOUT,
 						       (GSourceFunc) dkp_supply_poll_battery, supply);

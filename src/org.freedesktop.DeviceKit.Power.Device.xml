@@ -10,7 +10,7 @@
         <doc:para>
           TODO: some explanatory text etc. etc. Mention that we
           collect history to provide more precise values of
-          battery-time-to-empty, battery-time-to-full. Go into detail
+          time-to-empty, time-to-full. Go into detail
           with the algorithms.
         </doc:para>
         <doc:para>
@@ -194,7 +194,7 @@
           </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="line-power-online" type="b" access="read">
+    <property name="online" type="b" access="read">
       <doc:doc><doc:description><doc:para>
             Whether power is currently being provided through line power.
             This property is only valid if the property
@@ -203,7 +203,7 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-energy" type="d" access="read">
+    <property name="energy" type="d" access="read">
       <doc:doc><doc:description><doc:para>
             Amount of energy (measured in Wh) currently available in
             the power source.
@@ -214,7 +214,7 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-energy-empty" type="d" access="read">
+    <property name="energy-empty" type="d" access="read">
       <doc:doc><doc:description><doc:para>
             Amount of energy (measured in Wh) in the power source when
             it's considered to be empty.
@@ -225,7 +225,7 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-energy-full" type="d" access="read">
+    <property name="energy-full" type="d" access="read">
       <doc:doc><doc:description><doc:para>
             Amount of energy (measured in Wh) in the power source when
             it's considered full.
@@ -236,7 +236,7 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-energy-full-design" type="d" access="read">
+    <property name="energy-full-design" type="d" access="read">
       <doc:doc><doc:description><doc:para>
             Amount of energy (measured in Wh) the power source is
             designed to hold when it's considered full.
@@ -247,7 +247,7 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-energy-rate" type="d" access="read">
+    <property name="energy-rate" type="d" access="read">
       <doc:doc><doc:description><doc:para>
             Amount of energy being drained from the source, measured
             in W. If positive, the source is being discharged, if
@@ -259,7 +259,7 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-time-to-empty" type="x" access="read">
+    <property name="time-to-empty" type="x" access="read">
       <doc:doc><doc:description><doc:para>
             Number of seconds until the power source is considered empty.
             Is set to -1 if unknown.
@@ -270,7 +270,7 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-time-to-full" type="x" access="read">
+    <property name="time-to-full" type="x" access="read">
       <doc:doc><doc:description><doc:para>
             Number of seconds until the power source is considered full.
             Is set to -1 if unknown.
@@ -281,16 +281,16 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-percentage" type="d" access="read">
+    <property name="percentage" type="d" access="read">
       <doc:doc><doc:description><doc:para>
             The amount of energy left in the power source expressed as
             a percentage between 0 and 100. Typically this is the same as
-            (<doc:ref type="property" to="Source:battery-energy">battery-energy</doc:ref> -
-            <doc:ref type="property" to="Source:battery-energy-empty">battery-energy-empty</doc:ref>) /
-            (<doc:ref type="property" to="Source:battery-energy-full">battery-energy-full</doc:ref> -
-            <doc:ref type="property" to="Source:battery-energy-empty">battery-energy-empty</doc:ref>).
+            (<doc:ref type="property" to="Source:energy">energy</doc:ref> -
+            <doc:ref type="property" to="Source:energy-empty">energy-empty</doc:ref>) /
+            (<doc:ref type="property" to="Source:energy-full">energy-full</doc:ref> -
+            <doc:ref type="property" to="Source:energy-empty">energy-empty</doc:ref>).
             However, some primitive power sources are capable of only
-            reporting percentages and in this case the battery-energy-*
+            reporting percentages and in this case the energy-*
             properties will be unset while this property is set.
           </doc:para><doc:para>
             This property is only valid if the property
@@ -299,7 +299,7 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-is-present" type="b" access="read">
+    <property name="is-present" type="b" access="read">
       <doc:doc><doc:description><doc:para>
             If the power source is present in the bay.
             This field is required as some batteries are hot-removable, for example
@@ -311,7 +311,7 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-state" type="s" access="read">
+    <property name="state" type="s" access="read">
       <doc:doc><doc:description><doc:para>
             The battery power state.
             Known values are "fully-charged", "empty", "charging",
@@ -323,7 +323,7 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-is-rechargeable" type="b" access="read">
+    <property name="is-rechargeable" type="b" access="read">
       <doc:doc><doc:description><doc:para>
             If the power source is rechargeable.
           </doc:para><doc:para>
@@ -333,16 +333,16 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-capacity" type="d" access="read">
+    <property name="capacity" type="d" access="read">
       <doc:doc><doc:description><doc:para>
             The capacity of the power source expressed as a percentage between 0 and 100.
             The capacity of the battery will reduce with age.
             A capacity value less than 75% is usually a sign that you should renew your battery.
             Typically this value is the same as
-            (<doc:ref type="property" to="Source:battery-full-design">battery-full-design</doc:ref> /
-            <doc:ref type="property" to="Source:battery-full">battery-full</doc:ref>) * 100.
+            (<doc:ref type="property" to="Source:full-design">full-design</doc:ref> /
+            <doc:ref type="property" to="Source:full">full</doc:ref>) * 100.
             However, some primitive power sources are not capable reporting capacity
-            and in this case the battery-capacity property will be unset.
+            and in this case the capacity property will be unset.
           </doc:para><doc:para>
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
@@ -350,7 +350,7 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="battery-technology" type="s" access="read">
+    <property name="technology" type="s" access="read">
       <doc:doc><doc:description><doc:para>
             Technology used in the battery; known values are "lithium-ion", "lead-acid",
             "lithium-polymer", "nickel-metal-hydride", "lithium-iron-phosphate" or "unknown".

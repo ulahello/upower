@@ -168,46 +168,46 @@ dkp_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 		g_value_set_boolean (value, obj->power_supply);
 		break;
 	case PROP_LINE_POWER_ONLINE:
-		g_value_set_boolean (value, obj->line_power_online);
+		g_value_set_boolean (value, obj->online);
 		break;
 	case PROP_BATTERY_IS_PRESENT:
-		g_value_set_boolean (value, obj->battery_is_present);
+		g_value_set_boolean (value, obj->is_present);
 		break;
 	case PROP_BATTERY_IS_RECHARGEABLE:
-		g_value_set_boolean (value, obj->battery_is_rechargeable);
+		g_value_set_boolean (value, obj->is_rechargeable);
 		break;
 	case PROP_BATTERY_STATE:
-		g_value_set_string (value, dkp_device_state_to_text (obj->battery_state));
+		g_value_set_string (value, dkp_device_state_to_text (obj->state));
 		break;
 	case PROP_BATTERY_CAPACITY:
-		g_value_set_double (value, obj->battery_capacity);
+		g_value_set_double (value, obj->capacity);
 		break;
 	case PROP_BATTERY_ENERGY:
-		g_value_set_double (value, obj->battery_energy);
+		g_value_set_double (value, obj->energy);
 		break;
 	case PROP_BATTERY_ENERGY_EMPTY:
-		g_value_set_double (value, obj->battery_energy_empty);
+		g_value_set_double (value, obj->energy_empty);
 		break;
 	case PROP_BATTERY_ENERGY_FULL:
-		g_value_set_double (value, obj->battery_energy_full);
+		g_value_set_double (value, obj->energy_full);
 		break;
 	case PROP_BATTERY_ENERGY_FULL_DESIGN:
-		g_value_set_double (value, obj->battery_energy_full_design);
+		g_value_set_double (value, obj->energy_full_design);
 		break;
 	case PROP_BATTERY_ENERGY_RATE:
-		g_value_set_double (value, obj->battery_energy_rate);
+		g_value_set_double (value, obj->energy_rate);
 		break;
 	case PROP_BATTERY_TIME_TO_EMPTY:
-		g_value_set_int64 (value, obj->battery_time_to_empty);
+		g_value_set_int64 (value, obj->time_to_empty);
 		break;
 	case PROP_BATTERY_TIME_TO_FULL:
-		g_value_set_int64 (value, obj->battery_time_to_full);
+		g_value_set_int64 (value, obj->time_to_full);
 		break;
 	case PROP_BATTERY_PERCENTAGE:
-		g_value_set_double (value, obj->battery_percentage);
+		g_value_set_double (value, obj->percentage);
 		break;
 	case PROP_BATTERY_TECHNOLOGY:
-		g_value_set_string (value, dkp_device_technology_to_text (obj->battery_technology));
+		g_value_set_string (value, dkp_device_technology_to_text (obj->technology));
 		break;
 
 	default:
@@ -622,59 +622,59 @@ dkp_device_class_init (DkpDeviceClass *klass)
 	g_object_class_install_property (
 		object_class,
 		PROP_LINE_POWER_ONLINE,
-		g_param_spec_boolean ("line-power-online", NULL, NULL, FALSE, G_PARAM_READABLE));
+		g_param_spec_boolean ("online", NULL, NULL, FALSE, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_ENERGY,
-		g_param_spec_double ("battery-energy", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
+		g_param_spec_double ("energy", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_IS_PRESENT,
-		g_param_spec_boolean ("battery-is-present", NULL, NULL, FALSE, G_PARAM_READABLE));
+		g_param_spec_boolean ("is-present", NULL, NULL, FALSE, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_IS_RECHARGEABLE,
-		g_param_spec_boolean ("battery-is-rechargeable", NULL, NULL, FALSE, G_PARAM_READABLE));
+		g_param_spec_boolean ("is-rechargeable", NULL, NULL, FALSE, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_STATE,
-		g_param_spec_string ("battery-state", NULL, NULL, NULL, G_PARAM_READABLE));
+		g_param_spec_string ("state", NULL, NULL, NULL, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_CAPACITY,
-		g_param_spec_double ("battery-capacity", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
+		g_param_spec_double ("capacity", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_ENERGY_EMPTY,
-		g_param_spec_double ("battery-energy-empty", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
+		g_param_spec_double ("energy-empty", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_ENERGY_FULL,
-		g_param_spec_double ("battery-energy-full", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
+		g_param_spec_double ("energy-full", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_ENERGY_FULL_DESIGN,
-		g_param_spec_double ("battery-energy-full-design", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
+		g_param_spec_double ("energy-full-design", NULL, NULL, 0, G_MAXDOUBLE, 0, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_ENERGY_RATE,
-		g_param_spec_double ("battery-energy-rate", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 0, G_PARAM_READABLE));
+		g_param_spec_double ("energy-rate", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 0, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_TIME_TO_EMPTY,
-		g_param_spec_int64 ("battery-time-to-empty", NULL, NULL, -1, G_MAXINT64, -1, G_PARAM_READABLE));
+		g_param_spec_int64 ("time-to-empty", NULL, NULL, -1, G_MAXINT64, -1, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_TIME_TO_FULL,
-		g_param_spec_int64 ("battery-time-to-full", NULL, NULL, -1, G_MAXINT64, -1, G_PARAM_READABLE));
+		g_param_spec_int64 ("time-to-full", NULL, NULL, -1, G_MAXINT64, -1, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_PERCENTAGE,
-		g_param_spec_double ("battery-percentage", NULL, NULL, -1, 100, -1, G_PARAM_READABLE));
+		g_param_spec_double ("percentage", NULL, NULL, -1, 100, -1, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_TECHNOLOGY,
-		g_param_spec_string ("battery-technology", NULL, NULL, NULL, G_PARAM_READABLE));
+		g_param_spec_string ("technology", NULL, NULL, NULL, G_PARAM_READABLE));
 
 	dbus_g_error_domain_register (DKP_DEVICE_ERROR, NULL, DKP_DEVICE_TYPE_ERROR);
 }

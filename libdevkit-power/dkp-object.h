@@ -33,21 +33,21 @@ typedef struct {
 	gchar			*serial;
 	gchar			*native_path;
 	gboolean		 power_supply;
-	gboolean		 line_power_online;
-	gboolean		 battery_is_present;
-	gboolean		 battery_is_rechargeable;
+	gboolean		 online;
+	gboolean		 is_present;
+	gboolean		 is_rechargeable;
 	DkpDeviceType		 type;
-	DkpDeviceState		 battery_state;
-	DkpDeviceTechnology	 battery_technology;
-	gdouble			 battery_capacity;		/* percent */
-	gdouble			 battery_energy;		/* Watt Hours */
-	gdouble			 battery_energy_empty;		/* Watt Hours */
-	gdouble			 battery_energy_full;		/* Watt Hours */
-	gdouble			 battery_energy_full_design;	/* Watt Hours */
-	gdouble			 battery_energy_rate;		/* Watts */
-	gint64			 battery_time_to_empty;		/* seconds */
-	gint64			 battery_time_to_full;		/* seconds */
-	gdouble			 battery_percentage;		/* percent */
+	DkpDeviceState		 state;
+	DkpDeviceTechnology	 technology;
+	gdouble			 capacity;		/* percent */
+	gdouble			 energy;		/* Watt Hours */
+	gdouble			 energy_empty;		/* Watt Hours */
+	gdouble			 energy_full;		/* Watt Hours */
+	gdouble			 energy_full_design;	/* Watt Hours */
+	gdouble			 energy_rate;		/* Watts */
+	gint64			 time_to_empty;		/* seconds */
+	gint64			 time_to_full;		/* seconds */
+	gdouble			 percentage;		/* percent */
 } DkpObject;
 
 DkpObject	*dkp_object_new			(void);
