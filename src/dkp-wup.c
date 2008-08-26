@@ -251,8 +251,8 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 
 	/* update the command fields */
 	if (command == '?' && subcommand == '-') {
-		obj->battery_energy_rate = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_WATTS], NULL);
-//		obj->battery_volts = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_VOLTS], NULL);
+		obj->energy_rate = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_WATTS], NULL);
+//		obj->volts = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_VOLTS], NULL);
 	} else {
 		dkp_debug ("ignoring command '%c'", command);
 	}
@@ -322,9 +322,9 @@ dkp_wup_coldplug (DkpDevice *device)
 
 	/* hardcode some values */
 	obj->type = DKP_DEVICE_TYPE_MONITOR;
-	obj->battery_is_rechargeable = FALSE;
+	obj->is_rechargeable = FALSE;
 	obj->power_supply = FALSE;
-	obj->battery_is_present = FALSE;
+	obj->is_present = FALSE;
 	obj->vendor = g_strdup (devkit_device_get_property (d, "ID_VENDOR"));
 
 	/* coldplug everything */

@@ -179,31 +179,31 @@ dkp_hid_set_obj (DkpHid *hid, int code, int value)
 
 	switch (code) {
 	case DKP_HID_REMAINING_CAPACITY:
-		obj->battery_percentage = value;
+		obj->percentage = value;
 		break;
 	case DKP_HID_RUNTIME_TO_EMPTY:
-		obj->battery_time_to_empty = value;
+		obj->time_to_empty = value;
 		break;
 	case DKP_HID_CHARGING:
 		if (value != 0)
-			obj->battery_state = DKP_DEVICE_STATE_CHARGING;
+			obj->state = DKP_DEVICE_STATE_CHARGING;
 		break;
 	case DKP_HID_DISCHARGING:
 		if (value != 0)
-			obj->battery_state = DKP_DEVICE_STATE_DISCHARGING;
+			obj->state = DKP_DEVICE_STATE_DISCHARGING;
 		break;
 	case DKP_HID_BATTERY_PRESENT:
-		obj->battery_is_present = (value != 0);
+		obj->is_present = (value != 0);
 		break;
 	case DKP_HID_DEVICE_NAME:
 		//obj->device_name = dkp_hid_get_string (hid, value);
 		break;
 	case DKP_HID_CHEMISTRY:
 		type = dkp_hid_get_string (hid, value);
-		obj->battery_technology = dkp_acpi_to_device_technology (type);
+		obj->technology = dkp_acpi_to_device_technology (type);
 		break;
 	case DKP_HID_RECHARGEABLE:
-		obj->battery_is_rechargeable = (value != 0);
+		obj->is_rechargeable = (value != 0);
 		break;
 	case DKP_HID_OEM_INFORMATION:
 		obj->vendor = g_strdup (dkp_hid_get_string (hid, value));
@@ -215,7 +215,7 @@ dkp_hid_set_obj (DkpHid *hid, int code, int value)
 		obj->serial = g_strdup (dkp_hid_get_string (hid, value));
 		break;
 	case DKP_HID_DESIGN_CAPACITY:
-		obj->battery_energy_full_design = value;
+		obj->energy_full_design = value;
 		break;
 	default:
 		ret = FALSE;
@@ -315,9 +315,9 @@ dkp_hid_coldplug (DkpDevice *device)
 
 	/* hardcode some values */
 	obj->type = DKP_DEVICE_TYPE_UPS;
-	obj->battery_is_rechargeable = TRUE;
+	obj->is_rechargeable = TRUE;
 	obj->power_supply = TRUE;
-	obj->battery_is_present = TRUE;
+	obj->is_present = TRUE;
 
 	/* try and get from udev if UPS is being difficult */
 	if (obj->vendor == NULL)
