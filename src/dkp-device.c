@@ -40,6 +40,7 @@
 #include "dkp-device.h"
 #include "dkp-device.h"
 #include "dkp-history-obj.h"
+#include "dkp-stats-obj.h"
 #include "dkp-marshal.h"
 #include "dkp-device-glue.h"
 
@@ -97,6 +98,8 @@ G_DEFINE_TYPE (DkpDevice, dkp_device, G_TYPE_OBJECT)
 #define DKP_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_DEVICE, DkpDevicePrivate))
 #define DKP_DBUS_STRUCT_UINT_DOUBLE_STRING (dbus_g_type_get_struct ("GValueArray", \
 	G_TYPE_UINT, G_TYPE_DOUBLE, G_TYPE_STRING, G_TYPE_INVALID))
+#define DKP_DBUS_STRUCT_DOUBLE_DOUBLE (dbus_g_type_get_struct ("GValueArray", \
+	G_TYPE_DOUBLE, G_TYPE_DOUBLE, G_TYPE_INVALID))
 
 /**
  * dkp_device_error_quark:
@@ -241,7 +244,7 @@ dkp_device_get_on_battery (DkpDevice *device, gboolean *on_battery)
 	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 
 	/* no support */
-	if (klass->get_stats == NULL)
+	if (klass->get_on_battery == NULL)
 		return FALSE;
 
 	return klass->get_on_battery (device, on_battery);
@@ -308,7 +311,63 @@ out:
  * dkp_device_get_statistics:
  **/
 gboolean
-dkp_device_get_statistics (DkpDevice *device, const gchar *type, guint timespan, DBusGMethodInvocation *context)
+dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvocation *context)
+{
+	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+	GError *error;
+	GPtrArray *array;
+	GPtrArray *complex;
+	const DkpStatsObj *obj;
+	GValue *value;
+	guint i;
+
+	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
+
+	/* doesn't even try to support this */
+	if (klass->get_stats == NULL) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device does not support getting stats");
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
+	array = klass->get_stats (device, type);
+	/* maybe the device doesn't support histories */
+	if (array == NULL) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device has no statistics");
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
+	/* always 100 items of data */
+	if (array->len != 100) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "statistics invalid");
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
+	/* copy data to dbus struct */
+	complex = g_ptr_array_sized_new (array->len);
+	for (i=0; i<array->len; i++) {
+		obj = (const DkpStatsObj *) g_ptr_array_index (array, i);
+		value = g_new0 (GValue, 1);
+		g_value_init (value, DKP_DBUS_STRUCT_DOUBLE_DOUBLE);
+		g_value_take_boxed (value, dbus_g_type_specialized_construct (DKP_DBUS_STRUCT_DOUBLE_DOUBLE));
+		dbus_g_type_struct_set (value, 0, obj->value, 1, obj->accuracy, -1);
+		g_ptr_array_add (complex, g_value_get_boxed (value));
+		g_free (value);
+	}
+
+	g_ptr_array_free (array, TRUE);
+	dbus_g_method_return (context, complex);
+out:
+	return TRUE;
+}
+
+/**
+ * dkp_device_get_history:
+ **/
+gboolean
+dkp_device_get_history (DkpDevice *device, const gchar *type, guint timespan, DBusGMethodInvocation *context)
 {
 	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
 	GError *error;
@@ -327,7 +386,7 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, guint timespan,
 		goto out;
 	}
 
-	array = klass->get_stats (device, type, timespan);
+	array = klass->get_history (device, type, timespan);
 	/* maybe the device doesn't support histories */
 	if (array == NULL) {
 		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device has no history");

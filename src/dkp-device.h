@@ -59,9 +59,11 @@ typedef struct
 						 gboolean	*on_battery);
 	gboolean	 (*get_low_battery)	(DkpDevice	*device,
 						 gboolean	*low_battery);
-	GPtrArray	*(*get_stats)		(DkpDevice	*device,
+	GPtrArray	*(*get_history)		(DkpDevice	*device,
 						 const gchar	*type,
 						 guint		 timespan);
+	GPtrArray	*(*get_stats)		(DkpDevice	*device,
+						 const gchar	*type);
 } DkpDeviceClass;
 
 typedef enum
@@ -95,9 +97,12 @@ void		 dkp_device_emit_changed	(DkpDevice	*device);
 /* exported methods */
 gboolean	 dkp_device_refresh		(DkpDevice		*device,
 						 DBusGMethodInvocation	*context);
-gboolean	 dkp_device_get_statistics	(DkpDevice		*device,
+gboolean	 dkp_device_get_history		(DkpDevice		*device,
 						 const gchar		*type,
 						 guint			 timespan,
+						 DBusGMethodInvocation	*context);
+gboolean	 dkp_device_get_statistics	(DkpDevice		*device,
+						 const gchar		*type,
 						 DBusGMethodInvocation	*context);
 
 G_END_DECLS

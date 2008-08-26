@@ -355,10 +355,10 @@ dkp_supply_poll_battery (DkpSupply *supply)
 }
 
 /**
- * dkp_supply_get_stats:
+ * dkp_supply_get_history:
  **/
 static GPtrArray *
-dkp_supply_get_stats (DkpDevice *device, const gchar *type, guint timespan)
+dkp_supply_get_history (DkpDevice *device, const gchar *type, guint timespan)
 {
 	DkpSupply *supply = DKP_SUPPLY (device);
 	GPtrArray *array = NULL;
@@ -503,7 +503,7 @@ dkp_supply_class_init (DkpSupplyClass *klass)
 	device_class->get_low_battery = dkp_supply_get_low_battery;
 	device_class->coldplug = dkp_supply_coldplug;
 	device_class->refresh = dkp_supply_refresh;
-	device_class->get_stats = dkp_supply_get_stats;
+	device_class->get_history = dkp_supply_get_history;
 
 	g_type_class_add_private (klass, sizeof (DkpSupplyPrivate));
 }

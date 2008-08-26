@@ -89,8 +89,7 @@
       <doc:doc>
         <doc:description>
           <doc:para>
-            Gets statistics for the power device that may be interesting
-            to show on a graph in the session.
+            Gets history for the power device that is persistent across reboots.
           </doc:para>
         </doc:description>
       </doc:doc>
@@ -100,35 +99,24 @@
     <method name="GetStatistics">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
       <arg name="type" direction="in" type="s">
-        <doc:doc><doc:summary>The type of statistics.
-        Valid types are <literal>accuracy</literal> or <literal>time</literal>.</doc:summary></doc:doc>
-      </arg>
-      <arg name="mode" direction="in" type="s">
         <doc:doc><doc:summary>The mode for the statistics.
         Valid types are <literal>charging</literal> or <literal>discharging</literal>.</doc:summary></doc:doc>
       </arg>
-      <arg name="data" direction="out" type="a(uds)">
+      <arg name="data" direction="out" type="a(dd)">
         <doc:doc><doc:summary>
             The statistics data for the power device.
             Each element contains the following members:
             <doc:list>
               <doc:item>
-                <doc:term>time</doc:term>
-                <doc:definition>
-                  The time value in seconds from the <literal>gettimeofday()</literal> method.
-                </doc:definition>
-              </doc:item>
-              <doc:item>
                 <doc:term>value</doc:term>
                 <doc:definition>
-                  The data value, for instance the rate in W or the charge in %.
+                  The value of the percentage point, usually in seconds
                 </doc:definition>
               </doc:item>
               <doc:item>
-                <doc:term>state</doc:term>
+                <doc:term>accuracy</doc:term>
                 <doc:definition>
-                  The state of the device, for instance <literal>charging</literal> or
-                  <literal>discharging</literal>.
+                  The accuracy of the prediction in percent.
                 </doc:definition>
               </doc:item>
             </doc:list>

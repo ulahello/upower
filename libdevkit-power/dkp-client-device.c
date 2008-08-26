@@ -29,6 +29,7 @@
 #include "dkp-debug.h"
 #include "dkp-client-device.h"
 #include "dkp-object.h"
+#include "dkp-stats-obj.h"
 #include "dkp-history-obj.h"
 
 static void	dkp_client_device_class_init	(DkpClientDeviceClass	*klass);
@@ -192,10 +193,10 @@ dkp_client_device_get_object (const DkpClientDevice *device)
 }
 
 /**
- * dkp_client_device_print_stats:
+ * dkp_client_device_print_history:
  **/
 static gboolean
-dkp_client_device_print_stats (const DkpClientDevice *device, const gchar *type)
+dkp_client_device_print_history (const DkpClientDevice *device, const gchar *type)
 {
 	guint i;
 	GPtrArray *array;
@@ -203,7 +204,7 @@ dkp_client_device_print_stats (const DkpClientDevice *device, const gchar *type)
 	gboolean ret = FALSE;
 
 	/* get a fair chunk of data */
-	array = dkp_client_device_get_statistics (device, type, 120);
+	array = dkp_client_device_get_history (device, type, 120);
 	if (array == NULL)
 		goto out;
 
@@ -231,9 +232,9 @@ dkp_client_device_print (const DkpClientDevice *device)
 	/* print to screen */
 	dkp_object_print (device->priv->obj);
 
-	/* if we can, get stats */
-	dkp_client_device_print_stats (device, "charge");
-	dkp_client_device_print_stats (device, "rate");
+	/* if we can, get history */
+	dkp_client_device_print_history (device, "charge");
+	dkp_client_device_print_history (device, "rate");
 
 	return TRUE;
 }
@@ -263,12 +264,12 @@ out:
 }
 
 /**
- * dkp_client_device_get_statistics:
+ * dkp_client_device_get_history:
  *
  * Returns an array of %DkpHistoryObj's
  **/
 GPtrArray *
-dkp_client_device_get_statistics (const DkpClientDevice *device, const gchar *type, guint timespec)
+dkp_client_device_get_history (const DkpClientDevice *device, const gchar *type, guint timespec)
 {
 	GError *error = NULL;
 	GType g_type_gvalue_array;
@@ -290,7 +291,7 @@ dkp_client_device_get_statistics (const DkpClientDevice *device, const gchar *ty
 						G_TYPE_INVALID));
 
 	/* get compound data */
-	ret = dbus_g_proxy_call (device->priv->proxy_device, "GetStatistics", &error,
+	ret = dbus_g_proxy_call (device->priv->proxy_device, "GetHistory", &error,
 				 G_TYPE_STRING, type,
 				 G_TYPE_UINT, timespec,
 				 G_TYPE_INVALID,
@@ -324,6 +325,73 @@ dkp_client_device_get_statistics (const DkpClientDevice *device, const gchar *ty
 		gv = g_value_array_get_nth (gva, 2);
 		obj->state = dkp_device_state_from_text (g_value_get_string (gv));
 		g_value_unset (gv);
+		g_ptr_array_add (array, obj);
+		g_value_array_free (gva);
+	}
+
+out:
+	if (gvalue_ptr_array != NULL)
+		g_ptr_array_free (gvalue_ptr_array, TRUE);
+	return array;
+}
+
+/**
+ * dkp_client_device_get_statistics:
+ *
+ * Returns an array of %DkpStatsObj's
+ **/
+GPtrArray *
+dkp_client_device_get_statistics (const DkpClientDevice *device, const gchar *type)
+{
+	GError *error = NULL;
+	GType g_type_gvalue_array;
+	GPtrArray *gvalue_ptr_array = NULL;
+	GValueArray *gva;
+	GValue *gv;
+	guint i;
+	DkpStatsObj *obj;
+	GPtrArray *array = NULL;
+	gboolean ret;
+
+	g_return_val_if_fail (DKP_IS_CLIENT_DEVICE (device), FALSE);
+
+	g_type_gvalue_array = dbus_g_type_get_collection ("GPtrArray",
+					dbus_g_type_get_struct("GValueArray",
+						G_TYPE_DOUBLE,
+						G_TYPE_DOUBLE,
+						G_TYPE_INVALID));
+
+	/* get compound data */
+	ret = dbus_g_proxy_call (device->priv->proxy_device, "GetStatistics", &error,
+				 G_TYPE_STRING, type,
+				 G_TYPE_INVALID,
+				 g_type_gvalue_array, &gvalue_ptr_array,
+				 G_TYPE_INVALID);
+	if (!ret) {
+		dkp_debug ("GetStatistics(%s) on %s failed: %s", type,
+			   device->priv->object_path, error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* no data */
+	if (gvalue_ptr_array->len == 0)
+		goto out;
+
+	/* convert */
+	array = g_ptr_array_sized_new (gvalue_ptr_array->len);
+	for (i=0; i<gvalue_ptr_array->len; i++) {
+		gva = (GValueArray *) g_ptr_array_index (gvalue_ptr_array, i);
+		obj = dkp_stats_obj_new ();
+		/* 0 */
+		gv = g_value_array_get_nth (gva, 0);
+		obj->value = g_value_get_double (gv);
+		g_value_unset (gv);
+		/* 1 */
+		gv = g_value_array_get_nth (gva, 1);
+		obj->accuracy = g_value_get_double (gv);
+		g_value_unset (gv);
+		/* 2 */
 		g_ptr_array_add (array, obj);
 		g_value_array_free (gva);
 	}
