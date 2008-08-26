@@ -292,10 +292,6 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		dkp_supply_calculate_battery_rate (supply);
 	}
 
-	/* charging has a negative rate */
-	if (obj->battery_energy_rate > 0 && battery_state == DKP_DEVICE_STATE_CHARGING)
-		obj->battery_energy_rate *= -1.0;
-
 	/* get a precise percentage */
 	obj->battery_percentage = 100.0 * obj->battery_energy / obj->battery_energy_full;
 	if (obj->battery_percentage < 0)
