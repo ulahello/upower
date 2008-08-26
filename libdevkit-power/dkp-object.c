@@ -74,35 +74,35 @@ dkp_object_collect_props (const char *key, const GValue *value, DkpObject *obj)
 		obj->update_time = g_value_get_uint64 (value);
 	else if (strcmp (key, "type") == 0)
 		obj->type = dkp_device_type_from_text (g_value_get_string (value));
-	else if (strcmp (key, "line-power-online") == 0)
+	else if (strcmp (key, "online") == 0)
 		obj->online = g_value_get_boolean (value);
-	else if (strcmp (key, "battery-energy") == 0)
+	else if (strcmp (key, "energy") == 0)
 		obj->energy = g_value_get_double (value);
-	else if (strcmp (key, "battery-energy-empty") == 0)
+	else if (strcmp (key, "energy-empty") == 0)
 		obj->energy_empty = g_value_get_double (value);
-	else if (strcmp (key, "battery-energy-full") == 0)
+	else if (strcmp (key, "energy-full") == 0)
 		obj->energy_full = g_value_get_double (value);
-	else if (strcmp (key, "battery-energy-full-design") == 0)
+	else if (strcmp (key, "energy-full-design") == 0)
 		obj->energy_full_design = g_value_get_double (value);
-	else if (strcmp (key, "battery-energy-rate") == 0)
+	else if (strcmp (key, "energy-rate") == 0)
 		obj->energy_rate = g_value_get_double (value);
-	else if (strcmp (key, "battery-time-to-full") == 0)
+	else if (strcmp (key, "time-to-full") == 0)
 		obj->time_to_full = g_value_get_int64 (value);
-	else if (strcmp (key, "battery-time-to-empty") == 0)
+	else if (strcmp (key, "time-to-empty") == 0)
 		obj->time_to_empty = g_value_get_int64 (value);
-	else if (strcmp (key, "battery-percentage") == 0)
+	else if (strcmp (key, "percentage") == 0)
 		obj->percentage = g_value_get_double (value);
-	else if (strcmp (key, "battery-technology") == 0)
+	else if (strcmp (key, "technology") == 0)
 		obj->technology = dkp_device_technology_from_text (g_value_get_string (value));
-	else if (strcmp (key, "battery-is-present") == 0)
+	else if (strcmp (key, "is-present") == 0)
 		obj->is_present = g_value_get_boolean (value);
-	else if (strcmp (key, "battery-is-rechargeable") == 0)
+	else if (strcmp (key, "is-rechargeable") == 0)
 		obj->is_rechargeable = g_value_get_boolean (value);
 	else if (strcmp (key, "power-supply") == 0)
 		obj->power_supply = g_value_get_boolean (value);
-	else if (strcmp (key, "battery-capacity") == 0)
+	else if (strcmp (key, "capacity") == 0)
 		obj->capacity = g_value_get_double (value);
-	else if (strcmp (key, "battery-state") == 0)
+	else if (strcmp (key, "state") == 0)
 		obj->state = dkp_device_state_from_text (g_value_get_string (value));
 	else
 		handled = FALSE;
