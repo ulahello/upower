@@ -380,8 +380,8 @@ dkp_device_get_history (DkpDevice *device, const gchar *type, guint timespan, DB
 	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 
 	/* doesn't even try to support this */
-	if (klass->get_stats == NULL) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device does not support getting stats");
+	if (klass->get_history == NULL) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device does not support getting history");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
