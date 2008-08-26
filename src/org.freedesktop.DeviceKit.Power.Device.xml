@@ -49,10 +49,10 @@
     </signal>
 
     <!-- ************************************************************ -->
-    <method name="GetStatistics">
+    <method name="GetHistory">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
       <arg name="type" direction="in" type="s">
-        <doc:doc><doc:summary>The type of statistics.
+        <doc:doc><doc:summary>The type of history.
         Valid types are <literal>rate</literal> or <literal>charge</literal>.</doc:summary></doc:doc>
       </arg>
       <arg name="timespan" direction="in" type="u">
@@ -60,8 +60,57 @@
       </arg>
       <arg name="data" direction="out" type="a(uds)">
         <doc:doc><doc:summary>
-            The statistics data for the power device. Each element contains
-            the following members:
+            The history data for the power device, if the device supports history.
+            Data is ordered from the earliest in time, to the newest data point.
+            Each element contains the following members:
+            <doc:list>
+              <doc:item>
+                <doc:term>time</doc:term>
+                <doc:definition>
+                  The time value in seconds from the <literal>gettimeofday()</literal> method.
+                </doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>value</doc:term>
+                <doc:definition>
+                  The data value, for instance the rate in W or the charge in %.
+                </doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>state</doc:term>
+                <doc:definition>
+                  The state of the device, for instance <literal>charging</literal> or
+                  <literal>discharging</literal>.
+                </doc:definition>
+              </doc:item>
+            </doc:list>
+        </doc:summary></doc:doc>
+      </arg>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Gets statistics for the power device that may be interesting
+            to show on a graph in the session.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </method>
+
+    <!-- ************************************************************ -->
+    <method name="GetStatistics">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="type" direction="in" type="s">
+        <doc:doc><doc:summary>The type of statistics.
+        Valid types are <literal>accuracy</literal> or <literal>time</literal>.</doc:summary></doc:doc>
+      </arg>
+      <arg name="mode" direction="in" type="s">
+        <doc:doc><doc:summary>The mode for the statistics.
+        Valid types are <literal>charging</literal> or <literal>discharging</literal>.</doc:summary></doc:doc>
+      </arg>
+      <arg name="data" direction="out" type="a(uds)">
+        <doc:doc><doc:summary>
+            The statistics data for the power device.
+            Each element contains the following members:
             <doc:list>
               <doc:item>
                 <doc:term>time</doc:term>
