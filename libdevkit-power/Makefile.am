@@ -17,6 +17,8 @@ libdevkit_power_la_SOURCES =					\
 	dkp-client-device.h					\
 	dkp-history-obj.h					\
 	dkp-history-obj.c					\
+	dkp-stats-obj.h						\
+	dkp-stats-obj.c						\
 	dkp-enum.c						\
 	dkp-enum.h						\
 	dkp-object.c						\
