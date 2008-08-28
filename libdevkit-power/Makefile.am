@@ -14,6 +14,8 @@ libdevkit_power_la_SOURCES =					\
 	egg-debug.h						\
 	egg-string.c						\
 	egg-string.h						\
+	egg-obj-list.c						\
+	egg-obj-list.h						\
 	dkp-client.c						\
 	dkp-client.h						\
 	dkp-client-device.c					\

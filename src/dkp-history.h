@@ -25,6 +25,8 @@
 #include <glib-object.h>
 #include <dkp-enum.h>
 
+#include "egg-obj-list.h"
+
 G_BEGIN_DECLS
 
 #define DKP_TYPE_HISTORY			(dkp_history_get_type ())
@@ -51,13 +53,13 @@ typedef struct
 
 GType		 dkp_history_get_type			(void) G_GNUC_CONST;
 DkpHistory	*dkp_history_new			(void);
-GPtrArray	*dkp_history_get_charge_data		(DkpHistory		*history,
+EggObjList	*dkp_history_get_charge_data		(DkpHistory		*history,
 							 guint			 timespan);
-GPtrArray	*dkp_history_get_rate_data		(DkpHistory		*history,
+EggObjList	*dkp_history_get_rate_data		(DkpHistory		*history,
 							 guint			 timespan);
-GPtrArray	*dkp_history_get_time_full_data		(DkpHistory		*history,
+EggObjList	*dkp_history_get_time_full_data		(DkpHistory		*history,
 							 guint			 timespan);
-GPtrArray	*dkp_history_get_time_empty_data	(DkpHistory		*history,
+EggObjList	*dkp_history_get_time_empty_data	(DkpHistory		*history,
 							 guint			 timespan);
 
 gboolean	 dkp_history_set_id			(DkpHistory		*history,

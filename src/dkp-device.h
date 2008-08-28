@@ -26,8 +26,10 @@
 #include <polkit-dbus/polkit-dbus.h>
 #include <devkit-gobject.h>
 #include <dbus/dbus-glib.h>
-#include "dkp-object.h"
 
+#include "egg-obj-list.h"
+
+#include "dkp-object.h"
 #include "dkp-daemon.h"
 
 G_BEGIN_DECLS
@@ -59,10 +61,10 @@ typedef struct
 						 gboolean	*on_battery);
 	gboolean	 (*get_low_battery)	(DkpDevice	*device,
 						 gboolean	*low_battery);
-	GPtrArray	*(*get_history)		(DkpDevice	*device,
+	EggObjList	*(*get_history)		(DkpDevice	*device,
 						 const gchar	*type,
 						 guint		 timespan);
-	GPtrArray	*(*get_stats)		(DkpDevice	*device,
+	EggObjList	*(*get_stats)		(DkpDevice	*device,
 						 const gchar	*type);
 } DkpDeviceClass;
 

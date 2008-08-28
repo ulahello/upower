@@ -27,6 +27,8 @@
 #include <dbus/dbus-glib.h>
 
 #include "egg-debug.h"
+#include "egg-obj-list.h"
+
 #include "dkp-client-device.h"
 #include "dkp-object.h"
 #include "dkp-stats-obj.h"
@@ -199,7 +201,7 @@ static gboolean
 dkp_client_device_print_history (const DkpClientDevice *device, const gchar *type)
 {
 	guint i;
-	GPtrArray *array;
+	EggObjList *array;
 	DkpHistoryObj *obj;
 	gboolean ret = FALSE;
 
@@ -211,11 +213,10 @@ dkp_client_device_print_history (const DkpClientDevice *device, const gchar *typ
 	/* pretty print */
 	g_print ("  Statistics (%s):\n", type);
 	for (i=0; i<array->len; i++) {
-		obj = (DkpHistoryObj *) g_ptr_array_index (array, i);
+		obj = (DkpHistoryObj *) egg_obj_list_index (array, i);
 		g_print ("    %i\t%.3f\t%s\n", obj->time, obj->value, dkp_device_state_to_text (obj->state));
 	}
-	g_ptr_array_foreach (array, (GFunc) dkp_history_obj_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_object_unref (array);
 	ret = TRUE;
 out:
 	return ret;
@@ -268,7 +269,7 @@ out:
  *
  * Returns an array of %DkpHistoryObj's
  **/
-GPtrArray *
+EggObjList *
 dkp_client_device_get_history (const DkpClientDevice *device, const gchar *type, guint timespec)
 {
 	GError *error = NULL;
@@ -278,7 +279,7 @@ dkp_client_device_get_history (const DkpClientDevice *device, const gchar *type,
 	GValue *gv;
 	guint i;
 	DkpHistoryObj *obj;
-	GPtrArray *array = NULL;
+	EggObjList *array = NULL;
 	gboolean ret;
 
 	g_return_val_if_fail (DKP_IS_CLIENT_DEVICE (device), FALSE);
@@ -309,7 +310,10 @@ dkp_client_device_get_history (const DkpClientDevice *device, const gchar *type,
 		goto out;
 
 	/* convert */
-	array = g_ptr_array_sized_new (gvalue_ptr_array->len);
+	array = egg_obj_list_new ();
+	egg_obj_list_set_copy (array, (EggObjListCopyFunc) dkp_history_obj_copy);
+	egg_obj_list_set_free (array, (EggObjListFreeFunc) dkp_history_obj_free);
+
 	for (i=0; i<gvalue_ptr_array->len; i++) {
 		gva = (GValueArray *) g_ptr_array_index (gvalue_ptr_array, i);
 		obj = dkp_history_obj_new ();
@@ -325,7 +329,8 @@ dkp_client_device_get_history (const DkpClientDevice *device, const gchar *type,
 		gv = g_value_array_get_nth (gva, 2);
 		obj->state = dkp_device_state_from_text (g_value_get_string (gv));
 		g_value_unset (gv);
-		g_ptr_array_add (array, obj);
+		egg_obj_list_add (array, obj);
+		dkp_history_obj_free (obj);
 		g_value_array_free (gva);
 	}
 
@@ -340,7 +345,7 @@ out:
  *
  * Returns an array of %DkpStatsObj's
  **/
-GPtrArray *
+EggObjList *
 dkp_client_device_get_statistics (const DkpClientDevice *device, const gchar *type)
 {
 	GError *error = NULL;
@@ -350,7 +355,7 @@ dkp_client_device_get_statistics (const DkpClientDevice *device, const gchar *ty
 	GValue *gv;
 	guint i;
 	DkpStatsObj *obj;
-	GPtrArray *array = NULL;
+	EggObjList *array = NULL;
 	gboolean ret;
 
 	g_return_val_if_fail (DKP_IS_CLIENT_DEVICE (device), FALSE);
@@ -379,7 +384,10 @@ dkp_client_device_get_statistics (const DkpClientDevice *device, const gchar *ty
 		goto out;
 
 	/* convert */
-	array = g_ptr_array_sized_new (gvalue_ptr_array->len);
+	array = egg_obj_list_new ();
+	egg_obj_list_set_copy (array, (EggObjListCopyFunc) dkp_stats_obj_copy);
+	egg_obj_list_set_free (array, (EggObjListFreeFunc) dkp_stats_obj_free);
+
 	for (i=0; i<gvalue_ptr_array->len; i++) {
 		gva = (GValueArray *) g_ptr_array_index (gvalue_ptr_array, i);
 		obj = dkp_stats_obj_new ();
@@ -392,7 +400,8 @@ dkp_client_device_get_statistics (const DkpClientDevice *device, const gchar *ty
 		obj->accuracy = g_value_get_double (gv);
 		g_value_unset (gv);
 		/* 2 */
-		g_ptr_array_add (array, obj);
+		egg_obj_list_add (array, obj);
+		dkp_stats_obj_free (obj);
 		g_value_array_free (gva);
 	}
 

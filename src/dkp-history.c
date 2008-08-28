@@ -46,10 +46,10 @@ struct DkpHistoryPrivate
 	gint64			 time_empty_last;
 	gdouble			 percentage_last;
 	DkpDeviceState		 state;
-	GPtrArray		*data_rate;
-	GPtrArray		*data_charge;
-	GPtrArray		*data_time_full;
-	GPtrArray		*data_time_empty;
+	EggObjList		*data_rate;
+	EggObjList		*data_charge;
+	EggObjList		*data_time_full;
+	EggObjList		*data_time_empty;
 	guint			 save_id;
 };
 
@@ -62,32 +62,44 @@ G_DEFINE_TYPE (DkpHistory, dkp_history, G_TYPE_OBJECT)
 #define DKP_HISTORY_FILE_HEADER	"PackageKit Profile"
 
 /**
+ * dkp_history_get_history_list:
+ **/
+static EggObjList *
+dkp_history_new_history_list (void)
+{
+	EggObjList *list;
+	list = egg_obj_list_new ();
+	egg_obj_list_set_new (list, (EggObjListNewFunc) dkp_history_obj_new);
+	egg_obj_list_set_copy (list, (EggObjListCopyFunc) dkp_history_obj_copy);
+	egg_obj_list_set_free (list, (EggObjListFreeFunc) dkp_history_obj_free);
+	return list;
+}
+
+/**
  * dkp_history_copy_array_timespan:
  **/
-static GPtrArray *
-dkp_history_copy_array_timespan (GPtrArray *array, guint timespan)
+static EggObjList *
+dkp_history_copy_array_timespan (EggObjList *array, guint timespan)
 {
 	guint i;
 	const DkpHistoryObj *obj;
-	DkpHistoryObj *obj_new;
-	GPtrArray *array_new;
+	EggObjList *array_new;
 	guint start;
 
 	/* no data */
 	if (array->len == 0)
 		return NULL;
 
-	array_new = g_ptr_array_new ();
+	/* new data */
+	array_new = dkp_history_new_history_list ();
 
 	/* treat the timespan like a range, and search backwards */
-	obj = (const DkpHistoryObj *) g_ptr_array_index (array, array->len-1);
+	obj = (const DkpHistoryObj *) egg_obj_list_index (array, array->len-1);
 	start = obj->time;
 	for (i=array->len-1; i>0; i--) {
-		obj = (const DkpHistoryObj *) g_ptr_array_index (array, i);
-		if (start - obj->time < timespan) {
-			obj_new = dkp_history_obj_copy (obj);
-			g_ptr_array_add (array_new, obj_new);
-		}
+		obj = (const DkpHistoryObj *) egg_obj_list_index (array, i);
+		if (start - obj->time < timespan)
+			egg_obj_list_add (array_new, (const gpointer) obj);
 	}
 
 	return array_new;
@@ -96,10 +108,10 @@ dkp_history_copy_array_timespan (GPtrArray *array, guint timespan)
 /**
  * dkp_history_get_charge_data:
  **/
-GPtrArray *
+EggObjList *
 dkp_history_get_charge_data (DkpHistory *history, guint timespan)
 {
-	GPtrArray *array;
+	EggObjList *array;
 
 	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
 
@@ -112,10 +124,10 @@ dkp_history_get_charge_data (DkpHistory *history, guint timespan)
 /**
  * dkp_history_get_rate_data:
  **/
-GPtrArray *
+EggObjList *
 dkp_history_get_rate_data (DkpHistory *history, guint timespan)
 {
-	GPtrArray *array;
+	EggObjList *array;
 
 	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
 
@@ -128,10 +140,10 @@ dkp_history_get_rate_data (DkpHistory *history, guint timespan)
 /**
  * dkp_history_get_time_full_data:
  **/
-GPtrArray *
+EggObjList *
 dkp_history_get_time_full_data (DkpHistory *history, guint timespan)
 {
-	GPtrArray *array;
+	EggObjList *array;
 
 	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
 
@@ -144,10 +156,10 @@ dkp_history_get_time_full_data (DkpHistory *history, guint timespan)
 /**
  * dkp_history_get_time_empty_data:
  **/
-GPtrArray *
+EggObjList *
 dkp_history_get_time_empty_data (DkpHistory *history, guint timespan)
 {
-	GPtrArray *array;
+	EggObjList *array;
 
 	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
 
@@ -176,7 +188,7 @@ dkp_history_get_filename (DkpHistory *history, const gchar *type)
  * dkp_history_save_data_array:
  **/
 static gboolean
-dkp_history_save_data_array (const gchar *filename, GPtrArray *array)
+dkp_history_save_data_array (const gchar *filename, EggObjList *array)
 {
 	guint i;
 	const DkpHistoryObj *obj;
@@ -189,7 +201,7 @@ dkp_history_save_data_array (const gchar *filename, GPtrArray *array)
 	/* generate data */
 	string = g_string_new ("");
 	for (i=0; i<array->len; i++) {
-		obj = (const DkpHistoryObj *) g_ptr_array_index (array, i);
+		obj = (const DkpHistoryObj *) egg_obj_list_index (array, i);
 		part = dkp_history_obj_to_string (obj);
 		if (part == NULL) {
 			ret = FALSE;
@@ -290,7 +302,7 @@ dkp_history_is_low_power (DkpHistory *history)
 		return FALSE;
 
 	/* get the last saved charge object */
-	obj = (const DkpHistoryObj *) g_ptr_array_index (history->priv->data_charge, length-1);
+	obj = (const DkpHistoryObj *) egg_obj_list_index (history->priv->data_charge, length-1);
 	if (obj->state != DKP_DEVICE_STATE_DISCHARGING)
 		return FALSE;
 
@@ -338,7 +350,7 @@ dkp_history_schedule_save (DkpHistory *history)
  * dkp_history_load_data_array:
  **/
 static gboolean
-dkp_history_load_data_array (const gchar *filename, GPtrArray *array)
+dkp_history_load_data_array (const gchar *filename, EggObjList *array)
 {
 	gboolean ret;
 	GFile *file = NULL;
@@ -378,7 +390,8 @@ dkp_history_load_data_array (const gchar *filename, GPtrArray *array)
 	for (i=0; i<length-1; i++) {
 		obj = dkp_history_obj_from_string (parts[i]);
 		if (obj != NULL)
-			g_ptr_array_add (array, obj);
+			egg_obj_list_add (array, obj);
+		dkp_history_obj_free (obj);
 	}
 
 out:
@@ -476,7 +489,8 @@ dkp_history_set_charge_data (DkpHistory *history, gdouble percentage)
 
 	/* add to array and schedule save file */
 	obj = dkp_history_obj_create (percentage, history->priv->state);
-	g_ptr_array_add (history->priv->data_charge, obj);
+	egg_obj_list_add (history->priv->data_charge, obj);
+	dkp_history_obj_free (obj);
 	dkp_history_schedule_save (history);
 
 	/* save last value */
@@ -504,7 +518,8 @@ dkp_history_set_rate_data (DkpHistory *history, gdouble rate)
 
 	/* add to array and schedule save file */
 	obj = dkp_history_obj_create (rate, history->priv->state);
-	g_ptr_array_add (history->priv->data_rate, obj);
+	egg_obj_list_add (history->priv->data_rate, obj);
+	dkp_history_obj_free (obj);
 	dkp_history_schedule_save (history);
 
 	/* save last value */
@@ -534,7 +549,8 @@ dkp_history_set_time_full_data (DkpHistory *history, gint64 time)
 
 	/* add to array and schedule save file */
 	obj = dkp_history_obj_create ((gdouble) time, history->priv->state);
-	g_ptr_array_add (history->priv->data_time_full, obj);
+	egg_obj_list_add (history->priv->data_time_full, obj);
+	dkp_history_obj_free (obj);
 	dkp_history_schedule_save (history);
 
 	/* save last value */
@@ -564,7 +580,8 @@ dkp_history_set_time_empty_data (DkpHistory *history, gint64 time)
 
 	/* add to array and schedule save file */
 	obj = dkp_history_obj_create ((gdouble) time, history->priv->state);
-	g_ptr_array_add (history->priv->data_time_empty, obj);
+	egg_obj_list_add (history->priv->data_time_empty, obj);
+	dkp_history_obj_free (obj);
 	dkp_history_schedule_save (history);
 
 	/* save last value */
@@ -597,10 +614,10 @@ dkp_history_init (DkpHistory *history)
 	history->priv->rate_last = 0;
 	history->priv->percentage_last = 0;
 	history->priv->state = DKP_DEVICE_STATE_UNKNOWN;
-	history->priv->data_rate = g_ptr_array_new ();
-	history->priv->data_charge = g_ptr_array_new ();
-	history->priv->data_time_full = g_ptr_array_new ();
-	history->priv->data_time_empty = g_ptr_array_new ();
+	history->priv->data_rate = dkp_history_new_history_list ();
+	history->priv->data_charge = dkp_history_new_history_list ();
+	history->priv->data_time_full = dkp_history_new_history_list ();
+	history->priv->data_time_empty = dkp_history_new_history_list ();
 	history->priv->save_id = 0;
 }
 
@@ -620,10 +637,10 @@ dkp_history_finalize (GObject *object)
 	/* save */
 	dkp_history_save_data (history);
 
-	g_ptr_array_free (history->priv->data_rate, TRUE);
-	g_ptr_array_free (history->priv->data_charge, TRUE);
-	g_ptr_array_free (history->priv->data_time_full, TRUE);
-	g_ptr_array_free (history->priv->data_time_empty, TRUE);
+	g_object_unref (history->priv->data_rate);
+	g_object_unref (history->priv->data_charge);
+	g_object_unref (history->priv->data_time_full);
+	g_object_unref (history->priv->data_time_empty);
 	g_free (history->priv->id);
 
 	g_return_if_fail (history->priv != NULL);

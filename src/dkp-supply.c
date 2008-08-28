@@ -361,11 +361,11 @@ dkp_supply_poll_battery (DkpSupply *supply)
 /**
  * dkp_supply_get_history:
  **/
-static GPtrArray *
+static EggObjList *
 dkp_supply_get_history (DkpDevice *device, const gchar *type, guint timespan)
 {
 	DkpSupply *supply = DKP_SUPPLY (device);
-	GPtrArray *array = NULL;
+	EggObjList *array = NULL;
 
 	g_return_val_if_fail (DKP_IS_SUPPLY (supply), FALSE);
 	g_return_val_if_fail (type != NULL, FALSE);

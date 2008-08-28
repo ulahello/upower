@@ -36,6 +36,8 @@
 
 #include "sysfs-utils.h"
 #include "egg-debug.h"
+#include "egg-obj-list.h"
+
 #include "dkp-supply.h"
 #include "dkp-device.h"
 #include "dkp-device.h"
@@ -315,7 +317,7 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvo
 {
 	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
 	GError *error;
-	GPtrArray *array;
+	EggObjList *array = NULL;
 	GPtrArray *complex;
 	const DkpStatsObj *obj;
 	GValue *value;
@@ -348,7 +350,7 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvo
 	/* copy data to dbus struct */
 	complex = g_ptr_array_sized_new (array->len);
 	for (i=0; i<array->len; i++) {
-		obj = (const DkpStatsObj *) g_ptr_array_index (array, i);
+		obj = (const DkpStatsObj *) egg_obj_list_index (array, i);
 		value = g_new0 (GValue, 1);
 		g_value_init (value, DKP_DBUS_STRUCT_DOUBLE_DOUBLE);
 		g_value_take_boxed (value, dbus_g_type_specialized_construct (DKP_DBUS_STRUCT_DOUBLE_DOUBLE));
@@ -357,9 +359,10 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvo
 		g_free (value);
 	}
 
-	g_ptr_array_free (array, TRUE);
 	dbus_g_method_return (context, complex);
 out:
+	if (array != NULL)
+		g_object_unref (array);
 	return TRUE;
 }
 
@@ -371,7 +374,7 @@ dkp_device_get_history (DkpDevice *device, const gchar *type, guint timespan, DB
 {
 	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
 	GError *error;
-	GPtrArray *array;
+	EggObjList *array = NULL;
 	GPtrArray *complex;
 	const DkpHistoryObj *obj;
 	GValue *value;
@@ -397,7 +400,7 @@ dkp_device_get_history (DkpDevice *device, const gchar *type, guint timespan, DB
 	/* copy data to dbus struct */
 	complex = g_ptr_array_sized_new (array->len);
 	for (i=0; i<array->len; i++) {
-		obj = (const DkpHistoryObj *) g_ptr_array_index (array, i);
+		obj = (const DkpHistoryObj *) egg_obj_list_index (array, i);
 		value = g_new0 (GValue, 1);
 		g_value_init (value, DKP_DBUS_STRUCT_UINT_DOUBLE_STRING);
 		g_value_take_boxed (value, dbus_g_type_specialized_construct (DKP_DBUS_STRUCT_UINT_DOUBLE_STRING));
@@ -406,9 +409,10 @@ dkp_device_get_history (DkpDevice *device, const gchar *type, guint timespan, DB
 		g_free (value);
 	}
 
-	g_ptr_array_free (array, TRUE);
 	dbus_g_method_return (context, complex);
 out:
+	if (array != NULL)
+		g_object_unref (array);
 	return TRUE;
 }
 

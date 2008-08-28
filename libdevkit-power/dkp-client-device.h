@@ -25,6 +25,7 @@
 #include <glib-object.h>
 #include <dkp-enum.h>
 #include <dkp-object.h>
+#include "egg-obj-list.h"
 
 G_BEGIN_DECLS
 
@@ -62,10 +63,10 @@ gboolean	 dkp_client_device_set_object_path	(DkpClientDevice	*device,
 
 gboolean	 dkp_client_device_print		(const DkpClientDevice	*device);
 gboolean	 dkp_client_device_refresh		(DkpClientDevice	*device);
-GPtrArray	*dkp_client_device_get_history		(const DkpClientDevice	*device,
+EggObjList	*dkp_client_device_get_history		(const DkpClientDevice	*device,
 							 const gchar		*type,
 							 guint			 timespec);
-GPtrArray	*dkp_client_device_get_statistics	(const DkpClientDevice	*device,
+EggObjList	*dkp_client_device_get_statistics	(const DkpClientDevice	*device,
 							 const gchar		*type);
 
 G_END_DECLS
