@@ -20,7 +20,7 @@
  */
 
 /**
- * SECTION:dkp-debug
+ * SECTION:egg-debug
  * @short_description: Debugging functions
  *
  * This file contains functions that can be used for debugging.
@@ -41,7 +41,7 @@
 #include <time.h>
 #include <execinfo.h>
 
-#include "dkp-debug.h"
+#include "egg-debug.h"
 
 #define CONSOLE_RESET		0
 #define CONSOLE_BLACK 		30
@@ -53,16 +53,28 @@
 #define CONSOLE_CYAN		36
 #define CONSOLE_WHITE		37
 
-#define PK_LOG_FILE		PK_LOG_DIR "/PackageKit"
-
 static gboolean do_verbose = FALSE;	/* if we should print out debugging */
+static gboolean do_logging = FALSE;	/* if we should write to a file */
 static gboolean is_console = FALSE;
+static gint fd = -1;
 
 /**
- * dkp_set_console_mode:
+ * egg_debug_set_logging:
+ **/
+void
+egg_debug_set_logging (gboolean enabled)
+{
+	do_logging = enabled;
+	if (enabled) {
+		egg_debug ("now logging to %s", EGG_LOG_FILE);
+	}
+}
+
+/**
+ * pk_set_console_mode:
  **/
 static void
-dkp_set_console_mode (guint console_code)
+pk_set_console_mode (guint console_code)
 {
 	gchar command[13];
 
@@ -76,10 +88,10 @@ dkp_set_console_mode (guint console_code)
 }
 
 /**
- * dkp_debug_backtrace:
+ * egg_debug_backtrace:
  **/
 void
-dkp_debug_backtrace (void)
+egg_debug_backtrace (void)
 {
 	void *call_stack[512];
 	int  call_stack_size;
@@ -89,22 +101,50 @@ dkp_debug_backtrace (void)
 	call_stack_size = backtrace (call_stack, G_N_ELEMENTS (call_stack));
 	symbols = backtrace_symbols (call_stack, call_stack_size);
 	if (symbols != NULL) {
-		dkp_set_console_mode (CONSOLE_RED);
+		pk_set_console_mode (CONSOLE_RED);
 		g_print ("Traceback:\n");
 		while (i < call_stack_size) {
 			g_print ("\t%s\n", symbols[i]);
 			i++;
 		}
-		dkp_set_console_mode (CONSOLE_RESET);
+		pk_set_console_mode (CONSOLE_RESET);
 		free (symbols);
 	}
 }
 
 /**
- * dkp_print_line:
+ * pk_log_line:
  **/
 static void
-dkp_print_line (const gchar *func, const gchar *file, const int line, const gchar *buffer, guint color)
+pk_log_line (const gchar *buffer)
+{
+	ssize_t count;
+	/* open a file */
+	if (fd == -1) {
+		/* ITS4: ignore, /var/log/foo is owned by root, and this is just debug text */
+		fd = open (EGG_LOG_FILE, O_WRONLY|O_APPEND|O_CREAT, 0777);
+		if (fd == -1) {
+			g_error ("could not open log: '%s'", EGG_LOG_FILE);
+		}
+	}
+
+	/* ITS4: ignore, debug text always NULL terminated */
+	count = write (fd, buffer, strlen (buffer));
+	if (count == -1) {
+		g_warning ("could not write %s", buffer);
+	}
+	/* newline */
+	count = write (fd, "\n", 1);
+	if (count == -1) {
+		g_warning ("could not write newline");
+	}
+}
+
+/**
+ * pk_print_line:
+ **/
+static void
+pk_print_line (const gchar *func, const gchar *file, const int line, const gchar *buffer, guint color)
 {
 	gchar *str_time;
 	gchar *header;
@@ -121,13 +161,19 @@ dkp_print_line (const gchar *func, const gchar *file, const int line, const gcha
 	g_free (str_time);
 
 	/* always in light green */
-	dkp_set_console_mode (CONSOLE_GREEN);
+	pk_set_console_mode (CONSOLE_GREEN);
 	printf ("%s\n", header);
 
 	/* different colours according to the severity */
-	dkp_set_console_mode (color);
+	pk_set_console_mode (color);
 	printf (" - %s\n", buffer);
-	dkp_set_console_mode (CONSOLE_RESET);
+	pk_set_console_mode (CONSOLE_RESET);
+
+	/* log to a file */
+	if (do_logging) {
+		pk_log_line (header);
+		pk_log_line (buffer);
+	}
 
 	/* flush this output, as we need to debug */
 	fflush (stdout);
@@ -136,10 +182,10 @@ dkp_print_line (const gchar *func, const gchar *file, const int line, const gcha
 }
 
 /**
- * dkp_debug_real:
+ * egg_debug_real:
  **/
 void
-dkp_debug_real (const gchar *func, const gchar *file, const int line, const gchar *format, ...)
+egg_debug_real (const gchar *func, const gchar *file, const int line, const gchar *format, ...)
 {
 	va_list args;
 	gchar *buffer = NULL;
@@ -152,16 +198,16 @@ dkp_debug_real (const gchar *func, const gchar *file, const int line, const gcha
 	g_vasprintf (&buffer, format, args);
 	va_end (args);
 
-	dkp_print_line (func, file, line, buffer, CONSOLE_BLUE);
+	pk_print_line (func, file, line, buffer, CONSOLE_BLUE);
 
 	g_free(buffer);
 }
 
 /**
- * dkp_warning_real:
+ * egg_warning_real:
  **/
 void
-dkp_warning_real (const gchar *func, const gchar *file, const int line, const gchar *format, ...)
+egg_warning_real (const gchar *func, const gchar *file, const int line, const gchar *format, ...)
 {
 	va_list args;
 	gchar *buffer = NULL;
@@ -178,19 +224,16 @@ dkp_warning_real (const gchar *func, const gchar *file, const int line, const gc
 	if (!is_console) {
 		printf ("*** WARNING ***\n");
 	}
-	dkp_print_line (func, file, line, buffer, CONSOLE_RED);
+	pk_print_line (func, file, line, buffer, CONSOLE_RED);
 
 	g_free(buffer);
-
-	/* we want to fix this! */
-	dkp_debug_backtrace ();
 }
 
 /**
- * dkp_error_real:
+ * egg_error_real:
  **/
 void
-dkp_error_real (const gchar *func, const gchar *file, const int line, const gchar *format, ...)
+egg_error_real (const gchar *func, const gchar *file, const int line, const gchar *format, ...)
 {
 	va_list args;
 	gchar *buffer = NULL;
@@ -203,38 +246,38 @@ dkp_error_real (const gchar *func, const gchar *file, const int line, const gcha
 	if (!is_console) {
 		printf ("*** ERROR ***\n");
 	}
-	dkp_print_line (func, file, line, buffer, CONSOLE_RED);
+	pk_print_line (func, file, line, buffer, CONSOLE_RED);
 	g_free(buffer);
 
 	/* we want to fix this! */
-	dkp_debug_backtrace ();
+	egg_debug_backtrace ();
 
 	exit (1);
 }
 
 /**
- * dkp_debug_enabled:
+ * egg_debug_enabled:
  *
  * Returns: TRUE if we have debugging enabled
  **/
 gboolean
-dkp_debug_enabled (void)
+egg_debug_enabled (void)
 {
 	return do_verbose;
 }
 
 /**
- * dkp_debug_init:
- * @debug: If we should print out verbose debugging
+ * egg_debug_init:
+ * @debug: If we should print out verbose logging
  **/
 void
-dkp_debug_init (gboolean debug)
+egg_debug_init (gboolean debug)
 {
 	do_verbose = debug;
 	/* check if we are on console */
 	if (isatty (fileno (stdout)) == 1) {
 		is_console = TRUE;
 	}
-	dkp_debug ("Verbose debugging %i (on console %i)", do_verbose, is_console);
+	egg_debug ("Verbose debugging %i (on console %i)", do_verbose, is_console);
 }
 

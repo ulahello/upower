@@ -41,7 +41,9 @@
 #include <getopt.h>
 
 #include "sysfs-utils.h"
-#include "dkp-debug.h"
+#include "egg-debug.h"
+#include "egg-string.h"
+
 #include "dkp-enum.h"
 #include "dkp-object.h"
 #include "dkp-wup.h"
@@ -77,7 +79,7 @@ dkp_wup_poll (DkpWup *wup)
 	DkpDevice *device = DKP_DEVICE (wup);
 	DkpObject *obj = dkp_device_get_obj (device);
 
-	dkp_debug ("Polling: %s", obj->native_path);
+	egg_debug ("Polling: %s", obj->native_path);
 	ret = dkp_wup_refresh (device);
 	if (ret)
 		dkp_device_emit_changed (device);
@@ -95,7 +97,7 @@ dkp_wup_set_speed (DkpWup *wup)
 
 	retval = tcgetattr (wup->priv->fd, &t);
 	if (retval != 0) {
-		dkp_debug ("failed to get speed");
+		egg_debug ("failed to get speed");
 		return FALSE;
 	}
 
@@ -108,7 +110,7 @@ dkp_wup_set_speed (DkpWup *wup)
 	t.c_cflag &= ~CSTOPB;
 	retval = tcsetattr (wup->priv->fd, TCSANOW, &t);
 	if (retval != 0) {
-		dkp_debug ("failed to set speed");
+		egg_debug ("failed to set speed");
 		return FALSE;
 	}
 
@@ -128,10 +130,10 @@ dkp_wup_write_command (DkpWup *wup, const gchar *data)
 	gint length;
 
 	length = strlen (data);
-	dkp_debug ("writing [%s]", data);
+	egg_debug ("writing [%s]", data);
 	retval = write (wup->priv->fd, data, length);
 	if (retval != length) {
-		dkp_debug ("Writing [%s] to device failed", data);
+		egg_debug ("Writing [%s] to device failed", data);
 		ret = FALSE;
 	}
 	return ret;
@@ -149,10 +151,10 @@ dkp_wup_read_command (DkpWup *wup)
 	gchar buffer[DKP_WUP_COMMAND_LEN];
 	retval = read (wup->priv->fd, &buffer, DKP_WUP_COMMAND_LEN);
 	if (retval < 0) {
-		dkp_debug ("failed to read from fd");
+		egg_debug ("failed to read from fd");
 		return NULL;
 	}
-	dkp_debug ("reading [%s]", buffer);
+	egg_debug ("reading [%s]", buffer);
 	return g_strdup (buffer);
 }
 
@@ -190,7 +192,7 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 
 	/* does packet exist? */
 	if (packet == NULL) {
-		dkp_debug ("no start char in %s", data);
+		egg_debug ("no start char in %s", data);
 		goto out;
 	}
 
@@ -207,7 +209,7 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 	tokens = g_strsplit (data, ",", -1);
 	length = g_strv_length (tokens);
 	if (length < 3) {
-		dkp_debug ("not enough tokens '%s'", data);
+		egg_debug ("not enough tokens '%s'", data);
 		goto out;
 	}
 
@@ -219,11 +221,11 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 	/* check the first token */
 	length_tok = strlen (tokens[0]);
 	if (length_tok != 2) {
-		dkp_debug ("expected command '#?' but got '%s'", tokens[0]);
+		egg_debug ("expected command '#?' but got '%s'", tokens[0]);
 		goto out;
 	}
 	if (tokens[0][0] != '#') {
-		dkp_debug ("expected command '#?' but got '%s'", tokens[0]);
+		egg_debug ("expected command '#?' but got '%s'", tokens[0]);
 		goto out;
 	}
 	command = tokens[0][1];
@@ -231,7 +233,7 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 	/* check the second token */
 	length_tok = strlen (tokens[1]);
 	if (length_tok != 1) {
-		dkp_debug ("expected command '?' but got '%s'", tokens[1]);
+		egg_debug ("expected command '?' but got '%s'", tokens[1]);
 		goto out;
 	}
 	subcommand = tokens[1][0]; /* expect to be '-' */
@@ -239,14 +241,14 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 	/* check the length */
 	size = atoi (tokens[1]);
 	if (size != length - offset) {
-		dkp_debug ("size expected to be '%i' but got '%i'", length - offset, size);
+		egg_debug ("size expected to be '%i' but got '%i'", length - offset, size);
 		goto out;
 	}
 
 	/* print the data */
-	dkp_debug ("command=%c:%c", command, subcommand);
+	egg_debug ("command=%c:%c", command, subcommand);
 	for (i=0; i<size; i++) {
-		dkp_debug ("%i\t'%s'", i, tokens[i+offset]);
+		egg_debug ("%i\t'%s'", i, tokens[i+offset]);
 	}
 
 	/* update the command fields */
@@ -254,7 +256,7 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 		obj->energy_rate = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_WATTS], NULL);
 //		obj->volts = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_VOLTS], NULL);
 	} else {
-		dkp_debug ("ignoring command '%c'", command);
+		egg_debug ("ignoring command '%c'", command);
 	}
 
 out:
@@ -280,33 +282,33 @@ dkp_wup_coldplug (DkpDevice *device)
 	/* detect what kind of device we are */
 	d = dkp_device_get_d (device);
 	if (d == NULL)
-		dkp_error ("could not get device");
+		egg_error ("could not get device");
 
 	/* get the type */
 	type = devkit_device_get_property (d, "DKP_MONITOR_TYPE");
-	if (type == NULL || strcmp (type, "wup") != 0) {
-		dkp_debug ("not a Watts Up? Pro device");
+	if (type == NULL || !egg_strequal (type, "wup")) {
+		egg_debug ("not a Watts Up? Pro device");
 		goto out;
 	}
 
 	/* get the device file */
 	device_file = devkit_device_get_device_file (d);
 	if (device_file == NULL) {
-		dkp_debug ("could not get device file for WUP device");
+		egg_debug ("could not get device file for WUP device");
 		goto out;
 	}
 
 	/* connect to the device */
 	wup->priv->fd = open (device_file, O_RDONLY | O_NONBLOCK);
 	if (wup->priv->fd < 0) {
-		dkp_debug ("cannot open device file %s", device_file);
+		egg_debug ("cannot open device file %s", device_file);
 		goto out;
 	}
 
 	/* set speed */
 	ret = dkp_wup_set_speed (wup);
 	if (!ret) {
-		dkp_debug ("not a WUP device (cannot set speed): %s", device_file);
+		egg_debug ("not a WUP device (cannot set speed): %s", device_file);
 		goto out;
 	}
 
@@ -314,7 +316,7 @@ dkp_wup_coldplug (DkpDevice *device)
 	ret = dkp_wup_write_command (wup, DKP_WUP_COMMAND_CLEAR);
 	/* dummy read */
 	data = dkp_wup_read_command (wup);
-	dkp_debug ("data after clear %s", data);
+	egg_debug ("data after clear %s", data);
 
 	/* shouldn't do anything */
 	dkp_wup_parse_command (wup, data);
@@ -356,14 +358,14 @@ dkp_wup_refresh (DkpDevice *device)
 	/* get data */
 	data = dkp_wup_read_command (wup);
 	if (data == NULL) {
-		dkp_debug ("no data");
+		egg_debug ("no data");
 		goto out;
 	}
 
 	/* parse */
 	ret = dkp_wup_parse_command (wup, data);
 	if (!ret) {
-		dkp_debug ("failed to parse %s", data);
+		egg_debug ("failed to parse %s", data);
 		goto out;
 	}
 	ret = TRUE;

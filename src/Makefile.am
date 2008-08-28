@@ -10,6 +10,7 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
+	-DEGG_LOG_FILE=\""$(PK_LOG_DIR)/DeviceKit-power"\" \
 	-I$(top_srcdir)/libdevkit-power \
 	$(GIO_CFLAGS) \
 	$(DBUS_GLIB_CFLAGS) \
@@ -42,6 +43,8 @@ dbusifdir = $(datadir)/dbus-1/interfaces
 dbusif_DATA = org.freedesktop.DeviceKit.Power.xml org.freedesktop.DeviceKit.Power.Device.xml
 
 devkit_power_daemon_SOURCES = 					\
+	egg-debug.c						\
+	egg-debug.h						\
 	dkp-daemon.h			dkp-daemon.c		\
 	dkp-device.h			dkp-device.c		\
 	dkp-device-list.h		dkp-device-list.c	\

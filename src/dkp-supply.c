@@ -33,7 +33,9 @@
 #include <devkit-gobject.h>
 
 #include "sysfs-utils.h"
-#include "dkp-debug.h"
+#include "egg-debug.h"
+#include "egg-string.h"
+
 #include "dkp-enum.h"
 #include "dkp-object.h"
 #include "dkp-supply.h"
@@ -259,7 +261,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	else if (strcasecmp (status, "empty") == 0)
 		state = DKP_DEVICE_STATE_EMPTY;
 	else {
-		dkp_warning ("unknown status string: %s", status);
+		egg_warning ("unknown status string: %s", status);
 		state = DKP_DEVICE_STATE_UNKNOWN;
 	}
 
@@ -348,7 +350,7 @@ dkp_supply_poll_battery (DkpSupply *supply)
 	DkpDevice *device = DKP_DEVICE (supply);
 	DkpObject *obj = dkp_device_get_obj (device);
 
-	dkp_debug ("No updates on supply %s for 30 seconds; forcing update", obj->native_path);
+	egg_debug ("No updates on supply %s for 30 seconds; forcing update", obj->native_path);
 	supply->priv->poll_timer_id = 0;
 	ret = dkp_supply_refresh (device);
 	if (ret)
@@ -369,13 +371,13 @@ dkp_supply_get_history (DkpDevice *device, const gchar *type, guint timespan)
 	g_return_val_if_fail (type != NULL, FALSE);
 
 	/* get the correct data */
-	if (strcmp (type, "rate") == 0)
+	if (egg_strequal (type, "rate"))
 		array = dkp_history_get_rate_data (supply->priv->history, timespan);
-	else if (strcmp (type, "charge") == 0)
+	else if (egg_strequal (type, "charge"))
 		array = dkp_history_get_charge_data (supply->priv->history, timespan);
-	else if (strcmp (type, "time-full") == 0)
+	else if (egg_strequal (type, "time-full"))
 		array = dkp_history_get_time_full_data (supply->priv->history, timespan);
-	else if (strcmp (type, "time-empty") == 0)
+	else if (egg_strequal (type, "time-empty"))
 		array = dkp_history_get_time_empty_data (supply->priv->history, timespan);
 
 	return array;
@@ -398,11 +400,11 @@ dkp_supply_coldplug (DkpDevice *device)
 	/* detect what kind of device we are */
 	d = dkp_device_get_d (device);
 	if (d == NULL)
-		dkp_error ("could not get device");
+		egg_error ("could not get device");
 
 	native_path = devkit_device_get_native_path (d);
 	if (native_path == NULL)
-		dkp_error ("could not get native path");
+		egg_error ("could not get native path");
 
 	if (sysfs_file_exists (native_path, "online")) {
 		obj->type = DKP_DEVICE_TYPE_LINE_POWER;

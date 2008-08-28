@@ -41,7 +41,7 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include <devkit-gobject.h>
 
-#include "dkp-debug.h"
+#include "egg-debug.h"
 #include "dkp-daemon.h"
 
 #define NAME_TO_CLAIM "org.freedesktop.DeviceKit.Power"
@@ -75,20 +75,20 @@ main_acquire_name_on_proxy (DBusGProxy *bus_proxy)
 				 G_TYPE_INVALID);
 	if (!res) {
 		if (error != NULL) {
-			dkp_warning ("Failed to acquire %s: %s", NAME_TO_CLAIM, error->message);
+			egg_warning ("Failed to acquire %s: %s", NAME_TO_CLAIM, error->message);
 			g_error_free (error);
 		} else {
-			dkp_warning ("Failed to acquire %s", NAME_TO_CLAIM);
+			egg_warning ("Failed to acquire %s", NAME_TO_CLAIM);
 		}
 		goto out;
 	}
 
  	if (result != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER) {
 		if (error != NULL) {
-			dkp_warning ("Failed to acquire %s: %s", NAME_TO_CLAIM, error->message);
+			egg_warning ("Failed to acquire %s: %s", NAME_TO_CLAIM, error->message);
 			g_error_free (error);
 		} else {
-			dkp_warning ("Failed to acquire %s", NAME_TO_CLAIM);
+			egg_warning ("Failed to acquire %s", NAME_TO_CLAIM);
 		}
 		goto out;
 	}
@@ -105,7 +105,7 @@ main_acquire_name_on_proxy (DBusGProxy *bus_proxy)
 static void
 dkp_main_sigint_handler (int sig)
 {
-	dkp_debug ("Handling SIGINT");
+	egg_debug ("Handling SIGINT");
 
 	/* restore default */
 	signal (SIGINT, SIG_DFL);
@@ -140,12 +140,12 @@ main (int argc, char **argv)
 	g_option_context_add_main_entries (context, entries, NULL);
 	g_option_context_parse (context, &argc, &argv, NULL);
 	g_option_context_free (context);
-	dkp_debug_init (verbose);
+	egg_debug_init (verbose);
 
 	error = NULL;
 	bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (bus == NULL) {
-		dkp_warning ("Couldn't connect to system bus: %s", error->message);
+		egg_warning ("Couldn't connect to system bus: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -153,19 +153,19 @@ main (int argc, char **argv)
 	bus_proxy = dbus_g_proxy_new_for_name (bus, DBUS_SERVICE_DBUS,
 					       DBUS_PATH_DBUS, DBUS_INTERFACE_DBUS);
 	if (bus_proxy == NULL) {
-		dkp_warning ("Could not construct bus_proxy object; bailing out");
+		egg_warning ("Could not construct bus_proxy object; bailing out");
 		goto out;
 	}
 
 	if (!main_acquire_name_on_proxy (bus_proxy) ) {
-		dkp_warning ("Could not acquire name; bailing out");
+		egg_warning ("Could not acquire name; bailing out");
 		goto out;
 	}
 
 	/* do stuff on ctrl-c */
 	signal (SIGINT, dkp_main_sigint_handler);
 
-	dkp_debug ("Starting devkit-power-daemon version %s", VERSION);
+	egg_debug ("Starting devkit-power-daemon version %s", VERSION);
 
 	power_daemon = dkp_daemon_new ();
 

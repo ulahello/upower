@@ -22,7 +22,9 @@
 #include <glib-object.h>
 #include <string.h>
 
-#include "dkp-debug.h"
+#include "egg-debug.h"
+#include "egg-string.h"
+
 #include "dkp-enum.h"
 #include "dkp-object.h"
 
@@ -62,53 +64,53 @@ dkp_object_collect_props (const char *key, const GValue *value, DkpObject *obj)
 {
 	gboolean handled = TRUE;
 
-	if (strcmp (key, "native-path") == 0)
+	if (egg_strequal (key, "native-path"))
 		obj->native_path = g_strdup (g_value_get_string (value));
-	else if (strcmp (key, "vendor") == 0)
+	else if (egg_strequal (key, "vendor"))
 		obj->vendor = g_strdup (g_value_get_string (value));
-	else if (strcmp (key, "model") == 0)
+	else if (egg_strequal (key, "model"))
 		obj->model = g_strdup (g_value_get_string (value));
-	else if (strcmp (key, "serial") == 0)
+	else if (egg_strequal (key, "serial"))
 		obj->serial = g_strdup (g_value_get_string (value));
-	else if (strcmp (key, "update-time") == 0)
+	else if (egg_strequal (key, "update-time"))
 		obj->update_time = g_value_get_uint64 (value);
-	else if (strcmp (key, "type") == 0)
+	else if (egg_strequal (key, "type"))
 		obj->type = dkp_device_type_from_text (g_value_get_string (value));
-	else if (strcmp (key, "online") == 0)
+	else if (egg_strequal (key, "online"))
 		obj->online = g_value_get_boolean (value);
-	else if (strcmp (key, "energy") == 0)
+	else if (egg_strequal (key, "energy"))
 		obj->energy = g_value_get_double (value);
-	else if (strcmp (key, "energy-empty") == 0)
+	else if (egg_strequal (key, "energy-empty"))
 		obj->energy_empty = g_value_get_double (value);
-	else if (strcmp (key, "energy-full") == 0)
+	else if (egg_strequal (key, "energy-full"))
 		obj->energy_full = g_value_get_double (value);
-	else if (strcmp (key, "energy-full-design") == 0)
+	else if (egg_strequal (key, "energy-full-design"))
 		obj->energy_full_design = g_value_get_double (value);
-	else if (strcmp (key, "energy-rate") == 0)
+	else if (egg_strequal (key, "energy-rate"))
 		obj->energy_rate = g_value_get_double (value);
-	else if (strcmp (key, "time-to-full") == 0)
+	else if (egg_strequal (key, "time-to-full"))
 		obj->time_to_full = g_value_get_int64 (value);
-	else if (strcmp (key, "time-to-empty") == 0)
+	else if (egg_strequal (key, "time-to-empty"))
 		obj->time_to_empty = g_value_get_int64 (value);
-	else if (strcmp (key, "percentage") == 0)
+	else if (egg_strequal (key, "percentage"))
 		obj->percentage = g_value_get_double (value);
-	else if (strcmp (key, "technology") == 0)
+	else if (egg_strequal (key, "technology"))
 		obj->technology = dkp_device_technology_from_text (g_value_get_string (value));
-	else if (strcmp (key, "is-present") == 0)
+	else if (egg_strequal (key, "is-present"))
 		obj->is_present = g_value_get_boolean (value);
-	else if (strcmp (key, "is-rechargeable") == 0)
+	else if (egg_strequal (key, "is-rechargeable"))
 		obj->is_rechargeable = g_value_get_boolean (value);
-	else if (strcmp (key, "power-supply") == 0)
+	else if (egg_strequal (key, "power-supply"))
 		obj->power_supply = g_value_get_boolean (value);
-	else if (strcmp (key, "capacity") == 0)
+	else if (egg_strequal (key, "capacity"))
 		obj->capacity = g_value_get_double (value);
-	else if (strcmp (key, "state") == 0)
+	else if (egg_strequal (key, "state"))
 		obj->state = dkp_device_state_from_text (g_value_get_string (value));
 	else
 		handled = FALSE;
 
 	if (!handled)
-		dkp_warning ("unhandled property '%s'", key);
+		egg_warning ("unhandled property '%s'", key);
 }
 
 /**
@@ -155,26 +157,6 @@ dkp_object_copy (const DkpObject *cobj)
 }
 
 /**
- * dkp_strequal:
- * @id1: the first item of text to test
- * @id2: the second item of text to test
- *
- * This function is a much safer way of doing strcmp as it checks for
- * NULL first, and returns boolean TRUE, not zero for success.
- *
- * Return value: %TRUE if the string are the same.
- **/
-static gboolean
-dkp_strequal (const gchar *id1, const gchar *id2)
-{
-	if (id1 == NULL && id2 == NULL)
-		return TRUE;
-	if (id1 == NULL || id2 == NULL)
-		return FALSE;
-	return (strcmp (id1, id2) == 0);
-}
-
-/**
  * dkp_object_equal:
  **/
 gboolean
@@ -192,38 +174,15 @@ dkp_object_equal (const DkpObject *obj1, const DkpObject *obj2)
 	    obj1->time_to_full == obj2->time_to_full &&
 	    obj1->state == obj2->state &&
 	    obj1->technology == obj2->technology &&
-	    dkp_strequal (obj1->vendor, obj2->vendor) &&
-	    dkp_strequal (obj1->model, obj2->model) &&
-	    dkp_strequal (obj1->serial, obj2->serial) &&
-	    dkp_strequal (obj1->native_path, obj2->native_path) &&
+	    egg_strequal (obj1->vendor, obj2->vendor) &&
+	    egg_strequal (obj1->model, obj2->model) &&
+	    egg_strequal (obj1->serial, obj2->serial) &&
+	    egg_strequal (obj1->native_path, obj2->native_path) &&
 	    obj1->online == obj2->online &&
 	    obj1->is_present == obj2->is_present &&
 	    obj1->power_supply == obj2->power_supply &&
 	    obj1->is_rechargeable == obj2->is_rechargeable)
 		return TRUE;
-	return FALSE;
-}
-
-/**
- * dkp_strzero:
- * @text: The text to check
- *
- * This function is a much safer way of doing "if (strlen (text) == 0))"
- * as it does not rely on text being NULL terminated. It's also much
- * quicker as it only checks the first byte rather than scanning the whole
- * string just to verify it's not zero length.
- *
- * Return value: %TRUE if the string was converted correctly
- **/
-static gboolean
-dkp_strzero (const gchar *text)
-{
-	if (text == NULL) {
-		return TRUE;
-	}
-	if (text[0] == '\0') {
-		return TRUE;
-	}
 	return FALSE;
 }
 
@@ -276,11 +235,11 @@ dkp_object_print (const DkpObject *obj)
 	strftime (time_buf, sizeof time_buf, "%c", time_tm);
 
 	g_print ("  native-path:          %s\n", obj->native_path);
-	if (!dkp_strzero (obj->vendor))
+	if (!egg_strzero (obj->vendor))
 		g_print ("  vendor:               %s\n", obj->vendor);
-	if (!dkp_strzero (obj->model))
+	if (!egg_strzero (obj->model))
 		g_print ("  model:                %s\n", obj->model);
-	if (!dkp_strzero (obj->serial))
+	if (!egg_strzero (obj->serial))
 		g_print ("  serial:               %s\n", obj->serial);
 	g_print ("  power supply:         %s\n", dkp_object_bool_to_text (obj->power_supply));
 	g_print ("  updated:              %s (%d seconds ago)\n", time_buf, (int) (time (NULL) - obj->update_time));
@@ -346,11 +305,11 @@ dkp_object_diff (const DkpObject *old, const DkpObject *obj)
 	gchar *time_str_old;
 
 	g_print ("  native-path:          %s\n", obj->native_path);
-	if (!dkp_strequal (obj->vendor, old->vendor))
+	if (!egg_strequal (obj->vendor, old->vendor))
 		g_print ("  vendor:               %s -> %s\n", old->vendor, obj->vendor);
-	if (!dkp_strequal (obj->model, old->model))
+	if (!egg_strequal (obj->model, old->model))
 		g_print ("  model:                %s -> %s\n", old->model, obj->model);
-	if (!dkp_strequal (obj->serial, old->serial))
+	if (!egg_strequal (obj->serial, old->serial))
 		g_print ("  serial:               %s -> %s\n", old->serial, obj->serial);
 
 	g_print ("  %s\n", dkp_device_type_to_text (obj->type));

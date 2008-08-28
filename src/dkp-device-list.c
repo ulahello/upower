@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <glib.h>
 
-#include "dkp-debug.h"
+#include "egg-debug.h"
 #include "dkp-device.h"
 #include "dkp-device-list.h"
 
@@ -82,7 +82,7 @@ dkp_device_list_insert (DkpDeviceList *list, DevkitDevice *d, DkpDevice *device)
 	g_hash_table_insert (list->priv->map_native_path_to_device,
 			     g_strdup (native_path), device);
 	g_ptr_array_add (list->priv->array, device);
-	dkp_debug ("added %s", native_path);
+	egg_debug ("added %s", native_path);
 	return TRUE;
 }
 
@@ -93,7 +93,7 @@ static gboolean
 dkp_device_list_remove_cb (gpointer key, gpointer value, gpointer user_data)
 {
 	if (value == user_data) {
-		dkp_debug ("removed %s", (char *) key);
+		egg_debug ("removed %s", (char *) key);
 		return TRUE;
 	}
 	return FALSE;

@@ -26,7 +26,7 @@
 #include <glib/gi18n.h>
 #include <gio/gio.h>
 
-#include "dkp-debug.h"
+#include "egg-debug.h"
 #include "dkp-history.h"
 #include "dkp-history-obj.h"
 
@@ -202,7 +202,7 @@ dkp_history_save_data_array (const gchar *filename, GPtrArray *array)
 
 	/* we failed to convert to string */
 	if (!ret) {
-		dkp_warning ("failed to convert");
+		egg_warning ("failed to convert");
 		goto out;
 	}
 
@@ -211,11 +211,11 @@ dkp_history_save_data_array (const gchar *filename, GPtrArray *array)
 	ret = g_file_set_contents (filename, part, -1, &error);
 //	ret = g_file_replace_contents (file, part, -1, NULL, TRUE, G_FILE_CREATE_NONE, NULL, NULL, &error);
 	if (!ret) {
-		dkp_warning ("failed to set data: %s", error->message);
+		egg_warning ("failed to set data: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
-	dkp_debug ("saved %s", filename);
+	egg_debug ("saved %s", filename);
 
 out:
 	if (file != NULL)
@@ -234,7 +234,7 @@ dkp_history_save_data (DkpHistory *history)
 
 	/* we have an ID? */
 	if (history->priv->id == NULL) {
-		dkp_warning ("no ID, cannot save");
+		egg_warning ("no ID, cannot save");
 		return FALSE;
 	}
 
@@ -319,7 +319,7 @@ dkp_history_schedule_save (DkpHistory *history)
 
 	/* we already have one saved, cancel and reschedule */
 	if (history->priv->save_id != 0) {
-		dkp_debug ("deferring as others queued");
+		egg_debug ("deferring as others queued");
 		g_source_remove (history->priv->save_id);
 		history->priv->save_id = g_timeout_add_seconds (DKP_HISTORY_SAVE_INTERVAL,
 								(GSourceFunc) dkp_history_schedule_save_cb, history);
@@ -327,7 +327,7 @@ dkp_history_schedule_save (DkpHistory *history)
 	}
 
 	/* nothing scheduled, do new */
-	dkp_debug ("saving in %i seconds", DKP_HISTORY_SAVE_INTERVAL);
+	egg_debug ("saving in %i seconds", DKP_HISTORY_SAVE_INTERVAL);
 	history->priv->save_id = g_timeout_add_seconds (DKP_HISTORY_SAVE_INTERVAL,
 							(GSourceFunc) dkp_history_schedule_save_cb, history);
 
@@ -352,7 +352,7 @@ dkp_history_load_data_array (const gchar *filename, GPtrArray *array)
 	/* do we exist */
 	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
 	if (!ret) {
-		dkp_debug ("failed to get data from %s as file does not exist", filename);
+		egg_debug ("failed to get data from %s as file does not exist", filename);
 		goto out;
 	}
 
@@ -360,7 +360,7 @@ dkp_history_load_data_array (const gchar *filename, GPtrArray *array)
 	file = g_file_new_for_path (filename);
 	ret = g_file_load_contents (file, NULL, &data, NULL, NULL, &error);
 	if (!ret) {
-		dkp_warning ("failed to get data: %s", error->message);
+		egg_warning ("failed to get data: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -369,12 +369,12 @@ dkp_history_load_data_array (const gchar *filename, GPtrArray *array)
 	parts = g_strsplit (data, "\n", 0);
 	length = g_strv_length (parts);
 	if (length == 0) {
-		dkp_debug ("no data in %s", filename);
+		egg_debug ("no data in %s", filename);
 		goto out;
 	}
 
 	/* add valid entries */
-	dkp_debug ("loading %i items of data from %s", length, filename);
+	egg_debug ("loading %i items of data from %s", length, filename);
 	for (i=0; i<length-1; i++) {
 		obj = dkp_history_obj_from_string (parts[i]);
 		if (obj != NULL)
@@ -436,7 +436,7 @@ dkp_history_set_id (DkpHistory *history, const gchar *id)
 	if (id == NULL)
 		return FALSE;
 
-	dkp_debug ("using id: %s", id);
+	egg_debug ("using id: %s", id);
 	history->priv->id = g_strdup (id);
 	/* load all previous data */
 	ret = dkp_history_load_data (history);

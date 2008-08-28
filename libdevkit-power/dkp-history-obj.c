@@ -23,7 +23,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "dkp-debug.h"
+#include "egg-debug.h"
 #include "dkp-enum.h"
 #include "dkp-history-obj.h"
 
@@ -146,7 +146,7 @@ dkp_history_obj_from_string (const gchar *text)
 	parts = g_strsplit (text, "\t", 0);
 	length = g_strv_length (parts);
 	if (length != 3) {
-		dkp_warning ("invalid string: '%s'", text);
+		egg_warning ("invalid string: '%s'", text);
 		goto out;
 	}
 

@@ -2,6 +2,7 @@ INCLUDES = \
 	$(GLIB_CFLAGS)						\
 	$(DBUS_GLIB_CFLAGS)					\
 	-I$(top_srcdir)/libdevkit-power				\
+	-DEGG_LOG_FILE=\""$(PK_LOG_DIR)/DeviceKit-power"\"	\
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\"			\
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
@@ -9,8 +10,10 @@ noinst_LTLIBRARIES =						\
 	libdevkit-power.la
 
 libdevkit_power_la_SOURCES =					\
-	dkp-debug.c						\
-	dkp-debug.h						\
+	egg-debug.c						\
+	egg-debug.h						\
+	egg-string.c						\
+	egg-string.h						\
 	dkp-client.c						\
 	dkp-client.h						\
 	dkp-client-device.c					\

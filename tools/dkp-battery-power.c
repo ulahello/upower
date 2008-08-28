@@ -1,6 +1,6 @@
 #include <glib.h>
 #include <dbus/dbus-glib.h>
-#include "dkp-debug.h"
+#include "egg-debug.h"
 
 /**
  * main:
@@ -28,11 +28,11 @@ main (int argc, char **argv)
 	g_option_context_add_main_entries (context, entries, NULL);
 	g_option_context_parse (context, &argc, &argv, NULL);
 	g_option_context_free (context);
-	dkp_debug_init (verbose);
+	egg_debug_init (verbose);
 
 	bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (bus == NULL) {
-		dkp_warning ("Couldn't connect to system bus: %s", error->message);
+		egg_warning ("Couldn't connect to system bus: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -40,7 +40,7 @@ main (int argc, char **argv)
 	proxy = dbus_g_proxy_new_for_name (bus, "org.freedesktop.DeviceKit.Power",
 					   "/", "org.freedesktop.DeviceKit.Power");
 	if (proxy == NULL) {
-		dkp_warning ("Couldn't connect to DeviceKit-power");
+		egg_warning ("Couldn't connect to DeviceKit-power");
 		goto out;
 	}
 
@@ -49,7 +49,7 @@ main (int argc, char **argv)
 				 G_TYPE_BOOLEAN, &on_battery,
 				 G_TYPE_INVALID);
 	if (!ret) {
-		dkp_debug ("GetOnBattery failed: %s", error->message);
+		egg_debug ("GetOnBattery failed: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}

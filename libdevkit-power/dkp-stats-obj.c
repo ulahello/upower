@@ -23,7 +23,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "dkp-debug.h"
+#include "egg-debug.h"
 #include "dkp-stats-obj.h"
 
 /**

@@ -19,8 +19,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef __PK_DEBUG_H
-#define __PK_DEBUG_H
+#ifndef __EGG_DEBUG_H
+#define __EGG_DEBUG_H
 
 #include <stdarg.h>
 #include <glib.h>
@@ -29,52 +29,53 @@ G_BEGIN_DECLS
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 /**
- * dkp_debug:
+ * egg_debug:
  *
  * Non critical debugging
  */
-#define dkp_debug(...) dkp_debug_real (__func__, __FILE__, __LINE__, __VA_ARGS__)
+#define egg_debug(...) egg_debug_real (__func__, __FILE__, __LINE__, __VA_ARGS__)
 
 /**
- * dkp_warning:
+ * egg_warning:
  *
  * Important debugging
  */
-#define dkp_warning(...) dkp_warning_real (__func__, __FILE__, __LINE__, __VA_ARGS__)
+#define egg_warning(...) egg_warning_real (__func__, __FILE__, __LINE__, __VA_ARGS__)
 
 /**
- * dkp_error:
+ * egg_error:
  *
  * Critical debugging, with exit
  */
-#define dkp_error(...) dkp_error_real (__func__, __FILE__, __LINE__, __VA_ARGS__)
+#define egg_error(...) egg_error_real (__func__, __FILE__, __LINE__, __VA_ARGS__)
 
 #elif defined(__GNUC__) && __GNUC__ >= 3
-#define dkp_debug(...) dkp_debug_real (__FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
-#define dkp_warning(...) dkp_warning_real (__FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
-#define dkp_error(...) dkp_error_real (__FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define egg_debug(...) egg_debug_real (__FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define egg_warning(...) egg_warning_real (__FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define egg_error(...) egg_error_real (__FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
 #else
-#define dkp_debug(...)
-#define dkp_warning(...)
-#define dkp_error(...)
+#define egg_debug(...)
+#define egg_warning(...)
+#define egg_error(...)
 #endif
 
-void		dkp_debug_init			(gboolean	 debug);
-gboolean	dkp_debug_enabled		(void);
-void		dkp_debug_backtrace		(void);
-void		dkp_debug_real			(const gchar	*func,
+void		egg_debug_init			(gboolean	 debug);
+void		egg_debug_set_logging		(gboolean	 enabled);
+gboolean	egg_debug_enabled		(void);
+void		egg_debug_backtrace		(void);
+void		egg_debug_real			(const gchar	*func,
 						 const gchar	*file,
 						 int		 line,
 						 const gchar	*format, ...) __attribute__((format (printf,4,5)));
-void		dkp_warning_real			(const gchar	*func,
+void		egg_warning_real		(const gchar	*func,
 						 const gchar	*file,
 						 int		 line,
 						 const gchar	*format, ...) __attribute__((format (printf,4,5)));
-void		dkp_error_real			(const gchar	*func,
+void		egg_error_real			(const gchar	*func,
 						 const gchar	*file,
 						 int		 line,
 						 const gchar	*format, ...) __attribute__((format (printf,4,5)));
 
 G_END_DECLS
 
-#endif /* __PK_DEBUG_H */
+#endif /* __EGG_DEBUG_H */

@@ -31,7 +31,7 @@
 #include <glib/gi18n-lib.h>
 
 #include "dkp-marshal.h"
-#include "dkp-debug.h"
+#include "egg-debug.h"
 #include "dkp-client.h"
 #include "dkp-client-device.h"
 
@@ -123,7 +123,7 @@ main (int argc, char **argv)
 	g_option_context_add_main_entries (context, entries, NULL);
 	g_option_context_parse (context, &argc, &argv, NULL);
 	g_option_context_free (context);
-	dkp_debug_init (verbose);
+	egg_debug_init (verbose);
 
 	loop = g_main_loop_new (NULL, FALSE);
 	client = dkp_client_new ();

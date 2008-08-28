@@ -31,7 +31,9 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include <devkit-gobject.h>
 
-#include "dkp-debug.h"
+#include "egg-debug.h"
+#include "egg-string.h"
+
 #include "dkp-daemon.h"
 #include "dkp-device.h"
 #include "dkp-supply.h"
@@ -379,23 +381,23 @@ gpk_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesi
 	ret = dkp_daemon_get_on_battery_local (daemon);
 	if (ret != daemon->priv->on_battery) {
 		daemon->priv->on_battery = ret;
-		dkp_debug ("now on_battery = %s", ret ? "yes" : "no");
+		egg_debug ("now on_battery = %s", ret ? "yes" : "no");
 		g_signal_emit (daemon, signals[ON_BATTERY_CHANGED_SIGNAL], 0, ret);
 	}
 	ret = dkp_daemon_get_low_battery_local (daemon);
 	if (ret != daemon->priv->low_battery) {
 		daemon->priv->low_battery = ret;
-		dkp_debug ("now low_battery = %s", ret ? "yes" : "no");
+		egg_debug ("now low_battery = %s", ret ? "yes" : "no");
 		g_signal_emit (daemon, signals[LOW_BATTERY_CHANGED_SIGNAL], 0, ret);
 	}
 
 	/* does the device exist in the db? */
 	device = dkp_device_list_lookup (daemon->priv->list, d);
 	if (device != NULL) {
-		dkp_debug ("changed %s", dkp_device_get_object_path (device));
+		egg_debug ("changed %s", dkp_device_get_object_path (device));
 		dkp_device_changed (device, d, synthesized);
 	} else {
-		dkp_debug ("treating change event as add on %s", dkp_device_get_object_path (device));
+		egg_debug ("treating change event as add on %s", dkp_device_get_object_path (device));
 		gpk_daemon_device_add (daemon, d, TRUE);
 	}
 }
@@ -423,7 +425,7 @@ gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 	gboolean ret;
 
 	subsys = devkit_device_get_subsystem (d);
-	if (strcmp (subsys, "power_supply") == 0) {
+	if (egg_strequal (subsys, "power_supply")) {
 
 		/* are we a valid power supply */
 		device = DKP_DEVICE (dkp_supply_new ());
@@ -435,7 +437,7 @@ gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 		/* no valid power supply object */
 		device = NULL;
 
-	} else if (strcmp (subsys, "usb") == 0) {
+	} else if (egg_strequal (subsys, "usb")) {
 
 		/* see if this is a CSR mouse or keyboard */
 		device = DKP_DEVICE (dkp_csr_new ());
@@ -463,7 +465,7 @@ gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 
 	} else {
 		native_path = devkit_device_get_native_path (d);
-		dkp_warning ("native path %s (%s) ignoring", native_path, subsys);
+		egg_warning ("native path %s (%s) ignoring", native_path, subsys);
 	}
 out:
 	return device;
@@ -482,14 +484,14 @@ gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 	device = dkp_device_list_lookup (daemon->priv->list, d);
 	if (device != NULL) {
 		/* we already have the device; treat as change event */
-		dkp_debug ("treating add event as change event on %s", dkp_device_get_object_path (device));
+		egg_debug ("treating add event as change event on %s", dkp_device_get_object_path (device));
 		gpk_daemon_device_changed (daemon, d, FALSE);
 	} else {
 
 		/* get the right sort of device */
 		device = gpk_daemon_device_get (daemon, d);
 		if (device == NULL) {
-			dkp_debug ("ignoring add event on %s", devkit_device_get_native_path (d));
+			egg_debug ("ignoring add event on %s", devkit_device_get_native_path (d));
 			ret = FALSE;
 			goto out;
 		}
@@ -518,7 +520,7 @@ gpk_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d)
 	/* does device exist in db? */
 	device = dkp_device_list_lookup (daemon->priv->list, d);
 	if (device == NULL) {
-		dkp_debug ("ignoring remove event on %s", devkit_device_get_native_path (d));
+		egg_debug ("ignoring remove event on %s", devkit_device_get_native_path (d));
 	} else {
 		dkp_device_removed (device);
 		g_signal_emit (daemon, signals[DEVICE_REMOVED_SIGNAL], 0,
@@ -536,17 +538,17 @@ gpk_daemon_device_event_signal_handler (DevkitClient *client, const char *action
 {
 	DkpDaemon *daemon = DKP_DAEMON (user_data);
 
-	if (strcmp (action, "add") == 0) {
-		dkp_debug ("add %s", devkit_device_get_native_path (device));
+	if (egg_strequal (action, "add")) {
+		egg_debug ("add %s", devkit_device_get_native_path (device));
 		gpk_daemon_device_add (daemon, device, TRUE);
-	} else if (strcmp (action, "remove") == 0) {
-		dkp_debug ("remove %s", devkit_device_get_native_path (device));
+	} else if (egg_strequal (action, "remove")) {
+		egg_debug ("remove %s", devkit_device_get_native_path (device));
 		gpk_daemon_device_remove (daemon, device);
-	} else if (strcmp (action, "change") == 0) {
-		dkp_debug ("change %s", devkit_device_get_native_path (device));
+	} else if (egg_strequal (action, "change")) {
+		egg_debug ("change %s", devkit_device_get_native_path (device));
 		gpk_daemon_device_changed (daemon, device, FALSE);
 	} else {
-		dkp_warning ("unhandled action '%s' on %s", action, devkit_device_get_native_path (device));
+		egg_warning ("unhandled action '%s' on %s", action, devkit_device_get_native_path (device));
 	}
 }
 
@@ -607,7 +609,7 @@ gpk_daemon_register_power_daemon (DkpDaemon *daemon)
 			    &dbus_error);
 
 	if (dbus_error_is_set (&dbus_error)) {
-		dkp_warning ("Cannot add match rule: %s: %s", dbus_error.name, dbus_error.message);
+		egg_warning ("Cannot add match rule: %s: %s", dbus_error.name, dbus_error.message);
 		dbus_error_free (&dbus_error);
 		goto error;
 	}
@@ -618,7 +620,7 @@ gpk_daemon_register_power_daemon (DkpDaemon *daemon)
 			    &dbus_error);
 
 	if (dbus_error_is_set (&dbus_error)) {
-		dkp_warning ("Cannot add match rule: %s: %s", dbus_error.name, dbus_error.message);
+		egg_warning ("Cannot add match rule: %s: %s", dbus_error.name, dbus_error.message);
 		dbus_error_free (&dbus_error);
 		goto error;
 	}
@@ -627,14 +629,14 @@ gpk_daemon_register_power_daemon (DkpDaemon *daemon)
 					 gpk_daemon_dbus_filter,
 					 daemon,
 					 NULL)) {
-		dkp_warning ("Cannot add D-Bus filter: %s: %s", dbus_error.name, dbus_error.message);
+		egg_warning ("Cannot add D-Bus filter: %s: %s", dbus_error.name, dbus_error.message);
 		goto error;
 	}
 
 	/* connect to the DeviceKit daemon */
 	daemon->priv->devkit_client = devkit_client_new (subsystems);
 	if (!devkit_client_connect (daemon->priv->devkit_client, &error)) {
-		dkp_warning ("Couldn't open connection to DeviceKit daemon: %s", error->message);
+		egg_warning ("Couldn't open connection to DeviceKit daemon: %s", error->message);
 		g_error_free (error);
 		goto error;
 	}
@@ -667,7 +669,7 @@ dkp_daemon_new (void)
 
 	devices = devkit_client_enumerate_by_subsystem (daemon->priv->devkit_client, subsystems, &error);
 	if (error != NULL) {
-		dkp_warning ("Cannot enumerate devices: %s", error->message);
+		egg_warning ("Cannot enumerate devices: %s", error->message);
 		g_error_free (error);
 		g_object_unref (daemon);
 		return NULL;

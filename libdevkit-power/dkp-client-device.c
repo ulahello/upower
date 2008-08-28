@@ -26,7 +26,7 @@
 #include <glib.h>
 #include <dbus/dbus-glib.h>
 
-#include "dkp-debug.h"
+#include "egg-debug.h"
 #include "dkp-client-device.h"
 #include "dkp-object.h"
 #include "dkp-stats-obj.h"
@@ -73,7 +73,7 @@ dkp_client_device_get_device_properties (DkpClientDevice *device)
 				 &hash_table,
 				 G_TYPE_INVALID);
 	if (!ret) {
-		dkp_debug ("Couldn't call GetAll() to get properties for %s: %s", device->priv->object_path, error->message);
+		egg_debug ("Couldn't call GetAll() to get properties for %s: %s", device->priv->object_path, error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -92,7 +92,7 @@ dkp_client_device_refresh_internal (DkpClientDevice *device)
 	/* get all the properties */
 	hash = dkp_client_device_get_device_properties (device);
 	if (hash == NULL) {
-		dkp_warning ("Cannot get device properties for %s", device->priv->object_path);
+		egg_warning ("Cannot get device properties for %s", device->priv->object_path);
 		return FALSE;
 	}
 	dkp_object_set_from_map (device->priv->obj, hash);
@@ -132,7 +132,7 @@ dkp_client_device_set_object_path (DkpClientDevice *device, const gchar *object_
 	/* connect to the bus */
 	device->priv->bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (device->priv->bus == NULL) {
-		dkp_warning ("Couldn't connect to system bus: %s", error->message);
+		egg_warning ("Couldn't connect to system bus: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -141,7 +141,7 @@ dkp_client_device_set_object_path (DkpClientDevice *device, const gchar *object_
 	proxy_props = dbus_g_proxy_new_for_name (device->priv->bus, "org.freedesktop.DeviceKit.Power",
 						 object_path, "org.freedesktop.DBus.Properties");
 	if (proxy_props == NULL) {
-		dkp_warning ("Couldn't connect to proxy");
+		egg_warning ("Couldn't connect to proxy");
 		goto out;
 	}
 
@@ -149,7 +149,7 @@ dkp_client_device_set_object_path (DkpClientDevice *device, const gchar *object_
 	proxy_device = dbus_g_proxy_new_for_name (device->priv->bus, "org.freedesktop.DeviceKit.Power",
 						  object_path, "org.freedesktop.DeviceKit.Power.Device");
 	if (proxy_device == NULL) {
-		dkp_warning ("Couldn't connect to proxy");
+		egg_warning ("Couldn't connect to proxy");
 		goto out;
 	}
 
@@ -159,7 +159,7 @@ dkp_client_device_set_object_path (DkpClientDevice *device, const gchar *object_
 				     G_CALLBACK (dkp_client_device_changed_cb), device, NULL);
 
 	/* yay */
-	dkp_debug ("using object_path: %s", object_path);
+	egg_debug ("using object_path: %s", object_path);
 	device->priv->proxy_device = proxy_device;
 	device->priv->proxy_props = proxy_props;
 	device->priv->object_path = g_strdup (object_path);
@@ -167,7 +167,7 @@ dkp_client_device_set_object_path (DkpClientDevice *device, const gchar *object_
 	/* coldplug */
 	ret = dkp_client_device_refresh_internal (device);
 	if (!ret)
-		dkp_warning ("cannot refresh");
+		egg_warning ("cannot refresh");
 out:
 	return ret;
 }
@@ -255,7 +255,7 @@ dkp_client_device_refresh (DkpClientDevice *device)
 	ret = dbus_g_proxy_call (device->priv->proxy_device, "Refresh", &error,
 				 G_TYPE_INVALID, G_TYPE_INVALID);
 	if (!ret) {
-		dkp_debug ("Refresh() on %s failed: %s", device->priv->object_path, error->message);
+		egg_debug ("Refresh() on %s failed: %s", device->priv->object_path, error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -298,7 +298,7 @@ dkp_client_device_get_history (const DkpClientDevice *device, const gchar *type,
 				 g_type_gvalue_array, &gvalue_ptr_array,
 				 G_TYPE_INVALID);
 	if (!ret) {
-		dkp_debug ("GetStatistics(%s,%i) on %s failed: %s", type, timespec,
+		egg_debug ("GetStatistics(%s,%i) on %s failed: %s", type, timespec,
 			   device->priv->object_path, error->message);
 		g_error_free (error);
 		goto out;
@@ -368,7 +368,7 @@ dkp_client_device_get_statistics (const DkpClientDevice *device, const gchar *ty
 				 g_type_gvalue_array, &gvalue_ptr_array,
 				 G_TYPE_INVALID);
 	if (!ret) {
-		dkp_debug ("GetStatistics(%s) on %s failed: %s", type,
+		egg_debug ("GetStatistics(%s) on %s failed: %s", type,
 			   device->priv->object_path, error->message);
 		g_error_free (error);
 		goto out;

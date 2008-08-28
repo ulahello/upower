@@ -35,7 +35,7 @@
 #include <polkit-dbus/polkit-dbus.h>
 
 #include "sysfs-utils.h"
-#include "dkp-debug.h"
+#include "egg-debug.h"
 #include "dkp-supply.h"
 #include "dkp-device.h"
 #include "dkp-device.h"
@@ -228,7 +228,7 @@ dkp_device_removed (DkpDevice *device)
 	//DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
 	//klass->removed (device);
 	g_return_if_fail (DKP_IS_DEVICE (device));
-	dkp_warning ("do something here?");
+	egg_warning ("do something here?");
 }
 
 /**
@@ -522,7 +522,7 @@ dkp_device_emit_changed (DkpDevice *device)
 {
 	g_return_if_fail (DKP_IS_DEVICE (device));
 
-	dkp_debug ("emitting changed on %s", device->priv->obj->native_path);
+	egg_debug ("emitting changed on %s", device->priv->obj->native_path);
 	g_signal_emit_by_name (device->priv->daemon, "device-changed",
 			       device->priv->object_path, NULL);
 	g_signal_emit (device, signals[CHANGED_SIGNAL], 0);
@@ -572,13 +572,13 @@ dkp_device_register_device (DkpDevice *device)
 	gboolean ret = TRUE;
 
 	device->priv->object_path = dkp_device_compute_object_path (device);
-	dkp_debug ("object path = %s", device->priv->object_path);
+	egg_debug ("object path = %s", device->priv->object_path);
 	dbus_g_connection_register_g_object (device->priv->system_bus_connection,
 					     device->priv->object_path, G_OBJECT (device));
 	device->priv->system_bus_proxy = dbus_g_proxy_new_for_name (device->priv->system_bus_connection,
 								    DBUS_SERVICE_DBUS, DBUS_PATH_DBUS, DBUS_INTERFACE_DBUS);
 	if (device->priv->system_bus_proxy == NULL) {
-		dkp_warning ("proxy invalid");
+		egg_warning ("proxy invalid");
 		ret = FALSE;
 	}
 	return ret;
@@ -603,7 +603,7 @@ dkp_device_init (DkpDevice *device)
 
 	device->priv->system_bus_connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (device->priv->system_bus_connection == NULL) {
-		dkp_error ("error getting system bus: %s", error->message);
+		egg_error ("error getting system bus: %s", error->message);
 		g_error_free (error);
 	}
 }

@@ -10,6 +10,7 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
+	-DEGG_LOG_FILE=\""$(PK_LOG_DIR)/DeviceKit-power"\" \
 	-I$(top_srcdir)/libdevkit-power \
 	$(DBUS_GLIB_CFLAGS) \
 	$(POLKIT_DBUS_CFLAGS) \
@@ -33,6 +34,8 @@ dkp-daemon-glue.h: $(top_srcdir)/src/org.freedesktop.DeviceKit.Power.xml Makefil
 bin_PROGRAMS = devkit-power devkit-power-on-battery
 
 devkit_power_SOURCES = 					\
+	egg-debug.c					\
+	egg-debug.h					\
 	dkp-tool.c					\
 	$(BUILT_SOURCES)
 
@@ -47,6 +50,8 @@ devkit_power_LDADD = 					\
 	$(POLKIT_DBUS_LIBS)
 
 devkit_power_on_battery_SOURCES = 			\
+	egg-debug.c					\
+	egg-debug.h					\
 	dkp-battery-power.c				\
 	$(BUILT_SOURCES)
 

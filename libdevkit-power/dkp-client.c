@@ -26,7 +26,7 @@
 #include <glib.h>
 #include <dbus/dbus-glib.h>
 
-#include "dkp-debug.h"
+#include "egg-debug.h"
 #include "dkp-client.h"
 #include "dkp-client-device.h"
 
@@ -83,7 +83,7 @@ dkp_client_enumerate_devices (const DkpClient *client)
 				 g_type_array, &devices,
 				 G_TYPE_INVALID);
 	if (!ret) {
-		dkp_warning ("Couldn't enumerate devices: %s", error->message);
+		egg_warning ("Couldn't enumerate devices: %s", error->message);
 		g_error_free (error);
 	}
 	return devices;
@@ -209,7 +209,7 @@ dkp_client_init (DkpClient *client)
 	/* get on the bus */
 	client->priv->bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (client->priv->bus == NULL) {
-		dkp_warning ("Couldn't connect to system bus: %s", error->message);
+		egg_warning ("Couldn't connect to system bus: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -218,7 +218,7 @@ dkp_client_init (DkpClient *client)
 	client->priv->proxy = dbus_g_proxy_new_for_name (client->priv->bus, "org.freedesktop.DeviceKit.Power",
 							 "/", "org.freedesktop.DeviceKit.Power");
 	if (client->priv->proxy == NULL) {
-		dkp_warning ("Couldn't connect to proxy");
+		egg_warning ("Couldn't connect to proxy");
 		goto out;
 	}
 

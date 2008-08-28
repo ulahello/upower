@@ -47,7 +47,9 @@
 #include <unistd.h>
 
 #include "sysfs-utils.h"
-#include "dkp-debug.h"
+#include "egg-debug.h"
+#include "egg-string.h"
+
 #include "dkp-enum.h"
 #include "dkp-object.h"
 #include "dkp-hid.h"
@@ -111,7 +113,7 @@ dkp_hid_is_ups (DkpHid *hid)
 	/* get device info */
 	retval = ioctl (hid->priv->fd, HIDIOCGDEVINFO, &device_info);
 	if (retval < 0) {
-		dkp_debug ("HIDIOCGDEVINFO failed: %s", strerror (errno));
+		egg_debug ("HIDIOCGDEVINFO failed: %s", strerror (errno));
 		goto out;
 	}
 
@@ -137,7 +139,7 @@ dkp_hid_poll (DkpHid *hid)
 	DkpDevice *device = DKP_DEVICE (hid);
 	DkpObject *obj = dkp_device_get_obj (device);
 
-	dkp_debug ("Polling: %s", obj->native_path);
+	egg_debug ("Polling: %s", obj->native_path);
 	ret = dkp_hid_refresh (device);
 	if (ret)
 		dkp_device_emit_changed (device);
@@ -162,7 +164,7 @@ dkp_hid_get_string (DkpHid *hid, int sindex)
 	if (ioctl (hid->priv->fd, HIDIOCGSTRING, &sdesc) < 0)
 		return "";
 
-	dkp_debug ("value: '%s'", sdesc.value);
+	egg_debug ("value: '%s'", sdesc.value);
 	return sdesc.value;
 }
 
@@ -283,33 +285,33 @@ dkp_hid_coldplug (DkpDevice *device)
 	/* detect what kind of device we are */
 	d = dkp_device_get_d (device);
 	if (d == NULL)
-		dkp_error ("could not get device");
+		egg_error ("could not get device");
 
 	/* get the type */
 	type = devkit_device_get_property (d, "DKP_BATTERY_TYPE");
-	if (type == NULL || strcmp (type, "ups") != 0) {
-		dkp_debug ("not a UPS device");
+	if (type == NULL || !egg_strequal (type, "ups")) {
+		egg_debug ("not a UPS device");
 		goto out;
 	}
 
 	/* get the device file */
 	device_file = devkit_device_get_device_file (d);
 	if (device_file == NULL) {
-		dkp_debug ("could not get device file for HID device");
+		egg_debug ("could not get device file for HID device");
 		goto out;
 	}
 
 	/* connect to the device */
 	hid->priv->fd = open (device_file, O_RDONLY | O_NONBLOCK);
 	if (hid->priv->fd < 0) {
-		dkp_debug ("cannot open device file %s", device_file);
+		egg_debug ("cannot open device file %s", device_file);
 		goto out;
 	}
 
 	/* first check that we are an UPS */
 	ret = dkp_hid_is_ups (hid);
 	if (!ret) {
-		dkp_debug ("not a HID device: %s", device_file);
+		egg_debug ("not a HID device: %s", device_file);
 		goto out;
 	}
 

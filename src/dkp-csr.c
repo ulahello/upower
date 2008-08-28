@@ -34,7 +34,9 @@
 #include <usb.h>
 
 #include "sysfs-utils.h"
-#include "dkp-debug.h"
+#include "egg-debug.h"
+#include "egg-string.h"
+
 #include "dkp-enum.h"
 #include "dkp-object.h"
 #include "dkp-csr.h"
@@ -78,7 +80,7 @@ dkp_csr_poll (DkpCsr *csr)
 	DkpDevice *device = DKP_DEVICE (csr);
 	DkpObject *obj = dkp_device_get_obj (device);
 
-	dkp_debug ("Polling: %s", obj->native_path);
+	egg_debug ("Polling: %s", obj->native_path);
 	ret = dkp_csr_refresh (device);
 	if (ret)
 		dkp_device_emit_changed (device);
@@ -98,19 +100,19 @@ dkp_csr_find_device (DkpCsr *csr)
 
 	dir_name = g_strdup_printf ("%03d", csr->priv->bus_num);
 	filename = g_strdup_printf ("%03d",csr->priv->dev_num);
-	dkp_debug ("Looking for: [%s][%s]", dir_name, filename);
+	egg_debug ("Looking for: [%s][%s]", dir_name, filename);
 
 	for (curr_bus = usb_busses; curr_bus != NULL; curr_bus = curr_bus->next) {
-		/* dkp_debug ("Checking bus: [%s]", curr_bus->dirname); */
+		/* egg_debug ("Checking bus: [%s]", curr_bus->dirname); */
 		if (g_strcasecmp (dir_name, curr_bus->dirname))
 			continue;
 
  		for (curr_device = curr_bus->devices; curr_device != NULL; 
 		     curr_device = curr_device->next) {
-			/* dkp_debug ("Checking port: [%s]", curr_device->filename); */
+			/* egg_debug ("Checking port: [%s]", curr_device->filename); */
 			if (g_strcasecmp (filename, curr_device->filename))
 				continue;
-			dkp_debug ("Matched device: [%s][%s][%04X:%04X]", curr_bus->dirname, 
+			egg_debug ("Matched device: [%s][%s][%04X:%04X]", curr_bus->dirname, 
 				curr_device->filename, 
 				curr_device->descriptor.idVendor, 
 				curr_device->descriptor.idProduct);
@@ -140,24 +142,24 @@ dkp_csr_coldplug (DkpDevice *device)
 	/* detect what kind of device we are */
 	d = dkp_device_get_d (device);
 	if (d == NULL)
-		dkp_error ("could not get device");
+		egg_error ("could not get device");
 
 	/* get the type */
 	type = devkit_device_get_property (d, "DKP_BATTERY_TYPE");
 	if (type == NULL) {
-		dkp_debug ("not a CSR device");
+		egg_debug ("not a CSR device");
 		goto out;
 	}
 
 	/* which one? */
-	if (strcmp (type, "mouse") == 0)
+	if (egg_strequal (type, "mouse"))
 		obj->type = DKP_DEVICE_TYPE_MOUSE;
-	if (strcmp (type, "keyboard") == 0)
+	if (egg_strequal (type, "keyboard"))
 		obj->type = DKP_DEVICE_TYPE_KEYBOARD;
 
 	/* nothing known */
 	if (obj->type == DKP_DEVICE_TYPE_UNKNOWN) {
-		dkp_debug ("not a recognised csr device");
+		egg_debug ("not a recognised csr device");
 		goto out;
 	}
 
@@ -167,14 +169,14 @@ dkp_csr_coldplug (DkpDevice *device)
 
 	/* get correct bus numbers? */
 	if (csr->priv->bus_num == 0 || csr->priv->dev_num == 0) {
-		dkp_warning ("unable to get bus or device numbers");
+		egg_warning ("unable to get bus or device numbers");
 		goto out;
 	}
 
 	/* try to get the usb device */
 	csr->priv->device = dkp_csr_find_device (csr);
 	if (csr->priv->device == NULL) {
-		dkp_debug ("failed to get device %p", csr);
+		egg_debug ("failed to get device %p", csr);
 		goto out;
 	}
 
@@ -182,7 +184,7 @@ dkp_csr_coldplug (DkpDevice *device)
 	ret = devkit_device_has_property (d, "DKP_CSR_DUAL");
 	if (ret)
 		csr->priv->is_dual = devkit_device_get_property_as_boolean (d, "DKP_CSR_DUAL");
-	dkp_debug ("is_dual=%i", csr->priv->is_dual);
+	egg_debug ("is_dual=%i", csr->priv->is_dual);
 
 	obj->vendor = g_strdup (devkit_device_get_property (d, "ID_VENDOR"));
 	obj->model = g_strdup (devkit_device_get_property (d, "ID_PRODUCT"));
@@ -228,14 +230,14 @@ dkp_csr_refresh (DkpDevice *device)
 	addr = csr->priv->is_dual ? 1<<8 : 0;
 
 	if (csr->priv->device == NULL) {
-		dkp_warning ("no device!");
+		egg_warning ("no device!");
 		return FALSE;
 	}
 
 	/* open USB device */
 	handle = usb_open (csr->priv->device);
 	if (handle == NULL) {
-		dkp_warning ("could not open device");
+		egg_warning ("could not open device");
 		return FALSE;
 	}
 
@@ -243,22 +245,22 @@ dkp_csr_refresh (DkpDevice *device)
 	written = usb_control_msg (handle, 0xc0, 0x09, 0x03|addr, 0x00|addr, buf, 8, DKP_CSR_REFRESH_TIMEOUT);
 	ret = (written == 8);
 	if (!ret) {
-		dkp_warning ("failed to write to device, wrote %i bytes", written);
+		egg_warning ("failed to write to device, wrote %i bytes", written);
 		goto out;
 	}
 
 	/* is a C504 receiver busy? */
 	if (CSR_P0 == 0x3b && CSR_P4 == 0) {
-		dkp_debug ("receiver busy");
+		egg_debug ("receiver busy");
 		goto out;
 	}
 
 	/* get battery status */
 	csr->priv->raw_value = CSR_P5 & 0x07;
-	dkp_debug ("charge level: %d", csr->priv->raw_value);
+	egg_debug ("charge level: %d", csr->priv->raw_value);
 		if (csr->priv->raw_value != 0) {
 			obj->percentage = (100.0 / 7.0) * csr->priv->raw_value;
-			dkp_debug ("percentage=%f", obj->percentage);
+			egg_debug ("percentage=%f", obj->percentage);
 	}
 
 out:
