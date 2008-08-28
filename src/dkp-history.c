@@ -42,10 +42,14 @@ struct DkpHistoryPrivate
 {
 	gchar			*id;
 	gdouble			 rate_last;
+	gint64			 time_full_last;
+	gint64			 time_empty_last;
 	gdouble			 percentage_last;
 	DkpDeviceState		 state;
 	GPtrArray		*data_rate;
 	GPtrArray		*data_charge;
+	GPtrArray		*data_time_full;
+	GPtrArray		*data_time_empty;
 	guint			 save_id;
 };
 
@@ -118,6 +122,38 @@ dkp_history_get_rate_data (DkpHistory *history, guint timespan)
 	if (history->priv->id == NULL)
 		return NULL;
 	array = dkp_history_copy_array_timespan (history->priv->data_rate, timespan);
+	return array;
+}
+
+/**
+ * dkp_history_get_time_full_data:
+ **/
+GPtrArray *
+dkp_history_get_time_full_data (DkpHistory *history, guint timespan)
+{
+	GPtrArray *array;
+
+	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
+
+	if (history->priv->id == NULL)
+		return NULL;
+	array = dkp_history_copy_array_timespan (history->priv->data_time_full, timespan);
+	return array;
+}
+
+/**
+ * dkp_history_get_time_empty_data:
+ **/
+GPtrArray *
+dkp_history_get_time_empty_data (DkpHistory *history, guint timespan)
+{
+	GPtrArray *array;
+
+	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
+
+	if (history->priv->id == NULL)
+		return NULL;
+	array = dkp_history_copy_array_timespan (history->priv->data_time_empty, timespan);
 	return array;
 }
 
@@ -210,6 +246,16 @@ dkp_history_save_data (DkpHistory *history)
 	/* save charge history to disk */
 	filename = dkp_history_get_filename (history, "charge");
 	dkp_history_save_data_array (filename, history->priv->data_charge);
+	g_free (filename);
+
+	/* save charge history to disk */
+	filename = dkp_history_get_filename (history, "time-full");
+	dkp_history_save_data_array (filename, history->priv->data_time_full);
+	g_free (filename);
+
+	/* save charge history to disk */
+	filename = dkp_history_get_filename (history, "time-empty");
+	dkp_history_save_data_array (filename, history->priv->data_time_empty);
 	g_free (filename);
 
 	return TRUE;
@@ -362,6 +408,16 @@ dkp_history_load_data (DkpHistory *history)
 	dkp_history_load_data_array (filename, history->priv->data_charge);
 	g_free (filename);
 
+	/* load charge history from disk */
+	filename = dkp_history_get_filename (history, "time-full");
+	dkp_history_load_data_array (filename, history->priv->data_time_full);
+	g_free (filename);
+
+	/* load charge history from disk */
+	filename = dkp_history_get_filename (history, "time-empty");
+	dkp_history_load_data_array (filename, history->priv->data_time_empty);
+	g_free (filename);
+
 	return TRUE;
 }
 
@@ -458,6 +514,66 @@ dkp_history_set_rate_data (DkpHistory *history, gdouble rate)
 }
 
 /**
+ * dkp_history_set_time_full_data:
+ **/
+gboolean
+dkp_history_set_time_full_data (DkpHistory *history, gint64 time)
+{
+	DkpHistoryObj *obj;
+
+	g_return_val_if_fail (DKP_IS_HISTORY (history), FALSE);
+
+	if (history->priv->id == NULL)
+		return FALSE;
+	if (history->priv->state == DKP_DEVICE_STATE_UNKNOWN)
+		return FALSE;
+	if (time < 0)
+		return FALSE;
+	if (history->priv->time_full_last == time)
+		return FALSE;
+
+	/* add to array and schedule save file */
+	obj = dkp_history_obj_create ((gdouble) time, history->priv->state);
+	g_ptr_array_add (history->priv->data_time_full, obj);
+	dkp_history_schedule_save (history);
+
+	/* save last value */
+	history->priv->time_full_last = time;
+
+	return TRUE;
+}
+
+/**
+ * dkp_history_set_time_empty_data:
+ **/
+gboolean
+dkp_history_set_time_empty_data (DkpHistory *history, gint64 time)
+{
+	DkpHistoryObj *obj;
+
+	g_return_val_if_fail (DKP_IS_HISTORY (history), FALSE);
+
+	if (history->priv->id == NULL)
+		return FALSE;
+	if (history->priv->state == DKP_DEVICE_STATE_UNKNOWN)
+		return FALSE;
+	if (time < 0)
+		return FALSE;
+	if (history->priv->time_empty_last == time)
+		return FALSE;
+
+	/* add to array and schedule save file */
+	obj = dkp_history_obj_create ((gdouble) time, history->priv->state);
+	g_ptr_array_add (history->priv->data_time_empty, obj);
+	dkp_history_schedule_save (history);
+
+	/* save last value */
+	history->priv->time_empty_last = time;
+
+	return TRUE;
+}
+
+/**
  * dkp_history_class_init:
  * @klass: The DkpHistoryClass
  **/
@@ -483,6 +599,8 @@ dkp_history_init (DkpHistory *history)
 	history->priv->state = DKP_DEVICE_STATE_UNKNOWN;
 	history->priv->data_rate = g_ptr_array_new ();
 	history->priv->data_charge = g_ptr_array_new ();
+	history->priv->data_time_full = g_ptr_array_new ();
+	history->priv->data_time_empty = g_ptr_array_new ();
 	history->priv->save_id = 0;
 }
 
@@ -504,6 +622,8 @@ dkp_history_finalize (GObject *object)
 
 	g_ptr_array_free (history->priv->data_rate, TRUE);
 	g_ptr_array_free (history->priv->data_charge, TRUE);
+	g_ptr_array_free (history->priv->data_time_full, TRUE);
+	g_ptr_array_free (history->priv->data_time_empty, TRUE);
 	g_free (history->priv->id);
 
 	g_return_if_fail (history->priv != NULL);

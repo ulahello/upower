@@ -55,6 +55,10 @@ GPtrArray	*dkp_history_get_charge_data		(DkpHistory		*history,
 							 guint			 timespan);
 GPtrArray	*dkp_history_get_rate_data		(DkpHistory		*history,
 							 guint			 timespan);
+GPtrArray	*dkp_history_get_time_full_data		(DkpHistory		*history,
+							 guint			 timespan);
+GPtrArray	*dkp_history_get_time_empty_data	(DkpHistory		*history,
+							 guint			 timespan);
 
 gboolean	 dkp_history_set_id			(DkpHistory		*history,
 							 const gchar		*id);
@@ -64,6 +68,10 @@ gboolean	 dkp_history_set_charge_data		(DkpHistory		*history,
 							 gdouble		 percentage);
 gboolean	 dkp_history_set_rate_data		(DkpHistory		*history,
 							 gdouble		 rate);
+gboolean	 dkp_history_set_time_full_data		(DkpHistory		*history,
+							 gint64			 time);
+gboolean	 dkp_history_set_time_empty_data	(DkpHistory		*history,
+							 gint64			 time);
 
 G_END_DECLS
 

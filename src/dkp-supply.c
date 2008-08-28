@@ -331,6 +331,8 @@ out:
 	dkp_history_set_state (supply->priv->history, obj->state);
 	dkp_history_set_charge_data (supply->priv->history, obj->percentage);
 	dkp_history_set_rate_data (supply->priv->history, obj->energy_rate);
+	dkp_history_set_time_full_data (supply->priv->history, obj->time_to_full);
+	dkp_history_set_time_empty_data (supply->priv->history, obj->time_to_empty);
 
 	g_free (status);
 	return ret;
@@ -371,6 +373,10 @@ dkp_supply_get_history (DkpDevice *device, const gchar *type, guint timespan)
 		array = dkp_history_get_rate_data (supply->priv->history, timespan);
 	else if (strcmp (type, "charge") == 0)
 		array = dkp_history_get_charge_data (supply->priv->history, timespan);
+	else if (strcmp (type, "time-full") == 0)
+		array = dkp_history_get_time_full_data (supply->priv->history, timespan);
+	else if (strcmp (type, "time-empty") == 0)
+		array = dkp_history_get_time_empty_data (supply->priv->history, timespan);
 
 	return array;
 }
