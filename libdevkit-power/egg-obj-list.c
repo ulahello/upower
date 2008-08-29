@@ -26,6 +26,7 @@
 #include <glib/gi18n.h>
 #include <glib.h>
 
+#include "egg-debug.h"
 #include "egg-obj-list.h"
 
 #define EGG_OBJ_LIST_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), EGG_TYPE_OBJ_LIST, EggObjListPrivate))
@@ -188,6 +189,132 @@ egg_obj_list_add (EggObjList *list, const gpointer obj)
 	obj_new = list->priv->func_copy (obj);
 	g_ptr_array_add (list->priv->array, obj_new);
 	list->len = list->priv->array->len;
+}
+
+/**
+ * egg_obj_list_to_file:
+ * @list: a valid #EggObjList instance
+ * @filename: a filename
+ *
+ * Saves a copy of the list to a file
+ **/
+gboolean
+egg_obj_list_to_file (EggObjList *list, const gchar *filename)
+{
+	guint i;
+	gpointer obj;
+	gchar *part;
+	GString *string;
+	gboolean ret = TRUE;
+	GError *error = NULL;
+	EggObjListFreeFunc func_free;
+	EggObjListToStringFunc func_to_string;
+
+	g_return_val_if_fail (EGG_IS_OBJ_LIST (list), FALSE);
+	g_return_val_if_fail (list->priv->func_to_string != NULL, FALSE);
+	g_return_val_if_fail (list->priv->func_free != NULL, FALSE);
+
+	func_free = list->priv->func_free;
+	func_to_string = list->priv->func_to_string;
+
+	/* generate data */
+	string = g_string_new ("");
+	for (i=0; i<list->len; i++) {
+		obj = egg_obj_list_index (list, i);
+		part = func_to_string (obj);
+		if (part == NULL) {
+			ret = FALSE;
+			break;
+		}
+		g_string_append_printf (string, "%s\n", part);
+		g_free (part);
+	}
+	part = g_string_free (string, FALSE);
+
+	/* we failed to convert to string */
+	if (!ret) {
+		egg_warning ("failed to convert");
+		goto out;
+	}
+
+	/* save to disk */
+	ret = g_file_set_contents (filename, part, -1, &error);
+	if (!ret) {
+		egg_warning ("failed to set data: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+	egg_debug ("saved %s", filename);
+
+out:
+	g_free (part);
+	return ret;
+}
+
+/**
+ * egg_obj_list_from_file:
+ * @list: a valid #EggObjList instance
+ * @filename: a filename
+ *
+ * Appends the list from a file
+ **/
+gboolean
+egg_obj_list_from_file (EggObjList *list, const gchar *filename)
+{
+	gboolean ret;
+	GError *error = NULL;
+	gchar *data = NULL;
+	gchar **parts = NULL;
+	guint i;
+	guint length;
+	gpointer obj;
+	EggObjListFreeFunc func_free;
+	EggObjListFromStringFunc func_from_string;
+
+	g_return_val_if_fail (EGG_IS_OBJ_LIST (list), FALSE);
+	g_return_val_if_fail (list->priv->func_from_string != NULL, FALSE);
+	g_return_val_if_fail (list->priv->func_free != NULL, FALSE);
+
+	func_free = list->priv->func_free;
+	func_from_string = list->priv->func_from_string;
+
+	/* do we exist */
+	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
+	if (!ret) {
+		egg_debug ("failed to get data from %s as file does not exist", filename);
+		goto out;
+	}
+
+	/* get contents */
+	ret = g_file_get_contents (filename, &data, NULL, &error);
+	if (!ret) {
+		egg_warning ("failed to get data: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* split by line ending */
+	parts = g_strsplit (data, "\n", 0);
+	length = g_strv_length (parts);
+	if (length == 0) {
+		egg_debug ("no data in %s", filename);
+		goto out;
+	}
+
+	/* add valid entries */
+	egg_debug ("loading %i items of data from %s", length, filename);
+	for (i=0; i<length-1; i++) {
+		obj = func_from_string (parts[i]);
+		if (obj != NULL)
+			egg_obj_list_add (list, obj);
+		func_free (obj);
+	}
+
+out:
+	g_strfreev (parts);
+	g_free (data);
+
+	return ret;
 }
 
 /**

@@ -68,6 +68,10 @@ void		 egg_obj_list_set_from_string	(EggObjList		*list,
 						 EggObjListFromStringFunc func);
 void		 egg_obj_list_clear		(EggObjList		*list);
 void		 egg_obj_list_print		(EggObjList		*list);
+gboolean	 egg_obj_list_to_file		(EggObjList		*list,
+						 const gchar		*filename);
+gboolean	 egg_obj_list_from_file		(EggObjList		*list,
+						 const gchar		*filename);
 void		 egg_obj_list_add		(EggObjList		*list,
 						 const gpointer		 data);
 const gpointer	 egg_obj_list_index		(EggObjList		*list,

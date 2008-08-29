@@ -72,6 +72,8 @@ dkp_history_new_history_list (void)
 	egg_obj_list_set_new (list, (EggObjListNewFunc) dkp_history_obj_new);
 	egg_obj_list_set_copy (list, (EggObjListCopyFunc) dkp_history_obj_copy);
 	egg_obj_list_set_free (list, (EggObjListFreeFunc) dkp_history_obj_free);
+	egg_obj_list_set_to_string (list, (EggObjListToStringFunc) dkp_history_obj_to_string);
+	egg_obj_list_set_from_string (list, (EggObjListFromStringFunc) dkp_history_obj_from_string);
 	return list;
 }
 
@@ -170,7 +172,7 @@ dkp_history_get_time_empty_data (DkpHistory *history, guint timespan)
 }
 
 /**
- * dkp_history_load_data:
+ * dkp_history_get_filename:
  **/
 static gchar *
 dkp_history_get_filename (DkpHistory *history, const gchar *type)
@@ -182,57 +184,6 @@ dkp_history_get_filename (DkpHistory *history, const gchar *type)
 	path = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "DeviceKit-power", filename, NULL);
 	g_free (filename);
 	return path;
-}
-
-/**
- * dkp_history_save_data_array:
- **/
-static gboolean
-dkp_history_save_data_array (const gchar *filename, EggObjList *array)
-{
-	guint i;
-	const DkpHistoryObj *obj;
-	gchar *part;
-	GString *string;
-	gboolean ret = TRUE;
-	GFile *file = NULL;
-	GError *error = NULL;
-
-	/* generate data */
-	string = g_string_new ("");
-	for (i=0; i<array->len; i++) {
-		obj = (const DkpHistoryObj *) egg_obj_list_index (array, i);
-		part = dkp_history_obj_to_string (obj);
-		if (part == NULL) {
-			ret = FALSE;
-			break;
-		}
-		g_string_append_printf (string, "%s\n", part);
-		g_free (part);
-	}
-	part = g_string_free (string, FALSE);
-
-	/* we failed to convert to string */
-	if (!ret) {
-		egg_warning ("failed to convert");
-		goto out;
-	}
-
-	/* save to disk */
-	file = g_file_new_for_path (filename);
-	ret = g_file_set_contents (filename, part, -1, &error);
-	if (!ret) {
-		egg_warning ("failed to set data: %s", error->message);
-		g_error_free (error);
-		goto out;
-	}
-	egg_debug ("saved %s", filename);
-
-out:
-	if (file != NULL)
-		g_object_unref (file);
-	g_free (part);
-	return ret;
 }
 
 /**
@@ -251,22 +202,22 @@ dkp_history_save_data (DkpHistory *history)
 
 	/* save rate history to disk */
 	filename = dkp_history_get_filename (history, "rate");
-	dkp_history_save_data_array (filename, history->priv->data_rate);
+	egg_obj_list_to_file (history->priv->data_rate, filename);
 	g_free (filename);
 
 	/* save charge history to disk */
 	filename = dkp_history_get_filename (history, "charge");
-	dkp_history_save_data_array (filename, history->priv->data_charge);
+	egg_obj_list_to_file (history->priv->data_charge, filename);
 	g_free (filename);
 
 	/* save charge history to disk */
 	filename = dkp_history_get_filename (history, "time-full");
-	dkp_history_save_data_array (filename, history->priv->data_time_full);
+	egg_obj_list_to_file (history->priv->data_time_full, filename);
 	g_free (filename);
 
 	/* save charge history to disk */
 	filename = dkp_history_get_filename (history, "time-empty");
-	dkp_history_save_data_array (filename, history->priv->data_time_empty);
+	egg_obj_list_to_file (history->priv->data_time_empty, filename);
 	g_free (filename);
 
 	return TRUE;
@@ -346,59 +297,6 @@ dkp_history_schedule_save (DkpHistory *history)
 }
 
 /**
- * dkp_history_load_data_array:
- **/
-static gboolean
-dkp_history_load_data_array (const gchar *filename, EggObjList *array)
-{
-	gboolean ret;
-	GError *error = NULL;
-	gchar *data = NULL;
-	gchar **parts = NULL;
-	guint i;
-	guint length;
-	DkpHistoryObj *obj;
-
-	/* do we exist */
-	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
-	if (!ret) {
-		egg_debug ("failed to get data from %s as file does not exist", filename);
-		goto out;
-	}
-
-	/* get contents */
-	ret = g_file_get_contents (filename, &data, NULL, &error);
-	if (!ret) {
-		egg_warning ("failed to get data: %s", error->message);
-		g_error_free (error);
-		goto out;
-	}
-
-	/* split by line ending */
-	parts = g_strsplit (data, "\n", 0);
-	length = g_strv_length (parts);
-	if (length == 0) {
-		egg_debug ("no data in %s", filename);
-		goto out;
-	}
-
-	/* add valid entries */
-	egg_debug ("loading %i items of data from %s", length, filename);
-	for (i=0; i<length-1; i++) {
-		obj = dkp_history_obj_from_string (parts[i]);
-		if (obj != NULL)
-			egg_obj_list_add (array, obj);
-		dkp_history_obj_free (obj);
-	}
-
-out:
-	g_strfreev (parts);
-	g_free (data);
-
-	return ret;
-}
-
-/**
  * dkp_history_load_data:
  **/
 static gboolean
@@ -408,22 +306,22 @@ dkp_history_load_data (DkpHistory *history)
 
 	/* load rate history from disk */
 	filename = dkp_history_get_filename (history, "rate");
-	dkp_history_load_data_array (filename, history->priv->data_rate);
+	egg_obj_list_from_file (history->priv->data_rate, filename);
 	g_free (filename);
 
 	/* load charge history from disk */
 	filename = dkp_history_get_filename (history, "charge");
-	dkp_history_load_data_array (filename, history->priv->data_charge);
+	egg_obj_list_from_file (history->priv->data_charge, filename);
 	g_free (filename);
 
 	/* load charge history from disk */
 	filename = dkp_history_get_filename (history, "time-full");
-	dkp_history_load_data_array (filename, history->priv->data_time_full);
+	egg_obj_list_from_file (history->priv->data_time_full, filename);
 	g_free (filename);
 
 	/* load charge history from disk */
 	filename = dkp_history_get_filename (history, "time-empty");
-	dkp_history_load_data_array (filename, history->priv->data_time_empty);
+	egg_obj_list_from_file (history->priv->data_time_empty, filename);
 	g_free (filename);
 
 	return TRUE;
