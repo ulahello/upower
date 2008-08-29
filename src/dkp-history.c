@@ -221,7 +221,6 @@ dkp_history_save_data_array (const gchar *filename, EggObjList *array)
 	/* save to disk */
 	file = g_file_new_for_path (filename);
 	ret = g_file_set_contents (filename, part, -1, &error);
-//	ret = g_file_replace_contents (file, part, -1, NULL, TRUE, G_FILE_CREATE_NONE, NULL, NULL, &error);
 	if (!ret) {
 		egg_warning ("failed to set data: %s", error->message);
 		g_error_free (error);
@@ -353,7 +352,6 @@ static gboolean
 dkp_history_load_data_array (const gchar *filename, EggObjList *array)
 {
 	gboolean ret;
-	GFile *file = NULL;
 	GError *error = NULL;
 	gchar *data = NULL;
 	gchar **parts = NULL;
@@ -369,8 +367,7 @@ dkp_history_load_data_array (const gchar *filename, EggObjList *array)
 	}
 
 	/* get contents */
-	file = g_file_new_for_path (filename);
-	ret = g_file_load_contents (file, NULL, &data, NULL, NULL, &error);
+	ret = g_file_get_contents (filename, &data, NULL, &error);
 	if (!ret) {
 		egg_warning ("failed to get data: %s", error->message);
 		g_error_free (error);
@@ -397,8 +394,6 @@ dkp_history_load_data_array (const gchar *filename, EggObjList *array)
 out:
 	g_strfreev (parts);
 	g_free (data);
-	if (file != NULL)
-		g_object_unref (file);
 
 	return ret;
 }
