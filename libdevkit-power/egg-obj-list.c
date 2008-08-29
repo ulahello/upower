@@ -35,6 +35,8 @@ struct EggObjListPrivate
 	EggObjListNewFunc	 func_new;
 	EggObjListCopyFunc	 func_copy;
 	EggObjListFreeFunc	 func_free;
+	EggObjListToStringFunc	 func_to_string;
+	EggObjListFromStringFunc func_from_string;
 	GPtrArray		*array;
 };
 
@@ -83,6 +85,34 @@ egg_obj_list_set_free (EggObjList *list, EggObjListFreeFunc func)
 }
 
 /**
+ * egg_obj_list_set_to_string:
+ * @list: a valid #EggObjList instance
+ * @func: typedef'd function
+ *
+ * Adds a to string func
+ **/
+void
+egg_obj_list_set_to_string (EggObjList *list, EggObjListToStringFunc func)
+{
+	g_return_if_fail (EGG_IS_OBJ_LIST (list));
+	list->priv->func_to_string = func;
+}
+
+/**
+ * egg_obj_list_set_from_string:
+ * @list: a valid #EggObjList instance
+ * @func: typedef'd function
+ *
+ * Adds a from string func
+ **/
+void
+egg_obj_list_set_from_string (EggObjList *list, EggObjListFromStringFunc func)
+{
+	g_return_if_fail (EGG_IS_OBJ_LIST (list));
+	list->priv->func_from_string = func;
+}
+
+/**
  * egg_obj_list_clear:
  * @list: a valid #EggObjList instance
  *
@@ -105,6 +135,35 @@ egg_obj_list_clear (EggObjList *list)
 		if (func_free != NULL)
 			func_free (obj);
 		g_ptr_array_remove (array, obj);
+	}
+	list->len = 0;
+}
+
+/**
+ * egg_obj_list_print:
+ * @list: a valid #EggObjList instance
+ *
+ * Prints the package list
+ **/
+void
+egg_obj_list_print (EggObjList *list)
+{
+	guint i;
+	gpointer obj;
+	GPtrArray *array;
+	gchar *text;
+	EggObjListToStringFunc func_to_string;
+
+	g_return_if_fail (list->priv->func_to_string != NULL);
+	g_return_if_fail (EGG_IS_OBJ_LIST (list));
+
+	array = list->priv->array;
+	func_to_string = list->priv->func_to_string;
+	for (i=0; i<array->len; i++) {
+		obj = g_ptr_array_index (array, i);
+		text = func_to_string (obj);
+		g_print ("%s\n", text);
+		g_free (text);
 	}
 	list->len = 0;
 }
@@ -201,6 +260,8 @@ egg_obj_list_init (EggObjList *list)
 	list->priv->func_new = NULL;
 	list->priv->func_copy = NULL;
 	list->priv->func_free = NULL;
+	list->priv->func_to_string = NULL;
+	list->priv->func_from_string = NULL;
 	list->priv->array = g_ptr_array_new ();
 	list->len = list->priv->array->len;
 }
