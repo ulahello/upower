@@ -37,6 +37,8 @@ gboolean	 dkp_stats_obj_free		(DkpStatsObj		*obj);
 DkpStatsObj	*dkp_stats_obj_copy		(const DkpStatsObj	*cobj);
 DkpStatsObj	*dkp_stats_obj_create		(gdouble		 value,
 						 gdouble		 state);
+DkpStatsObj	*dkp_stats_obj_from_string	(const gchar		*text);
+gchar		*dkp_stats_obj_to_string	(const DkpStatsObj	*obj);
 
 G_END_DECLS
 

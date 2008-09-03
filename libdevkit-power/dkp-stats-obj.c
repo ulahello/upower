@@ -77,3 +77,44 @@ dkp_stats_obj_create (gdouble value, gdouble state)
 	return obj;
 }
 
+/**
+ * dkp_stats_obj_from_string:
+ **/
+DkpStatsObj *
+dkp_stats_obj_from_string (const gchar *text)
+{
+	DkpStatsObj *obj = NULL;
+	gchar **parts = NULL;
+	guint length;
+
+	if (text == NULL)
+		goto out;
+
+	/* split by tab */
+	parts = g_strsplit (text, "\t", 0);
+	length = g_strv_length (parts);
+	if (length != 2) {
+		egg_warning ("invalid string: '%s'", text);
+		goto out;
+	}
+
+	/* parse and create */
+	obj = dkp_stats_obj_new ();
+	obj->value = atoi (parts[0]);
+	obj->accuracy = atof (parts[1]);
+out:
+	g_strfreev (parts);
+	return obj;
+}
+
+/**
+ * dkp_stats_obj_to_string:
+ **/
+gchar *
+dkp_stats_obj_to_string (const DkpStatsObj *obj)
+{
+	if (obj == NULL)
+		return NULL;
+	return g_strdup_printf ("%.2f\t%.2f", obj->value, obj->accuracy);
+}
+
