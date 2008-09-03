@@ -196,6 +196,11 @@ EggObjList *
 dkp_history_get_profile_data (DkpHistory *history, gboolean charging)
 {
 	guint i;
+	guint non_zero_accuracy = 0;
+	gfloat average;
+	guint bin;
+	guint oldbin = 999;
+	const DkpHistoryObj *obj_last = NULL;
 	const DkpHistoryObj *obj;
 	const DkpHistoryObj *obj_old = NULL;
 	DkpStatsObj *stats;
@@ -203,8 +208,7 @@ dkp_history_get_profile_data (DkpHistory *history, gboolean charging)
 	EggObjList *data;
 	guint time;
 	gdouble value;
-	guint int_bin;
-	gdouble total_accuracy = 0.0f;
+	gdouble total_value = 0.0f;
 
 	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
 
@@ -216,50 +220,87 @@ dkp_history_get_profile_data (DkpHistory *history, gboolean charging)
 		dkp_stats_obj_free (stats);
 	}
 
-	/* partition the array into bins */
 	array = history->priv->data_charge;
-	egg_debug ("array->len=%i", array->len);
 	for (i=0; i<array->len; i++) {
 		obj = (const DkpHistoryObj *) egg_obj_list_index (array, i);
-		if (obj_old == NULL || obj->state != obj_old->state) {
-			obj_old = obj;
-			egg_debug ("ignoring %i as not the same as prev", obj->time);
-			continue;
-		}
-		/* center the value on a specific time difference */
-		time = obj->time - obj_old->time;
-		value = (obj->value + obj_old->value) / 2.0f;
-		if (value < 0.0001) {
-			egg_debug ("ignoring %i as zero", obj->time);
-			continue;
+		if (obj_last == NULL || obj->state != obj_last->state) {
+//			egg_debug ("ignoring %i as not the same as prev", obj->time);
+			obj_old = NULL;
+			goto cont;
 		}
 
-		/* use the accuracy field as a counter for now */
-		if ((charging && obj->state == DKP_DEVICE_STATE_CHARGING) ||
-		    (!charging && obj->state == DKP_DEVICE_STATE_DISCHARGING)) {
-			/* round to the nearest int */
-			int_bin = rint (value);
-			stats = (DkpStatsObj *) egg_obj_list_index (data, int_bin);
-			stats->value += time;
-			stats->accuracy++;
+		/* round to the nearest int */
+		bin = rint (obj->value);
+//		egg_debug ("data %f binned into %i", obj->value, bin);
+		if (oldbin != bin) {
+//			egg_debug ("bin changed!, %i->%i", oldbin, bin);
+			oldbin = bin;
+			if (obj_old != NULL) {
+				/* not enough or too much difference */
+				value = fabs (obj->value - obj_old->value);
+				if (value < 0.01f) {
+//					egg_debug ("ignoring as value difference too small: %f", value);
+					obj_old = NULL;
+					goto cont;
+				}
+				if (value > 3.0f) {
+//					egg_debug ("ignoring as value difference too large: %f", value);
+					obj_old = NULL;
+					goto cont;
+				}
+
+				time = obj->time - obj_old->time;
+//				egg_debug ("time difference at %i is %i", bin, time);
+				/* use the accuracy field as a counter for now */
+				if ((charging && obj->state == DKP_DEVICE_STATE_CHARGING) ||
+				    (!charging && obj->state == DKP_DEVICE_STATE_DISCHARGING)) {
+					stats = (DkpStatsObj *) egg_obj_list_index (data, bin);
+					stats->value += time;
+					stats->accuracy++;
+				}
+			}
+			obj_old = obj;
 		}
+cont:
+		obj_last = obj;
 	}
 
-	/* calculate average, and find total accuracy */
+	/* divide the value by the number of samples to make the average */
 	for (i=0; i<101; i++) {
 		stats = (DkpStatsObj *) egg_obj_list_index (data, i);
 		if (stats->accuracy != 0)
-			stats->value /= stats->accuracy;
-		total_accuracy += stats->accuracy;
+			stats->value = stats->value / stats->accuracy;
 	}
 
-	/* set 100% as average */
-	total_accuracy = 10000.0f / total_accuracy;
-
-	/* normalise accuracy */
+	/* find non-zero accuracy values for the average */
 	for (i=0; i<101; i++) {
 		stats = (DkpStatsObj *) egg_obj_list_index (data, i);
-		stats->accuracy *= total_accuracy;
+		if (stats->accuracy > 0) {
+			total_value += stats->value;
+			non_zero_accuracy++;
+		}
+	}
+
+	/* average */
+	average = total_value / non_zero_accuracy;
+	egg_debug ("average is %f", average);
+
+	/* make the values a factor of 0, so that 1.0 is twice the
+	 * average, and -1.0 is half the average */
+	for (i=0; i<101; i++) {
+		stats = (DkpStatsObj *) egg_obj_list_index (data, i);
+		if (stats->accuracy > 0)
+			stats->value = (stats->value - average) / average;
+		else
+			stats->value = 0.0f;
+	}
+
+	/* accuracy is a percentage scale, where each cycle = 20% */
+	for (i=0; i<101; i++) {
+		stats = (DkpStatsObj *) egg_obj_list_index (data, i);
+		stats->accuracy *= 20;
+		if (stats->accuracy > 100.0f)
+			stats->accuracy = 100.0f;
 	}
 
 	return data;
@@ -397,6 +438,7 @@ static gboolean
 dkp_history_load_data (DkpHistory *history)
 {
 	gchar *filename;
+	DkpHistoryObj *obj;
 
 	/* load rate history from disk */
 	filename = dkp_history_get_filename (history, "rate");
@@ -417,6 +459,15 @@ dkp_history_load_data (DkpHistory *history)
 	filename = dkp_history_get_filename (history, "time-empty");
 	egg_obj_list_from_file (history->priv->data_time_empty, filename);
 	g_free (filename);
+
+	/* save a marker so we don't use incomplete percentages */
+	obj = dkp_history_obj_create (0, DKP_DEVICE_STATE_UNKNOWN);
+	egg_obj_list_add (history->priv->data_rate, obj);
+	egg_obj_list_add (history->priv->data_charge, obj);
+	egg_obj_list_add (history->priv->data_time_full, obj);
+	egg_obj_list_add (history->priv->data_time_empty, obj);
+	dkp_history_obj_free (obj);
+	dkp_history_schedule_save (history);
 
 	return TRUE;
 }
