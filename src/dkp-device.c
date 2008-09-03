@@ -340,9 +340,9 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvo
 		goto out;
 	}
 
-	/* always 100 items of data */
-	if (array->len != 100) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "statistics invalid");
+	/* always 101 items of data */
+	if (array->len != 101) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "statistics invalid as have %i items", array->len);
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
