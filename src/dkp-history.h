@@ -29,7 +29,7 @@
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_HISTORY			(dkp_history_get_type ())
+#define DKP_TYPE_HISTORY		(dkp_history_get_type ())
 #define DKP_HISTORY(o)			(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_HISTORY, DkpHistory))
 #define DKP_HISTORY_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_HISTORY, DkpHistoryClass))
 #define DKP_IS_HISTORY(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_HISTORY))
@@ -61,6 +61,8 @@ EggObjList	*dkp_history_get_time_full_data		(DkpHistory		*history,
 							 guint			 timespan);
 EggObjList	*dkp_history_get_time_empty_data	(DkpHistory		*history,
 							 guint			 timespan);
+EggObjList	*dkp_history_get_profile_data		(DkpHistory		*history,
+							 gboolean		 charging);
 
 gboolean	 dkp_history_set_id			(DkpHistory		*history,
 							 const gchar		*id);

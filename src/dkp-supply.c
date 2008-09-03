@@ -384,6 +384,27 @@ dkp_supply_get_history (DkpDevice *device, const gchar *type, guint timespan)
 }
 
 /**
+ * dkp_supply_get_stats:
+ **/
+static EggObjList *
+dkp_supply_get_stats (DkpDevice *device, const gchar *type)
+{
+	DkpSupply *supply = DKP_SUPPLY (device);
+	EggObjList *array = NULL;
+
+	g_return_val_if_fail (DKP_IS_SUPPLY (supply), FALSE);
+	g_return_val_if_fail (type != NULL, FALSE);
+
+	/* get the correct data */
+	if (egg_strequal (type, "charging"))
+		array = dkp_history_get_profile_data (supply->priv->history, TRUE);
+	else if (egg_strequal (type, "discharging"))
+		array = dkp_history_get_profile_data (supply->priv->history, FALSE);
+
+	return array;
+}
+
+/**
  * dkp_supply_coldplug:
  **/
 static gboolean
@@ -512,6 +533,7 @@ dkp_supply_class_init (DkpSupplyClass *klass)
 	device_class->coldplug = dkp_supply_coldplug;
 	device_class->refresh = dkp_supply_refresh;
 	device_class->get_history = dkp_supply_get_history;
+	device_class->get_stats = dkp_supply_get_stats;
 
 	g_type_class_add_private (klass, sizeof (DkpSupplyPrivate));
 }

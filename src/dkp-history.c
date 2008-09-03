@@ -23,11 +23,13 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <glib/gi18n.h>
 #include <gio/gio.h>
 
 #include "egg-debug.h"
 #include "dkp-history.h"
+#include "dkp-stats-obj.h"
 #include "dkp-history-obj.h"
 
 static void	dkp_history_class_init	(DkpHistoryClass	*klass);
@@ -74,6 +76,22 @@ dkp_history_new_history_list (void)
 	egg_obj_list_set_free (list, (EggObjListFreeFunc) dkp_history_obj_free);
 	egg_obj_list_set_to_string (list, (EggObjListToStringFunc) dkp_history_obj_to_string);
 	egg_obj_list_set_from_string (list, (EggObjListFromStringFunc) dkp_history_obj_from_string);
+	return list;
+}
+
+/**
+ * dkp_history_get_stats_list:
+ **/
+static EggObjList *
+dkp_history_new_stats_list (void)
+{
+	EggObjList *list;
+	list = egg_obj_list_new ();
+	egg_obj_list_set_new (list, (EggObjListNewFunc) dkp_stats_obj_new);
+	egg_obj_list_set_copy (list, (EggObjListCopyFunc) dkp_stats_obj_copy);
+	egg_obj_list_set_free (list, (EggObjListFreeFunc) dkp_stats_obj_free);
+	egg_obj_list_set_to_string (list, (EggObjListToStringFunc) dkp_stats_obj_to_string);
+	egg_obj_list_set_from_string (list, (EggObjListFromStringFunc) dkp_stats_obj_from_string);
 	return list;
 }
 
@@ -169,6 +187,82 @@ dkp_history_get_time_empty_data (DkpHistory *history, guint timespan)
 		return NULL;
 	array = dkp_history_copy_array_timespan (history->priv->data_time_empty, timespan);
 	return array;
+}
+
+/**
+ * dkp_history_get_profile_data:
+ **/
+EggObjList *
+dkp_history_get_profile_data (DkpHistory *history, gboolean charging)
+{
+	guint i;
+	const DkpHistoryObj *obj;
+	const DkpHistoryObj *obj_old = NULL;
+	DkpStatsObj *stats;
+	EggObjList *array;
+	EggObjList *data;
+	guint time;
+	gdouble value;
+	guint int_bin;
+	gdouble total_accuracy = 0.0f;
+
+	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
+
+	/* create 100 item list and set to zero */
+	data = dkp_history_new_stats_list ();
+	for (i=0; i<101; i++) {
+		stats = dkp_stats_obj_create (0.0f, 0.0f);
+		egg_obj_list_add (data, stats);
+		dkp_stats_obj_free (stats);
+	}
+
+	/* partition the array into bins */
+	array = history->priv->data_charge;
+	egg_debug ("array->len=%i", array->len);
+	for (i=0; i<array->len; i++) {
+		obj = (const DkpHistoryObj *) egg_obj_list_index (array, i);
+		if (obj_old == NULL || obj->state != obj_old->state) {
+			obj_old = obj;
+			egg_debug ("ignoring %i as not the same as prev", obj->time);
+			continue;
+		}
+		/* center the value on a specific time difference */
+		time = obj->time - obj_old->time;
+		value = (obj->value + obj_old->value) / 2.0f;
+		if (value < 0.0001) {
+			egg_debug ("ignoring %i as zero", obj->time);
+			continue;
+		}
+
+		/* use the accuracy field as a counter for now */
+		if ((charging && obj->state == DKP_DEVICE_STATE_CHARGING) ||
+		    (!charging && obj->state == DKP_DEVICE_STATE_DISCHARGING)) {
+			/* round to the nearest int */
+			int_bin = rint (value);
+			stats = (DkpStatsObj *) egg_obj_list_index (data, int_bin);
+			stats->value += time;
+			stats->accuracy++;
+		}
+	}
+
+	/* calculate average, and find total accuracy */
+	for (i=0; i<101; i++) {
+		stats = (DkpStatsObj *) egg_obj_list_index (data, i);
+		if (stats->accuracy != 0)
+			stats->value /= stats->accuracy;
+		total_accuracy += stats->accuracy;
+	}
+
+	/* set 100% as average */
+	total_accuracy = 10000.0f / total_accuracy;
+
+	/* normalise accuracy */
+	for (i=0; i<101; i++) {
+		stats = (DkpStatsObj *) egg_obj_list_index (data, i);
+		stats->accuracy *= total_accuracy;
+	}
+
+	return data;
 }
 
 /**

@@ -64,6 +64,7 @@ devkit_power_daemon_CPPFLAGS = 					\
 	$(AM_CPPFLAGS)
 
 devkit_power_daemon_LDADD = 					\
+	-lm							\
 	$(USB_LIBS)						\
 	$(GIO_LIBS)						\
 	$(DBUS_GLIB_LIBS)					\
