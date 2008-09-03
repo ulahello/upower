@@ -41,7 +41,7 @@
 #include "dkp-supply.h"
 #include "dkp-history.h"
 
-#define DKP_SUPPLY_REFRESH_TIMEOUT	30L
+#define DKP_SUPPLY_REFRESH_TIMEOUT	10L
 
 struct DkpSupplyPrivate
 {
