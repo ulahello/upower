@@ -211,7 +211,7 @@ dkp_client_device_print_history (const DkpClientDevice *device, const gchar *typ
 		goto out;
 
 	/* pretty print */
-	g_print ("  Statistics (%s):\n", type);
+	g_print ("  History (%s):\n", type);
 	for (i=0; i<array->len; i++) {
 		obj = (DkpHistoryObj *) egg_obj_list_index (array, i);
 		g_print ("    %i\t%.3f\t%s\n", obj->time, obj->value, dkp_device_state_to_text (obj->state));
@@ -299,7 +299,7 @@ dkp_client_device_get_history (const DkpClientDevice *device, const gchar *type,
 				 g_type_gvalue_array, &gvalue_ptr_array,
 				 G_TYPE_INVALID);
 	if (!ret) {
-		egg_debug ("GetStatistics(%s,%i) on %s failed: %s", type, timespec,
+		egg_debug ("GetHistory(%s,%i) on %s failed: %s", type, timespec,
 			   device->priv->object_path, error->message);
 		g_error_free (error);
 		goto out;
