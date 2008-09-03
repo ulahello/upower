@@ -166,7 +166,6 @@ egg_obj_list_print (EggObjList *list)
 		g_print ("%s\n", text);
 		g_free (text);
 	}
-	list->len = 0;
 }
 
 /**
