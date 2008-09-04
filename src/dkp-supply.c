@@ -236,16 +236,26 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		obj->energy_full_design =
 			sysfs_get_double (obj->native_path, "energy_full_design") / 1000000.0;
 
-		/* the last full cannot be bigger than the design */
+		/* the last full should not be bigger than the design */
 		if (obj->energy_full > obj->energy_full_design)
+			egg_warning ("energy_full (%f) is greater than energy_full_design (%f)",
+				     obj->energy_full, obj->energy_full_design);
+
+		/* some systems don't have this */
+		if (obj->energy_full < 0.01) {
+			egg_warning ("correcting energy_full (%f) using energy_full_design (%f)",
+				     obj->energy_full, obj->energy_full_design);
 			obj->energy_full = obj->energy_full_design;
+		}
 
 		/* calculate how broken our battery is */
-		obj->capacity = obj->energy_full_design / obj->energy_full * 100.0f;
-		if (obj->capacity < 0)
-			obj->capacity = 0;
-		if (obj->capacity > 100.0)
-			obj->capacity = 100.0;
+		if (obj->energy_full > 0) {
+			obj->capacity = obj->energy_full_design / obj->energy_full * 100.0f;
+			if (obj->capacity < 0)
+				obj->capacity = 0;
+			if (obj->capacity > 100.0)
+				obj->capacity = 100.0;
+		}
 
 		/* we only coldplug once, as these values will never change */
 		supply->priv->has_coldplug_values = TRUE;
