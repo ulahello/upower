@@ -96,10 +96,73 @@ dkp_history_new_stats_list (void)
 }
 
 /**
+ * dkp_history_array_limit_x_size:
+ * @array: The data we have for a specific graph
+ * @max_num: The max desired points
+ *
+ * We need to reduce the number of data points else the graph will take a long
+ * time to plot accuracy we don't need at the larger scales.
+ * This will not reduce the scale or range of the data.
+ **/
+static gboolean
+dkp_history_array_limit_x_size (EggObjList *array, guint max_num)
+{
+	const DkpHistoryObj *obj;
+	gfloat div;
+	gfloat running_count = 0.0f;
+	guint length;
+	guint a;
+	guint last;
+	guint first;
+
+	egg_debug ("length of array (before) %i", array->len);
+
+	/* sanity check */
+	length = array->len;
+	if (length < max_num) {
+		egg_debug ("no limit possible as under limit");
+		return FALSE;
+	}
+
+	/* last element */
+	obj = (const DkpHistoryObj *) egg_obj_list_index (array, length-1);
+	last = obj->time;
+	obj = (const DkpHistoryObj *) egg_obj_list_index (array, 0);
+	first = obj->time;
+
+	div = (first - last) / (gfloat) max_num;
+	egg_debug ("Using a x division of %f", div);
+
+	/* Reduces the number of points to a pre-set level using a time
+	 * division algorithm so we don't keep diluting the previous
+	 * data with a conventional 1-in-x type algorithm. */
+	for (a=0; a < length; a++) {
+		obj = (const DkpHistoryObj *) egg_obj_list_index (array, a);
+		if (obj->time - last >= running_count) {
+			/* keep valid obj */
+			running_count = running_count + div;
+		} else {
+			/* remove obj */
+			egg_obj_list_remove (array, (const gpointer) obj);
+
+			/* decrement the array length as we removed a obj */
+			length--;
+			/* re-evaluate the 'current' item */
+			a--;
+		}
+	}
+
+	/* check length */
+	egg_debug ("length of array (after) %i", array->len);
+
+	return TRUE;
+}
+
+/**
  * dkp_history_copy_array_timespan:
  **/
 static EggObjList *
-dkp_history_copy_array_timespan (EggObjList *array, guint timespan)
+dkp_history_copy_array_timespan (const EggObjList *array, guint timespan)
 {
 	guint i;
 	const DkpHistoryObj *obj;
@@ -121,6 +184,9 @@ dkp_history_copy_array_timespan (EggObjList *array, guint timespan)
 		if (start - obj->time < timespan)
 			egg_obj_list_add (array_new, (const gpointer) obj);
 	}
+
+	/* FIXME: only add a certain number of points */
+	if (0) dkp_history_array_limit_x_size (array_new, 100);
 
 	return array_new;
 }
