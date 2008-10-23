@@ -169,6 +169,20 @@ dkp_hid_get_string (DkpHid *hid, int sindex)
 }
 
 /**
+ * dkp_hid_convert_device_technology:
+ **/
+static DkpDeviceTechnology
+dkp_hid_convert_device_technology (const gchar *type)
+{
+	if (type == NULL)
+		return DKP_DEVICE_TECHNOLGY_UNKNOWN;
+	if (strcasecmp (type, "pb") == 0 ||
+	    strcasecmp (type, "pbac") == 0)
+		return DKP_DEVICE_TECHNOLGY_LEAD_ACID;
+	return DKP_DEVICE_TECHNOLGY_UNKNOWN;
+}
+
+/**
  * dkp_hid_set_obj:
  **/
 static gboolean
@@ -202,7 +216,7 @@ dkp_hid_set_obj (DkpHid *hid, int code, int value)
 		break;
 	case DKP_HID_CHEMISTRY:
 		type = dkp_hid_get_string (hid, value);
-		obj->technology = dkp_acpi_to_device_technology (type);
+		obj->technology = dkp_hid_convert_device_technology (type);
 		break;
 	case DKP_HID_RECHARGEABLE:
 		obj->is_rechargeable = (value != 0);

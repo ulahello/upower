@@ -190,6 +190,31 @@ dkp_supply_calculate_rate (DkpSupply *supply)
 }
 
 /**
+ * dkp_supply_convert_device_technology:
+ **/
+static DkpDeviceTechnology
+dkp_supply_convert_device_technology (const gchar *type)
+{
+	if (type == NULL)
+		return DKP_DEVICE_TECHNOLGY_UNKNOWN;
+	/* every case combination of Li-Ion is commonly used.. */
+	if (strcasecmp (type, "li-ion") == 0 ||
+	    strcasecmp (type, "lion") == 0)
+		return DKP_DEVICE_TECHNOLGY_LITHIUM_ION;
+	if (strcasecmp (type, "pb") == 0 ||
+	    strcasecmp (type, "pbac") == 0)
+		return DKP_DEVICE_TECHNOLGY_LEAD_ACID;
+	if (strcasecmp (type, "lip") == 0 ||
+	    strcasecmp (type, "lipo") == 0)
+		return DKP_DEVICE_TECHNOLGY_LITHIUM_POLYMER;
+	if (strcasecmp (type, "nimh") == 0)
+		return DKP_DEVICE_TECHNOLGY_NICKEL_METAL_HYDRIDE;
+	if (strcasecmp (type, "lifo") == 0)
+		return DKP_DEVICE_TECHNOLGY_LITHIUM_IRON_PHOSPHATE;
+	return DKP_DEVICE_TECHNOLGY_UNKNOWN;
+}
+
+/**
  * dkp_supply_refresh_battery:
  *
  * Return value: TRUE if we changed
@@ -220,7 +245,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 
 		/* the ACPI spec is bad at defining battery type constants */
 		technology_native = g_strstrip (sysfs_get_string (obj->native_path, "technology"));
-		obj->technology = dkp_acpi_to_device_technology (technology_native);
+		obj->technology = dkp_supply_convert_device_technology (technology_native);
 		g_free (technology_native);
 
 		obj->vendor = g_strstrip (sysfs_get_string (obj->native_path, "manufacturer"));
