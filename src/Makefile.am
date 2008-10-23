@@ -10,7 +10,10 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
-	-DEGG_LOG_FILE=\""$(PK_LOG_DIR)/DeviceKit-power"\" \
+	-DEGG_LOG_FILE=\""$(DKP_LOG_DIR)/DeviceKit-power"\"	\
+	-DEGG_VERBOSE="\"DKP_VERBOSE\""				\
+	-DEGG_LOGGING="\"DKP_LOGGING\""				\
+	-DEGG_CONSOLE="\"DKP_CONSOLE\""				\
 	-I$(top_srcdir)/libdevkit-power \
 	$(GIO_CFLAGS) \
 	$(DBUS_GLIB_CFLAGS) \

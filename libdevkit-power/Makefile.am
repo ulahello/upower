@@ -2,7 +2,10 @@ INCLUDES = \
 	$(GLIB_CFLAGS)						\
 	$(DBUS_GLIB_CFLAGS)					\
 	-I$(top_srcdir)/libdevkit-power				\
-	-DEGG_LOG_FILE=\""$(PK_LOG_DIR)/DeviceKit-power"\"	\
+	-DEGG_LOG_FILE=\""$(DKP_LOG_DIR)/DeviceKit-power"\"	\
+	-DEGG_VERBOSE="\"DKP_VERBOSE\""				\
+	-DEGG_LOGGING="\"DKP_LOGGING\""				\
+	-DEGG_CONSOLE="\"DKP_CONSOLE\""				\
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\"			\
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
