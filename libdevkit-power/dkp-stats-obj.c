@@ -68,12 +68,12 @@ dkp_stats_obj_free (DkpStatsObj *obj)
  * dkp_stats_obj_create:
  **/
 DkpStatsObj *
-dkp_stats_obj_create (gdouble value, gdouble state)
+dkp_stats_obj_create (gdouble value, gdouble accuracy)
 {
 	DkpStatsObj *obj;
 	obj = dkp_stats_obj_new ();
 	obj->value = value;
-	obj->accuracy = state;
+	obj->accuracy = accuracy;
 	return obj;
 }
 

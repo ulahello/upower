@@ -54,6 +54,8 @@ dkp_object_clear_internal (DkpObject *obj)
 	obj->is_present = FALSE;
 	obj->power_supply = FALSE;
 	obj->is_rechargeable = FALSE;
+	obj->has_history = FALSE;
+	obj->has_statistics = FALSE;
 }
 
 /**
@@ -78,6 +80,10 @@ dkp_object_collect_props (const char *key, const GValue *value, DkpObject *obj)
 		obj->type = dkp_device_type_from_text (g_value_get_string (value));
 	else if (egg_strequal (key, "online"))
 		obj->online = g_value_get_boolean (value);
+	else if (egg_strequal (key, "has-history"))
+		obj->has_history = g_value_get_boolean (value);
+	else if (egg_strequal (key, "has-statistics"))
+		obj->has_statistics = g_value_get_boolean (value);
 	else if (egg_strequal (key, "energy"))
 		obj->energy = g_value_get_double (value);
 	else if (egg_strequal (key, "energy-empty"))
@@ -152,6 +158,8 @@ dkp_object_copy (const DkpObject *cobj)
 	obj->is_present = cobj->is_present;
 	obj->power_supply = cobj->power_supply;
 	obj->is_rechargeable = cobj->is_rechargeable;
+	obj->has_history = cobj->has_history;
+	obj->has_statistics = cobj->has_statistics;
 
 	return obj;
 }
@@ -169,6 +177,8 @@ dkp_object_equal (const DkpObject *obj1, const DkpObject *obj2)
 	    obj1->energy_full_design == obj2->energy_full_design &&
 	    obj1->energy_rate == obj2->energy_rate &&
 	    obj1->percentage == obj2->percentage &&
+	    obj1->has_history == obj2->has_history &&
+	    obj1->has_statistics == obj2->has_statistics &&
 	    obj1->capacity == obj2->capacity &&
 	    obj1->time_to_empty == obj2->time_to_empty &&
 	    obj1->time_to_full == obj2->time_to_full &&
@@ -243,6 +253,8 @@ dkp_object_print (const DkpObject *obj)
 		g_print ("  serial:               %s\n", obj->serial);
 	g_print ("  power supply:         %s\n", dkp_object_bool_to_text (obj->power_supply));
 	g_print ("  updated:              %s (%d seconds ago)\n", time_buf, (int) (time (NULL) - obj->update_time));
+	g_print ("  has history:          %s\n", dkp_object_bool_to_text (obj->has_history));
+	g_print ("  has statistics:       %s\n", dkp_object_bool_to_text (obj->has_statistics));
 	g_print ("  %s\n", dkp_device_type_to_text (obj->type));
 
 	if (obj->type == DKP_DEVICE_TYPE_BATTERY ||
@@ -311,6 +323,14 @@ dkp_object_diff (const DkpObject *old, const DkpObject *obj)
 		g_print ("  model:                %s -> %s\n", old->model, obj->model);
 	if (!egg_strequal (obj->serial, old->serial))
 		g_print ("  serial:               %s -> %s\n", old->serial, obj->serial);
+	if (obj->has_history != old->has_history)
+		g_print ("  has history:          %s -> %s\n",
+			 dkp_object_bool_to_text (old->has_history),
+			 dkp_object_bool_to_text (obj->has_history));
+	if (obj->has_statistics != old->has_statistics)
+		g_print ("  has statistics:       %s -> %s\n",
+			 dkp_object_bool_to_text (old->has_statistics),
+			 dkp_object_bool_to_text (obj->has_statistics));
 
 	g_print ("  %s\n", dkp_device_type_to_text (obj->type));
 	if (obj->type == DKP_DEVICE_TYPE_BATTERY ||

@@ -182,6 +182,18 @@
           </doc:para></doc:description></doc:doc>
     </property>
 
+    <property name="has-history" type="b" access="read">
+      <doc:doc><doc:description><doc:para>
+            If the power device has history.
+          </doc:para></doc:description></doc:doc>
+    </property>
+
+    <property name="has-statistics" type="b" access="read">
+      <doc:doc><doc:description><doc:para>
+            If the power device has statistics.
+          </doc:para></doc:description></doc:doc>
+    </property>
+
     <property name="online" type="b" access="read">
       <doc:doc><doc:description><doc:para>
             Whether power is currently being provided through line power.

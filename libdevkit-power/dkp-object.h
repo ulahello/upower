@@ -36,6 +36,8 @@ typedef struct {
 	gboolean		 online;
 	gboolean		 is_present;
 	gboolean		 is_rechargeable;
+	gboolean		 has_history;
+	gboolean		 has_statistics;
 	DkpDeviceType		 type;
 	DkpDeviceState		 state;
 	DkpDeviceTechnology	 technology;

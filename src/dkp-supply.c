@@ -229,6 +229,8 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 
 		/* assume true for laptops */
 		obj->is_rechargeable = TRUE;
+		obj->has_history = TRUE;
+		obj->has_statistics = TRUE;
 
 		/* these don't change at runtime */
 		obj->energy_full =

@@ -76,6 +76,8 @@ enum
 	PROP_BATTERY_CAPACITY,
 	PROP_BATTERY_IS_PRESENT,
 	PROP_BATTERY_IS_RECHARGEABLE,
+	PROP_BATTERY_HAS_HISTORY,
+	PROP_BATTERY_HAS_STATISTICS,
 	PROP_BATTERY_STATE,
 	PROP_BATTERY_ENERGY,
 	PROP_BATTERY_ENERGY_EMPTY,
@@ -180,6 +182,12 @@ dkp_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 		break;
 	case PROP_BATTERY_IS_RECHARGEABLE:
 		g_value_set_boolean (value, obj->is_rechargeable);
+		break;
+	case PROP_BATTERY_HAS_HISTORY:
+		g_value_set_boolean (value, obj->has_history);
+		break;
+	case PROP_BATTERY_HAS_STATISTICS:
+		g_value_set_boolean (value, obj->has_statistics);
 		break;
 	case PROP_BATTERY_STATE:
 		g_value_set_string (value, dkp_device_state_to_text (obj->state));
@@ -698,6 +706,14 @@ dkp_device_class_init (DkpDeviceClass *klass)
 		object_class,
 		PROP_BATTERY_IS_RECHARGEABLE,
 		g_param_spec_boolean ("is-rechargeable", NULL, NULL, FALSE, G_PARAM_READABLE));
+	g_object_class_install_property (
+		object_class,
+		PROP_BATTERY_HAS_HISTORY,
+		g_param_spec_boolean ("has-history", NULL, NULL, FALSE, G_PARAM_READABLE));
+	g_object_class_install_property (
+		object_class,
+		PROP_BATTERY_HAS_STATISTICS,
+		g_param_spec_boolean ("has-statistics", NULL, NULL, FALSE, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_STATE,

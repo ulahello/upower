@@ -387,6 +387,8 @@ dkp_client_device_get_statistics (const DkpClientDevice *device, const gchar *ty
 	array = egg_obj_list_new ();
 	egg_obj_list_set_copy (array, (EggObjListCopyFunc) dkp_stats_obj_copy);
 	egg_obj_list_set_free (array, (EggObjListFreeFunc) dkp_stats_obj_free);
+	egg_obj_list_set_to_string (array, (EggObjListToStringFunc) dkp_stats_obj_to_string);
+	egg_obj_list_set_from_string (array, (EggObjListFromStringFunc) dkp_stats_obj_from_string);
 
 	for (i=0; i<gvalue_ptr_array->len; i++) {
 		gva = (GValueArray *) g_ptr_array_index (gvalue_ptr_array, i);
@@ -404,7 +406,6 @@ dkp_client_device_get_statistics (const DkpClientDevice *device, const gchar *ty
 		dkp_stats_obj_free (obj);
 		g_value_array_free (gva);
 	}
-
 out:
 	if (gvalue_ptr_array != NULL)
 		g_ptr_array_free (gvalue_ptr_array, TRUE);
