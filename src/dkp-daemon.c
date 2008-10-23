@@ -826,6 +826,32 @@ dkp_daemon_get_low_battery (DkpDaemon *daemon, DBusGMethodInvocation *context)
 }
 
 /**
+ * dkp_daemon_can_suspend:
+ *
+ * TODO: Ask PolicyKit and check in DeviceKit.conf
+ **/
+gboolean
+dkp_daemon_can_suspend (DkpDaemon *daemon, gboolean interactive, DBusGMethodInvocation *context)
+{
+	/* for now, assume we can suspend under all circumstances */
+	dbus_g_method_return (context, TRUE);
+	return TRUE;
+}
+
+/**
+ * dkp_daemon_can_hibernate:
+ *
+ * TODO: Ask PolicyKit and check in DeviceKit.conf
+ **/
+gboolean
+dkp_daemon_can_hibernate (DkpDaemon *daemon, gboolean interactive, DBusGMethodInvocation *context)
+{
+	/* for now, assume we can hibernate under all circumstances */
+	dbus_g_method_return (context, TRUE);
+	return TRUE;
+}
+
+/**
  * dkp_daemon_suspend:
  **/
 gboolean
@@ -834,8 +860,6 @@ dkp_daemon_suspend (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	gboolean ret;
 	GError *error;
 	GError *error_local = NULL;
-	gchar *argv;
-	const gchar *quirks;
 	PolKitCaller *pk_caller;
 
 	pk_caller = dkp_daemon_local_get_caller_for_context (daemon, context);
@@ -845,11 +869,7 @@ dkp_daemon_suspend (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	if (!dkp_daemon_local_check_auth (daemon, pk_caller, "org.freedesktop.devicekit.power.suspend", context))
 		goto out;
 
-	/* TODO: where from? */
-	quirks = "--quirk-s3-bios --quirk-s3-mode";
-
-	argv = g_strdup_printf ("/usr/sbin/pm-suspend %s", quirks);
-	ret = g_spawn_command_line_async (argv, &error_local);
+	ret = g_spawn_command_line_async ("/usr/sbin/pm-suspend", &error_local);
 	if (!ret) {
 		error = g_error_new (DKP_DAEMON_ERROR,
 				     DKP_DAEMON_ERROR_GENERAL,
@@ -874,8 +894,6 @@ dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	gboolean ret;
 	GError *error;
 	GError *error_local = NULL;
-	gchar *argv;
-	const gchar *quirks;
 	PolKitCaller *pk_caller;
 
 	pk_caller = dkp_daemon_local_get_caller_for_context (daemon, context);
@@ -885,11 +903,7 @@ dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	if (!dkp_daemon_local_check_auth (daemon, pk_caller, "org.freedesktop.devicekit.power.hibernate", context))
 		goto out;
 
-	/* TODO: where from? */
-	quirks = "--quirk-s3-bios --quirk-s3-mode";
-
-	argv = g_strdup_printf ("/usr/sbin/pm-hibernate %s", quirks);
-	ret = g_spawn_command_line_async (argv, &error_local);
+	ret = g_spawn_command_line_async ("/usr/sbin/pm-hibernate", &error_local);
 	if (!ret) {
 		error = g_error_new (DKP_DAEMON_ERROR,
 				     DKP_DAEMON_ERROR_GENERAL,

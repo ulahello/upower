@@ -135,6 +135,52 @@
 
     <!-- ************************************************************ -->
 
+    <method name="CanSuspend">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="interactive" direction="in" type="b">
+        <doc:doc>
+          <doc:summary>
+            If we are allowed to be interactive, and ask the user to authorise
+            the action.
+          </doc:summary>
+        </doc:doc>
+      </arg>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Returns if the computer is able to suspend.
+            This function should be used to decide whether to show the
+            Supend menu item or button in GUI programs.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </method>
+
+    <!-- ************************************************************ -->
+
+    <method name="CanHibernate">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="interactive" direction="in" type="b">
+        <doc:doc>
+          <doc:summary>
+            If we are allowed to be interactive, and ask the user to authorise
+            the action.
+          </doc:summary>
+        </doc:doc>
+      </arg>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Returns if the computer is able to hibernate.
+            This function should be used to decide whether to show the
+            Hibernate menu item or button in GUI programs.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </method>
+
+    <!-- ************************************************************ -->
+
     <method name="Suspend">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
       <doc:doc>

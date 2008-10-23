@@ -85,6 +85,12 @@ gboolean	 dkp_daemon_suspend		(DkpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
 gboolean	 dkp_daemon_hibernate		(DkpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
+gboolean	 dkp_daemon_can_suspend		(DkpDaemon		*daemon,
+						 gboolean		 interactive,
+						 DBusGMethodInvocation	*context);
+gboolean	 dkp_daemon_can_hibernate	(DkpDaemon		*daemon,
+						 gboolean		 interactive,
+						 DBusGMethodInvocation	*context);
 
 G_END_DECLS
 
