@@ -203,34 +203,3 @@ dkp_device_technology_from_text (const gchar *technology)
 	return DKP_DEVICE_TECHNOLGY_UNKNOWN;
 }
 
-/**
- * dkp_acpi_to_device_technology:
- **/
-DkpDeviceTechnology
-dkp_acpi_to_device_technology (const gchar *type)
-{
-	if (type == NULL) {
-		return DKP_DEVICE_TECHNOLGY_UNKNOWN;
-	}
-	/* every case combination of Li-Ion is commonly used.. */
-	if (strcasecmp (type, "li-ion") == 0 ||
-	    strcasecmp (type, "lion") == 0) {
-		return DKP_DEVICE_TECHNOLGY_LITHIUM_ION;
-	}
-	if (strcasecmp (type, "pb") == 0 ||
-	    strcasecmp (type, "pbac") == 0) {
-		return DKP_DEVICE_TECHNOLGY_LEAD_ACID;
-	}
-	if (strcasecmp (type, "lip") == 0 ||
-	    strcasecmp (type, "lipo") == 0) {
-		return DKP_DEVICE_TECHNOLGY_LITHIUM_POLYMER;
-	}
-	if (strcasecmp (type, "nimh") == 0) {
-		return DKP_DEVICE_TECHNOLGY_NICKEL_METAL_HYDRIDE;
-	}
-	if (strcasecmp (type, "lifo") == 0) {
-		return DKP_DEVICE_TECHNOLGY_LITHIUM_IRON_PHOSPHATE;
-	}
-	return DKP_DEVICE_TECHNOLGY_UNKNOWN;
-}
-
