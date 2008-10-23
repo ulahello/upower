@@ -62,7 +62,6 @@ const gchar	*dkp_device_technology_to_text	(DkpDeviceTechnology	 technology_enum
 DkpDeviceType	 dkp_device_type_from_text	(const gchar		*type);
 DkpDeviceState	 dkp_device_state_from_text	(const gchar		*state);
 DkpDeviceTechnology dkp_device_technology_from_text (const gchar	*technology);
-DkpDeviceTechnology dkp_acpi_to_device_technology (const char		*type);
 
 G_END_DECLS
 
