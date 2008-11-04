@@ -131,7 +131,7 @@ main (int argc, char **argv)
 	if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
 		const gchar *object_path;
-		devices = dkp_client_enumerate_devices (client);
+		devices = dkp_client_enumerate_devices (client, NULL);
 		if (devices == NULL)
 			goto out;
 		for (n=0; n < devices->len; n++) {
