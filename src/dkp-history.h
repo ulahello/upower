@@ -51,19 +51,22 @@ typedef struct
 	GObjectClass		 parent_class;
 } DkpHistoryClass;
 
+typedef enum {
+	DKP_HISTORY_TYPE_CHARGE,
+	DKP_HISTORY_TYPE_RATE,
+	DKP_HISTORY_TYPE_TIME_FULL,
+	DKP_HISTORY_TYPE_TIME_EMPTY,
+	DKP_HISTORY_TYPE_UNKNOWN
+} DkpHistoryType;
+
+
 GType		 dkp_history_get_type			(void) G_GNUC_CONST;
 DkpHistory	*dkp_history_new			(void);
-EggObjList	*dkp_history_get_charge_data		(DkpHistory		*history,
-							 guint			 timespan);
-EggObjList	*dkp_history_get_rate_data		(DkpHistory		*history,
-							 guint			 timespan);
-EggObjList	*dkp_history_get_time_full_data		(DkpHistory		*history,
-							 guint			 timespan);
-EggObjList	*dkp_history_get_time_empty_data	(DkpHistory		*history,
+EggObjList	*dkp_history_get_data			(DkpHistory		*history,
+							 DkpHistoryType		 type,
 							 guint			 timespan);
 EggObjList	*dkp_history_get_profile_data		(DkpHistory		*history,
 							 gboolean		 charging);
-
 gboolean	 dkp_history_set_id			(DkpHistory		*history,
 							 const gchar		*id);
 gboolean	 dkp_history_set_state			(DkpHistory		*history,

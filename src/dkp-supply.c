@@ -399,23 +399,28 @@ dkp_supply_poll_battery (DkpSupply *supply)
  * dkp_supply_get_history:
  **/
 static EggObjList *
-dkp_supply_get_history (DkpDevice *device, const gchar *type, guint timespan)
+dkp_supply_get_history (DkpDevice *device, const gchar *type_string, guint timespan)
 {
 	DkpSupply *supply = DKP_SUPPLY (device);
 	EggObjList *array = NULL;
+	DkpHistoryType type = DKP_HISTORY_TYPE_UNKNOWN;
 
 	g_return_val_if_fail (DKP_IS_SUPPLY (supply), FALSE);
-	g_return_val_if_fail (type != NULL, FALSE);
+	g_return_val_if_fail (type_string != NULL, FALSE);
 
 	/* get the correct data */
-	if (egg_strequal (type, "rate"))
-		array = dkp_history_get_rate_data (supply->priv->history, timespan);
-	else if (egg_strequal (type, "charge"))
-		array = dkp_history_get_charge_data (supply->priv->history, timespan);
-	else if (egg_strequal (type, "time-full"))
-		array = dkp_history_get_time_full_data (supply->priv->history, timespan);
-	else if (egg_strequal (type, "time-empty"))
-		array = dkp_history_get_time_empty_data (supply->priv->history, timespan);
+	if (egg_strequal (type_string, "rate"))
+		type = DKP_HISTORY_TYPE_RATE;
+	else if (egg_strequal (type_string, "charge"))
+		type = DKP_HISTORY_TYPE_CHARGE;
+	else if (egg_strequal (type_string, "time-full"))
+		type = DKP_HISTORY_TYPE_TIME_FULL;
+	else if (egg_strequal (type_string, "time-empty"))
+		type = DKP_HISTORY_TYPE_TIME_EMPTY;
+
+	/* something recognised */
+	if (type != DKP_HISTORY_TYPE_UNKNOWN)
+		array = dkp_history_get_data (supply->priv->history, type, timespan);
 
 	return array;
 }

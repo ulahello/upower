@@ -192,66 +192,33 @@ dkp_history_copy_array_timespan (const EggObjList *array, guint timespan)
 }
 
 /**
- * dkp_history_get_charge_data:
+ * dkp_history_get_data:
  **/
 EggObjList *
-dkp_history_get_charge_data (DkpHistory *history, guint timespan)
+dkp_history_get_data (DkpHistory *history, DkpHistoryType type, guint timespan)
 {
 	EggObjList *array;
+	const EggObjList *array_data = NULL;
 
 	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
 
 	if (history->priv->id == NULL)
 		return NULL;
-	array = dkp_history_copy_array_timespan (history->priv->data_charge, timespan);
-	return array;
-}
 
-/**
- * dkp_history_get_rate_data:
- **/
-EggObjList *
-dkp_history_get_rate_data (DkpHistory *history, guint timespan)
-{
-	EggObjList *array;
+	if (type == DKP_HISTORY_TYPE_CHARGE)
+		array_data = history->priv->data_charge;
+	else if (type == DKP_HISTORY_TYPE_RATE)
+		array_data = history->priv->data_rate;
+	else if (type == DKP_HISTORY_TYPE_TIME_FULL)
+		array_data = history->priv->data_time_full;
+	else if (type == DKP_HISTORY_TYPE_TIME_EMPTY)
+		array_data = history->priv->data_time_empty;
 
-	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
-
-	if (history->priv->id == NULL)
+	/* not recognised */
+	if (array_data == NULL)
 		return NULL;
-	array = dkp_history_copy_array_timespan (history->priv->data_rate, timespan);
-	return array;
-}
 
-/**
- * dkp_history_get_time_full_data:
- **/
-EggObjList *
-dkp_history_get_time_full_data (DkpHistory *history, guint timespan)
-{
-	EggObjList *array;
-
-	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
-
-	if (history->priv->id == NULL)
-		return NULL;
-	array = dkp_history_copy_array_timespan (history->priv->data_time_full, timespan);
-	return array;
-}
-
-/**
- * dkp_history_get_time_empty_data:
- **/
-EggObjList *
-dkp_history_get_time_empty_data (DkpHistory *history, guint timespan)
-{
-	EggObjList *array;
-
-	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
-
-	if (history->priv->id == NULL)
-		return NULL;
-	array = dkp_history_copy_array_timespan (history->priv->data_time_empty, timespan);
+	array = dkp_history_copy_array_timespan (array_data, timespan);
 	return array;
 }
 
