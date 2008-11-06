@@ -53,7 +53,7 @@
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
       <arg name="type" direction="in" type="s">
         <doc:doc><doc:summary>The type of history.
-        Valid types are <literal>rate</literal> or <literal>charge</literal>.</doc:summary></doc:doc>
+        Valid types are <doc:tt>rate</doc:tt> or <doc:tt>charge</doc:tt>.</doc:summary></doc:doc>
       </arg>
       <arg name="timespan" direction="in" type="u">
         <doc:doc><doc:summary>The amount of data to return in seconds, or 0 for all.</doc:summary></doc:doc>
@@ -67,7 +67,7 @@
               <doc:item>
                 <doc:term>time</doc:term>
                 <doc:definition>
-                  The time value in seconds from the <literal>gettimeofday()</literal> method.
+                  The time value in seconds from the <doc:tt>gettimeofday()</doc:tt> method.
                 </doc:definition>
               </doc:item>
               <doc:item>
@@ -79,8 +79,8 @@
               <doc:item>
                 <doc:term>state</doc:term>
                 <doc:definition>
-                  The state of the device, for instance <literal>charging</literal> or
-                  <literal>discharging</literal>.
+                  The state of the device, for instance <doc:tt>charging</doc:tt> or
+                  <doc:tt>discharging</doc:tt>.
                 </doc:definition>
               </doc:item>
             </doc:list>
@@ -100,7 +100,7 @@
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
       <arg name="type" direction="in" type="s">
         <doc:doc><doc:summary>The mode for the statistics.
-        Valid types are <literal>charging</literal> or <literal>discharging</literal>.</doc:summary></doc:doc>
+        Valid types are <doc:tt>charging</doc:tt> or <doc:tt>discharging</doc:tt>.</doc:summary></doc:doc>
       </arg>
       <arg name="data" direction="out" type="a(dd)">
         <doc:doc><doc:summary>
