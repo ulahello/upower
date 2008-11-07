@@ -254,8 +254,14 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 	 *                  \-----/
 	 * so try to find the start and the end */
 
-	/* strip to the first '#' char */
+	/* ensure we have a long enough response */
 	length = strlen (data);
+	if (length < 3) {
+		egg_debug ("not enough data '%s'", data);
+		goto out;
+	}
+
+	/* strip to the first '#' char */
 	for (i=0; i<length-1; i++)
 		if (data[i] == '#')
 			packet = g_strdup (data+i);

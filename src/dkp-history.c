@@ -708,9 +708,10 @@ dkp_history_finalize (GObject *object)
 	history = DKP_HISTORY (object);
 
 	/* save */
+	if (history->priv->save_id > 0)
+		g_source_remove (history->priv->save_id);
 	if (history->priv->id != NULL)
 		dkp_history_save_data (history);
-
 	g_object_unref (history->priv->data_rate);
 	g_object_unref (history->priv->data_charge);
 	g_object_unref (history->priv->data_time_full);
