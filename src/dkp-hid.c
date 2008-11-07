@@ -334,6 +334,8 @@ dkp_hid_coldplug (DkpDevice *device)
 	obj->is_rechargeable = TRUE;
 	obj->power_supply = TRUE;
 	obj->is_present = TRUE;
+	obj->has_history = TRUE;
+	obj->has_statistics = TRUE;
 
 	/* try and get from udev if UPS is being difficult */
 	if (obj->vendor == NULL)

@@ -39,13 +39,11 @@
 #include "dkp-enum.h"
 #include "dkp-object.h"
 #include "dkp-supply.h"
-#include "dkp-history.h"
 
 #define DKP_SUPPLY_REFRESH_TIMEOUT	10L
 
 struct DkpSupplyPrivate
 {
-	DkpHistory		*history;
 	guint			 poll_timer_id;
 	gboolean		 has_coldplug_values;
 	gdouble			 energy_old;
@@ -368,13 +366,6 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	}
 
 out:
-	/* save new history */
-	dkp_history_set_state (supply->priv->history, obj->state);
-	dkp_history_set_charge_data (supply->priv->history, obj->percentage);
-	dkp_history_set_rate_data (supply->priv->history, obj->energy_rate);
-	dkp_history_set_time_full_data (supply->priv->history, obj->time_to_full);
-	dkp_history_set_time_empty_data (supply->priv->history, obj->time_to_empty);
-
 	g_free (status);
 	return ret;
 }
@@ -398,57 +389,6 @@ dkp_supply_poll_battery (DkpSupply *supply)
 }
 
 /**
- * dkp_supply_get_history:
- **/
-static EggObjList *
-dkp_supply_get_history (DkpDevice *device, const gchar *type_string, guint timespan)
-{
-	DkpSupply *supply = DKP_SUPPLY (device);
-	EggObjList *array = NULL;
-	DkpHistoryType type = DKP_HISTORY_TYPE_UNKNOWN;
-
-	g_return_val_if_fail (DKP_IS_SUPPLY (supply), FALSE);
-	g_return_val_if_fail (type_string != NULL, FALSE);
-
-	/* get the correct data */
-	if (egg_strequal (type_string, "rate"))
-		type = DKP_HISTORY_TYPE_RATE;
-	else if (egg_strequal (type_string, "charge"))
-		type = DKP_HISTORY_TYPE_CHARGE;
-	else if (egg_strequal (type_string, "time-full"))
-		type = DKP_HISTORY_TYPE_TIME_FULL;
-	else if (egg_strequal (type_string, "time-empty"))
-		type = DKP_HISTORY_TYPE_TIME_EMPTY;
-
-	/* something recognised */
-	if (type != DKP_HISTORY_TYPE_UNKNOWN)
-		array = dkp_history_get_data (supply->priv->history, type, timespan);
-
-	return array;
-}
-
-/**
- * dkp_supply_get_stats:
- **/
-static EggObjList *
-dkp_supply_get_stats (DkpDevice *device, const gchar *type)
-{
-	DkpSupply *supply = DKP_SUPPLY (device);
-	EggObjList *array = NULL;
-
-	g_return_val_if_fail (DKP_IS_SUPPLY (supply), FALSE);
-	g_return_val_if_fail (type != NULL, FALSE);
-
-	/* get the correct data */
-	if (egg_strequal (type, "charging"))
-		array = dkp_history_get_profile_data (supply->priv->history, TRUE);
-	else if (egg_strequal (type, "discharging"))
-		array = dkp_history_get_profile_data (supply->priv->history, FALSE);
-
-	return array;
-}
-
-/**
  * dkp_supply_coldplug:
  **/
 static gboolean
@@ -458,7 +398,6 @@ dkp_supply_coldplug (DkpDevice *device)
 	DevkitDevice *d;
 	const gchar *native_path;
 	DkpObject *obj = dkp_device_get_obj (device);
-	gchar *id;
 
 	dkp_supply_reset_values (supply);
 
@@ -480,12 +419,6 @@ dkp_supply_coldplug (DkpDevice *device)
 
 	/* coldplug values */
 	dkp_supply_refresh (device);
-
-	/* get the id so we can load the old history */
-	id = dkp_object_get_id (obj);
-	if (id != NULL)
-		dkp_history_set_id (supply->priv->history, id);
-	g_free (id);
 
 	return TRUE;
 }
@@ -538,7 +471,6 @@ static void
 dkp_supply_init (DkpSupply *supply)
 {
 	supply->priv = DKP_SUPPLY_GET_PRIVATE (supply);
-	supply->priv->history = dkp_history_new ();
 }
 
 /**
@@ -555,7 +487,6 @@ dkp_supply_finalize (GObject *object)
 	supply = DKP_SUPPLY (object);
 	g_return_if_fail (supply->priv != NULL);
 
-	g_object_unref (supply->priv->history);
 	if (supply->priv->poll_timer_id > 0)
 		g_source_remove (supply->priv->poll_timer_id);
 
@@ -576,8 +507,6 @@ dkp_supply_class_init (DkpSupplyClass *klass)
 	device_class->get_low_battery = dkp_supply_get_low_battery;
 	device_class->coldplug = dkp_supply_coldplug;
 	device_class->refresh = dkp_supply_refresh;
-	device_class->get_history = dkp_supply_get_history;
-	device_class->get_stats = dkp_supply_get_stats;
 
 	g_type_class_add_private (klass, sizeof (DkpSupplyPrivate));
 }

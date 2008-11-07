@@ -492,47 +492,52 @@ dkp_object_get_id (DkpObject *obj)
 	GString *string;
 	gchar *id = NULL;
 
-	/* only valid for devices supplying the system */
-	if (!obj->power_supply)
-		return id;
+	/* line power */
+	if (obj->type == DKP_DEVICE_TYPE_LINE_POWER) {
+		goto out;
 
-	/* only valid for batteries */
-	if (obj->type != DKP_DEVICE_TYPE_BATTERY)
-		return id;
+	/* batteries */
+	} else if (obj->type == DKP_DEVICE_TYPE_BATTERY) {
+		/* we don't have an ID if we are not present */
+		if (!obj->is_present)
+			goto out;
 
-	/* we don't have an ID if we are not present */
-	if (!obj->is_present)
-		return id;
+		string = g_string_new ("");
 
-	string = g_string_new ("");
+		/* in an ideal world, model-capacity-serial */
+		if (obj->model != NULL && strlen (obj->model) > 2) {
+			g_string_append (string, obj->model);
+			g_string_append_c (string, '-');
+		}
+		if (obj->energy_full_design > 0) {
+			g_string_append_printf (string, "%i", (guint) obj->energy_full_design);
+			g_string_append_c (string, '-');
+		}
+		if (obj->serial != NULL && strlen (obj->serial) > 2) {
+			g_string_append (string, obj->serial);
+			g_string_append_c (string, '-');
+		}
 
-	/* in an ideal world, model-capacity-serial */
-	if (obj->model != NULL && strlen (obj->model) > 2) {
-		g_string_append (string, obj->model);
-		g_string_append_c (string, '-');
-	}
-	if (obj->energy_full_design > 0) {
-		g_string_append_printf (string, "%i", (guint) obj->energy_full_design);
-		g_string_append_c (string, '-');
-	}
-	if (obj->serial != NULL && strlen (obj->serial) > 2) {
-		g_string_append (string, obj->serial);
-		g_string_append_c (string, '-');
-	}
+		/* make sure we are sane */
+		if (string->len == 0) {
+			/* just use something generic */
+			g_string_append (string, "generic_id");
+		} else {
+			/* remove trailing '-' */
+			g_string_set_size (string, string->len - 1);
+		}
 
-	/* make sure we are sane */
-	if (string->len == 0) {
-		/* just use something generic */
-		g_string_append (string, "generic_id");
+		/* the id may have invalid chars that need to be replaced */
+		id = g_string_free (string, FALSE);
+
 	} else {
-		/* remove trailing '-' */
-		g_string_set_size (string, string->len - 1);
+		/* generic fallback */
+		id = g_strdup_printf ("%s-%s-%s", obj->vendor, obj->model, obj->serial);
 	}
 
-	/* the id may have invalid chars that need to be replaced */
-	id = g_string_free (string, FALSE);
-	g_strdelimit (id, "\\\t\"' /", '_');
+	g_strdelimit (id, "\\\t\"?' /", '_');
 
+out:
 	return id;
 }
 

@@ -36,11 +36,12 @@
 
 #include "sysfs-utils.h"
 #include "egg-debug.h"
+#include "egg-string.h"
 #include "egg-obj-list.h"
 
 #include "dkp-supply.h"
 #include "dkp-device.h"
-#include "dkp-device.h"
+#include "dkp-history.h"
 #include "dkp-history-obj.h"
 #include "dkp-stats-obj.h"
 #include "dkp-marshal.h"
@@ -52,6 +53,7 @@ struct DkpDevicePrivate
 	DBusGConnection		*system_bus_connection;
 	DBusGProxy		*system_bus_proxy;
 	DkpDaemon		*daemon;
+	DkpHistory		*history;
 	DevkitDevice		*d;
 	DkpObject		*obj;
 	gboolean		 has_ever_refresh;
@@ -292,6 +294,7 @@ dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, DevkitDevice *d)
 	gboolean ret;
 	const gchar *native_path;
 	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+	gchar *id;
 
 	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 
@@ -317,6 +320,12 @@ dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, DevkitDevice *d)
 	if (!ret)
 		goto out;
 
+	/* get the id so we can load the old history */
+	id = dkp_object_get_id (device->priv->obj);
+	if (id != NULL)
+		dkp_history_set_id (device->priv->history, id);
+	g_free (id);
+
 out:
 	return ret;
 }
@@ -327,7 +336,6 @@ out:
 gboolean
 dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvocation *context)
 {
-	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
 	GError *error;
 	EggObjList *array = NULL;
 	GPtrArray *complex;
@@ -336,15 +344,21 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvo
 	guint i;
 
 	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
+	g_return_val_if_fail (type != NULL, FALSE);
 
 	/* doesn't even try to support this */
-	if (klass->get_stats == NULL) {
+	if (!device->priv->obj->has_statistics) {
 		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device does not support getting stats");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
 
-	array = klass->get_stats (device, type);
+	/* get the correct data */
+	if (egg_strequal (type, "charging"))
+		array = dkp_history_get_profile_data (device->priv->history, TRUE);
+	else if (egg_strequal (type, "discharging"))
+		array = dkp_history_get_profile_data (device->priv->history, FALSE);
+
 	/* maybe the device doesn't support histories */
 	if (array == NULL) {
 		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device has no statistics");
@@ -382,27 +396,41 @@ out:
  * dkp_device_get_history:
  **/
 gboolean
-dkp_device_get_history (DkpDevice *device, const gchar *type, guint timespan, DBusGMethodInvocation *context)
+dkp_device_get_history (DkpDevice *device, const gchar *type_string, guint timespan, DBusGMethodInvocation *context)
 {
-	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
 	GError *error;
 	EggObjList *array = NULL;
 	GPtrArray *complex;
 	const DkpHistoryObj *obj;
 	GValue *value;
 	guint i;
+	DkpHistoryType type = DKP_HISTORY_TYPE_UNKNOWN;
 
 	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
+	g_return_val_if_fail (type_string != NULL, FALSE);
 
 	/* doesn't even try to support this */
-	if (klass->get_history == NULL) {
+	if (!device->priv->obj->has_history) {
 		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device does not support getting history");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
 
-	array = klass->get_history (device, type, timespan);
-	/* maybe the device doesn't support histories */
+	/* get the correct data */
+	if (egg_strequal (type_string, "rate"))
+		type = DKP_HISTORY_TYPE_RATE;
+	else if (egg_strequal (type_string, "charge"))
+		type = DKP_HISTORY_TYPE_CHARGE;
+	else if (egg_strequal (type_string, "time-full"))
+		type = DKP_HISTORY_TYPE_TIME_FULL;
+	else if (egg_strequal (type_string, "time-empty"))
+		type = DKP_HISTORY_TYPE_TIME_EMPTY;
+
+	/* something recognised */
+	if (type != DKP_HISTORY_TYPE_UNKNOWN)
+		array = dkp_history_get_data (device->priv->history, type, timespan);
+
+	/* maybe the device doesn't have any history */
 	if (array == NULL) {
 		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device has no history");
 		dbus_g_method_return_error (context, error);
@@ -445,11 +473,14 @@ dkp_device_refresh_internal (DkpDevice *device)
 
 	/* do the refresh */
 	success = klass->refresh (device);
-	if (!success)
+	if (!success) {
+		egg_warning ("failed to reresh");
 		goto out;
+	}
 
 	/* the first time, print all properties */
 	if (!device->priv->has_ever_refresh) {
+		egg_debug ("iniital fillup");
 		dkp_object_print (obj);
 		device->priv->has_ever_refresh = TRUE;
 		goto out;
@@ -459,6 +490,7 @@ dkp_device_refresh_internal (DkpDevice *device)
 	ret = !dkp_object_equal (obj, obj_old);
 	if (ret)
 		dkp_object_diff (obj_old, obj);
+
 out:
 	dkp_object_free (obj_old);
 	return success;
@@ -536,7 +568,16 @@ dkp_device_get_d (DkpDevice *device)
 void
 dkp_device_emit_changed (DkpDevice *device)
 {
+	DkpObject *obj = dkp_device_get_obj (device);
+
 	g_return_if_fail (DKP_IS_DEVICE (device));
+
+	/* save new history */
+	dkp_history_set_state (device->priv->history, obj->state);
+	dkp_history_set_charge_data (device->priv->history, obj->percentage);
+	dkp_history_set_rate_data (device->priv->history, obj->energy_rate);
+	dkp_history_set_time_full_data (device->priv->history, obj->time_to_full);
+	dkp_history_set_time_empty_data (device->priv->history, obj->time_to_empty);
 
 	egg_debug ("emitting changed on %s", device->priv->obj->native_path);
 	g_signal_emit_by_name (device->priv->daemon, "device-changed",
@@ -616,6 +657,7 @@ dkp_device_init (DkpDevice *device)
 	device->priv->d = NULL;
 	device->priv->has_ever_refresh = FALSE;
 	device->priv->obj = dkp_object_new ();
+	device->priv->history = dkp_history_new ();
 
 	device->priv->system_bus_connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (device->priv->system_bus_connection == NULL) {
@@ -639,6 +681,7 @@ dkp_device_finalize (GObject *object)
 	g_return_if_fail (device->priv != NULL);
 	g_object_unref (device->priv->d);
 	g_object_unref (device->priv->daemon);
+	g_object_unref (device->priv->history);
 	dkp_object_free (device->priv->obj);
 
 	G_OBJECT_CLASS (dkp_device_parent_class)->finalize (object);

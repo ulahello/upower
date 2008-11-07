@@ -405,6 +405,10 @@ dkp_wup_coldplug (DkpDevice *device)
 	obj->power_supply = FALSE;
 	obj->is_present = FALSE;
 	obj->vendor = g_strdup (devkit_device_get_property (d, "ID_VENDOR"));
+	obj->model = g_strdup (devkit_device_get_property (d, "ID_PRODUCT"));
+	obj->serial = g_strstrip (sysfs_get_string (obj->native_path, "serial"));
+	obj->has_history = TRUE;
+	obj->state = DKP_DEVICE_STATE_DISCHARGING;
 
 	/* coldplug */
 	egg_debug ("coldplug");

@@ -179,6 +179,7 @@ dkp_history_copy_array_timespan (const EggObjList *array, guint timespan)
 	/* treat the timespan like a range, and search backwards */
 	obj = (const DkpHistoryObj *) egg_obj_list_index (array, array->len-1);
 	start = obj->time;
+	timespan *= 0.95f;
 	for (i=array->len-1; i>0; i--) {
 		obj = (const DkpHistoryObj *) egg_obj_list_index (array, i);
 		if (start - obj->time < timespan)
@@ -440,9 +441,10 @@ dkp_history_schedule_save (DkpHistory *history)
 {
 	gboolean ret;
 
-	/* if low power, then don't batch up save requests */
+	/* TODO: if low power, then don't batch up save requests */
 	ret = dkp_history_is_low_power (history);
-	if (ret) {
+	if (FALSE && ret) {
+		egg_warning ("saving directly to disk as low power");
 		dkp_history_save_data (history);
 		return TRUE;
 	}
@@ -706,7 +708,8 @@ dkp_history_finalize (GObject *object)
 	history = DKP_HISTORY (object);
 
 	/* save */
-	dkp_history_save_data (history);
+	if (history->priv->id != NULL)
+		dkp_history_save_data (history);
 
 	g_object_unref (history->priv->data_rate);
 	g_object_unref (history->priv->data_charge);

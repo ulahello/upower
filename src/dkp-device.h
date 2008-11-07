@@ -61,11 +61,6 @@ typedef struct
 						 gboolean	*on_battery);
 	gboolean	 (*get_low_battery)	(DkpDevice	*device,
 						 gboolean	*low_battery);
-	EggObjList	*(*get_history)		(DkpDevice	*device,
-						 const gchar	*type,
-						 guint		 timespan);
-	EggObjList	*(*get_stats)		(DkpDevice	*device,
-						 const gchar	*type);
 } DkpDeviceClass;
 
 typedef enum

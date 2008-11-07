@@ -71,10 +71,10 @@ G_DEFINE_TYPE (DkpCsr, dkp_csr, DKP_TYPE_DEVICE)
 static gboolean		 dkp_csr_refresh	 	(DkpDevice *device);
 
 /**
- * dkp_csr_poll:
+ * dkp_csr_poll_cb:
  **/
 static gboolean
-dkp_csr_poll (DkpCsr *csr)
+dkp_csr_poll_cb (DkpCsr *csr)
 {
 	gboolean ret;
 	DkpDevice *device = DKP_DEVICE (csr);
@@ -192,6 +192,7 @@ dkp_csr_coldplug (DkpDevice *device)
 	obj->is_present = TRUE;
 	obj->is_rechargeable = TRUE;
 	obj->state = DKP_DEVICE_STATE_DISCHARGING;
+	obj->has_history = TRUE;
 
 	/* coldplug */
 	ret = dkp_csr_refresh (device);
@@ -200,7 +201,7 @@ dkp_csr_coldplug (DkpDevice *device)
 
 	/* set up a poll */
 	csr->priv->poll_timer_id = g_timeout_add_seconds (DKP_CSR_REFRESH_TIMEOUT,
-							  (GSourceFunc) dkp_csr_poll, csr);
+							  (GSourceFunc) dkp_csr_poll_cb, csr);
 
 out:
 	return ret;
