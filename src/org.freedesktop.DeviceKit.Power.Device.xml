@@ -259,6 +259,12 @@
       </doc:para></doc:description></doc:doc>
     </property>
 
+    <property name="voltage" type="d" access="read">
+      <doc:doc><doc:description><doc:para>
+            Voltage in the Cell or being recorded by the meter.
+          </doc:para></doc:description></doc:doc>
+    </property>
+
     <property name="time-to-empty" type="x" access="read">
       <doc:doc><doc:description><doc:para>
             Number of seconds until the power source is considered empty.

@@ -315,6 +315,8 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 
 	obj->energy_rate =
 		fabs (sysfs_get_double (obj->native_path, "current_now") / 1000000.0);
+	obj->voltage =
+		sysfs_get_double (obj->native_path, "voltage_now") / 1000000.0;
 
 	/* ACPI gives out the special 'Ones' value for rate when it's unable
 	 * to calculate the true rate. We should set the rate zero, and wait

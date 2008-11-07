@@ -325,7 +325,7 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 	/* update the command fields */
 	if (command == 'd' && subcommand == '-') {
 		obj->energy_rate = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_WATTS], NULL) / 10.0f;
-//		obj->volts = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_VOLTS], NULL) / 10.0f;
+		obj->voltage = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_VOLTS], NULL) / 10.0f;
 		ret = TRUE;
 	} else {
 		egg_debug ("ignoring command '%c'", command);

@@ -40,6 +40,7 @@ dkp_object_clear_internal (DkpObject *obj)
 	obj->energy_full = -1;
 	obj->energy_full_design = -1;
 	obj->energy_rate = -1;
+	obj->voltage = -1;
 	obj->percentage = -1;
 	obj->capacity = -1;
 	obj->time_to_empty = -1;
@@ -94,6 +95,8 @@ dkp_object_collect_props (const char *key, const GValue *value, DkpObject *obj)
 		obj->energy_full_design = g_value_get_double (value);
 	else if (egg_strequal (key, "energy-rate"))
 		obj->energy_rate = g_value_get_double (value);
+	else if (egg_strequal (key, "voltage"))
+		obj->voltage = g_value_get_double (value);
 	else if (egg_strequal (key, "time-to-full"))
 		obj->time_to_full = g_value_get_int64 (value);
 	else if (egg_strequal (key, "time-to-empty"))
@@ -144,6 +147,7 @@ dkp_object_copy (const DkpObject *cobj)
 	obj->energy_full = cobj->energy_full;
 	obj->energy_full_design = cobj->energy_full_design;
 	obj->energy_rate = cobj->energy_rate;
+	obj->voltage = cobj->voltage;
 	obj->percentage = cobj->percentage;
 	obj->capacity = cobj->capacity;
 	obj->time_to_empty = cobj->time_to_empty;
@@ -175,6 +179,7 @@ dkp_object_equal (const DkpObject *obj1, const DkpObject *obj2)
 	    obj1->energy == obj2->energy &&
 	    obj1->energy_full == obj2->energy_full &&
 	    obj1->energy_full_design == obj2->energy_full_design &&
+	    obj1->voltage == obj2->voltage &&
 	    obj1->energy_rate == obj2->energy_rate &&
 	    obj1->percentage == obj2->percentage &&
 	    obj1->has_history == obj2->has_history &&
@@ -279,6 +284,10 @@ dkp_object_print (const DkpObject *obj)
 	if (obj->type == DKP_DEVICE_TYPE_BATTERY ||
 	    obj->type == DKP_DEVICE_TYPE_MONITOR)
 		g_print ("    energy-rate:         %g W\n", obj->energy_rate);
+	if (obj->type == DKP_DEVICE_TYPE_UPS ||
+	    obj->type == DKP_DEVICE_TYPE_BATTERY ||
+	    obj->type == DKP_DEVICE_TYPE_MONITOR)
+		g_print ("    voltage:             %g V\n", obj->voltage);
 	if (obj->type == DKP_DEVICE_TYPE_BATTERY ||
 	    obj->type == DKP_DEVICE_TYPE_UPS) {
 		if (obj->time_to_full >= 0) {
@@ -376,6 +385,12 @@ dkp_object_diff (const DkpObject *old, const DkpObject *obj)
 		if (old->energy_rate != obj->energy_rate)
 			g_print ("    energy-rate:         %g -> %g W\n",
 				 old->energy_rate, obj->energy_rate);
+	if (obj->type == DKP_DEVICE_TYPE_UPS ||
+	    obj->type == DKP_DEVICE_TYPE_BATTERY ||
+	    obj->type == DKP_DEVICE_TYPE_MONITOR)
+		if (old->voltage != obj->voltage)
+			g_print ("    voltage:             %g -> %g V\n",
+				 old->voltage, obj->voltage);
 	if (obj->type == DKP_DEVICE_TYPE_BATTERY ||
 	    obj->type == DKP_DEVICE_TYPE_UPS) {
 		if (old->time_to_full != obj->time_to_full) {

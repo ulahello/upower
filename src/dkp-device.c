@@ -84,6 +84,7 @@ enum
 	PROP_BATTERY_ENERGY_FULL,
 	PROP_BATTERY_ENERGY_FULL_DESIGN,
 	PROP_BATTERY_ENERGY_RATE,
+	PROP_BATTERY_VOLTAGE,
 	PROP_BATTERY_TIME_TO_EMPTY,
 	PROP_BATTERY_TIME_TO_FULL,
 	PROP_BATTERY_PERCENTAGE,
@@ -209,6 +210,9 @@ dkp_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 		break;
 	case PROP_BATTERY_ENERGY_RATE:
 		g_value_set_double (value, obj->energy_rate);
+		break;
+	case PROP_BATTERY_VOLTAGE:
+		g_value_set_double (value, obj->voltage);
 		break;
 	case PROP_BATTERY_TIME_TO_EMPTY:
 		g_value_set_int64 (value, obj->time_to_empty);
@@ -738,6 +742,10 @@ dkp_device_class_init (DkpDeviceClass *klass)
 		object_class,
 		PROP_BATTERY_ENERGY_RATE,
 		g_param_spec_double ("energy-rate", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 0, G_PARAM_READABLE));
+	g_object_class_install_property (
+		object_class,
+		PROP_BATTERY_VOLTAGE,
+		g_param_spec_double ("voltage", NULL, NULL, -G_MAXDOUBLE, G_MAXDOUBLE, 0, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_TIME_TO_EMPTY,
