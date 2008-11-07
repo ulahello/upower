@@ -792,15 +792,15 @@ dkp_device_class_init (DkpDeviceClass *klass)
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_TIME_TO_EMPTY,
-		g_param_spec_int64 ("time-to-empty", NULL, NULL, -1, G_MAXINT64, -1, G_PARAM_READABLE));
+		g_param_spec_int64 ("time-to-empty", NULL, NULL, 0, G_MAXINT64, 0, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_TIME_TO_FULL,
-		g_param_spec_int64 ("time-to-full", NULL, NULL, -1, G_MAXINT64, -1, G_PARAM_READABLE));
+		g_param_spec_int64 ("time-to-full", NULL, NULL, 0, G_MAXINT64, 0, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_PERCENTAGE,
-		g_param_spec_double ("percentage", NULL, NULL, -1, 100, -1, G_PARAM_READABLE));
+		g_param_spec_double ("percentage", NULL, NULL, 0, 100, 0, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
 		PROP_BATTERY_TECHNOLOGY,

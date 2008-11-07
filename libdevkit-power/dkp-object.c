@@ -36,15 +36,15 @@ dkp_object_clear_internal (DkpObject *obj)
 {
 	obj->type = DKP_DEVICE_TYPE_UNKNOWN;
 	obj->update_time = 0;
-	obj->energy = -1;
-	obj->energy_full = -1;
-	obj->energy_full_design = -1;
-	obj->energy_rate = -1;
-	obj->voltage = -1;
-	obj->percentage = -1;
-	obj->capacity = -1;
-	obj->time_to_empty = -1;
-	obj->time_to_full = -1;
+	obj->energy = 0;
+	obj->energy_full = 0;
+	obj->energy_full_design = 0;
+	obj->energy_rate = 0;
+	obj->voltage = 0;
+	obj->percentage = 0;
+	obj->capacity = 0;
+	obj->time_to_empty = 0;
+	obj->time_to_full = 0;
 	obj->state = DKP_DEVICE_STATE_UNKNOWN;
 	obj->technology = DKP_DEVICE_TECHNOLGY_UNKNOWN;
 	obj->vendor = NULL;

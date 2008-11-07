@@ -91,7 +91,7 @@ dkp_supply_reset_values (DkpSupply *supply)
 	native_path = g_strdup (obj->native_path);
 
 	supply->priv->has_coldplug_values = FALSE;
-	supply->priv->energy_old = -1;
+	supply->priv->energy_old = 0;
 	supply->priv->energy_old_timespec.tv_sec = 0;
 	dkp_object_clear (obj);
 
@@ -320,11 +320,11 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	 * to calculate the true rate. We should set the rate zero, and wait
 	 * for the BIOS to stabilise. */
 	if (obj->energy_rate == 0xffff)
-		obj->energy_rate = -1;
+		obj->energy_rate = 0;
 
 	/* sanity check to less than 100W */
 	if (obj->energy_rate > 100*1000)
-		obj->energy_rate = -1;
+		obj->energy_rate = 0;
 
 	/* the hardware reporting failed -- try to calculate this */
 	if (obj->energy_rate < 0) {
@@ -339,8 +339,8 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		obj->percentage = 100.0;
 
 	/* calculate a quick and dirty time remaining value */
-	obj->time_to_empty = -1;
-	obj->time_to_full = -1;
+	obj->time_to_empty = 0;
+	obj->time_to_full = 0;
 	if (obj->energy_rate > 0) {
 		if (state == DKP_DEVICE_STATE_DISCHARGING) {
 			obj->time_to_empty = 3600 * (obj->energy / obj->energy_rate);
@@ -351,9 +351,9 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	/* check the remaining time is under a set limit, to deal with broken
 	   primary batteries rate */
 	if (obj->time_to_empty > (100 * 60 * 60))
-		obj->time_to_empty = -1;
+		obj->time_to_empty = 0;
 	if (obj->time_to_full > (100 * 60 * 60))
-		obj->time_to_full = -1;
+		obj->time_to_full = 0;
 
 	/* set the old status */
 	supply->priv->energy_old = obj->energy;
@@ -361,7 +361,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 
 	/* we changed state */
 	if (obj->state != state) {
-		supply->priv->energy_old = -1;
+		supply->priv->energy_old = 0;
 		obj->state = state;
 	}
 

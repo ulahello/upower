@@ -268,7 +268,7 @@
     <property name="time-to-empty" type="x" access="read">
       <doc:doc><doc:description><doc:para>
             Number of seconds until the power source is considered empty.
-            Is set to -1 if unknown.
+            Is set to 0 if unknown.
           </doc:para><doc:para>
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
@@ -279,7 +279,7 @@
     <property name="time-to-full" type="x" access="read">
       <doc:doc><doc:description><doc:para>
             Number of seconds until the power source is considered full.
-            Is set to -1 if unknown.
+            Is set to 0 if unknown.
           </doc:para><doc:para>
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
