@@ -240,7 +240,7 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 	guint i;
 	guint size;
 	guint length;
-	guint length_tok;
+	guint number_tokens;
 	DkpDevice *device = DKP_DEVICE (wup);
 	DkpObject *obj = dkp_device_get_obj (device);
 	const guint offset = 3;
@@ -283,19 +283,19 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 
 	/* check we have enough data inthe packet */
 	tokens = g_strsplit (packet, ",", -1);
-	length = g_strv_length (tokens);
-	if (length < 3) {
+	number_tokens = g_strv_length (tokens);
+	if (number_tokens < 3) {
 		egg_debug ("not enough tokens '%s'", packet);
 		goto out;
 	}
 
 	/* remove leading or trailing whitespace in tokens */
-	for (i=0; i<length; i++)
+	for (i=0; i<number_tokens; i++)
 		g_strstrip (tokens[i]);
 
 	/* check the first token */
-	length_tok = strlen (tokens[0]);
-	if (length_tok != 2) {
+	length = strlen (tokens[0]);
+	if (length != 2) {
 		egg_debug ("expected command '#?' but got '%s'", tokens[0]);
 		goto out;
 	}
@@ -306,17 +306,24 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 	command = tokens[0][1];
 
 	/* check the second token */
-	length_tok = strlen (tokens[1]);
-	if (length_tok != 1) {
+	length = strlen (tokens[1]);
+	if (length != 1) {
 		egg_debug ("expected command '?' but got '%s'", tokens[1]);
 		goto out;
 	}
 	subcommand = tokens[1][0]; /* expect to be '-' */
 
-	/* check the length */
+	/* check the length is present */
+	length = strlen (tokens[2]);
+	if (length == 0) {
+		egg_debug ("length value not present");
+		goto out;
+	}
+
+	/* check the length matches what data we've got*/
 	size = atoi (tokens[2]);
-	if (size != length - offset) {
-		egg_debug ("size expected to be '%i' but got '%i'", length - offset, size);
+	if (size != number_tokens - offset) {
+		egg_debug ("size expected to be '%i' but got '%i'", number_tokens - offset, size);
 		goto out;
 	}
 
@@ -329,7 +336,7 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 #endif
 
 	/* update the command fields */
-	if (command == 'd' && subcommand == '-') {
+	if (command == 'd' && subcommand == '-' && number_tokens - offset == 18) {
 		obj->energy_rate = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_WATTS], NULL) / 10.0f;
 		obj->voltage = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_VOLTS], NULL) / 10.0f;
 		ret = TRUE;
