@@ -48,10 +48,76 @@
 #include "dkp-object.h"
 #include "dkp-wup.h"
 
-#define DKP_WUP_REFRESH_TIMEOUT			30l
-#define DKP_WUP_COMMAND_CLEAR			"#R,W,0"
+#define DKP_WUP_REFRESH_TIMEOUT			1
+#define DKP_WUP_COMMAND_CLEAR			"#R,W,0;"
+#define DKP_WUP_COMMAND_READ_CAL		"#F,R,0;"
+/* Response:
+ *	0x0	flags
+ *	0x1	sample count
+ *	0x2	volts gain
+ *	0x3	volts bias
+ *	0x4	amps gain
+ *	0x5	amps bias
+ *	0x6	amps offset
+ *	0x7	low amps gain
+ *	0x8	low amps bias
+ *	0x9	low amps offset
+ *	0xa	watts gain
+ *	0xb	watts offset
+ *	0xc	low watts gain
+ *	0xd	low watts offset
+ */
+#define DKP_WUP_COMMAND_START_LOG		"#L,W,3,E,1,1;"
+#define DKP_WUP_COMMAND_STOP_LOG		"#L,R,0;"
+/* Response:
+ *	0x0	time stamp
+ *	0x1	interval
+ */
+#define DKP_WUP_COMMAND_READ_INTERVAL		"#S,R,0;"
+/* Response:
+ *	0x0	reserved
+ *	0x1	interval
+ */
+#define DKP_WUP_COMMAND_WRITE_INTERVAL		"#S,W,2," /* {seconds},{interval} */
+#define DKP_WUP_COMMAND_READ_MODE		"#M,R,0;"
+/* Response:
+ *	0x0	display mode
+ */
+#define DKP_WUP_COMMAND_WRITE_MODE		"#M,W,1," /* {mode} */
+#define DKP_WUP_COMMAND_READ_USER		"#U,R,0;"
+/* Response:
+ *	0x0	cost per kWh
+ *	0x1	2nd tier cost
+ *	0x2	2nd tier threshold
+ *	0x3	duty cycle threshold
+ */
+#define DKP_WUP_COMMAND_WRITE_USER		"#U,W,0;"
+/* Response:
+ *	0x0	kwh_cost
+ *	0x1	2nd_tier_cost
+ *	0x2	2nd_tier_threshold
+ *	0x3	duty_cycle_threshold
+ */
+#define DKP_WUP_COMMAND_READ_HEADER		"#H,R,0;"
+/* Response:
+ *	0x?	One of the DKP_WUP_RESPONSE_HEADER_x constants */
+
 #define DKP_WUP_RESPONSE_HEADER_WATTS		0x0
 #define DKP_WUP_RESPONSE_HEADER_VOLTS		0x1
+#define DKP_WUP_RESPONSE_HEADER_AMPS		0x2
+#define DKP_WUP_RESPONSE_HEADER_KWH		0x3
+#define DKP_WUP_RESPONSE_HEADER_COST		0x4
+#define DKP_WUP_RESPONSE_HEADER_MONTHLY_KWH	0x5
+#define DKP_WUP_RESPONSE_HEADER_MONTHLY_COST	0x6
+#define DKP_WUP_RESPONSE_HEADER_MAX_WATTS	0x7
+#define DKP_WUP_RESPONSE_HEADER_MAX_VOLTS	0x8
+#define DKP_WUP_RESPONSE_HEADER_MAX_AMPS	0x9
+#define DKP_WUP_RESPONSE_HEADER_MIN_WATTS	0xa
+#define DKP_WUP_RESPONSE_HEADER_MIN_VOLTS	0xb
+#define DKP_WUP_RESPONSE_HEADER_MIN_AMPS	0xc
+#define DKP_WUP_RESPONSE_HEADER_POWER_FACTOR	0xd
+#define DKP_WUP_RESPONSE_HEADER_DUTY_CYCLE	0xe
+#define DKP_WUP_RESPONSE_HEADER_POWER_CYCLE	0xf
 
 /* commands can never be bigger then this */
 #define DKP_WUP_COMMAND_LEN			256
@@ -70,10 +136,10 @@ G_DEFINE_TYPE (DkpWup, dkp_wup, DKP_TYPE_DEVICE)
 static gboolean		 dkp_wup_refresh	 	(DkpDevice *device);
 
 /**
- * dkp_wup_poll:
+ * dkp_wup_poll_cb:
  **/
 static gboolean
-dkp_wup_poll (DkpWup *wup)
+dkp_wup_poll_cb (DkpWup *wup)
 {
 	gboolean ret;
 	DkpDevice *device = DKP_DEVICE (wup);
@@ -140,7 +206,7 @@ dkp_wup_write_command (DkpWup *wup, const gchar *data)
 }
 
 /**
- * dkp_wup_write_command:
+ * dkp_wup_read_command:
  *
  * Return value: Some data to parse
  **/
@@ -177,7 +243,11 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 	guint length_tok;
 	DkpDevice *device = DKP_DEVICE (wup);
 	DkpObject *obj = dkp_device_get_obj (device);
-	const guint offset = 2;
+	const guint offset = 3;
+
+	/* invalid */
+	if (data == NULL)
+		goto out;
 
 	/* Try to find a valid packet in the data stream
 	 * Data may be sdfsd#P,-,0;sdfs and we only want this bit:
@@ -198,25 +268,24 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 
 	/* replace the first ';' char with a NULL if it exists */
 	length = strlen (packet);
-	for (i=0; i<length-1; i++) {
-		if (data[i] == ';') {
+	for (i=0; i<length; i++) {
+		if (packet[i] == ';') {
 			packet[i] = '\0';
 			break;
 		}
 	}
 
-	/* check we have enough data */
-	tokens = g_strsplit (data, ",", -1);
+	/* check we have enough data inthe packet */
+	tokens = g_strsplit (packet, ",", -1);
 	length = g_strv_length (tokens);
 	if (length < 3) {
-		egg_debug ("not enough tokens '%s'", data);
+		egg_debug ("not enough tokens '%s'", packet);
 		goto out;
 	}
 
 	/* remove leading or trailing whitespace in tokens */
-	for (i=0; i<length; i++) {
+	for (i=0; i<length; i++)
 		g_strstrip (tokens[i]);
-	}
 
 	/* check the first token */
 	length_tok = strlen (tokens[0]);
@@ -239,22 +308,25 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 	subcommand = tokens[1][0]; /* expect to be '-' */
 
 	/* check the length */
-	size = atoi (tokens[1]);
+	size = atoi (tokens[2]);
 	if (size != length - offset) {
 		egg_debug ("size expected to be '%i' but got '%i'", length - offset, size);
 		goto out;
 	}
 
+#if 0
 	/* print the data */
 	egg_debug ("command=%c:%c", command, subcommand);
 	for (i=0; i<size; i++) {
 		egg_debug ("%i\t'%s'", i, tokens[i+offset]);
 	}
+#endif
 
 	/* update the command fields */
-	if (command == '?' && subcommand == '-') {
-		obj->energy_rate = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_WATTS], NULL);
-//		obj->volts = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_VOLTS], NULL);
+	if (command == 'd' && subcommand == '-') {
+		obj->energy_rate = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_WATTS], NULL) / 10.0f;
+//		obj->volts = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_VOLTS], NULL) / 10.0f;
+		ret = TRUE;
 	} else {
 		egg_debug ("ignoring command '%c'", command);
 	}
@@ -297,13 +369,17 @@ dkp_wup_coldplug (DkpDevice *device)
 		egg_debug ("could not get device file for WUP device");
 		goto out;
 	}
+	egg_debug ("wanted %s", device_file);
+	device_file = g_strdup ("/dev/ttyUSB0");
+	egg_debug ("opened %s", device_file);
 
 	/* connect to the device */
-	wup->priv->fd = open (device_file, O_RDONLY | O_NONBLOCK);
+	wup->priv->fd = open (device_file, O_RDWR | O_NONBLOCK);
 	if (wup->priv->fd < 0) {
 		egg_debug ("cannot open device file %s", device_file);
 		goto out;
 	}
+	egg_debug ("opened %s", device_file);
 
 	/* set speed */
 	ret = dkp_wup_set_speed (wup);
@@ -314,6 +390,7 @@ dkp_wup_coldplug (DkpDevice *device)
 
 	/* attempt to clear */
 	ret = dkp_wup_write_command (wup, DKP_WUP_COMMAND_CLEAR);
+	ret = dkp_wup_write_command (wup, DKP_WUP_COMMAND_START_LOG);
 	/* dummy read */
 	data = dkp_wup_read_command (wup);
 	egg_debug ("data after clear %s", data);
@@ -329,11 +406,10 @@ dkp_wup_coldplug (DkpDevice *device)
 	obj->is_present = FALSE;
 	obj->vendor = g_strdup (devkit_device_get_property (d, "ID_VENDOR"));
 
-	/* coldplug everything */
-	//TODO -- how?
-
 	/* coldplug */
+	egg_debug ("coldplug");
 	ret = dkp_wup_refresh (device);
+	ret = TRUE;
 
 out:
 	return ret;
@@ -368,11 +444,10 @@ dkp_wup_refresh (DkpDevice *device)
 		egg_debug ("failed to parse %s", data);
 		goto out;
 	}
-	ret = TRUE;
 
 out:
 	g_free (data);
-	return ret;
+	return TRUE;
 }
 
 /**
@@ -384,7 +459,7 @@ dkp_wup_init (DkpWup *wup)
 	wup->priv = DKP_WUP_GET_PRIVATE (wup);
 	wup->priv->fd = -1;
 	wup->priv->poll_timer_id = g_timeout_add_seconds (DKP_WUP_REFRESH_TIMEOUT,
-							  (GSourceFunc) dkp_wup_poll, wup);
+							  (GSourceFunc) dkp_wup_poll_cb, wup);
 }
 
 /**
