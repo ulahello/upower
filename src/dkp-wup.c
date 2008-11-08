@@ -220,7 +220,6 @@ dkp_wup_read_command (DkpWup *wup)
 		egg_debug ("failed to read from fd");
 		return NULL;
 	}
-	egg_debug ("reading [%s]", buffer);
 	return g_strdup (buffer);
 }
 
