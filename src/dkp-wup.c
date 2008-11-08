@@ -274,6 +274,8 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 	/* replace the first ';' char with a NULL if it exists */
 	length = strlen (packet);
 	for (i=0; i<length; i++) {
+		if (packet[i] < 0x20 && packet[i] > 0x7e)
+			packet[i] = '?';
 		if (packet[i] == ';') {
 			packet[i] = '\0';
 			break;
@@ -325,14 +327,6 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 		egg_debug ("size expected to be '%i' but got '%i'", number_tokens - offset, size);
 		goto out;
 	}
-
-#if 0
-	/* print the data */
-	egg_debug ("command=%c:%c", command, subcommand);
-	for (i=0; i<size; i++) {
-		egg_debug ("%i\t'%s'", i, tokens[i+offset]);
-	}
-#endif
 
 	/* update the command fields */
 	if (command == 'd' && subcommand == '-' && number_tokens - offset == 18) {
