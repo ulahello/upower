@@ -97,6 +97,7 @@ gboolean	 dkp_device_refresh		(DkpDevice		*device,
 gboolean	 dkp_device_get_history		(DkpDevice		*device,
 						 const gchar		*type,
 						 guint			 timespan,
+						 guint			 resolution,
 						 DBusGMethodInvocation	*context);
 gboolean	 dkp_device_get_statistics	(DkpDevice		*device,
 						 const gchar		*type,

@@ -144,7 +144,6 @@ egg_obj_list_clear (EggObjList *list)
 
 	array = list->priv->array;
 	func_free = list->priv->func_free;
-
 	if (func_free != NULL)
 		g_ptr_array_foreach (array, (GFunc) func_free, NULL);
 	g_ptr_array_remove_range (array, 0, array->len);

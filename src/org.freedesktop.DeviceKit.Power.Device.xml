@@ -58,6 +58,14 @@
       <arg name="timespan" direction="in" type="u">
         <doc:doc><doc:summary>The amount of data to return in seconds, or 0 for all.</doc:summary></doc:doc>
       </arg>
+      <arg name="resolution" direction="in" type="u">
+        <doc:doc>
+          <doc:summary>
+            The approximate number of points to return.
+            A higher resolution is more accurate, at the expense of plotting speed.
+          </doc:summary>
+        </doc:doc>
+      </arg>
       <arg name="data" direction="out" type="a(uds)">
         <doc:doc><doc:summary>
             The history data for the power device, if the device supports history.

@@ -39,7 +39,6 @@ static void	dkp_history_finalize	(GObject		*object);
 #define DKP_HISTORY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_HISTORY, DkpHistoryPrivate))
 
 #define DKP_HISTORY_SAVE_INTERVAL	5 /* seconds */
-#define	DKP_HISTORY_MAX_RESOLUTION	150
 
 struct DkpHistoryPrivate
 {
@@ -207,7 +206,6 @@ dkp_history_copy_array_timespan (const EggObjList *array, guint timespan)
 	guint i;
 	const DkpHistoryObj *obj;
 	EggObjList *array_new;
-	EggObjList *array_resolution;
 	guint start;
 
 	/* no data */
@@ -227,20 +225,17 @@ dkp_history_copy_array_timespan (const EggObjList *array, guint timespan)
 			egg_obj_list_add (array_new, (const gpointer) obj);
 	}
 
-	/* only add a certain number of points */
-	array_resolution = dkp_history_array_limit_resolution (array_new, DKP_HISTORY_MAX_RESOLUTION);
-	g_object_unref (array_new);
-
-	return array_resolution;
+	return array_new;
 }
 
 /**
  * dkp_history_get_data:
  **/
 EggObjList *
-dkp_history_get_data (DkpHistory *history, DkpHistoryType type, guint timespan)
+dkp_history_get_data (DkpHistory *history, DkpHistoryType type, guint timespan, guint resolution)
 {
 	EggObjList *array;
+	EggObjList *array_resolution;
 	const EggObjList *array_data = NULL;
 
 	g_return_val_if_fail (DKP_IS_HISTORY (history), NULL);
@@ -261,8 +256,16 @@ dkp_history_get_data (DkpHistory *history, DkpHistoryType type, guint timespan)
 	if (array_data == NULL)
 		return NULL;
 
+	/* only return a certain time */
 	array = dkp_history_copy_array_timespan (array_data, timespan);
-	return array;
+	if (array == NULL)
+		return NULL;
+
+	/* only add a certain number of points */
+	array_resolution = dkp_history_array_limit_resolution (array, resolution);
+	g_object_unref (array);
+
+	return array_resolution;
 }
 
 /**

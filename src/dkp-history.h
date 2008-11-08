@@ -64,7 +64,8 @@ GType		 dkp_history_get_type			(void) G_GNUC_CONST;
 DkpHistory	*dkp_history_new			(void);
 EggObjList	*dkp_history_get_data			(DkpHistory		*history,
 							 DkpHistoryType		 type,
-							 guint			 timespan);
+							 guint			 timespan,
+							 guint			 resolution);
 EggObjList	*dkp_history_get_profile_data		(DkpHistory		*history,
 							 gboolean		 charging);
 gboolean	 dkp_history_set_id			(DkpHistory		*history,

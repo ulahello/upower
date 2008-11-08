@@ -396,7 +396,7 @@ out:
  * dkp_device_get_history:
  **/
 gboolean
-dkp_device_get_history (DkpDevice *device, const gchar *type_string, guint timespan, DBusGMethodInvocation *context)
+dkp_device_get_history (DkpDevice *device, const gchar *type_string, guint timespan, guint resolution, DBusGMethodInvocation *context)
 {
 	GError *error;
 	EggObjList *array = NULL;
@@ -428,7 +428,7 @@ dkp_device_get_history (DkpDevice *device, const gchar *type_string, guint times
 
 	/* something recognised */
 	if (type != DKP_HISTORY_TYPE_UNKNOWN)
-		array = dkp_history_get_data (device->priv->history, type, timespan);
+		array = dkp_history_get_data (device->priv->history, type, timespan, resolution);
 
 	/* maybe the device doesn't have any history */
 	if (array == NULL) {
