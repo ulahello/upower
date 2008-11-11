@@ -24,7 +24,7 @@
 
 #include <glib-object.h>
 #include <polkit-dbus/polkit-dbus.h>
-#include <devkit-gobject.h>
+#include <devkit-gobject/devkit-gobject.h>
 #include <dbus/dbus-glib.h>
 
 #include "egg-obj-list.h"

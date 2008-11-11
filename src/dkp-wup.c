@@ -29,7 +29,7 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <devkit-gobject.h>
+#include <devkit-gobject/devkit-gobject.h>
 
 #include <stdio.h>
 #include <stdlib.h>

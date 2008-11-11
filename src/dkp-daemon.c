@@ -29,7 +29,7 @@
 #include <glib-object.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
-#include <devkit-gobject.h>
+#include <devkit-gobject/devkit-gobject.h>
 
 #include "egg-debug.h"
 #include "egg-string.h"
