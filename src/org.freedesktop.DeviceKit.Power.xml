@@ -100,120 +100,6 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
     </signal>
 
     <!-- ************************************************************ -->
-    <signal name="OnBatteryChanged">
-      <arg name="on_battery" type="b">
-        <doc:doc><doc:summary>If we are on battery power.</doc:summary></doc:doc>
-      </arg>
-
-      <doc:doc>
-        <doc:description>
-          <doc:para>
-            Emitted when the main power source of the system has changed.
-          </doc:para>
-        </doc:description>
-      </doc:doc>
-    </signal>
-
-    <!-- ************************************************************ -->
-    <signal name="LowBatteryChanged">
-      <arg name="low_battery" type="b">
-        <doc:doc><doc:summary>If we are critically low on battery power.</doc:summary></doc:doc>
-      </arg>
-      <doc:doc>
-        <doc:description>
-          <doc:para>
-            Emitted when the main power source of the system is critically low in power.
-          </doc:para>
-        </doc:description>
-      </doc:doc>
-    </signal>
-
-    <!-- ************************************************************ -->
-    <method name="GetOnBattery">
-      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-      <arg name="on_battery" direction="out" type="b">
-        <doc:doc><doc:summary>If we are on battery power.</doc:summary></doc:doc>
-      </arg>
-      <doc:doc>
-        <doc:description>
-          <doc:para>
-            Finds out if we are using battery so we can make policy decisions,
-            for instance not running the indexer when we are on battery power.
-          </doc:para>
-        </doc:description>
-      </doc:doc>
-    </method>
-
-    <!-- ************************************************************ -->
-    <method name="GetLowBattery">
-      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-      <arg name="low_battery" direction="out" type="b">
-        <doc:doc><doc:summary>If we are critically low on battery power.</doc:summary></doc:doc>
-      </arg>
-      <doc:doc>
-        <doc:description>
-          <doc:para>
-            Finds out if we are critically low on battery so we can make policy
-            decisions, for instance saving documents or turning off network
-            connections.
-          </doc:para>
-        </doc:description>
-      </doc:doc>
-    </method>
-
-    <!-- ************************************************************ -->
-
-    <method name="CanSuspend">
-      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-      <arg name="interactive" direction="in" type="b">
-        <doc:doc>
-          <doc:summary>
-            If we are allowed to be interactive, and ask the user to authorise
-            the action.
-          </doc:summary>
-        </doc:doc>
-      </arg>
-      <arg name="can_suspend" direction="out" type="b">
-        <doc:doc><doc:summary>If we can suspend.</doc:summary></doc:doc>
-      </arg>
-      <doc:doc>
-        <doc:description>
-          <doc:para>
-            Returns if the computer is able to suspend.
-            This function should be used to decide whether to show the
-            Supend menu item or button in GUI programs.
-          </doc:para>
-        </doc:description>
-      </doc:doc>
-    </method>
-
-    <!-- ************************************************************ -->
-
-    <method name="CanHibernate">
-      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-      <arg name="interactive" direction="in" type="b">
-        <doc:doc>
-          <doc:summary>
-            If we are allowed to be interactive, and ask the user to authorise
-            the action.
-          </doc:summary>
-        </doc:doc>
-      </arg>
-      <arg name="can_hibernate" direction="out" type="b">
-        <doc:doc><doc:summary>If we can hibernate.</doc:summary></doc:doc>
-      </arg>
-      <doc:doc>
-        <doc:description>
-          <doc:para>
-            Returns if the computer is able to hibernate.
-            This function should be used to decide whether to show the
-            Hibernate menu item or button in GUI programs.
-          </doc:para>
-        </doc:description>
-      </doc:doc>
-    </method>
-
-    <!-- ************************************************************ -->
 
     <method name="Suspend">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
@@ -242,6 +128,49 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
     </method>
 
     <!-- ************************************************************ -->
+
+
+    <property name="daemon-version" type="s" access="read">
+      <doc:doc><doc:description><doc:para>
+            Version of the running daemon, e.g. <doc:tt>002</doc:tt>.
+      </doc:para></doc:description></doc:doc>
+    </property>
+
+    <property name="can-suspend" type="b" access="read">
+      <doc:doc><doc:description><doc:para>
+            Whether the system is able to suspend.
+      </doc:para></doc:description></doc:doc>
+    </property>
+
+    <property name="can-hibernate" type="b" access="read">
+      <doc:doc><doc:description><doc:para>
+            Whether the system is able to hibernate.
+      </doc:para></doc:description></doc:doc>
+    </property>
+
+    <property name="on-battery" type="b" access="read">
+      <doc:doc><doc:description><doc:para>
+            Indicates whether the system is running on battery power.
+            This property is provided for convenience.
+      </doc:para></doc:description></doc:doc>
+    </property>
+
+    <property name="on-low-battery" type="b" access="read">
+      <doc:doc><doc:description><doc:para>
+            Indicates whether the system is running on battery power and if the battery is critically low.
+            This property is provided for convenience.
+      </doc:para></doc:description></doc:doc>
+    </property>
+
+    <signal name="Changed">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Emitted when one or more properties on the object changes.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </signal>
 
   </interface>
 

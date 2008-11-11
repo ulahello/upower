@@ -580,9 +580,15 @@ dkp_device_emit_changed (DkpDevice *device)
 	dkp_history_set_time_empty_data (device->priv->history, obj->time_to_empty);
 
 	egg_debug ("emitting changed on %s", device->priv->obj->native_path);
+
+	/*  The order here matters; we want Device::Changed() before
+	 *  the DeviceChanged() signal on the main object; otherwise
+	 *  clients that only listens on DeviceChanged() won't be
+	 *  fully caught up...
+	 */
+	g_signal_emit (device, signals[CHANGED_SIGNAL], 0);
 	g_signal_emit_by_name (device->priv->daemon, "device-changed",
 			       device->priv->object_path, NULL);
-	g_signal_emit (device, signals[CHANGED_SIGNAL], 0);
 }
 
 /**

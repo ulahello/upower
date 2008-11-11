@@ -47,11 +47,20 @@
 
 enum
 {
+	PROP_0,
+	PROP_DAEMON_VERSION,
+	PROP_CAN_SUSPEND,
+	PROP_CAN_HIBERNATE,
+	PROP_ON_BATTERY,
+	PROP_ON_LOW_BATTERY,
+};
+
+enum
+{
 	DEVICE_ADDED_SIGNAL,
 	DEVICE_REMOVED_SIGNAL,
 	DEVICE_CHANGED_SIGNAL,
-	ON_BATTERY_CHANGED_SIGNAL,
-	LOW_BATTERY_CHANGED_SIGNAL,
+	CHANGED_SIGNAL,
 	LAST_SIGNAL,
 };
 
@@ -134,6 +143,49 @@ dkp_daemon_constructor (GType type, guint n_construct_properties, GObjectConstru
 }
 
 /**
+ * dkp_daemon_get_property:
+ **/
+static void
+dkp_daemon_get_property (GObject         *object,
+			 guint            prop_id,
+			 GValue          *value,
+			 GParamSpec      *pspec)
+{
+	DkpDaemon *daemon;
+
+	daemon = DKP_DAEMON (object);
+
+        switch (prop_id) {
+
+        case PROP_DAEMON_VERSION:
+                g_value_set_string (value, PACKAGE_VERSION);
+                break;
+
+        case PROP_CAN_SUSPEND:
+		/* TODO: for now assume we can always suspend */
+                g_value_set_boolean (value, TRUE);
+                break;
+
+        case PROP_CAN_HIBERNATE:
+		/* TODO for now assume we can always hibernate */
+                g_value_set_boolean (value, TRUE);
+                break;
+
+        case PROP_ON_BATTERY:
+                g_value_set_boolean (value, daemon->priv->on_battery);
+                break;
+
+        case PROP_ON_LOW_BATTERY:
+                g_value_set_boolean (value, daemon->priv->on_battery && daemon->priv->low_battery);
+                break;
+
+        default:
+                G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+                break;
+        }
+}
+
+/**
  * dkp_daemon_class_init:
  **/
 static void
@@ -143,6 +195,7 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 
 	object_class->constructor = dkp_daemon_constructor;
 	object_class->finalize = dkp_daemon_finalize;
+	object_class->get_property = dkp_daemon_get_property;
 
 	g_type_class_add_private (klass, sizeof (DkpDaemonPrivate));
 
@@ -173,23 +226,55 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 
-	signals[ON_BATTERY_CHANGED_SIGNAL] =
-		g_signal_new ("on-battery-changed",
+	signals[CHANGED_SIGNAL] =
+		g_signal_new ("changed",
 			      G_OBJECT_CLASS_TYPE (klass),
 			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
 			      0,
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__BOOLEAN,
-			      G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+			      G_TYPE_NONE, 0);
 
-	signals[LOW_BATTERY_CHANGED_SIGNAL] =
-		g_signal_new ("low-battery-changed",
-			      G_OBJECT_CLASS_TYPE (klass),
-			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
-			      0,
-			      NULL, NULL,
-			      g_cclosure_marshal_VOID__BOOLEAN,
-			      G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+
+        g_object_class_install_property (object_class,
+                                         PROP_DAEMON_VERSION,
+                                         g_param_spec_string ("daemon-version",
+                                                              "Daemon Version",
+                                                              "The version of the running daemon",
+                                                              NULL,
+                                                              G_PARAM_READABLE));
+
+        g_object_class_install_property (object_class,
+                                         PROP_CAN_SUSPEND,
+                                         g_param_spec_boolean ("can-suspend",
+							       "Can Suspend",
+							       "Whether the system can suspend",
+							       FALSE,
+							       G_PARAM_READABLE));
+
+        g_object_class_install_property (object_class,
+                                         PROP_CAN_SUSPEND,
+                                         g_param_spec_boolean ("can-hibernate",
+							       "Can Hibernate",
+							       "Whether the system can hibernate",
+							       FALSE,
+							       G_PARAM_READABLE));
+
+        g_object_class_install_property (object_class,
+                                         PROP_ON_BATTERY,
+                                         g_param_spec_boolean ("on-battery",
+							       "On Battery",
+							       "Whether the system is running on battery",
+							       FALSE,
+							       G_PARAM_READABLE));
+
+        g_object_class_install_property (object_class,
+                                         PROP_ON_LOW_BATTERY,
+                                         g_param_spec_boolean ("on-low-battery",
+							       "On Low Battery",
+							       "Whether the system is running on battery and if the battery is critically low",
+							       FALSE,
+							       G_PARAM_READABLE));
 
 	dbus_g_object_type_install_info (DKP_TYPE_DAEMON, &dbus_glib_dkp_daemon_object_info);
 
@@ -372,21 +457,7 @@ gpk_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesi
 	DkpDevice *device;
 	gboolean ret;
 
-	/* check if the on_battery and low_battery state has changed */
-	ret = dkp_daemon_get_on_battery_local (daemon);
-	if (ret != daemon->priv->on_battery) {
-		daemon->priv->on_battery = ret;
-		egg_debug ("now on_battery = %s", ret ? "yes" : "no");
-		g_signal_emit (daemon, signals[ON_BATTERY_CHANGED_SIGNAL], 0, ret);
-	}
-	ret = dkp_daemon_get_low_battery_local (daemon);
-	if (ret != daemon->priv->low_battery) {
-		daemon->priv->low_battery = ret;
-		egg_debug ("now low_battery = %s", ret ? "yes" : "no");
-		g_signal_emit (daemon, signals[LOW_BATTERY_CHANGED_SIGNAL], 0, ret);
-	}
-
-	/* does the device exist in the db? */
+	/* first, change the device and add it if it doesn't exist */
 	device = dkp_device_list_lookup (daemon->priv->list, d);
 	if (device != NULL) {
 		egg_debug ("changed %s", dkp_device_get_object_path (device));
@@ -394,6 +465,20 @@ gpk_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesi
 	} else {
 		egg_debug ("treating change event as add on %s", dkp_device_get_object_path (device));
 		gpk_daemon_device_add (daemon, d, TRUE);
+	}
+
+	/* second, check if the on_battery and low_battery state has changed */
+	ret = dkp_daemon_get_on_battery_local (daemon);
+	if (ret != daemon->priv->on_battery) {
+		daemon->priv->on_battery = ret;
+		egg_debug ("now on_battery = %s", ret ? "yes" : "no");
+		g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
+	}
+	ret = dkp_daemon_get_low_battery_local (daemon);
+	if (ret != daemon->priv->low_battery) {
+		daemon->priv->low_battery = ret;
+		egg_debug ("now low_battery = %s", ret ? "yes" : "no");
+		g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
 	}
 }
 
@@ -804,54 +889,6 @@ dkp_daemon_enumerate_devices (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	/* free */
 	g_ptr_array_foreach (object_paths, (GFunc) g_free, NULL);
 	g_ptr_array_free (object_paths, TRUE);
-	return TRUE;
-}
-
-/**
- * dkp_daemon_get_on_battery:
- **/
-gboolean
-dkp_daemon_get_on_battery (DkpDaemon *daemon, DBusGMethodInvocation *context)
-{
-	/* this is cached as it's expensive to check all sources */
-	dbus_g_method_return (context, daemon->priv->on_battery);
-	return TRUE;
-}
-
-/**
- * dkp_daemon_get_low_battery:
- **/
-gboolean
-dkp_daemon_get_low_battery (DkpDaemon *daemon, DBusGMethodInvocation *context)
-{
-	/* this is cached as it's expensive to check all sources */
-	dbus_g_method_return (context, daemon->priv->low_battery);
-	return TRUE;
-}
-
-/**
- * dkp_daemon_can_suspend:
- *
- * TODO: Ask PolicyKit and check in DeviceKit.conf
- **/
-gboolean
-dkp_daemon_can_suspend (DkpDaemon *daemon, gboolean interactive, DBusGMethodInvocation *context)
-{
-	/* for now, assume we can suspend under all circumstances */
-	dbus_g_method_return (context, TRUE);
-	return TRUE;
-}
-
-/**
- * dkp_daemon_can_hibernate:
- *
- * TODO: Ask PolicyKit and check in DeviceKit.conf
- **/
-gboolean
-dkp_daemon_can_hibernate (DkpDaemon *daemon, gboolean interactive, DBusGMethodInvocation *context)
-{
-	/* for now, assume we can hibernate under all circumstances */
-	dbus_g_method_return (context, TRUE);
 	return TRUE;
 }
 

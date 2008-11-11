@@ -47,6 +47,7 @@ dkp_tool_device_added_cb (DkpClient *client, const DkpClientDevice *device, gpoi
 	g_print ("added:     %s\n", dkp_client_device_get_object_path (device));
 	if (opt_monitor_detail) {
 		dkp_client_device_print (device);
+		g_print ("\n");
 	}
 }
 
@@ -60,6 +61,7 @@ dkp_tool_device_changed_cb (DkpClient *client, const DkpClientDevice *device, gp
 	if (opt_monitor_detail) {
 		/* TODO: would be nice to just show the diff */
 		dkp_client_device_print (device);
+		g_print ("\n");
 	}
 }
 
@@ -70,6 +72,31 @@ static void
 dkp_tool_device_removed_cb (DkpClient *client, const DkpClientDevice *device, gpointer user_data)
 {
 	g_print ("removed:   %s\n", dkp_client_device_get_object_path (device));
+	if (opt_monitor_detail)
+		g_print ("\n");
+}
+
+static void
+dkp_client_print (DkpClient *client)
+{
+	g_print ("  daemon-version:  %s\n", dkp_client_get_daemon_version (client));
+	g_print ("  can-suspend:     %s\n", dkp_client_can_suspend (client) ? "yes" : "no");
+	g_print ("  can-hibernate    %s\n", dkp_client_can_hibernate (client) ? "yes" : "no");
+	g_print ("  on-battery:      %s\n", dkp_client_on_battery (client) ? "yes" : "no");
+	g_print ("  on-low-battery:  %s\n", dkp_client_on_low_battery (client) ? "yes" : "no");
+}
+
+/**
+ * dkp_tool_changed_cb:
+ **/
+static void
+dkp_tool_changed_cb (DkpClient *client, gpointer user_data)
+{
+	g_print ("daemon changed:\n");
+	if (opt_monitor_detail) {
+		dkp_client_print (client);
+		g_print ("\n");
+	}
 }
 
 /**
@@ -80,9 +107,10 @@ dkp_tool_do_monitor (DkpClient *client)
 {
 	g_print ("Monitoring activity from the power daemon. Press Ctrl+C to cancel.\n");
 
-	g_signal_connect (client, "added", G_CALLBACK (dkp_tool_device_added_cb), NULL);
-	g_signal_connect (client, "removed", G_CALLBACK (dkp_tool_device_removed_cb), NULL);
-	g_signal_connect (client, "changed", G_CALLBACK (dkp_tool_device_changed_cb), NULL);
+	g_signal_connect (client, "device-added", G_CALLBACK (dkp_tool_device_added_cb), NULL);
+	g_signal_connect (client, "device-removed", G_CALLBACK (dkp_tool_device_removed_cb), NULL);
+	g_signal_connect (client, "device-changed", G_CALLBACK (dkp_tool_device_changed_cb), NULL);
+	g_signal_connect (client, "changed", G_CALLBACK (dkp_tool_changed_cb), NULL);
 
 	g_main_loop_run (loop);
 
@@ -102,6 +130,7 @@ main (int argc, char **argv)
 	gboolean opt_enumerate = FALSE;
 	gboolean opt_monitor = FALSE;
 	gchar *opt_show_info = FALSE;
+	gboolean opt_version = FALSE;
 	unsigned int n;
 
 	DkpClient *client;
@@ -114,6 +143,7 @@ main (int argc, char **argv)
 		{ "monitor", 'm', 0, G_OPTION_ARG_NONE, &opt_monitor, _("Monitor activity from the power daemon"), NULL },
 		{ "monitor-detail", 0, 0, G_OPTION_ARG_NONE, &opt_monitor_detail, _("Monitor with detail"), NULL },
 		{ "show-info", 'i', 0, G_OPTION_ARG_STRING, &opt_show_info, _("Show information about object path"), NULL },
+                { "version", 'v', 0, G_OPTION_ARG_NONE, &opt_version, "Print version of client and daemon", NULL },
 		{ NULL }
 	};
 
@@ -128,6 +158,15 @@ main (int argc, char **argv)
 	loop = g_main_loop_new (NULL, FALSE);
 	client = dkp_client_new ();
 
+	if (opt_version) {
+                g_print ("DeviceKit-power client version %s\n"
+                         "DeviceKit-power daemon version %s\n",
+                         PACKAGE_VERSION,
+                         dkp_client_get_daemon_version (client));
+		ret = 0;
+		goto out;
+	}
+
 	if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
 		const gchar *object_path;
@@ -136,18 +175,23 @@ main (int argc, char **argv)
 			goto out;
 		for (n=0; n < devices->len; n++) {
 			object_path = (const gchar *) g_ptr_array_index (devices, n);
-			if (opt_enumerate)
+			if (opt_enumerate) {
 				g_print ("%s\n", object_path);
-			else {
+			} else {
 				g_print ("Device: %s\n", object_path);
 				device = dkp_client_device_new ();
 				dkp_client_device_set_object_path (device, object_path);
 				dkp_client_device_print (device);
+				g_print ("\n");
 				g_object_unref (device);
 			}
 		}
 		g_ptr_array_foreach (devices, (GFunc) g_free, NULL);
 		g_ptr_array_free (devices, TRUE);
+		if (opt_dump) {
+			g_print ("Daemon:\n");
+			dkp_client_print (client);
+		}
 	} else if (opt_monitor || opt_monitor_detail) {
 		if (!dkp_tool_do_monitor (client))
 			goto out;
