@@ -37,8 +37,10 @@ main (int argc, char **argv)
 		goto out;
 	}
 
-	proxy = dbus_g_proxy_new_for_name (bus, "org.freedesktop.DeviceKit.Power",
-					   "/", "org.freedesktop.DeviceKit.Power");
+	proxy = dbus_g_proxy_new_for_name (bus,
+                                           "org.freedesktop.DeviceKit.Power",
+					   "/org/freedesktop/DeviceKit/Power",
+                                           "org.freedesktop.DeviceKit.Power");
 	if (proxy == NULL) {
 		egg_warning ("Couldn't connect to DeviceKit-power");
 		goto out;

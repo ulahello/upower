@@ -612,7 +612,7 @@ dkp_device_compute_object_path (DkpDevice *device)
 		if (id[i] == ':')
 			id[i] = 'o';
 	}
-	object_path = g_build_filename ("/devices", id, NULL);
+	object_path = g_build_filename ("/org/freedesktop/DeviceKit/Power/devices", id, NULL);
 
 	g_free (basename);
 	g_free (id);

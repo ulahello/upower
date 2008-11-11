@@ -337,8 +337,10 @@ dkp_client_init (DkpClient *client)
 	}
 
 	/* connect to main interface */
-	client->priv->proxy = dbus_g_proxy_new_for_name (client->priv->bus, "org.freedesktop.DeviceKit.Power",
-							 "/", "org.freedesktop.DeviceKit.Power");
+	client->priv->proxy = dbus_g_proxy_new_for_name (client->priv->bus,
+							 "org.freedesktop.DeviceKit.Power",
+							 "/org/freedesktop/DeviceKit/Power",
+							 "org.freedesktop.DeviceKit.Power");
 	if (client->priv->proxy == NULL) {
 		egg_warning ("Couldn't connect to proxy");
 		goto out;
