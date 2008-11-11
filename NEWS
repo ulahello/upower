@@ -1,2 +1,37 @@
-TODO: for now see doc/TODO
+Version 0.3.11
+~~~~~~~~~~~~~~
+Released: 2008-11-11
+
+New Features:
+ - add in CanSuspend and CanHibernate into API (Richard Hughes)
+ - add two new properties, has-history and has-statistics (Richard Hughes)
+ - add voltage property of a power device (Richard Hughes)
+ - all logging for all the other device types too (Richard Hughes)
+ - Move object paths so things are rooted under /org/freedesktop/DeviceKit/Power (David Zeuthen)
+ - Add functionality to monitor a Watts Up Pro device (Richard Hughes)
+
+Bugfixes:
+ - Also rename configure.in to configure.ac in autogen.sh (David Zeuthen)
+ - Fix up deps and build system (David Zeuthen)
+ - We're a fd.o project (David Zeuthen)
+ - Update my email address (David Zeuthen)
+ - Update mailing list reference in man pages (David Zeuthen)
+ - Update bug report URL to point to our mailing list (David Zeuthen)
+ - Nuke devkit-power-on-battery for now (David Zeuthen)
+ - Don't report negative rate when charging (Richard Hughes)
+ - Remove the battery- and line-power- prefix from the device properties (Richard Hughes)
+ - Add DkpStatsObj convenience helpers (Richard Hughes)
+ - Save the time to full and time to empty too (Richard Hughes)
+ - Don't clear the list when we print it (Richard Hughes)
+ - Support getting stats from DkpSupply devices (Richard Hughes)
+ - Poll every 10 seconds to get better stats results (Richard Hughes)
+ - Work out the statistics by binning them into percentage sized holes (Richard Hughes)
+ - Add two remove functions to the generic object list (Richard Hughes)
+ - Don't unconditionally set the energy_full to energy_full_design if larger (Richard Hughes)
+ - Add a first approximation of a time resolution limiter (Richard Hughes)
+ - Expand the client helper library to cover all the base API for gnome-power-manager (Richard Hughes)
+ - Use 0 for unknown, not -1 as some values like rate and voltage are valid when negative (Richard Hughes)
+ - Use a better resolution limiting function for getting the history to reduce CPU load (Richard Hughes)
+ - Match the WUP device on the tty device, not the USB device (Richard Hughes)
+ - Fix the include headers for DeviceKit 002 (Richard Hughes)
 
