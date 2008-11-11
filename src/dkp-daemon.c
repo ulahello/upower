@@ -55,7 +55,7 @@ enum
 	LAST_SIGNAL,
 };
 
-static const gchar *subsystems[] = {"power_supply", "usb", NULL};
+static const gchar *subsystems[] = {"power_supply", "usb", "tty", NULL};
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
@@ -222,19 +222,14 @@ dkp_daemon_finalize (GObject *object)
 
 	if (daemon->priv->pk_context != NULL)
 		polkit_context_unref (daemon->priv->pk_context);
-
 	if (daemon->priv->pk_tracker != NULL)
 		polkit_tracker_unref (daemon->priv->pk_tracker);
-
 	if (daemon->priv->system_bus_proxy != NULL)
 		g_object_unref (daemon->priv->system_bus_proxy);
-
 	if (daemon->priv->system_bus_connection != NULL)
 		dbus_g_connection_unref (daemon->priv->system_bus_connection);
-
 	if (daemon->priv->devkit_client != NULL)
 		g_object_unref (daemon->priv->devkit_client);
-
 	if (daemon->priv->list != NULL)
 		g_object_unref (daemon->priv->list);
 
@@ -437,6 +432,18 @@ gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 		/* no valid power supply object */
 		device = NULL;
 
+	} else if (egg_strequal (subsys, "tty")) {
+
+		/* try to detect a Watts Up? Pro monitor */
+		device = DKP_DEVICE (dkp_wup_new ());
+		ret = dkp_device_coldplug (device, daemon, d);
+		if (ret)
+			goto out;
+		g_object_unref (device);
+
+		/* no valid TTY object ;-( */
+		device = NULL;
+
 	} else if (egg_strequal (subsys, "usb")) {
 
 		/* see if this is a CSR mouse or keyboard */
@@ -448,13 +455,6 @@ gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 
 		/* try to detect a HID UPS */
 		device = DKP_DEVICE (dkp_hid_new ());
-		ret = dkp_device_coldplug (device, daemon, d);
-		if (ret)
-			goto out;
-		g_object_unref (device);
-
-		/* try to detect a Watts Up? Pro monitor */
-		device = DKP_DEVICE (dkp_wup_new ());
 		ret = dkp_device_coldplug (device, daemon, d);
 		if (ret)
 			goto out;
@@ -561,6 +561,7 @@ gpk_daemon_register_power_daemon (DkpDaemon *daemon)
 	DBusConnection *connection;
 	DBusError dbus_error;
 	GError *error = NULL;
+	guint i;
 
 	daemon->priv->pk_context = polkit_context_new ();
 	polkit_context_set_io_watch_functions (daemon->priv->pk_context, pk_io_add_watch, pk_io_remove_watch);
@@ -634,6 +635,8 @@ gpk_daemon_register_power_daemon (DkpDaemon *daemon)
 	}
 
 	/* connect to the DeviceKit daemon */
+	for (i=0; subsystems[i] != NULL; i++)
+		egg_debug ("registering subsystem : %s", subsystems[i]);
 	daemon->priv->devkit_client = devkit_client_new (subsystems);
 	if (!devkit_client_connect (daemon->priv->devkit_client, &error)) {
 		egg_warning ("Couldn't open connection to DeviceKit daemon: %s", error->message);

@@ -375,9 +375,6 @@ dkp_wup_coldplug (DkpDevice *device)
 		egg_debug ("could not get device file for WUP device");
 		goto out;
 	}
-	egg_debug ("wanted %s", device_file);
-	device_file = g_strdup ("/dev/ttyUSB0");
-	egg_debug ("opened %s", device_file);
 
 	/* connect to the device */
 	wup->priv->fd = open (device_file, O_RDWR | O_NONBLOCK);
