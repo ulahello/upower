@@ -65,7 +65,7 @@ esac
 
       aclocalinclude="$ACLOCAL_FLAGS"
 
-      if grep "^AM_PROG_LIBTOOL" configure.in >/dev/null; then
+      if grep "^AM_PROG_LIBTOOL" configure.ac >/dev/null; then
 	if test -z "$NO_LIBTOOLIZE" ; then 
 	  echo "Running libtoolize..."
 	  libtoolize --force --copy
@@ -73,11 +73,11 @@ esac
       fi
       echo "Running aclocal $aclocalinclude ..."
       aclocal $aclocalinclude
-      if grep "^AM_CONFIG_HEADER" configure.in >/dev/null; then
+      if grep "^AM_CONFIG_HEADER" configure.ac >/dev/null; then
 	echo "Running autoheader..."
 	autoheader
       fi
-      echo "Running automake --gnu -Wno-portability $am_opt ..."
+      echo "Running automake --add-missing --gnu -Wno-portability $am_opt ..."
       automake --add-missing --gnu -Wno-portability $am_opt
       echo "Running autoconf ..."
       autoconf
