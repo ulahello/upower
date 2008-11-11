@@ -79,8 +79,8 @@
     <title>BUGS</title>
     <para>
       Please send bug reports to either the distribution or the
-      hal mailing list,
-      see <ulink url="http://lists.freedesktop.org/mailman/listinfo/hal"/>
+      DeviceKit mailing list,
+      see <ulink url="http://lists.freedesktop.org/mailman/listinfo/devkit-devel"/>
       on how to subscribe.
     </para>
   </refsect1>
