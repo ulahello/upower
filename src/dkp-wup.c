@@ -48,76 +48,23 @@
 #include "dkp-object.h"
 #include "dkp-wup.h"
 
-#define DKP_WUP_REFRESH_TIMEOUT			1
-#define DKP_WUP_COMMAND_CLEAR			"#R,W,0;"
-#define DKP_WUP_COMMAND_READ_CAL		"#F,R,0;"
-/* Response:
- *	0x0	flags
- *	0x1	sample count
- *	0x2	volts gain
- *	0x3	volts bias
- *	0x4	amps gain
- *	0x5	amps bias
- *	0x6	amps offset
- *	0x7	low amps gain
- *	0x8	low amps bias
- *	0x9	low amps offset
- *	0xa	watts gain
- *	0xb	watts offset
- *	0xc	low watts gain
- *	0xd	low watts offset
- */
-#define DKP_WUP_COMMAND_START_LOG		"#L,W,3,E,1,1;"
-#define DKP_WUP_COMMAND_STOP_LOG		"#L,R,0;"
-/* Response:
- *	0x0	time stamp
- *	0x1	interval
- */
-#define DKP_WUP_COMMAND_READ_INTERVAL		"#S,R,0;"
-/* Response:
- *	0x0	reserved
- *	0x1	interval
- */
-#define DKP_WUP_COMMAND_WRITE_INTERVAL		"#S,W,2," /* {seconds},{interval} */
-#define DKP_WUP_COMMAND_READ_MODE		"#M,R,0;"
-/* Response:
- *	0x0	display mode
- */
-#define DKP_WUP_COMMAND_WRITE_MODE		"#M,W,1," /* {mode} */
-#define DKP_WUP_COMMAND_READ_USER		"#U,R,0;"
-/* Response:
- *	0x0	cost per kWh
- *	0x1	2nd tier cost
- *	0x2	2nd tier threshold
- *	0x3	duty cycle threshold
- */
-#define DKP_WUP_COMMAND_WRITE_USER		"#U,W,0;"
-/* Response:
- *	0x0	kwh_cost
- *	0x1	2nd_tier_cost
- *	0x2	2nd_tier_threshold
- *	0x3	duty_cycle_threshold
- */
-#define DKP_WUP_COMMAND_READ_HEADER		"#H,R,0;"
-/* Response:
- *	0x?	One of the DKP_WUP_RESPONSE_HEADER_x constants */
-
-#define DKP_WUP_RESPONSE_HEADER_WATTS		0x0
-#define DKP_WUP_RESPONSE_HEADER_VOLTS		0x1
-#define DKP_WUP_RESPONSE_HEADER_AMPS		0x2
-#define DKP_WUP_RESPONSE_HEADER_KWH		0x3
-#define DKP_WUP_RESPONSE_HEADER_COST		0x4
-#define DKP_WUP_RESPONSE_HEADER_MONTHLY_KWH	0x5
-#define DKP_WUP_RESPONSE_HEADER_MONTHLY_COST	0x6
-#define DKP_WUP_RESPONSE_HEADER_MAX_WATTS	0x7
-#define DKP_WUP_RESPONSE_HEADER_MAX_VOLTS	0x8
-#define DKP_WUP_RESPONSE_HEADER_MAX_AMPS	0x9
-#define DKP_WUP_RESPONSE_HEADER_MIN_WATTS	0xa
-#define DKP_WUP_RESPONSE_HEADER_MIN_VOLTS	0xb
-#define DKP_WUP_RESPONSE_HEADER_MIN_AMPS	0xc
-#define DKP_WUP_RESPONSE_HEADER_POWER_FACTOR	0xd
-#define DKP_WUP_RESPONSE_HEADER_DUTY_CYCLE	0xe
-#define DKP_WUP_RESPONSE_HEADER_POWER_CYCLE	0xf
+#define DKP_WUP_REFRESH_TIMEOUT			10 /* seconds */
+#define DKP_WUP_RESPONSE_OFFSET_WATTS		0x0
+#define DKP_WUP_RESPONSE_OFFSET_VOLTS		0x1
+#define DKP_WUP_RESPONSE_OFFSET_AMPS		0x2
+#define DKP_WUP_RESPONSE_OFFSET_KWH		0x3
+#define DKP_WUP_RESPONSE_OFFSET_COST		0x4
+#define DKP_WUP_RESPONSE_OFFSET_MONTHLY_KWH	0x5
+#define DKP_WUP_RESPONSE_OFFSET_MONTHLY_COST	0x6
+#define DKP_WUP_RESPONSE_OFFSET_MAX_WATTS	0x7
+#define DKP_WUP_RESPONSE_OFFSET_MAX_VOLTS	0x8
+#define DKP_WUP_RESPONSE_OFFSET_MAX_AMPS	0x9
+#define DKP_WUP_RESPONSE_OFFSET_MIN_WATTS	0xa
+#define DKP_WUP_RESPONSE_OFFSET_MIN_VOLTS	0xb
+#define DKP_WUP_RESPONSE_OFFSET_MIN_AMPS	0xc
+#define DKP_WUP_RESPONSE_OFFSET_POWER_FACTOR	0xd
+#define DKP_WUP_RESPONSE_OFFSET_DUTY_CYCLE	0xe
+#define DKP_WUP_RESPONSE_OFFSET_POWER_CYCLE	0xf
 
 /* commands can never be bigger then this */
 #define DKP_WUP_COMMAND_LEN			256
@@ -330,8 +277,8 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 
 	/* update the command fields */
 	if (command == 'd' && subcommand == '-' && number_tokens - offset == 18) {
-		obj->energy_rate = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_WATTS], NULL) / 10.0f;
-		obj->voltage = strtod (tokens[offset+DKP_WUP_RESPONSE_HEADER_VOLTS], NULL) / 10.0f;
+		obj->energy_rate = strtod (tokens[offset+DKP_WUP_RESPONSE_OFFSET_WATTS], NULL) / 10.0f;
+		obj->voltage = strtod (tokens[offset+DKP_WUP_RESPONSE_OFFSET_VOLTS], NULL) / 10.0f;
 		ret = TRUE;
 	} else {
 		egg_debug ("ignoring command '%c'", command);
@@ -392,8 +339,13 @@ dkp_wup_coldplug (DkpDevice *device)
 	}
 
 	/* attempt to clear */
-	ret = dkp_wup_write_command (wup, DKP_WUP_COMMAND_CLEAR);
-	ret = dkp_wup_write_command (wup, DKP_WUP_COMMAND_START_LOG);
+	ret = dkp_wup_write_command (wup, "#R,W,0;");
+
+	/* setup logging interval */
+	data = g_strdup_printf ("#L,W,3,E,1,%i;", DKP_WUP_REFRESH_TIMEOUT);
+	ret = dkp_wup_write_command (wup, data);
+	g_free (data);
+
 	/* dummy read */
 	data = dkp_wup_read_command (wup);
 	egg_debug ("data after clear %s", data);
