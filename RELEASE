@@ -1,0 +1,31 @@
+DeviceKit-power Release Notes
+
+1. Write NEWS entries for DeviceKit-power and gnome-packagekit in the same
+   format as usual. Ignore any trivial commits.
+
+git-shortlog DEVICEKIT_POWER_001.. | grep -v trivial | grep -v Merge > NEWS.new
+
+2. Commit changes in DeviceKit-power git:
+
+git commit -a -m "Release version 002"
+git tag -a -f -m "Release 002" DEVICEKIT_POWER_002
+git push --tags
+git push
+
+3. Generate the tarball:
+
+make dist
+
+4. Upload both tarballs to:
+
+scp *.tar.gz packagekit.org:/srv/www/html/releases/
+
+5. Do post release version bump in configure.ac
+
+6. Commit changes:
+
+git commit -a -m "trivial: post release version bump"
+git push
+
+7. Send an email to devkit-devel@lists.freedesktop.org
+

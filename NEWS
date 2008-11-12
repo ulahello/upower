@@ -9,6 +9,7 @@ New Features:
  - all logging for all the other device types too (Richard Hughes)
  - Move object paths so things are rooted under /org/freedesktop/DeviceKit/Power (David Zeuthen)
  - Add functionality to monitor a Watts Up Pro device (Richard Hughes)
+ - Turn some methods into properties (David Zeuthen)
 
 Bugfixes:
  - Also rename configure.in to configure.ac in autogen.sh (David Zeuthen)
@@ -34,4 +35,5 @@ Bugfixes:
  - Use a better resolution limiting function for getting the history to reduce CPU load (Richard Hughes)
  - Match the WUP device on the tty device, not the USB device (Richard Hughes)
  - Fix the include headers for DeviceKit 002 (Richard Hughes)
+ - Document how to access the D-Bus service with examples (David Zeuthen)
 
