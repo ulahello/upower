@@ -101,113 +101,130 @@ dkp_client_enumerate_devices (DkpClient *client, GError **error)
 	return devices;
 }
 
+/**
+ * dkp_client_ensure_properties:
+ **/
 static void
-ensure_properties (DkpClient *client)
+dkp_client_ensure_properties (DkpClient *client)
 {
-        GError *error;
-        GHashTable *props;
-        GValue *value;
+	gboolean ret;
+	GError *error;
+	GHashTable *props;
+	GValue *value;
 
-        props = NULL;
+	props = NULL;
 
 	if (client->priv->have_properties)
 		goto out;
 
-        error = NULL;
-        if (!dbus_g_proxy_call (client->priv->prop_proxy,
-                                "GetAll",
-                                &error,
-                                G_TYPE_STRING,
-                                "org.freedesktop.DeviceKit.Power",
-                                G_TYPE_INVALID,
-                                dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_VALUE),
-                                &props,
-                                G_TYPE_INVALID)) {
-                g_warning ("Error invokving GetAll() to get properties: %s", error->message);
-                g_error_free (error);
-                goto out;
-        }
+	error = NULL;
+	ret = dbus_g_proxy_call (client->priv->prop_proxy, "GetAll", &error,
+				 G_TYPE_STRING, "org.freedesktop.DeviceKit.Power",
+				 G_TYPE_INVALID,
+				 dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_VALUE), &props,
+				 G_TYPE_INVALID);
+	if (!ret) {
+		g_warning ("Error invoking GetAll() to get properties: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
 
 
-        value = g_hash_table_lookup (props, "daemon-version");
-        if (value == NULL) {
-                g_warning ("No 'daemon-version' property");
-                goto out;
-        }
-        client->priv->daemon_version = g_strdup (g_value_get_string (value));
+	value = g_hash_table_lookup (props, "daemon-version");
+	if (value == NULL) {
+		g_warning ("No 'daemon-version' property");
+		goto out;
+	}
+	client->priv->daemon_version = g_strdup (g_value_get_string (value));
 
-        value = g_hash_table_lookup (props, "can-suspend");
-        if (value == NULL) {
-                g_warning ("No 'can-suspend' property");
-                goto out;
-        }
-        client->priv->can_suspend = g_value_get_boolean (value);
+	value = g_hash_table_lookup (props, "can-suspend");
+	if (value == NULL) {
+		g_warning ("No 'can-suspend' property");
+		goto out;
+	}
+	client->priv->can_suspend = g_value_get_boolean (value);
 
-        value = g_hash_table_lookup (props, "can-hibernate");
-        if (value == NULL) {
-                g_warning ("No 'can-hibernate' property");
-                goto out;
-        }
-        client->priv->can_hibernate = g_value_get_boolean (value);
+	value = g_hash_table_lookup (props, "can-hibernate");
+	if (value == NULL) {
+		g_warning ("No 'can-hibernate' property");
+		goto out;
+	}
+	client->priv->can_hibernate = g_value_get_boolean (value);
 
-        value = g_hash_table_lookup (props, "on-battery");
-        if (value == NULL) {
-                g_warning ("No 'on-battery' property");
-                goto out;
-        }
-        client->priv->on_battery = g_value_get_boolean (value);
+	value = g_hash_table_lookup (props, "on-battery");
+	if (value == NULL) {
+		g_warning ("No 'on-battery' property");
+		goto out;
+	}
+	client->priv->on_battery = g_value_get_boolean (value);
 
-        value = g_hash_table_lookup (props, "on-low-battery");
-        if (value == NULL) {
-                g_warning ("No 'on-low-battery' property");
-                goto out;
-        }
-        client->priv->on_low_battery = g_value_get_boolean (value);
+	value = g_hash_table_lookup (props, "on-low-battery");
+	if (value == NULL) {
+		g_warning ("No 'on-low-battery' property");
+		goto out;
+	}
+	client->priv->on_low_battery = g_value_get_boolean (value);
 
+	/* cached */
 	client->priv->have_properties = TRUE;
 
  out:
-        if (props != NULL)
-                g_hash_table_unref (props);
+	if (props != NULL)
+		g_hash_table_unref (props);
 }
 
+/**
+ * dkp_client_get_daemon_version:
+ **/
 const gchar *
 dkp_client_get_daemon_version (DkpClient *client)
 {
 	g_return_val_if_fail (DKP_IS_CLIENT (client), NULL);
-	ensure_properties (client);
+	dkp_client_ensure_properties (client);
 	return client->priv->daemon_version;
 }
 
+/**
+ * dkp_client_can_hibernate:
+ **/
 gboolean
 dkp_client_can_hibernate (DkpClient *client)
 {
 	g_return_val_if_fail (DKP_IS_CLIENT (client), FALSE);
-	ensure_properties (client);
+	dkp_client_ensure_properties (client);
 	return client->priv->can_hibernate;
 }
 
+/**
+ * dkp_client_can_suspend:
+ **/
 gboolean
 dkp_client_can_suspend (DkpClient *client)
 {
 	g_return_val_if_fail (DKP_IS_CLIENT (client), FALSE);
-	ensure_properties (client);
+	dkp_client_ensure_properties (client);
 	return client->priv->can_suspend;
 }
 
+/**
+ * dkp_client_on_battery:
+ **/
 gboolean
 dkp_client_on_battery (DkpClient *client)
 {
 	g_return_val_if_fail (DKP_IS_CLIENT (client), FALSE);
-	ensure_properties (client);
+	dkp_client_ensure_properties (client);
 	return client->priv->on_battery;
 }
 
+/**
+ * dkp_client_on_low_battery:
+ **/
 gboolean
 dkp_client_on_low_battery (DkpClient *client)
 {
 	g_return_val_if_fail (DKP_IS_CLIENT (client), FALSE);
-	ensure_properties (client);
+	dkp_client_ensure_properties (client);
 	return client->priv->on_low_battery;
 }
 

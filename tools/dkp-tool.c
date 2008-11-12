@@ -44,7 +44,7 @@ static gboolean opt_monitor_detail = FALSE;
 static void
 dkp_tool_device_added_cb (DkpClient *client, const DkpClientDevice *device, gpointer user_data)
 {
-	g_print ("added:     %s\n", dkp_client_device_get_object_path (device));
+	g_print ("device added:     %s\n", dkp_client_device_get_object_path (device));
 	if (opt_monitor_detail) {
 		dkp_client_device_print (device);
 		g_print ("\n");
@@ -57,7 +57,7 @@ dkp_tool_device_added_cb (DkpClient *client, const DkpClientDevice *device, gpoi
 static void
 dkp_tool_device_changed_cb (DkpClient *client, const DkpClientDevice *device, gpointer user_data)
 {
-	g_print ("changed:     %s\n", dkp_client_device_get_object_path (device));
+	g_print ("device changed:     %s\n", dkp_client_device_get_object_path (device));
 	if (opt_monitor_detail) {
 		/* TODO: would be nice to just show the diff */
 		dkp_client_device_print (device);
@@ -71,7 +71,7 @@ dkp_tool_device_changed_cb (DkpClient *client, const DkpClientDevice *device, gp
 static void
 dkp_tool_device_removed_cb (DkpClient *client, const DkpClientDevice *device, gpointer user_data)
 {
-	g_print ("removed:   %s\n", dkp_client_device_get_object_path (device));
+	g_print ("device removed:   %s\n", dkp_client_device_get_object_path (device));
 	if (opt_monitor_detail)
 		g_print ("\n");
 }
@@ -143,7 +143,7 @@ main (int argc, char **argv)
 		{ "monitor", 'm', 0, G_OPTION_ARG_NONE, &opt_monitor, _("Monitor activity from the power daemon"), NULL },
 		{ "monitor-detail", 0, 0, G_OPTION_ARG_NONE, &opt_monitor_detail, _("Monitor with detail"), NULL },
 		{ "show-info", 'i', 0, G_OPTION_ARG_STRING, &opt_show_info, _("Show information about object path"), NULL },
-                { "version", 'v', 0, G_OPTION_ARG_NONE, &opt_version, "Print version of client and daemon", NULL },
+		{ "version", 'v', 0, G_OPTION_ARG_NONE, &opt_version, "Print version of client and daemon", NULL },
 		{ NULL }
 	};
 
@@ -159,10 +159,10 @@ main (int argc, char **argv)
 	client = dkp_client_new ();
 
 	if (opt_version) {
-                g_print ("DeviceKit-power client version %s\n"
-                         "DeviceKit-power daemon version %s\n",
-                         PACKAGE_VERSION,
-                         dkp_client_get_daemon_version (client));
+		g_print ("DeviceKit-power client version %s\n"
+			 "DeviceKit-power daemon version %s\n",
+			 PACKAGE_VERSION,
+			 dkp_client_get_daemon_version (client));
 		ret = 0;
 		goto out;
 	}

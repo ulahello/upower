@@ -155,34 +155,34 @@ dkp_daemon_get_property (GObject         *object,
 
 	daemon = DKP_DAEMON (object);
 
-        switch (prop_id) {
+	switch (prop_id) {
 
-        case PROP_DAEMON_VERSION:
-                g_value_set_string (value, PACKAGE_VERSION);
-                break;
+	case PROP_DAEMON_VERSION:
+		g_value_set_string (value, PACKAGE_VERSION);
+		break;
 
-        case PROP_CAN_SUSPEND:
+	case PROP_CAN_SUSPEND:
 		/* TODO: for now assume we can always suspend */
-                g_value_set_boolean (value, TRUE);
-                break;
+		g_value_set_boolean (value, TRUE);
+		break;
 
-        case PROP_CAN_HIBERNATE:
+	case PROP_CAN_HIBERNATE:
 		/* TODO for now assume we can always hibernate */
-                g_value_set_boolean (value, TRUE);
-                break;
+		g_value_set_boolean (value, TRUE);
+		break;
 
-        case PROP_ON_BATTERY:
-                g_value_set_boolean (value, daemon->priv->on_battery);
-                break;
+	case PROP_ON_BATTERY:
+		g_value_set_boolean (value, daemon->priv->on_battery);
+		break;
 
-        case PROP_ON_LOW_BATTERY:
-                g_value_set_boolean (value, daemon->priv->on_battery && daemon->priv->low_battery);
-                break;
+	case PROP_ON_LOW_BATTERY:
+		g_value_set_boolean (value, daemon->priv->on_battery && daemon->priv->low_battery);
+		break;
 
-        default:
-                G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-                break;
-        }
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
 }
 
 /**
@@ -203,8 +203,7 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 		g_signal_new ("device-added",
 			      G_OBJECT_CLASS_TYPE (klass),
 			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
-			      0,
-			      NULL, NULL,
+			      0, NULL, NULL,
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 
@@ -212,8 +211,7 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 		g_signal_new ("device-removed",
 			      G_OBJECT_CLASS_TYPE (klass),
 			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
-			      0,
-			      NULL, NULL,
+			      0, NULL, NULL,
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 
@@ -221,8 +219,7 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 		g_signal_new ("device-changed",
 			      G_OBJECT_CLASS_TYPE (klass),
 			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
-			      0,
-			      NULL, NULL,
+			      0, NULL, NULL,
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 
@@ -230,47 +227,46 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 		g_signal_new ("changed",
 			      G_OBJECT_CLASS_TYPE (klass),
 			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
-			      0,
-			      NULL, NULL,
+			      0, NULL, NULL,
 			      g_cclosure_marshal_VOID__BOOLEAN,
 			      G_TYPE_NONE, 0);
 
 
-        g_object_class_install_property (object_class,
-                                         PROP_DAEMON_VERSION,
-                                         g_param_spec_string ("daemon-version",
-                                                              "Daemon Version",
-                                                              "The version of the running daemon",
-                                                              NULL,
-                                                              G_PARAM_READABLE));
+	g_object_class_install_property (object_class,
+					 PROP_DAEMON_VERSION,
+					 g_param_spec_string ("daemon-version",
+							      "Daemon Version",
+							      "The version of the running daemon",
+							      NULL,
+							      G_PARAM_READABLE));
 
-        g_object_class_install_property (object_class,
-                                         PROP_CAN_SUSPEND,
-                                         g_param_spec_boolean ("can-suspend",
+	g_object_class_install_property (object_class,
+					 PROP_CAN_SUSPEND,
+					 g_param_spec_boolean ("can-suspend",
 							       "Can Suspend",
 							       "Whether the system can suspend",
 							       FALSE,
 							       G_PARAM_READABLE));
 
-        g_object_class_install_property (object_class,
-                                         PROP_CAN_SUSPEND,
-                                         g_param_spec_boolean ("can-hibernate",
+	g_object_class_install_property (object_class,
+					 PROP_CAN_SUSPEND,
+					 g_param_spec_boolean ("can-hibernate",
 							       "Can Hibernate",
 							       "Whether the system can hibernate",
 							       FALSE,
 							       G_PARAM_READABLE));
 
-        g_object_class_install_property (object_class,
-                                         PROP_ON_BATTERY,
-                                         g_param_spec_boolean ("on-battery",
+	g_object_class_install_property (object_class,
+					 PROP_ON_BATTERY,
+					 g_param_spec_boolean ("on-battery",
 							       "On Battery",
 							       "Whether the system is running on battery",
 							       FALSE,
 							       G_PARAM_READABLE));
 
-        g_object_class_install_property (object_class,
-                                         PROP_ON_LOW_BATTERY,
-                                         g_param_spec_boolean ("on-low-battery",
+	g_object_class_install_property (object_class,
+					 PROP_ON_LOW_BATTERY,
+					 g_param_spec_boolean ("on-low-battery",
 							       "On Low Battery",
 							       "Whether the system is running on battery and if the battery is critically low",
 							       FALSE,
@@ -375,15 +371,13 @@ gpk_daemon_dbus_filter (DBusConnection *connection, DBusMessage *message, void *
 
 	interface = dbus_message_get_interface (message);
 
-	if (dbus_message_is_signal (message, DBUS_INTERFACE_DBUS, "NameOwnerChanged")) {
-		/* pass NameOwnerChanged signals from the bus to PolKitTracker */
+	/* pass NameOwnerChanged signals from the bus to PolKitTracker */
+	if (dbus_message_is_signal (message, DBUS_INTERFACE_DBUS, "NameOwnerChanged"))
 		polkit_tracker_dbus_func (daemon->priv->pk_tracker, message);
-	}
 
-	if (interface != NULL && g_str_has_prefix (interface, "org.freedesktop.ConsoleKit")) {
-		/* pass ConsoleKit signals to PolKitTracker */
+	/* pass ConsoleKit signals to PolKitTracker */
+	if (interface != NULL && g_str_has_prefix (interface, "org.freedesktop.ConsoleKit"))
 		polkit_tracker_dbus_func (daemon->priv->pk_tracker, message);
-	}
 
 	/* other filters might want to process this message too */
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;

@@ -90,7 +90,7 @@ dkp_csr_poll_cb (DkpCsr *csr)
 /**
  * dkp_csr_find_device:
  **/
-static struct usb_device * 
+static struct usb_device *
 dkp_csr_find_device (DkpCsr *csr)
 {
 	struct usb_bus *curr_bus;
@@ -107,14 +107,14 @@ dkp_csr_find_device (DkpCsr *csr)
 		if (g_strcasecmp (dir_name, curr_bus->dirname))
 			continue;
 
- 		for (curr_device = curr_bus->devices; curr_device != NULL; 
+		for (curr_device = curr_bus->devices; curr_device != NULL;
 		     curr_device = curr_device->next) {
 			/* egg_debug ("Checking port: [%s]", curr_device->filename); */
 			if (g_strcasecmp (filename, curr_device->filename))
 				continue;
-			egg_debug ("Matched device: [%s][%s][%04X:%04X]", curr_bus->dirname, 
-				curr_device->filename, 
-				curr_device->descriptor.idVendor, 
+			egg_debug ("Matched device: [%s][%s][%04X:%04X]", curr_bus->dirname,
+				curr_device->filename,
+				curr_device->descriptor.idVendor,
 				curr_device->descriptor.idProduct);
 			goto out;
 		}
