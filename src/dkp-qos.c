@@ -1,0 +1,525 @@
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
+ *
+ * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ *
+ * Licensed under the GNU General Public License Version 2
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+#include "config.h"
+
+#include <glib.h>
+#include <dbus/dbus-glib.h>
+#include <dbus/dbus-glib-lowlevel.h>
+#include <glib/gi18n.h>
+#include <string.h>
+
+#include "egg-debug.h"
+#include "egg-string.h"
+
+#include "dkp-qos.h"
+#include "dkp-marshal.h"
+#include "dkp-daemon.h"
+#include "dkp-polkit.h"
+
+static void     dkp_qos_class_init (DkpQosClass *klass);
+static void     dkp_qos_init       (DkpQos      *qos);
+static void     dkp_qos_finalize   (GObject	*object);
+
+#define DKP_QOS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_QOS, DkpQosPrivate))
+
+typedef enum {
+	DKP_QOS_TYPE_NETWORK,
+	DKP_QOS_TYPE_CPU_DMA,
+	DKP_QOS_TYPE_UNKNOWN
+} DkpQosType;
+
+typedef struct
+{
+	gint			 value;
+	guint			 uid;
+	guint			 pid;
+	gchar			*sender;
+	guint32			 cookie;
+	gboolean		 persistent;
+	DkpQosType		 type;
+} DkpQosRequestObj;
+
+struct DkpQosPrivate
+{
+//	gint			 last_network;
+//	gint			 last_cpu_dma;
+//	GPtrArray		*data_network;
+//	GPtrArray		*data_cpu_dma;
+	GPtrArray		*data;
+	gint			 last[DKP_QOS_TYPE_UNKNOWN];
+	DkpPolkit		*polkit;
+	DBusGConnection		*connection;
+	DBusGProxy		*proxy;
+};
+
+enum {
+	LATENCY_CHANGED,
+	REQUESTS_CHANGED,
+	LAST_SIGNAL
+};
+
+static guint signals [LAST_SIGNAL] = { 0 };
+
+G_DEFINE_TYPE (DkpQos, dkp_qos, G_TYPE_OBJECT)
+
+/**
+ * dkp_qos_type_to_text:
+ **/
+static const gchar *
+dkp_qos_type_to_text (DkpQosType type)
+{
+	if (type == DKP_QOS_TYPE_NETWORK)
+		return "network";
+	if (type == DKP_QOS_TYPE_CPU_DMA)
+		return "cpu_dma";
+	return NULL;
+}
+
+/**
+ * dkp_qos_type_from_text:
+ **/
+static DkpQosType
+dkp_qos_type_from_text (const gchar *type)
+{
+	if (egg_strequal (type, "network"))
+		return DKP_QOS_TYPE_NETWORK;
+	if (egg_strequal (type, "cpu_dma"))
+		return DKP_QOS_TYPE_CPU_DMA;
+	return DKP_QOS_TYPE_UNKNOWN;
+}
+
+/**
+ * dkp_qos_find_from_cookie:
+ **/
+static DkpQosRequestObj *
+dkp_qos_find_from_cookie (DkpQos *qos, guint32 cookie)
+{
+	guint i;
+	GPtrArray *data;
+	DkpQosRequestObj *obj;
+
+	/* search list */
+	data = qos->priv->data;
+	for (i=0; i<data->len; i++) {
+		obj = g_ptr_array_index (data, i);
+		if (obj->cookie == cookie)
+			return obj;
+	}
+
+	/* nothing found */
+	return NULL;
+}
+
+/**
+ * dkp_qos_generate_cookie:
+ *
+ * Return value: a random cookie not already allocated
+ **/
+static guint32
+dkp_qos_generate_cookie (DkpQos *qos)
+{
+	guint32 cookie;
+
+	/* iterate until we have a unique cookie */
+	do {
+		cookie = (guint32) g_random_int_range (1, G_MAXINT32);
+	} while (dkp_qos_find_from_cookie (qos, cookie) != NULL);
+
+	return cookie;
+}
+
+/**
+ * dkp_qos_get_lowest:
+ **/
+static gint
+dkp_qos_get_lowest (DkpQos *qos, DkpQosType type)
+{
+	guint i;
+	gint lowest = G_MAXINT;
+	GPtrArray *data;
+	DkpQosRequestObj *obj;
+
+	/* find lowest */
+	data = qos->priv->data;
+	for (i=0; i<data->len; i++) {
+		obj = g_ptr_array_index (data, i);
+		if (obj->type == type && obj->value > 0 && obj->value < lowest)
+			lowest = obj->value;
+	}
+
+	/* no requests */
+	if (lowest == G_MAXINT)
+		lowest = -1;
+
+	return lowest;
+}
+
+/**
+ * dkp_qos_latency_perhaps_changed:
+ **/
+static gboolean
+dkp_qos_latency_perhaps_changed (DkpQos *qos, DkpQosType type)
+{
+	gint lowest;
+	gint *last;
+
+	/* re-find the lowest value */
+	lowest = dkp_qos_get_lowest (qos, type);
+
+	/* find the last value */
+	last = &qos->priv->last[type];
+
+	/* same value? */
+	if (*last == lowest)
+		return FALSE;
+
+	/* emit signal */
+	g_signal_emit (qos, signals [LATENCY_CHANGED], 0, dkp_qos_type_to_text (type), lowest);
+	*last = lowest;
+	return TRUE;
+}
+
+/**
+ * dkp_qos_request_latency:
+ *
+ * Return value: a new random cookie
+ **/
+void
+dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboolean persistent, DBusGMethodInvocation *context)
+{
+	DkpQosRequestObj *obj;
+	gchar *sender = NULL;
+	const gchar *auth;
+	GError *error;
+	guint uid;
+	gint pid;
+	PolKitCaller *caller = NULL;
+	polkit_bool_t retval;
+	DkpQosType type;
+
+	/* get correct data */
+	type = dkp_qos_type_from_text (type_text);
+	if (type == DKP_QOS_TYPE_UNKNOWN) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
+	/* as we are async, we can get the sender */
+	sender = dbus_g_method_get_sender (context);
+	if (sender == NULL) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "no DBUS sender");
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
+	/* get the caller */
+	caller = dkp_polkit_get_caller (qos->priv->polkit, context);
+	if (caller == NULL)
+		goto out;
+
+	/* check auth */
+	if (persistent)
+		auth = "org.freedesktop.devicekit.power.latency.request-latency-persistent";
+	else
+		auth = "org.freedesktop.devicekit.power.latency.request-latency";
+	if (!dkp_polkit_check_auth (qos->priv->polkit, caller, auth, context))
+		goto out;
+
+	/* get uid */
+	retval = polkit_caller_get_uid (caller, &uid);
+	if (!retval) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "cannot get UID");
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
+	/* get pid */
+	retval = polkit_caller_get_pid (caller, &pid);
+	if (!retval) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "cannot get PID");
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
+	/* seems okay, add to list */
+	obj = g_new (DkpQosRequestObj, 1);
+	obj->cookie = dkp_qos_generate_cookie (qos);
+	obj->sender = g_strdup (sender);
+	obj->value = value;
+	obj->uid = uid;
+	obj->uid = pid;
+	obj->persistent = persistent;
+	obj->type = type;
+	g_ptr_array_add (qos->priv->data, obj);
+
+	egg_debug ("Recieved Qos from '%s' (%i:%i)' saving as #%i",
+		   obj->sender, obj->value, obj->persistent, obj->cookie);
+
+	/* TODO: if persistent add to datadase */
+
+	/* only emit event on the first one */
+	dkp_qos_latency_perhaps_changed (qos, type);
+	dbus_g_method_return (context, obj->cookie);
+out:
+	if (caller != NULL)
+		polkit_caller_unref (caller);
+	g_free (sender);
+}
+
+/**
+ * dkp_qos_free_data_obj:
+ **/
+static void
+dkp_qos_free_data_obj (DkpQosRequestObj *obj)
+{
+	g_free (obj->sender);
+	g_free (obj);
+}
+
+/**
+ * dkp_qos_cancel_request:
+ *
+ * Removes a cookie and associated data from the DkpQosRequestObj struct.
+ **/
+void
+dkp_qos_cancel_request (DkpQos *qos, guint cookie, DBusGMethodInvocation *context)
+{
+	DkpQosRequestObj *obj;
+	GError *error;
+	gchar *sender = NULL;
+	PolKitCaller *caller = NULL;
+
+	/* find the correct cookie */
+	obj = dkp_qos_find_from_cookie (qos, cookie);
+	if (obj == NULL) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL,
+				     "Cannot find request for #%i", cookie);
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
+	/* get the sender? */
+	sender = dbus_g_method_get_sender (context);
+	if (sender == NULL) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "no DBUS sender");
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
+	/* are we not the sender? */
+	if (!egg_strequal (sender, obj->sender)) {
+		caller = dkp_polkit_get_caller (qos->priv->polkit, context);
+		if (caller == NULL)
+			goto out;
+		if (!dkp_polkit_check_auth (qos->priv->polkit, caller, "org.freedesktop.devicekit.power.latency.cancel-request", context))
+			goto out;
+	}
+
+	egg_debug ("Clear #%i", cookie);
+
+	/* remove object from list */
+	g_ptr_array_remove (qos->priv->data, obj);
+	dkp_qos_latency_perhaps_changed (qos, obj->type);
+
+	/* TODO: if persistent remove from datadase */
+
+	dkp_qos_free_data_obj (obj);
+
+	g_signal_emit (qos, signals [REQUESTS_CHANGED], 0);
+out:
+	if (caller != NULL)
+		polkit_caller_unref (caller);
+	g_free (sender);
+}
+
+/**
+ * dkp_qos_get_latency:
+ *
+ * Gets the current latency
+ **/
+gboolean
+dkp_qos_get_latency (DkpQos *qos, const gchar *type_text, gint *value, GError **error)
+{
+	DkpQosType type;
+
+	/* get correct data */
+	type = dkp_qos_type_from_text (type_text);
+	if (type == DKP_QOS_TYPE_UNKNOWN) {
+		*error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
+		return FALSE;
+	}
+
+	/* get the lowest value for this type */
+	*value = dkp_qos_get_lowest (qos, type);
+	return TRUE;
+}
+
+/**
+ * dkp_qos_set_minimum_latency:
+ **/
+void
+dkp_qos_set_minimum_latency (DkpQos *qos, const gchar *type, gint value, DBusGMethodInvocation *context)
+{
+	egg_warning ("Not implimented");
+	return;
+}
+
+/**
+ * dkp_qos_get_latency_requests:
+ **/
+gboolean
+dkp_qos_get_latency_requests (DkpQos *qos, GPtrArray **requests, GError **error)
+{
+	egg_warning ("Not implimented");
+	return FALSE;
+}
+
+
+/**
+ * dkp_qos_remove_dbus:
+ **/
+static void
+dkp_qos_remove_dbus (DkpQos *qos, const gchar *sender)
+{
+	guint i;
+	GPtrArray *data;
+	DkpQosRequestObj *obj;
+
+	/* remove *any* senders that match the sender */
+	data = qos->priv->data;
+	for (i=0; i<data->len; i++) {
+		obj = g_ptr_array_index (data, i);
+		if (strcmp (obj->sender, sender) == 0) {
+			egg_debug ("Auto-revoked idle qos on %s", sender);
+			g_ptr_array_remove (qos->priv->data, obj);
+			dkp_qos_latency_perhaps_changed (qos, obj->type);
+			dkp_qos_free_data_obj (obj);
+		}
+	}
+}
+
+/**
+ * dkp_qos_name_owner_changed_cb:
+ **/
+static void
+dkp_qos_name_owner_changed_cb (DBusGProxy *proxy, const gchar *name, const gchar *prev, const gchar *new, DkpQos *qos)
+{
+	if (strlen (new) == 0)
+		dkp_qos_remove_dbus (qos, name);
+}
+
+/**
+ * dkp_qos_class_init:
+ **/
+static void
+dkp_qos_class_init (DkpQosClass *klass)
+{
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	object_class->finalize = dkp_qos_finalize;
+
+	signals [LATENCY_CHANGED] =
+		g_signal_new ("latency-changed",
+			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (DkpQosClass, latency_changed),
+			      NULL, NULL, dkp_marshal_VOID__STRING_INT,
+			      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+	signals [REQUESTS_CHANGED] =
+		g_signal_new ("requests-changed",
+			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (DkpQosClass, requests_changed),
+			      NULL, NULL, g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
+	g_type_class_add_private (klass, sizeof (DkpQosPrivate));
+}
+
+/**
+ * dkp_qos_init:
+ **/
+static void
+dkp_qos_init (DkpQos *qos)
+{
+	guint i;
+	GError *error = NULL;
+
+	qos->priv = DKP_QOS_GET_PRIVATE (qos);
+	qos->priv->polkit = dkp_polkit_new ();
+	qos->priv->data = g_ptr_array_new ();
+
+	/* TODO: need to load persistent values */
+
+	/* setup lowest */
+	for (i=0; i<DKP_QOS_TYPE_UNKNOWN; i++)
+		qos->priv->last[i] = dkp_qos_get_lowest (qos, i);
+
+	qos->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
+	if (error != NULL) {
+		egg_warning ("Cannot connect to bus: %s", error->message);
+		g_error_free (error);
+		return;
+	}
+
+	/* register on the bus */
+	dbus_g_connection_register_g_object (qos->priv->connection, "/org/freedesktop/DeviceKit/Power", G_OBJECT (qos));
+
+	/* watch NOC */
+	qos->priv->proxy = dbus_g_proxy_new_for_name_owner (qos->priv->connection, DBUS_SERVICE_DBUS,
+						 	    DBUS_PATH_DBUS, DBUS_INTERFACE_DBUS, NULL);
+	dbus_g_proxy_add_signal (qos->priv->proxy, "NameOwnerChanged",
+				 G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
+	dbus_g_proxy_connect_signal (qos->priv->proxy, "NameOwnerChanged",
+				     G_CALLBACK (dkp_qos_name_owner_changed_cb), qos, NULL);
+}
+
+/**
+ * dkp_qos_finalize:
+ **/
+static void
+dkp_qos_finalize (GObject *object)
+{
+	DkpQos *qos;
+
+	g_return_if_fail (object != NULL);
+	g_return_if_fail (DKP_IS_QOS (object));
+
+	qos = DKP_QOS (object);
+	qos->priv = DKP_QOS_GET_PRIVATE (qos);
+
+	g_ptr_array_foreach (qos->priv->data, (GFunc) dkp_qos_free_data_obj, NULL);
+	g_ptr_array_free (qos->priv->data, TRUE);
+	g_object_unref (qos->priv->proxy);
+	g_object_unref (qos->priv->polkit);
+
+	G_OBJECT_CLASS (dkp_qos_parent_class)->finalize (object);
+}
+
+/**
+ * dkp_qos_new:
+ **/
+DkpQos *
+dkp_qos_new (void)
+{
+	DkpQos *qos;
+	qos = g_object_new (DKP_TYPE_QOS, NULL);
+	return DKP_QOS (qos);
+}
+
