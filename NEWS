@@ -1,6 +1,6 @@
-Version 0.3.11
-~~~~~~~~~~~~~~
-Released: 2008-11-11
+Version 002
+~~~~~~~~~~~
+Released: 2008-11-13
 
 New Features:
  - add in CanSuspend and CanHibernate into API (Richard Hughes)
@@ -36,4 +36,10 @@ Bugfixes:
  - Match the WUP device on the tty device, not the USB device (Richard Hughes)
  - Fix the include headers for DeviceKit 002 (Richard Hughes)
  - Document how to access the D-Bus service with examples (David Zeuthen)
+
+Version 001
+~~~~~~~~~~~
+Released: 2008-09-02
+
+- Initial proof of concept version
 
