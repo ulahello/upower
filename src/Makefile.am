@@ -26,7 +26,9 @@ DEVKIT_POWER_LIBS = $(top_builddir)/libdevkit-power/libdevkit-power.la
 BUILT_SOURCES =							\
 	dkp-daemon-glue.h					\
 	dkp-device-glue.h					\
-	dkp-marshal.h			dkp-marshal.c
+	dkp-qos-glue.h					\
+	dkp-marshal.h						\
+	dkp-marshal.c
 
 dkp-marshal.h: dkp-marshal.list
 	glib-genmarshal $< --prefix=dkp_marshal --header > $@
@@ -40,10 +42,16 @@ dkp-daemon-glue.h: org.freedesktop.DeviceKit.Power.xml Makefile.am
 dkp-device-glue.h: org.freedesktop.DeviceKit.Power.Device.xml Makefile.am
 	dbus-binding-tool --prefix=dkp_device --mode=glib-server --output=dkp-device-glue.h org.freedesktop.DeviceKit.Power.Device.xml
 
+dkp-qos-glue.h: org.freedesktop.DeviceKit.Power.QoS.xml Makefile.am
+	dbus-binding-tool --prefix=dkp_qos --mode=glib-server --output=dkp-qos-glue.h org.freedesktop.DeviceKit.Power.QoS.xml
+
 libexec_PROGRAMS = devkit-power-daemon
 
 dbusifdir = $(datadir)/dbus-1/interfaces
-dbusif_DATA = org.freedesktop.DeviceKit.Power.xml org.freedesktop.DeviceKit.Power.Device.xml
+dbusif_DATA = 							\
+	org.freedesktop.DeviceKit.Power.xml 			\
+	org.freedesktop.DeviceKit.Power.Device.xml 		\
+	org.freedesktop.DeviceKit.Power.QoS.xml
 
 devkit_power_daemon_SOURCES = 					\
 	egg-debug.c						\
@@ -103,6 +111,7 @@ CLEANFILES = $(BUILT_SOURCES)
 EXTRA_DIST =							\
 	org.freedesktop.DeviceKit.Power.xml        		\
 	org.freedesktop.DeviceKit.Power.Device.xml		\
+	org.freedesktop.DeviceKit.Power.QoS.xml		\
 	dkp-marshal.list					\
 	95-devkit-power-csr.rules				\
 	95-devkit-power-hid.rules				\

@@ -66,6 +66,7 @@
     </partintro>
     <xi:include href="dbus/org.freedesktop.DeviceKit.Power.ref.xml"/>
     <xi:include href="dbus/org.freedesktop.DeviceKit.Power.Device.ref.xml"/>
+    <xi:include href="dbus/org.freedesktop.DeviceKit.Power.QoS.ref.xml"/>
   </reference>
 
   <reference id="tools-fileformats">
