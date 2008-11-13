@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
  * Copyright (C) 2008 David Zeuthen <davidz@redhat.com>
+ * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +35,7 @@
 #include "egg-debug.h"
 #include "egg-string.h"
 
+#include "dkp-polkit.h"
 #include "dkp-daemon.h"
 #include "dkp-device.h"
 #include "dkp-supply.h"
@@ -70,15 +72,12 @@ static guint signals[LAST_SIGNAL] = { 0 };
 
 struct DkpDaemonPrivate
 {
-	DBusGConnection		*system_bus_connection;
-	DBusGProxy		*system_bus_proxy;
-	PolKitContext		*pk_context;
-	PolKitTracker		*pk_tracker;
-
+	DBusGConnection		*connection;
+	DBusGProxy		*proxy;
+	DkpPolkit		*polkit;
 	DkpDeviceList		*list;
 	gboolean		 on_battery;
 	gboolean		 low_battery;
-
 	DevkitClient		*devkit_client;
 };
 
@@ -284,6 +283,7 @@ static void
 dkp_daemon_init (DkpDaemon *daemon)
 {
 	daemon->priv = DKP_DAEMON_GET_PRIVATE (daemon);
+	daemon->priv->polkit = dkp_polkit_new ();
 }
 
 /**
@@ -301,86 +301,17 @@ dkp_daemon_finalize (GObject *object)
 
 	g_return_if_fail (daemon->priv != NULL);
 
-	if (daemon->priv->pk_context != NULL)
-		polkit_context_unref (daemon->priv->pk_context);
-	if (daemon->priv->pk_tracker != NULL)
-		polkit_tracker_unref (daemon->priv->pk_tracker);
-	if (daemon->priv->system_bus_proxy != NULL)
-		g_object_unref (daemon->priv->system_bus_proxy);
-	if (daemon->priv->system_bus_connection != NULL)
-		dbus_g_connection_unref (daemon->priv->system_bus_connection);
+	if (daemon->priv->proxy != NULL)
+		g_object_unref (daemon->priv->proxy);
+	if (daemon->priv->connection != NULL)
+		dbus_g_connection_unref (daemon->priv->connection);
 	if (daemon->priv->devkit_client != NULL)
 		g_object_unref (daemon->priv->devkit_client);
 	if (daemon->priv->list != NULL)
 		g_object_unref (daemon->priv->list);
+	g_object_unref (daemon->priv->polkit);
 
 	G_OBJECT_CLASS (dkp_daemon_parent_class)->finalize (object);
-}
-
-/**
- * pk_io_watch_have_data:
- **/
-static gboolean
-pk_io_watch_have_data (GIOChannel *channel, GIOCondition condition, gpointer user_data)
-{
-	int fd;
-	PolKitContext *pk_context = user_data;
-	fd = g_io_channel_unix_get_fd (channel);
-	polkit_context_io_func (pk_context, fd);
-	return TRUE;
-}
-
-/**
- * pk_io_add_watch:
- **/
-static int
-pk_io_add_watch (PolKitContext *pk_context, int fd)
-{
-	guint id = 0;
-	GIOChannel *channel;
-	channel = g_io_channel_unix_new (fd);
-	if (channel == NULL)
-		goto out;
-	id = g_io_add_watch (channel, G_IO_IN, pk_io_watch_have_data, pk_context);
-	if (id == 0) {
-		g_io_channel_unref (channel);
-		goto out;
-	}
-	g_io_channel_unref (channel);
-out:
-	return id;
-}
-
-/**
- * pk_io_remove_watch:
- **/
-static void
-pk_io_remove_watch (PolKitContext *pk_context, int watch_id)
-{
-	g_source_remove (watch_id);
-}
-
-/**
- * gpk_daemon_dbus_filter:
- **/
-static DBusHandlerResult
-gpk_daemon_dbus_filter (DBusConnection *connection, DBusMessage *message, void *user_data)
-{
-	DkpDaemon *daemon = DKP_DAEMON (user_data);
-	const gchar *interface;
-
-	interface = dbus_message_get_interface (message);
-
-	/* pass NameOwnerChanged signals from the bus to PolKitTracker */
-	if (dbus_message_is_signal (message, DBUS_INTERFACE_DBUS, "NameOwnerChanged"))
-		polkit_tracker_dbus_func (daemon->priv->pk_tracker, message);
-
-	/* pass ConsoleKit signals to PolKitTracker */
-	if (interface != NULL && g_str_has_prefix (interface, "org.freedesktop.ConsoleKit"))
-		polkit_tracker_dbus_func (daemon->priv->pk_tracker, message);
-
-	/* other filters might want to process this message too */
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
 static gboolean gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event);
@@ -631,6 +562,127 @@ gpk_daemon_device_event_signal_handler (DevkitClient *client, const char *action
 	}
 }
 
+#if 0
+/**
+ * gpk_daemon_throw_error:
+ **/
+static gboolean
+gpk_daemon_throw_error (DBusGMethodInvocation *context, int error_code, const char *format, ...)
+{
+	GError *error;
+	va_list args;
+	gchar *message;
+
+	va_start (args, format);
+	message = g_strdup_vprintf (format, args);
+	va_end (args);
+
+	error = g_error_new (DKP_DAEMON_ERROR, error_code, message);
+	dbus_g_method_return_error (context, error);
+	g_error_free (error);
+	g_free (message);
+	return TRUE;
+}
+#endif
+
+/* exported methods */
+
+/**
+ * dkp_daemon_enumerate_devices:
+ **/
+gboolean
+dkp_daemon_enumerate_devices (DkpDaemon *daemon, DBusGMethodInvocation *context)
+{
+	guint i;
+	const GPtrArray *array;
+	GPtrArray *object_paths;
+	DkpDevice *device;
+
+	/* build a pointer array of the object paths */
+	object_paths = g_ptr_array_new ();
+	array = dkp_device_list_get_array (daemon->priv->list);
+	for (i=0; i<array->len; i++) {
+		device = (DkpDevice *) g_ptr_array_index (array, i);
+		g_ptr_array_add (object_paths, g_strdup (dkp_device_get_object_path (device)));
+	}
+
+	/* return it on the bus */
+	dbus_g_method_return (context, object_paths);
+
+	/* free */
+	g_ptr_array_foreach (object_paths, (GFunc) g_free, NULL);
+	g_ptr_array_free (object_paths, TRUE);
+	return TRUE;
+}
+
+/**
+ * dkp_daemon_suspend:
+ **/
+gboolean
+dkp_daemon_suspend (DkpDaemon *daemon, DBusGMethodInvocation *context)
+{
+	gboolean ret;
+	GError *error;
+	GError *error_local = NULL;
+	PolKitCaller *caller;
+
+	caller = dkp_polkit_get_caller (daemon->priv->polkit, context);
+	if (caller == NULL)
+		goto out;
+
+	if (!dkp_polkit_check_auth (daemon->priv->polkit, caller, "org.freedesktop.devicekit.power.suspend", context))
+		goto out;
+
+	ret = g_spawn_command_line_async ("/usr/sbin/pm-suspend", &error_local);
+	if (!ret) {
+		error = g_error_new (DKP_DAEMON_ERROR,
+				     DKP_DAEMON_ERROR_GENERAL,
+				     "Cannot spawn: %s", error_local->message);
+		g_error_free (error_local);
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+	dbus_g_method_return (context, NULL);
+out:
+	if (caller != NULL)
+		polkit_caller_unref (caller);
+	return TRUE;
+}
+
+/**
+ * dkp_daemon_hibernate:
+ **/
+gboolean
+dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
+{
+	gboolean ret;
+	GError *error;
+	GError *error_local = NULL;
+	PolKitCaller *caller;
+
+	caller = dkp_polkit_get_caller (daemon->priv->polkit, context);
+	if (caller == NULL)
+		goto out;
+
+	if (!dkp_polkit_check_auth (daemon->priv->polkit, caller, "org.freedesktop.devicekit.power.hibernate", context))
+		goto out;
+
+	ret = g_spawn_command_line_async ("/usr/sbin/pm-hibernate", &error_local);
+	if (!ret) {
+		error = g_error_new (DKP_DAEMON_ERROR,
+				     DKP_DAEMON_ERROR_GENERAL,
+				     "Cannot spawn: %s", error_local->message);
+		g_error_free (error_local);
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+	dbus_g_method_return (context, NULL);
+out:
+	if (caller != NULL)
+		polkit_caller_unref (caller);
+	return TRUE;
+}
+
 /**
  * gpk_daemon_register_power_daemon:
  **/
@@ -642,81 +694,36 @@ gpk_daemon_register_power_daemon (DkpDaemon *daemon)
 	GError *error = NULL;
 	guint i;
 
-	daemon->priv->pk_context = polkit_context_new ();
-	polkit_context_set_io_watch_functions (daemon->priv->pk_context, pk_io_add_watch, pk_io_remove_watch);
-	if (!polkit_context_init (daemon->priv->pk_context, NULL)) {
-		g_critical ("cannot initialize libpolkit");
-		goto error;
-	}
-
 	error = NULL;
-	daemon->priv->system_bus_connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
-	if (daemon->priv->system_bus_connection == NULL) {
+	daemon->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
+	if (daemon->priv->connection == NULL) {
 		if (error != NULL) {
 			g_critical ("error getting system bus: %s", error->message);
 			g_error_free (error);
 		}
 		goto error;
 	}
-	connection = dbus_g_connection_get_connection (daemon->priv->system_bus_connection);
+	connection = dbus_g_connection_get_connection (daemon->priv->connection);
 
-	daemon->priv->pk_tracker = polkit_tracker_new ();
-	polkit_tracker_set_system_bus_connection (daemon->priv->pk_tracker, connection);
-	polkit_tracker_init (daemon->priv->pk_tracker);
-
-	dbus_g_connection_register_g_object (daemon->priv->system_bus_connection,
+	dbus_g_connection_register_g_object (daemon->priv->connection,
 					     "/org/freedesktop/DeviceKit/Power",
 					     G_OBJECT (daemon));
 
-	daemon->priv->system_bus_proxy = dbus_g_proxy_new_for_name (daemon->priv->system_bus_connection,
-								      DBUS_SERVICE_DBUS,
-								      DBUS_PATH_DBUS,
-								      DBUS_INTERFACE_DBUS);
-
-	/* TODO FIXME: I'm pretty sure dbus-glib blows in a way that
-	 * we can't say we're interested in all signals from all
-	 * members on all interfaces for a given service... So we do
-	 * this..
-	 */
-
+	daemon->priv->proxy = dbus_g_proxy_new_for_name (daemon->priv->connection,
+						      DBUS_SERVICE_DBUS,
+						      DBUS_PATH_DBUS,
+						      DBUS_INTERFACE_DBUS);
 	dbus_error_init (&dbus_error);
-
-	/* need to listen to NameOwnerChanged */
-	dbus_bus_add_match (connection,
-			    "type='signal'"
-			    ",interface='"DBUS_INTERFACE_DBUS"'"
-			    ",sender='"DBUS_SERVICE_DBUS"'"
-			    ",member='NameOwnerChanged'",
-			    &dbus_error);
-
 	if (dbus_error_is_set (&dbus_error)) {
 		egg_warning ("Cannot add match rule: %s: %s", dbus_error.name, dbus_error.message);
 		dbus_error_free (&dbus_error);
-		goto error;
-	}
-
-	/* need to listen to ConsoleKit signals */
-	dbus_bus_add_match (connection,
-			    "type='signal',sender='org.freedesktop.ConsoleKit'",
-			    &dbus_error);
-
-	if (dbus_error_is_set (&dbus_error)) {
-		egg_warning ("Cannot add match rule: %s: %s", dbus_error.name, dbus_error.message);
-		dbus_error_free (&dbus_error);
-		goto error;
-	}
-
-	if (!dbus_connection_add_filter (connection,
-					 gpk_daemon_dbus_filter,
-					 daemon,
-					 NULL)) {
-		egg_warning ("Cannot add D-Bus filter: %s: %s", dbus_error.name, dbus_error.message);
 		goto error;
 	}
 
 	/* connect to the DeviceKit daemon */
 	for (i=0; subsystems[i] != NULL; i++)
 		egg_debug ("registering subsystem : %s", subsystems[i]);
+
 	daemon->priv->devkit_client = devkit_client_new (subsystems);
 	if (!devkit_client_connect (daemon->priv->devkit_client, &error)) {
 		egg_warning ("Couldn't open connection to DeviceKit daemon: %s", error->message);
@@ -769,188 +776,5 @@ dkp_daemon_new (void)
 	daemon->priv->low_battery = dkp_daemon_get_low_battery_local (daemon);
 
 	return daemon;
-}
-
-/**
- * dkp_daemon_local_get_caller_for_context:
- **/
-PolKitCaller *
-dkp_daemon_local_get_caller_for_context (DkpDaemon *daemon, DBusGMethodInvocation *context)
-{
-	const gchar *sender;
-	GError *error;
-	DBusError dbus_error;
-	PolKitCaller *pk_caller;
-
-	sender = dbus_g_method_get_sender (context);
-	dbus_error_init (&dbus_error);
-	pk_caller = polkit_tracker_get_caller_from_dbus_name (daemon->priv->pk_tracker,
-							      sender,
-							      &dbus_error);
-	if (pk_caller == NULL) {
-		error = g_error_new (DKP_DAEMON_ERROR,
-				     DKP_DAEMON_ERROR_GENERAL,
-				     "Error getting information about caller: %s: %s",
-				     dbus_error.name, dbus_error.message);
-		dbus_error_free (&dbus_error);
-		dbus_g_method_return_error (context, error);
-		g_error_free (error);
-		return NULL;
-	}
-
-	return pk_caller;
-}
-
-/**
- * dkp_daemon_local_check_auth:
- **/
-gboolean
-dkp_daemon_local_check_auth (DkpDaemon *daemon, PolKitCaller *pk_caller, const char *action_id, DBusGMethodInvocation *context)
-{
-	gboolean ret = FALSE;
-	GError *error;
-	DBusError d_error;
-	PolKitAction *pk_action;
-	PolKitResult pk_result;
-
-	pk_action = polkit_action_new ();
-	polkit_action_set_action_id (pk_action, action_id);
-	pk_result = polkit_context_is_caller_authorized (daemon->priv->pk_context, pk_action, pk_caller, TRUE, NULL);
-	if (pk_result == POLKIT_RESULT_YES) {
-		ret = TRUE;
-	} else {
-		dbus_error_init (&d_error);
-		polkit_dbus_error_generate (pk_action, pk_result, &d_error);
-		error = NULL;
-		dbus_set_g_error (&error, &d_error);
-		dbus_g_method_return_error (context, error);
-		g_error_free (error);
-		dbus_error_free (&d_error);
-	}
-	polkit_action_unref (pk_action);
-	return ret;
-}
-
-#if 0
-/**
- * gpk_daemon_throw_error:
- **/
-static gboolean
-gpk_daemon_throw_error (DBusGMethodInvocation *context, int error_code, const char *format, ...)
-{
-	GError *error;
-	va_list args;
-	gchar *message;
-
-	va_start (args, format);
-	message = g_strdup_vprintf (format, args);
-	va_end (args);
-
-	error = g_error_new (DKP_DAEMON_ERROR,
-			     error_code,
-			     message);
-	dbus_g_method_return_error (context, error);
-	g_error_free (error);
-	g_free (message);
-	return TRUE;
-}
-#endif
-
-/* exported methods */
-
-/**
- * dkp_daemon_enumerate_devices:
- **/
-gboolean
-dkp_daemon_enumerate_devices (DkpDaemon *daemon, DBusGMethodInvocation *context)
-{
-	guint i;
-	const GPtrArray *array;
-	GPtrArray *object_paths;
-	DkpDevice *device;
-
-	/* build a pointer array of the object paths */
-	object_paths = g_ptr_array_new ();
-	array = dkp_device_list_get_array (daemon->priv->list);
-	for (i=0; i<array->len; i++) {
-		device = (DkpDevice *) g_ptr_array_index (array, i);
-		g_ptr_array_add (object_paths, g_strdup (dkp_device_get_object_path (device)));
-	}
-
-	/* return it on the bus */
-	dbus_g_method_return (context, object_paths);
-
-	/* free */
-	g_ptr_array_foreach (object_paths, (GFunc) g_free, NULL);
-	g_ptr_array_free (object_paths, TRUE);
-	return TRUE;
-}
-
-/**
- * dkp_daemon_suspend:
- **/
-gboolean
-dkp_daemon_suspend (DkpDaemon *daemon, DBusGMethodInvocation *context)
-{
-	gboolean ret;
-	GError *error;
-	GError *error_local = NULL;
-	PolKitCaller *pk_caller;
-
-	pk_caller = dkp_daemon_local_get_caller_for_context (daemon, context);
-	if (pk_caller == NULL)
-		goto out;
-
-	if (!dkp_daemon_local_check_auth (daemon, pk_caller, "org.freedesktop.devicekit.power.suspend", context))
-		goto out;
-
-	ret = g_spawn_command_line_async ("/usr/sbin/pm-suspend", &error_local);
-	if (!ret) {
-		error = g_error_new (DKP_DAEMON_ERROR,
-				     DKP_DAEMON_ERROR_GENERAL,
-				     "Cannot spawn: %s", error_local->message);
-		g_error_free (error_local);
-		dbus_g_method_return_error (context, error);
-		goto out;
-	}
-	dbus_g_method_return (context, NULL);
-out:
-	if (pk_caller != NULL)
-		polkit_caller_unref (pk_caller);
-	return TRUE;
-}
-
-/**
- * dkp_daemon_hibernate:
- **/
-gboolean
-dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
-{
-	gboolean ret;
-	GError *error;
-	GError *error_local = NULL;
-	PolKitCaller *pk_caller;
-
-	pk_caller = dkp_daemon_local_get_caller_for_context (daemon, context);
-	if (pk_caller == NULL)
-		goto out;
-
-	if (!dkp_daemon_local_check_auth (daemon, pk_caller, "org.freedesktop.devicekit.power.hibernate", context))
-		goto out;
-
-	ret = g_spawn_command_line_async ("/usr/sbin/pm-hibernate", &error_local);
-	if (!ret) {
-		error = g_error_new (DKP_DAEMON_ERROR,
-				     DKP_DAEMON_ERROR_GENERAL,
-				     "Cannot spawn: %s", error_local->message);
-		g_error_free (error_local);
-		dbus_g_method_return_error (context, error);
-		goto out;
-	}
-	dbus_g_method_return (context, NULL);
-out:
-	if (pk_caller != NULL)
-		polkit_caller_unref (pk_caller);
-	return TRUE;
 }
 

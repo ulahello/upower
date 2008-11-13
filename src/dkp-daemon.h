@@ -28,7 +28,7 @@
 G_BEGIN_DECLS
 
 #define DKP_TYPE_DAEMON		(dkp_daemon_get_type ())
-#define DKP_DAEMON(o)	   	(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_DAEMON, DkpDaemon))
+#define DKP_DAEMON(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_DAEMON, DkpDaemon))
 #define DKP_DAEMON_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_DAEMON, DkpDaemonClass))
 #define DKP_IS_DAEMON(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_DAEMON))
 #define DKP_IS_DAEMON_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_DAEMON))
@@ -63,18 +63,6 @@ GType dkp_daemon_error_get_type (void);
 GQuark		 dkp_daemon_error_quark		(void);
 GType		 dkp_daemon_get_type		(void);
 DkpDaemon	*dkp_daemon_new			(void);
-
-/* local methods */
-
-PolKitCaller	*dkp_daemon_local_get_caller_for_context (DkpDaemon	*daemon,
-						 DBusGMethodInvocation	*context);
-
-gboolean	 dkp_daemon_local_check_auth	(DkpDaemon		*daemon,
-						 PolKitCaller		*pk_caller,
-						 const char		*action_id,
-						 DBusGMethodInvocation	*context);
-
-/* exported methods */
 gboolean	 dkp_daemon_enumerate_devices	(DkpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
 gboolean	 dkp_daemon_get_on_battery	(DkpDaemon		*daemon,
