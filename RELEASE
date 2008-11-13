@@ -3,12 +3,12 @@ DeviceKit-power Release Notes
 1. Write NEWS entries for DeviceKit-power and gnome-packagekit in the same
    format as usual. Ignore any trivial commits.
 
-git-shortlog DeviceKit-power-001.. | grep -v trivial | grep -v Merge > NEWS.new
+git-shortlog DeviceKit-power-002.. | grep -v trivial | grep -v Merge > NEWS.new
 
 2. Commit changes in DeviceKit-power git:
 
-git commit -a -m "Released DeviceKit-power 002"
-git tag -a -f -m "Released DeviceKit-power 002" DeviceKit-power-002
+git commit -a -m "Released DeviceKit-power 003"
+git tag -a -f -m "Released DeviceKit-power 003" DeviceKit-power-003
 git push --tags
 git push
 
@@ -16,9 +16,9 @@ git push
 
 make dist
 
-4. Upload both tarballs to:
+4. Upload tarball:
 
-scp *.tar.gz packagekit.org:/srv/www/html/releases/
+scp *.tar.gz hughsient@freedesktop.org:/srv/hal.freedesktop.org/www/releases/
 
 5. Do post release version bump in configure.ac
 
