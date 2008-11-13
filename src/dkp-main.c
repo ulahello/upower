@@ -42,7 +42,10 @@
 #include <devkit-gobject/devkit-gobject.h>
 
 #include "egg-debug.h"
+
 #include "dkp-daemon.h"
+#include "dkp-qos.h"
+#include "dkp-qos-glue.h"
 
 #define NAME_TO_CLAIM "org.freedesktop.DeviceKit.Power"
 static GMainLoop *loop = NULL;
@@ -54,15 +57,12 @@ static gboolean
 main_acquire_name_on_proxy (DBusGProxy *bus_proxy)
 {
 	GError *error;
-	guint	  result;
-	gboolean	res;
-	gboolean	ret;
+	guint result;
+	gboolean res;
+	gboolean ret = FALSE;
 
-	ret = FALSE;
-
-	if (bus_proxy == NULL) {
+	if (bus_proxy == NULL)
 		goto out;
-	}
 
 	error = NULL;
 	res = dbus_g_proxy_call (bus_proxy,
@@ -94,8 +94,7 @@ main_acquire_name_on_proxy (DBusGProxy *bus_proxy)
 	}
 
 	ret = TRUE;
-
- out:
+out:
 	return ret;
 }
 
@@ -121,11 +120,13 @@ int
 main (int argc, char **argv)
 {
 	GError *error;
-	DkpDaemon *power_daemon;
+	DkpDaemon *daemon;
+	DkpQos *qos;
 	GOptionContext *context;
 	DBusGProxy *bus_proxy;
 	DBusGConnection *bus;
 	gboolean verbose = FALSE;
+	DBusGConnection *connection;
 	int ret = 1;
 
 	const GOptionEntry entries[] = {
@@ -167,18 +168,24 @@ main (int argc, char **argv)
 
 	egg_debug ("Starting devkit-power-daemon version %s", VERSION);
 
-	power_daemon = dkp_daemon_new ();
-
-	if (power_daemon == NULL)
+	qos = dkp_qos_new ();
+	daemon = dkp_daemon_new ();
+	if (daemon == NULL)
 		goto out;
+
+	/* register on the bus */
+	connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, NULL);
+	dbus_g_object_type_install_info (DKP_TYPE_QOS, &dbus_glib_dkp_qos_object_info);
+	dbus_g_connection_register_g_object (connection, "/org/freedesktop/DeviceKit/Power/QoS", G_OBJECT (qos));
 
 	loop = g_main_loop_new (NULL, FALSE);
 	g_main_loop_run (loop);
 
-	g_object_unref (power_daemon);
+	g_object_unref (qos);
+	g_object_unref (daemon);
 	g_main_loop_unref (loop);
 	ret = 0;
-
 out:
 	return ret;
 }
+
