@@ -488,7 +488,7 @@ dkp_history_schedule_save (DkpHistory *history)
 
 	/* TODO: if low power, then don't batch up save requests */
 	ret = dkp_history_is_low_power (history);
-	if (FALSE && ret) {
+	if (ret) {
 		egg_warning ("saving directly to disk as low power");
 		dkp_history_save_data (history);
 		return TRUE;
