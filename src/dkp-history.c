@@ -276,7 +276,7 @@ dkp_history_get_profile_data (DkpHistory *history, gboolean charging)
 {
 	guint i;
 	guint non_zero_accuracy = 0;
-	gfloat average;
+	gfloat average = 0.0f;
 	guint bin;
 	guint oldbin = 999;
 	const DkpHistoryObj *obj_last = NULL;
@@ -303,33 +303,27 @@ dkp_history_get_profile_data (DkpHistory *history, gboolean charging)
 	for (i=0; i<array->len; i++) {
 		obj = (const DkpHistoryObj *) egg_obj_list_index (array, i);
 		if (obj_last == NULL || obj->state != obj_last->state) {
-//			egg_debug ("ignoring %i as not the same as prev", obj->time);
 			obj_old = NULL;
 			goto cont;
 		}
 
 		/* round to the nearest int */
 		bin = rint (obj->value);
-//		egg_debug ("data %f binned into %i", obj->value, bin);
 		if (oldbin != bin) {
-//			egg_debug ("bin changed!, %i->%i", oldbin, bin);
 			oldbin = bin;
 			if (obj_old != NULL) {
 				/* not enough or too much difference */
 				value = fabs (obj->value - obj_old->value);
 				if (value < 0.01f) {
-//					egg_debug ("ignoring as value difference too small: %f", value);
 					obj_old = NULL;
 					goto cont;
 				}
 				if (value > 3.0f) {
-//					egg_debug ("ignoring as value difference too large: %f", value);
 					obj_old = NULL;
 					goto cont;
 				}
 
 				time = obj->time - obj_old->time;
-//				egg_debug ("time difference at %i is %i", bin, time);
 				/* use the accuracy field as a counter for now */
 				if ((charging && obj->state == DKP_DEVICE_STATE_CHARGING) ||
 				    (!charging && obj->state == DKP_DEVICE_STATE_DISCHARGING)) {
@@ -361,7 +355,8 @@ cont:
 	}
 
 	/* average */
-	average = total_value / non_zero_accuracy;
+	if (non_zero_accuracy != 0)
+		average = total_value / non_zero_accuracy;
 	egg_debug ("average is %f", average);
 
 	/* make the values a factor of 0, so that 1.0 is twice the
