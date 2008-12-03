@@ -23,7 +23,6 @@ file are instantly applied.
     <_description>Suspend the system</_description>
     <_message>Authentication is required to suspend the system</_message>
     <defaults>
-      <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>
       <allow_active>yes</allow_active>
     </defaults>
@@ -33,7 +32,6 @@ file are instantly applied.
     <_description>Hibernate the system</_description>
     <_message>Authentication is required to hibernate the system</_message>
     <defaults>
-      <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>
       <allow_active>yes</allow_active>
     </defaults>
@@ -43,7 +41,6 @@ file are instantly applied.
     <_description>Set the required latency of an application</_description>
     <_message>Authentication is required to set the required latency of an application</_message>
     <defaults>
-      <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>
       <allow_active>yes</allow_active>
     </defaults>
@@ -53,7 +50,6 @@ file are instantly applied.
     <_description>Set a persistent latency setting</_description>
     <_message>Authentication is required to set a persistent latency setting</_message>
     <defaults>
-      <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>
       <allow_active>yes</allow_active>
     </defaults>
@@ -63,7 +59,6 @@ file are instantly applied.
     <_description>Set administrator settings for latency control</_description>
     <_message>Authentication is required to set administrator settings for latency control</_message>
     <defaults>
-      <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>
       <allow_active>auth_admin</allow_active>
     </defaults>
@@ -73,7 +68,6 @@ file are instantly applied.
     <_description>Cancel a latency request</_description>
     <_message>Authentication is required to cancel a latency request</_message>
     <defaults>
-      <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>
       <allow_active>auth_admin</allow_active>
     </defaults>

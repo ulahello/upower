@@ -199,7 +199,6 @@
 
     <!-- ************************************************************ -->
     <method name="GetLatency">
-      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
       <arg name="type" direction="in" type="s">
         <doc:doc>
           <doc:summary>
@@ -310,7 +309,6 @@
                 <doc:term>value</doc:term>
                 <doc:definition>
                   The value, in microseconds or kilobits per second.
-                  <doc:tt>discharging</doc:tt>.
                 </doc:definition>
               </doc:item>
             </doc:list>

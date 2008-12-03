@@ -26,6 +26,11 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include <glib/gi18n.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
 
 #include "egg-debug.h"
 #include "egg-string.h"
@@ -41,6 +46,18 @@ static void     dkp_qos_finalize   (GObject	*object);
 
 #define DKP_QOS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_QOS, DkpQosPrivate))
 
+#define DKP_QOS_REQUESTS_STRUCT_TYPE (dbus_g_type_get_struct ("GValueArray",	\
+							      G_TYPE_UINT,	\
+							      G_TYPE_UINT,	\
+							      G_TYPE_UINT,	\
+							      G_TYPE_STRING,	\
+							      G_TYPE_UINT64,	\
+							      G_TYPE_BOOLEAN,	\
+							      G_TYPE_STRING,	\
+							      G_TYPE_STRING,	\
+							      G_TYPE_INT,	\
+							      G_TYPE_INVALID))
+
 typedef enum {
 	DKP_QOS_TYPE_NETWORK,
 	DKP_QOS_TYPE_CPU_DMA,
@@ -53,6 +70,7 @@ typedef struct
 	guint			 uid;
 	guint			 pid;
 	gchar			*sender;
+	gchar			*cmdline;
 	guint32			 cookie;
 	gboolean		 persistent;
 	DkpQosType		 type;
@@ -61,7 +79,9 @@ typedef struct
 struct DkpQosPrivate
 {
 	GPtrArray		*data;
+	gint			 fd[DKP_QOS_TYPE_UNKNOWN];
 	gint			 last[DKP_QOS_TYPE_UNKNOWN];
+	gint			 minimum[DKP_QOS_TYPE_UNKNOWN];
 	DkpPolkit		*polkit;
 	DBusGConnection		*connection;
 	DBusGProxy		*proxy;
@@ -162,6 +182,12 @@ dkp_qos_get_lowest (DkpQos *qos, DkpQosType type)
 			lowest = obj->value;
 	}
 
+	/* over-ride */
+	if (lowest < qos->priv->minimum[type]) {
+		egg_debug ("minium override from %i to %i", lowest, qos->priv->minimum[type]);
+		lowest = qos->priv->minimum[type];
+	}
+
 	/* no requests */
 	if (lowest == G_MAXINT)
 		lowest = -1;
@@ -177,6 +203,7 @@ dkp_qos_latency_perhaps_changed (DkpQos *qos, DkpQosType type)
 {
 	gint lowest;
 	gint *last;
+	gchar *text;
 
 	/* re-find the lowest value */
 	lowest = dkp_qos_get_lowest (qos, type);
@@ -188,10 +215,43 @@ dkp_qos_latency_perhaps_changed (DkpQos *qos, DkpQosType type)
 	if (*last == lowest)
 		return FALSE;
 
+	/* write new values to pm-qos */
+	if (qos->priv->fd[type] < 0) {
+		egg_warning ("cannot write to pm-qos as file not open");
+	} else {
+		text = g_strdup_printf ("%i", lowest);
+		write (qos->priv->fd[type], text, strlen (text));
+		g_free (text);
+	}
+
 	/* emit signal */
 	g_signal_emit (qos, signals [LATENCY_CHANGED], 0, dkp_qos_type_to_text (type), lowest);
 	*last = lowest;
 	return TRUE;
+}
+
+/**
+ * dkp_qos_get_cmdline:
+ **/
+static gchar *
+dkp_qos_get_cmdline (gint pid)
+{
+	gboolean ret;
+	gchar *filename = NULL;
+	gchar *cmdline = NULL;
+	GError *error = NULL;
+
+	/* get command line from proc */
+	filename = g_strdup_printf ("/proc/%i/cmdline", pid);
+	ret = g_file_get_contents (filename, &cmdline, NULL, &error);
+	if (!ret) {
+		egg_warning ("failed to get cmdline: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+out:
+	g_free (filename);
+	return cmdline;
 }
 
 /**
@@ -205,6 +265,7 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	DkpQosRequestObj *obj;
 	gchar *sender = NULL;
 	const gchar *auth;
+	gchar *cmdline = NULL;
 	GError *error;
 	guint uid;
 	gint pid;
@@ -257,13 +318,22 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 		goto out;
 	}
 
+	/* get command line */
+	cmdline = dkp_qos_get_cmdline (pid);
+	if (cmdline == NULL) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "cannot get cmdline");
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
 	/* seems okay, add to list */
 	obj = g_new (DkpQosRequestObj, 1);
 	obj->cookie = dkp_qos_generate_cookie (qos);
 	obj->sender = g_strdup (sender);
 	obj->value = value;
 	obj->uid = uid;
-	obj->uid = pid;
+	obj->pid = pid;
+	obj->cmdline = g_strdup (cmdline);
 	obj->persistent = persistent;
 	obj->type = type;
 	g_ptr_array_add (qos->priv->data, obj);
@@ -280,6 +350,7 @@ out:
 	if (caller != NULL)
 		polkit_caller_unref (caller);
 	g_free (sender);
+	g_free (cmdline);
 }
 
 /**
@@ -288,6 +359,7 @@ out:
 static void
 dkp_qos_free_data_obj (DkpQosRequestObj *obj)
 {
+	g_free (obj->cmdline);
 	g_free (obj->sender);
 	g_free (obj);
 }
@@ -374,10 +446,25 @@ dkp_qos_get_latency (DkpQos *qos, const gchar *type_text, gint *value, GError **
  * dkp_qos_set_minimum_latency:
  **/
 void
-dkp_qos_set_minimum_latency (DkpQos *qos, const gchar *type, gint value, DBusGMethodInvocation *context)
+dkp_qos_set_minimum_latency (DkpQos *qos, const gchar *type_text, gint value, DBusGMethodInvocation *context)
 {
-	egg_warning ("Not implimented");
-	return;
+	DkpQosType type;
+	GError *error;
+
+	/* type valid? */
+	type = dkp_qos_type_from_text (type_text);
+	if (type == DKP_QOS_TYPE_UNKNOWN) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
+		dbus_g_method_return_error (context, error);
+		return;
+	}
+
+	egg_warning ("setting %s minimum to %i", type_text, value);
+	qos->priv->minimum[type] = value;
+
+	/* may have changed */
+	dkp_qos_latency_perhaps_changed (qos, type);
+	dbus_g_method_return (context, NULL);
 }
 
 /**
@@ -386,8 +473,36 @@ dkp_qos_set_minimum_latency (DkpQos *qos, const gchar *type, gint value, DBusGMe
 gboolean
 dkp_qos_get_latency_requests (DkpQos *qos, GPtrArray **requests, GError **error)
 {
-	egg_warning ("Not implimented");
-	return FALSE;
+	guint i;
+	GPtrArray *data;
+	DkpQosRequestObj *obj;
+
+	*requests = g_ptr_array_new ();
+	data = qos->priv->data;
+	for (i=0; i<data->len; i++) {
+		GValue elem = {0};
+
+		obj = g_ptr_array_index (data, i);
+		g_value_init (&elem, DKP_QOS_REQUESTS_STRUCT_TYPE);
+		g_value_take_boxed (&elem, dbus_g_type_specialized_construct (DKP_QOS_REQUESTS_STRUCT_TYPE));
+		dbus_g_type_struct_set (&elem,
+					0, obj->cookie,
+					1, obj->uid,
+					2, obj->pid,
+					3, obj->cmdline,
+					4, 0, //obj->timespec,
+					5, obj->persistent,
+					6, dkp_qos_type_to_text (obj->type),
+					7, obj->value,
+					G_MAXUINT);
+		g_ptr_array_add (*requests, g_value_get_boxed (&elem));
+	}
+
+//	dbus_g_method_return (context, requests);
+//	g_ptr_array_foreach (*requests, (GFunc) g_value_array_free, NULL);
+//	g_ptr_array_free (*requests, TRUE);
+
+	return TRUE;
 }
 
 
@@ -467,6 +582,17 @@ dkp_qos_init (DkpQos *qos)
 	for (i=0; i<DKP_QOS_TYPE_UNKNOWN; i++)
 		qos->priv->last[i] = dkp_qos_get_lowest (qos, i);
 
+	/* setup minimum */
+	for (i=0; i<DKP_QOS_TYPE_UNKNOWN; i++)
+		qos->priv->minimum[i] = -1;
+
+	qos->priv->fd[DKP_QOS_TYPE_CPU_DMA] = open ("/dev/cpu_dma_latency", O_WRONLY);
+	if (qos->priv->fd[DKP_QOS_TYPE_CPU_DMA] < 0)
+		egg_warning ("cannot open cpu_dma device file");
+	qos->priv->fd[DKP_QOS_TYPE_NETWORK] = open ("/dev/network_latency", O_WRONLY);
+	if (qos->priv->fd[DKP_QOS_TYPE_NETWORK] < 0)
+		egg_warning ("cannot open network device file");
+
 	qos->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (error != NULL) {
 		egg_warning ("Cannot connect to bus: %s", error->message);
@@ -493,6 +619,7 @@ static void
 dkp_qos_finalize (GObject *object)
 {
 	DkpQos *qos;
+	guint i;
 
 	g_return_if_fail (object != NULL);
 	g_return_if_fail (DKP_IS_QOS (object));
@@ -500,6 +627,11 @@ dkp_qos_finalize (GObject *object)
 	qos = DKP_QOS (object);
 	qos->priv = DKP_QOS_GET_PRIVATE (qos);
 
+	/* close files */
+	for (i=0; i<DKP_QOS_TYPE_UNKNOWN; i++) {
+		if (qos->priv->fd[i] > 0)
+			close (qos->priv->fd[i]);
+	}
 	g_ptr_array_foreach (qos->priv->data, (GFunc) dkp_qos_free_data_obj, NULL);
 	g_ptr_array_free (qos->priv->data, TRUE);
 	g_object_unref (qos->priv->proxy);
