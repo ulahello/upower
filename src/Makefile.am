@@ -106,7 +106,9 @@ udevrules_DATA = 						\
 	95-devkit-power-csr.rules
 
 install-data-hook:
-	$(mkinstalldirs) $(DESTDIR)$(localstatedir)/lib/DeviceKit-power
+	if test -w $(DESTDIR)$(prefix)/; then \
+		mkdir -p $(DESTDIR)$(localstatedir)/lib/DeviceKit-power; \
+	fi
 
 CLEANFILES = $(BUILT_SOURCES)
 
