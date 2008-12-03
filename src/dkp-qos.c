@@ -196,6 +196,40 @@ dkp_qos_get_lowest (DkpQos *qos, DkpQosType type)
 }
 
 /**
+ * dkp_qos_latency_write:
+ **/
+static gboolean
+dkp_qos_latency_write (DkpQos *qos, DkpQosType type, gint value)
+{
+	gchar *text = NULL;
+	gint retval;
+	gint length;
+	gboolean ret = TRUE;
+
+	/* write new values to pm-qos */
+	if (qos->priv->fd[type] < 0) {
+		egg_warning ("cannot write to pm-qos as file not open");
+		ret = FALSE;
+		goto out;
+	}
+
+	/* convert to text */
+	text = g_strdup_printf ("%i", value);
+	length = strlen (text);
+
+	/* write to device file */
+	retval = write (qos->priv->fd[type], text, length);
+	if (retval != length) {
+		egg_warning ("writing '%s' to device failed", text);
+		ret = FALSE;
+		goto out;
+	}
+out:
+	g_free (text);
+	return ret;
+}
+
+/**
  * dkp_qos_latency_perhaps_changed:
  **/
 static gboolean
@@ -203,7 +237,6 @@ dkp_qos_latency_perhaps_changed (DkpQos *qos, DkpQosType type)
 {
 	gint lowest;
 	gint *last;
-	gchar *text;
 
 	/* re-find the lowest value */
 	lowest = dkp_qos_get_lowest (qos, type);
@@ -215,14 +248,8 @@ dkp_qos_latency_perhaps_changed (DkpQos *qos, DkpQosType type)
 	if (*last == lowest)
 		return FALSE;
 
-	/* write new values to pm-qos */
-	if (qos->priv->fd[type] < 0) {
-		egg_warning ("cannot write to pm-qos as file not open");
-	} else {
-		text = g_strdup_printf ("%i", lowest);
-		write (qos->priv->fd[type], text, strlen (text));
-		g_free (text);
-	}
+	/* write to file */
+	dkp_qos_latency_write (qos, type, lowest);
 
 	/* emit signal */
 	g_signal_emit (qos, signals [LATENCY_CHANGED], 0, dkp_qos_type_to_text (type), lowest);

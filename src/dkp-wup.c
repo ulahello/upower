@@ -139,7 +139,7 @@ static gboolean
 dkp_wup_write_command (DkpWup *wup, const gchar *data)
 {
 	guint ret = TRUE;
-	int retval;
+	gint retval;
 	gint length;
 
 	length = strlen (data);
