@@ -60,10 +60,6 @@ typedef struct
 
 struct DkpQosPrivate
 {
-//	gint			 last_network;
-//	gint			 last_cpu_dma;
-//	GPtrArray		*data_network;
-//	GPtrArray		*data_cpu_dma;
 	GPtrArray		*data;
 	gint			 last[DKP_QOS_TYPE_UNKNOWN];
 	DkpPolkit		*polkit;

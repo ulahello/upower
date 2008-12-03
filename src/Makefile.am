@@ -26,7 +26,7 @@ DEVKIT_POWER_LIBS = $(top_builddir)/libdevkit-power/libdevkit-power.la
 BUILT_SOURCES =							\
 	dkp-daemon-glue.h					\
 	dkp-device-glue.h					\
-	dkp-qos-glue.h					\
+	dkp-qos-glue.h						\
 	dkp-marshal.h						\
 	dkp-marshal.c
 
