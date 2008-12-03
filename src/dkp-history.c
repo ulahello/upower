@@ -444,6 +444,7 @@ static gboolean
 dkp_history_schedule_save_cb (DkpHistory *history)
 {
 	dkp_history_save_data (history);
+	history->priv->save_id = 0;
 	return FALSE;
 }
 
@@ -486,7 +487,7 @@ dkp_history_schedule_save (DkpHistory *history)
 {
 	gboolean ret;
 
-	/* TODO: if low power, then don't batch up save requests */
+	/* if low power, then don't batch up save requests */
 	ret = dkp_history_is_low_power (history);
 	if (ret) {
 		egg_warning ("saving directly to disk as low power");
@@ -494,12 +495,9 @@ dkp_history_schedule_save (DkpHistory *history)
 		return TRUE;
 	}
 
-	/* we already have one saved, cancel and reschedule */
+	/* we already have one saved */
 	if (history->priv->save_id != 0) {
 		egg_debug ("deferring as others queued");
-		g_source_remove (history->priv->save_id);
-		history->priv->save_id = g_timeout_add_seconds (DKP_HISTORY_SAVE_INTERVAL,
-								(GSourceFunc) dkp_history_schedule_save_cb, history);
 		return TRUE;
 	}
 
