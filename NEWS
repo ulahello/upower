@@ -1,3 +1,15 @@
+Version 003
+~~~~~~~~~~~
+Released: 2008-12-09
+
+New Features:
+ - Implement the .QoS interface -- still proof of concept (Richard Hughes)
+
+Bugfixes:
+ - Enable the low power saving code in DkpHistory (Richard Hughes)
+ - Don't keep putting off the profile saving in DkpHistory (Richard Hughes)
+ - Allow DeviceKit-power to run with the 'fixed' DBus (Richard Hughes)
+
 Version 002
 ~~~~~~~~~~~
 Released: 2008-11-13
