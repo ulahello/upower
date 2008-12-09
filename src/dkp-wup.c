@@ -311,10 +311,8 @@ dkp_wup_coldplug (DkpDevice *device)
 
 	/* get the type */
 	type = devkit_device_get_property (d, "DKP_MONITOR_TYPE");
-	if (type == NULL || !egg_strequal (type, "wup")) {
-		egg_debug ("not a Watts Up? Pro device");
+	if (type == NULL || !egg_strequal (type, "wup"))
 		goto out;
-	}
 
 	/* get the device file */
 	device_file = devkit_device_get_device_file (d);

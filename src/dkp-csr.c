@@ -146,10 +146,8 @@ dkp_csr_coldplug (DkpDevice *device)
 
 	/* get the type */
 	type = devkit_device_get_property (d, "DKP_BATTERY_TYPE");
-	if (type == NULL) {
-		egg_debug ("not a CSR device");
+	if (type == NULL)
 		goto out;
-	}
 
 	/* which one? */
 	if (egg_strequal (type, "mouse"))

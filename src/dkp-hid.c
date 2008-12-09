@@ -303,10 +303,8 @@ dkp_hid_coldplug (DkpDevice *device)
 
 	/* get the type */
 	type = devkit_device_get_property (d, "DKP_BATTERY_TYPE");
-	if (type == NULL || !egg_strequal (type, "ups")) {
-		egg_debug ("not a UPS device");
+	if (type == NULL || !egg_strequal (type, "ups"))
 		goto out;
-	}
 
 	/* get the device file */
 	device_file = devkit_device_get_device_file (d);

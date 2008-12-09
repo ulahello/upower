@@ -45,7 +45,6 @@
 
 #include "dkp-daemon.h"
 #include "dkp-qos.h"
-#include "dkp-qos-glue.h"
 
 #define NAME_TO_CLAIM "org.freedesktop.DeviceKit.Power"
 static GMainLoop *loop = NULL;
@@ -126,7 +125,6 @@ main (int argc, char **argv)
 	DBusGProxy *bus_proxy;
 	DBusGConnection *bus;
 	gboolean verbose = FALSE;
-	DBusGConnection *connection;
 	int ret = 1;
 
 	const GOptionEntry entries[] = {
@@ -172,11 +170,6 @@ main (int argc, char **argv)
 	daemon = dkp_daemon_new ();
 	if (daemon == NULL)
 		goto out;
-
-	/* register on the bus */
-	connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, NULL);
-	dbus_g_object_type_install_info (DKP_TYPE_QOS, &dbus_glib_dkp_qos_object_info);
-	dbus_g_connection_register_g_object (connection, "/org/freedesktop/DeviceKit/Power/QoS", G_OBJECT (qos));
 
 	loop = g_main_loop_new (NULL, FALSE);
 	g_main_loop_run (loop);

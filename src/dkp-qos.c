@@ -39,6 +39,7 @@
 #include "dkp-marshal.h"
 #include "dkp-daemon.h"
 #include "dkp-polkit.h"
+#include "dkp-qos-glue.h"
 
 static void     dkp_qos_class_init (DkpQosClass *klass);
 static void     dkp_qos_init       (DkpQos      *qos);
@@ -587,6 +588,10 @@ dkp_qos_class_init (DkpQosClass *klass)
 			      G_STRUCT_OFFSET (DkpQosClass, requests_changed),
 			      NULL, NULL, g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
+
+	/* introspection */
+	dbus_g_object_type_install_info (DKP_TYPE_QOS, &dbus_glib_dkp_qos_object_info);
+
 	g_type_class_add_private (klass, sizeof (DkpQosPrivate));
 }
 
@@ -628,7 +633,7 @@ dkp_qos_init (DkpQos *qos)
 	}
 
 	/* register on the bus */
-	dbus_g_connection_register_g_object (qos->priv->connection, "/org/freedesktop/DeviceKit/Power", G_OBJECT (qos));
+	dbus_g_connection_register_g_object (qos->priv->connection, "/org/freedesktop/DeviceKit/Power/Policy", G_OBJECT (qos));
 
 	/* watch NOC */
 	qos->priv->proxy = dbus_g_proxy_new_for_name_owner (qos->priv->connection, DBUS_SERVICE_DBUS,
