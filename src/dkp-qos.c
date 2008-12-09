@@ -324,9 +324,9 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 
 	/* check auth */
 	if (persistent)
-		auth = "org.freedesktop.devicekit.power.latency.request-latency-persistent";
+		auth = "org.freedesktop.devicekit.power.qos.request-latency-persistent";
 	else
-		auth = "org.freedesktop.devicekit.power.latency.request-latency";
+		auth = "org.freedesktop.devicekit.power.qos.request-latency";
 	if (!dkp_polkit_check_auth (qos->priv->polkit, caller, auth, context))
 		goto out;
 
@@ -427,7 +427,7 @@ dkp_qos_cancel_request (DkpQos *qos, guint cookie, DBusGMethodInvocation *contex
 		caller = dkp_polkit_get_caller (qos->priv->polkit, context);
 		if (caller == NULL)
 			goto out;
-		if (!dkp_polkit_check_auth (qos->priv->polkit, caller, "org.freedesktop.devicekit.power.latency.cancel-request", context))
+		if (!dkp_polkit_check_auth (qos->priv->polkit, caller, "org.freedesktop.devicekit.power.qos.cancel-request", context))
 			goto out;
 	}
 

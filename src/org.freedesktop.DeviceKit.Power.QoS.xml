@@ -97,7 +97,7 @@
             You do not have to use this method during normal operation.
           </doc:para>
         </doc:description>
-        <doc:permission>Callers need the <doc:tt>org.freedesktop.devicekit.power.latency.set-minimum-latency</doc:tt> authorization</doc:permission>
+        <doc:permission>Callers need the <doc:tt>org.freedesktop.devicekit.power.qos.set-minimum-latency</doc:tt> authorization</doc:permission>
         <doc:errors>
           <doc:error name="&ERROR_GENERAL;">if an error occured while setting the latency</doc:error>
         </doc:errors>
@@ -151,9 +151,9 @@
         </doc:description>
         <doc:permission>
           Callers need the
-          <doc:tt>org.freedesktop.devicekit.power.latency.request-latency-persistent</doc:tt>
+          <doc:tt>org.freedesktop.devicekit.power.qos.request-latency-persistent</doc:tt>
           authorization if <doc:tt>persistent</doc:tt> is TRUE, or
-          <doc:tt>org.freedesktop.devicekit.power.latency.request-latency</doc:tt> otherwise.
+          <doc:tt>org.freedesktop.devicekit.power.qos.request-latency</doc:tt> otherwise.
         </doc:permission>
         <doc:errors>
           <doc:error name="&ERROR_GENERAL;">if an error occured while setting the latency</doc:error>
@@ -188,7 +188,7 @@
         </doc:description>
         <doc:permission>
           Callers need the
-          <doc:tt>org.freedesktop.devicekit.power.latency.cancel-request</doc:tt>
+          <doc:tt>org.freedesktop.devicekit.power.qos.cancel-request</doc:tt>
           authorization if they were not the one issuing the request.
         </doc:permission>
         <doc:errors>

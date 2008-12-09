@@ -1,5 +1,5 @@
 polkit_policydir = $(datadir)/PolicyKit/policy
-dist_polkit_policy_DATA = org.freedesktop.devicekit.power.policy
+dist_polkit_policy_DATA = org.freedesktop.devicekit.power.policy org.freedesktop.devicekit.power.qos.policy
 
 # You will need a recent intltool or the patch from this bug
 # http://bugzilla.gnome.org/show_bug.cgi?id=462312

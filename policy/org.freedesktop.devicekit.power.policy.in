@@ -37,40 +37,4 @@ file are instantly applied.
     </defaults>
   </action>
 
-  <action id="org.freedesktop.devicekit.power.latency.request-latency">
-    <_description>Set the required latency of an application</_description>
-    <_message>Authentication is required to set the required latency of an application</_message>
-    <defaults>
-      <allow_inactive>no</allow_inactive>
-      <allow_active>yes</allow_active>
-    </defaults>
-  </action>
-
-  <action id="org.freedesktop.devicekit.power.latency.request-latency-persistent">
-    <_description>Set a persistent latency setting</_description>
-    <_message>Authentication is required to set a persistent latency setting</_message>
-    <defaults>
-      <allow_inactive>no</allow_inactive>
-      <allow_active>yes</allow_active>
-    </defaults>
-  </action>
-
-  <action id="org.freedesktop.devicekit.power.latency.set-minimum-latency">
-    <_description>Set administrator settings for latency control</_description>
-    <_message>Authentication is required to set administrator settings for latency control</_message>
-    <defaults>
-      <allow_inactive>no</allow_inactive>
-      <allow_active>auth_admin</allow_active>
-    </defaults>
-  </action>
-
-  <action id="org.freedesktop.devicekit.power.latency.cancel-request">
-    <_description>Cancel a latency request</_description>
-    <_message>Authentication is required to cancel a latency request</_message>
-    <defaults>
-      <allow_inactive>no</allow_inactive>
-      <allow_active>auth_admin</allow_active>
-    </defaults>
-  </action>
-
 </policyconfig>
