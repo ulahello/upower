@@ -164,7 +164,7 @@ main (int argc, char **argv)
 	/* do stuff on ctrl-c */
 	signal (SIGINT, dkp_main_sigint_handler);
 
-	egg_debug ("Starting devkit-power-daemon version %s", VERSION);
+	egg_debug ("Starting devkit-power-daemon version %s", PACKAGE_VERSION);
 
 	qos = dkp_qos_new ();
 	daemon = dkp_daemon_new ();
