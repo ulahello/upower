@@ -275,7 +275,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 
 		/* calculate how broken our battery is */
 		if (obj->energy_full > 0) {
-			obj->capacity = obj->energy_full_design / obj->energy_full * 100.0f;
+			obj->capacity = (obj->energy_full / obj->energy_full_design) * 100.0f;
 			if (obj->capacity < 0)
 				obj->capacity = 0;
 			if (obj->capacity > 100.0)
