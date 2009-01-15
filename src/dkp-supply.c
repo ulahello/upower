@@ -222,6 +222,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 {
 	gchar *status = NULL;
 	gboolean ret = TRUE;
+	gdouble voltage_design;
 	DkpDeviceState state;
 	DkpDevice *device = DKP_DEVICE (supply);
 	DkpObject *obj = dkp_device_get_obj (device);
@@ -233,6 +234,16 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		obj->type = DKP_DEVICE_TYPE_BATTERY;
 		goto out;
 	}
+
+	/* get the currect charge */
+	obj->energy = sysfs_get_double (obj->native_path, "energy_avg") / 1000000.0;
+	if (obj->energy == 0)
+		obj->energy = sysfs_get_double (obj->native_path, "energy_now") / 1000000.0;
+
+	/* used to convert A to W later */
+	voltage_design = sysfs_get_double (obj->native_path, "voltage_min_design") / 1000000.0;
+	if (voltage_design < 1.00)
+		voltage_design = sysfs_get_double (obj->native_path, "voltage_present") / 1000000.0;
 
 	/* initial values */
 	if (!supply->priv->has_coldplug_values) {
@@ -256,10 +267,16 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		obj->has_statistics = TRUE;
 
 		/* these don't change at runtime */
-		obj->energy_full =
-			sysfs_get_double (obj->native_path, "energy_full") / 1000000.0;
-		obj->energy_full_design =
-			sysfs_get_double (obj->native_path, "energy_full_design") / 1000000.0;
+		obj->energy_full = sysfs_get_double (obj->native_path, "energy_full") / 1000000.0;
+		obj->energy_full_design = sysfs_get_double (obj->native_path, "energy_full_design") / 1000000.0;
+
+		/* convert charge to energy */
+		if (obj->energy == 0) {
+			obj->energy_full = sysfs_get_double (obj->native_path, "charge_full") / 1000000.0;
+			obj->energy_full_design = sysfs_get_double (obj->native_path, "charge_full_design") / 1000000.0;
+			obj->energy_full *= voltage_design;
+			obj->energy_full_design *= voltage_design;
+		}
 
 		/* the last full should not be bigger than the design */
 		if (obj->energy_full > obj->energy_full_design)
@@ -300,21 +317,22 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		state = DKP_DEVICE_STATE_UNKNOWN;
 	}
 
-	/* get the currect charge */
-	obj->energy =
-		sysfs_get_double (obj->native_path, "energy_avg") / 1000000.0;
-	if (obj->energy == 0)
-		obj->energy =
-			sysfs_get_double (obj->native_path, "energy_now") / 1000000.0;
+	/* get rate; it seems odd as it's either in uVh or uWh */
+	obj->energy_rate = fabs (sysfs_get_double (obj->native_path, "current_now") / 1000000.0);
+
+	/* convert charge to energy */
+	if (obj->energy == 0) {
+		obj->energy = sysfs_get_double (obj->native_path, "charge_now") / 1000000.0;
+		obj->energy *= voltage_design;
+		obj->energy_rate *= voltage_design;
+	}
 
 	/* some batteries don't update last_full attribute */
 	if (obj->energy > obj->energy_full)
 		obj->energy_full = obj->energy;
 
-	obj->energy_rate =
-		fabs (sysfs_get_double (obj->native_path, "current_now") / 1000000.0);
-	obj->voltage =
-		sysfs_get_double (obj->native_path, "voltage_now") / 1000000.0;
+	/* present voltage */
+	obj->voltage = sysfs_get_double (obj->native_path, "voltage_now") / 1000000.0;
 
 	/* ACPI gives out the special 'Ones' value for rate when it's unable
 	 * to calculate the true rate. We should set the rate zero, and wait
@@ -327,9 +345,8 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		obj->energy_rate = 0;
 
 	/* the hardware reporting failed -- try to calculate this */
-	if (obj->energy_rate < 0) {
+	if (obj->energy_rate < 0)
 		dkp_supply_calculate_rate (supply);
-	}
 
 	/* get a precise percentage */
 	obj->percentage = 100.0 * obj->energy / obj->energy_full;
@@ -342,12 +359,12 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	obj->time_to_empty = 0;
 	obj->time_to_full = 0;
 	if (obj->energy_rate > 0) {
-		if (state == DKP_DEVICE_STATE_DISCHARGING) {
+		if (state == DKP_DEVICE_STATE_DISCHARGING)
 			obj->time_to_empty = 3600 * (obj->energy / obj->energy_rate);
-		} else if (state == DKP_DEVICE_STATE_CHARGING) {
+		else if (state == DKP_DEVICE_STATE_CHARGING)
 			obj->time_to_full = 3600 * ((obj->energy_full - obj->energy) / obj->energy_rate);
-		}
 	}
+
 	/* check the remaining time is under a set limit, to deal with broken
 	   primary batteries rate */
 	if (obj->time_to_empty > (100 * 60 * 60))
@@ -364,7 +381,6 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		supply->priv->energy_old = 0;
 		obj->state = state;
 	}
-
 out:
 	g_free (status);
 	return ret;
