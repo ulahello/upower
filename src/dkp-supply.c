@@ -221,6 +221,7 @@ static gboolean
 dkp_supply_refresh_battery (DkpSupply *supply)
 {
 	gchar *status = NULL;
+	gchar *technology_native;
 	gboolean ret = TRUE;
 	gdouble voltage_design;
 	DkpDeviceState state;
@@ -236,18 +237,22 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	}
 
 	/* get the currect charge */
-	obj->energy = sysfs_get_double (obj->native_path, "energy_avg") / 1000000.0;
+	obj->energy = sysfs_get_double (obj->native_path, "energy_now") / 1000000.0;
 	if (obj->energy == 0)
-		obj->energy = sysfs_get_double (obj->native_path, "energy_now") / 1000000.0;
+		obj->energy = sysfs_get_double (obj->native_path, "energy_avg") / 1000000.0;
 
 	/* used to convert A to W later */
-	voltage_design = sysfs_get_double (obj->native_path, "voltage_min_design") / 1000000.0;
-	if (voltage_design < 1.00)
-		voltage_design = sysfs_get_double (obj->native_path, "voltage_present") / 1000000.0;
+	voltage_design = sysfs_get_double (obj->native_path, "voltage_max_design") / 1000000.0;
+	if (voltage_design < 1.00) {
+		voltage_design = sysfs_get_double (obj->native_path, "voltage_min_design") / 1000000.0;
+		if (voltage_design < 1.00) {
+			egg_debug ("using present voltage as design voltage");
+			voltage_design = sysfs_get_double (obj->native_path, "voltage_present") / 1000000.0;
+		}
+	}
 
 	/* initial values */
 	if (!supply->priv->has_coldplug_values) {
-		gchar *technology_native;
 
 		/* when we add via sysfs power_supply class then we know this is true */
 		obj->power_supply = TRUE;
@@ -323,6 +328,8 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	/* convert charge to energy */
 	if (obj->energy == 0) {
 		obj->energy = sysfs_get_double (obj->native_path, "charge_now") / 1000000.0;
+		if (obj->energy == 0)
+			obj->energy = sysfs_get_double (obj->native_path, "charge_avg") / 1000000.0;
 		obj->energy *= voltage_design;
 		obj->energy_rate *= voltage_design;
 	}
@@ -333,6 +340,8 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 
 	/* present voltage */
 	obj->voltage = sysfs_get_double (obj->native_path, "voltage_now") / 1000000.0;
+	if (obj->voltage == 0)
+		obj->voltage = sysfs_get_double (obj->native_path, "voltage_avg") / 1000000.0;
 
 	/* ACPI gives out the special 'Ones' value for rate when it's unable
 	 * to calculate the true rate. We should set the rate zero, and wait
@@ -363,13 +372,14 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 			obj->time_to_empty = 3600 * (obj->energy / obj->energy_rate);
 		else if (state == DKP_DEVICE_STATE_CHARGING)
 			obj->time_to_full = 3600 * ((obj->energy_full - obj->energy) / obj->energy_rate);
+		/* TODO: need to factor in battery charge metrics */
 	}
 
 	/* check the remaining time is under a set limit, to deal with broken
 	   primary batteries rate */
-	if (obj->time_to_empty > (100 * 60 * 60))
+	if (obj->time_to_empty > (20 * 60 * 60))
 		obj->time_to_empty = 0;
-	if (obj->time_to_full > (100 * 60 * 60))
+	if (obj->time_to_full > (20 * 60 * 60))
 		obj->time_to_full = 0;
 
 	/* set the old status */
