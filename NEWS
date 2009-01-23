@@ -1,3 +1,12 @@
+Version 004
+~~~~~~~~~~~
+Released: 2009-01-23
+
+Bugfixes:
+ - Fix the battery capacity calculation. Fixes fd#19165 (Richard Hughes)
+ - Special case machines where the kernel does not convert charge to power (Richard Hughes)
+ - Check all the power supply fields for valid data (Richard Hughes)
+
 Version 003
 ~~~~~~~~~~~
 Released: 2008-12-09

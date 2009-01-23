@@ -1,7 +1,6 @@
 DeviceKit-power Release Notes
 
-1. Write NEWS entries for DeviceKit-power and gnome-packagekit in the same
-   format as usual. Ignore any trivial commits.
+1. Write NEWS entries for DeviceKit-power in the same format as usual.
 
 git-shortlog DeviceKit-power-003.. | grep -v trivial | grep -v Merge > NEWS.new
 
