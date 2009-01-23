@@ -510,6 +510,7 @@ dkp_object_get_id (DkpObject *obj)
 			g_string_append_c (string, '-');
 		}
 		if (obj->energy_full_design > 0) {
+			/* FIXME: this may not be stable if we are using voltage_now */
 			g_string_append_printf (string, "%i", (guint) obj->energy_full_design);
 			g_string_append_c (string, '-');
 		}

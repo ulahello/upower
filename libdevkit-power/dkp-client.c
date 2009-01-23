@@ -28,7 +28,7 @@
 
 #include "egg-debug.h"
 #include "dkp-client.h"
-#include "dkp-client-device.h"
+#include "dkp-device.h"
 
 static void	dkp_client_class_init	(DkpClientClass	*klass);
 static void	dkp_client_init		(DkpClient	*client);
@@ -44,19 +44,19 @@ struct DkpClientPrivate
 	GHashTable		*hash;
 	GPtrArray		*array;
 
-	gboolean have_properties;
+	gboolean		 have_properties;
 
-	char *daemon_version;
-	gboolean can_suspend;
-	gboolean can_hibernate;
-	gboolean on_battery;
-	gboolean on_low_battery;
+	gchar			*daemon_version;
+	gboolean		 can_suspend;
+	gboolean		 can_hibernate;
+	gboolean		 on_battery;
+	gboolean		 on_low_battery;
 };
 
 enum {
-	DKP_CLIENT_DEVICE_ADDED,
-	DKP_CLIENT_DEVICE_CHANGED,
-	DKP_CLIENT_DEVICE_REMOVED,
+	DKP_DEVICE_ADDED,
+	DKP_DEVICE_CHANGED,
+	DKP_DEVICE_REMOVED,
 	DKP_CLIENT_CHANGED,
 	DKP_CLIENT_LAST_SIGNAL
 };
@@ -68,19 +68,41 @@ G_DEFINE_TYPE (DkpClient, dkp_client, G_TYPE_OBJECT)
 /**
  * dkp_client_get_device:
  **/
-static DkpClientDevice *
+static DkpDevice *
 dkp_client_get_device (DkpClient *client, const gchar *object_path)
 {
-	DkpClientDevice *device;
+	DkpDevice *device;
 	device = g_hash_table_lookup (client->priv->hash, object_path);
 	return device;
 }
 
 /**
  * dkp_client_enumerate_devices:
+ *
+ * Return a list of devices, which need to be unref'd, and the array needs
+ * to be freed
  **/
 GPtrArray *
-dkp_client_enumerate_devices (DkpClient *client, GError **error)
+dkp_client_enumerate_devices (DkpClient *client)
+{
+	guint i;
+	GPtrArray *array;
+	DkpDevice *device;
+
+	array = g_ptr_array_new ();
+	for (i=0; i<client->priv->array->len; i++) {
+		device = g_ptr_array_index (client->priv->array, i);
+		g_object_ref (device);
+		g_ptr_array_add (array, device);
+	}
+	return array;
+}
+
+/**
+ * dkp_client_enumerate_devices_private:
+ **/
+static GPtrArray *
+dkp_client_enumerate_devices_private (DkpClient *client, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -99,6 +121,52 @@ dkp_client_enumerate_devices (DkpClient *client, GError **error)
 		g_error_free (error_local);
 	}
 	return devices;
+}
+
+/**
+ * dkp_client_suspend:
+ **/
+gboolean
+dkp_client_suspend (DkpClient *client, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+
+	g_return_val_if_fail (DKP_IS_CLIENT (client), FALSE);
+	g_return_val_if_fail (client->priv->proxy != NULL, FALSE);
+
+	ret = dbus_g_proxy_call (client->priv->proxy, "Suspend", &error_local,
+				 G_TYPE_INVALID, G_TYPE_INVALID);
+	if (!ret) {
+		egg_warning ("Couldn't suspend: %s", error_local->message);
+		if (error != NULL)
+			*error = g_error_new (1, 0, "%s", error_local->message);
+		g_error_free (error_local);
+	}
+	return ret;
+}
+
+/**
+ * dkp_client_hibernate:
+ **/
+gboolean
+dkp_client_hibernate (DkpClient *client, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+
+	g_return_val_if_fail (DKP_IS_CLIENT (client), FALSE);
+	g_return_val_if_fail (client->priv->proxy != NULL, FALSE);
+
+	ret = dbus_g_proxy_call (client->priv->proxy, "Hibernate", &error_local,
+				 G_TYPE_INVALID, G_TYPE_INVALID);
+	if (!ret) {
+		egg_warning ("Couldn't hibernate: %s", error_local->message);
+		if (error != NULL)
+			*error = g_error_new (1, 0, "%s", error_local->message);
+		g_error_free (error_local);
+	}
+	return ret;
 }
 
 /**
@@ -231,14 +299,14 @@ dkp_client_on_low_battery (DkpClient *client)
 /**
  * dkp_client_add:
  **/
-static DkpClientDevice *
+static DkpDevice *
 dkp_client_add (DkpClient *client, const gchar *object_path)
 {
-	DkpClientDevice *device;
+	DkpDevice *device;
 
 	/* create new device */
-	device = dkp_client_device_new ();
-	dkp_client_device_set_object_path (device, object_path);
+	device = dkp_device_new ();
+	dkp_device_set_object_path (device, object_path);
 
 	g_ptr_array_add (client->priv->array, device);
 	g_hash_table_insert (client->priv->hash, g_strdup (object_path), device);
@@ -249,7 +317,7 @@ dkp_client_add (DkpClient *client, const gchar *object_path)
  * dkp_client_remove:
  **/
 static gboolean
-dkp_client_remove (DkpClient *client, DkpClientDevice *device)
+dkp_client_remove (DkpClient *client, DkpDevice *device)
 {
 	/* deallocate it */
 	g_object_unref (device);
@@ -263,37 +331,37 @@ dkp_client_remove (DkpClient *client, DkpClientDevice *device)
  * dkp_client_added_cb:
  **/
 static void
-dkp_client_device_added_cb (DBusGProxy *proxy, const gchar *object_path, DkpClient *client)
+dkp_device_added_cb (DBusGProxy *proxy, const gchar *object_path, DkpClient *client)
 {
-	DkpClientDevice *device;
+	DkpDevice *device;
 
 	/* create new device */
 	device = dkp_client_add (client, object_path);
-	g_signal_emit (client, signals [DKP_CLIENT_DEVICE_ADDED], 0, device);
+	g_signal_emit (client, signals [DKP_DEVICE_ADDED], 0, device);
 }
 
 /**
  * dkp_client_changed_cb:
  **/
 static void
-dkp_client_device_changed_cb (DBusGProxy *proxy, const gchar *object_path, DkpClient *client)
+dkp_device_changed_cb (DBusGProxy *proxy, const gchar *object_path, DkpClient *client)
 {
-	DkpClientDevice *device;
+	DkpDevice *device;
 	device = dkp_client_get_device (client, object_path);
 	if (device != NULL)
-		g_signal_emit (client, signals [DKP_CLIENT_DEVICE_CHANGED], 0, device);
+		g_signal_emit (client, signals [DKP_DEVICE_CHANGED], 0, device);
 }
 
 /**
  * dkp_client_removed_cb:
  **/
 static void
-dkp_client_device_removed_cb (DBusGProxy *proxy, const gchar *object_path, DkpClient *client)
+dkp_device_removed_cb (DBusGProxy *proxy, const gchar *object_path, DkpClient *client)
 {
-	DkpClientDevice *device;
+	DkpDevice *device;
 	device = dkp_client_get_device (client, object_path);
 	if (device != NULL)
-		g_signal_emit (client, signals [DKP_CLIENT_DEVICE_REMOVED], 0, device);
+		g_signal_emit (client, signals [DKP_DEVICE_REMOVED], 0, device);
 	dkp_client_remove (client, device);
 }
 
@@ -317,19 +385,19 @@ dkp_client_class_init (DkpClientClass *klass)
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = dkp_client_finalize;
 
-	signals [DKP_CLIENT_DEVICE_ADDED] =
+	signals [DKP_DEVICE_ADDED] =
 		g_signal_new ("device-added",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (DkpClientClass, device_added),
 			      NULL, NULL, g_cclosure_marshal_VOID__POINTER,
 			      G_TYPE_NONE, 1, G_TYPE_POINTER);
-	signals [DKP_CLIENT_DEVICE_REMOVED] =
+	signals [DKP_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (DkpClientClass, device_removed),
 			      NULL, NULL, g_cclosure_marshal_VOID__POINTER,
 			      G_TYPE_NONE, 1, G_TYPE_POINTER);
-	signals [DKP_CLIENT_DEVICE_CHANGED] =
+	signals [DKP_DEVICE_CHANGED] =
 		g_signal_new ("device-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (DkpClientClass, device_changed),
@@ -395,16 +463,16 @@ dkp_client_init (DkpClient *client)
 
 	/* all callbacks */
 	dbus_g_proxy_connect_signal (client->priv->proxy, "DeviceAdded",
-				     G_CALLBACK (dkp_client_device_added_cb), client, NULL);
+				     G_CALLBACK (dkp_device_added_cb), client, NULL);
 	dbus_g_proxy_connect_signal (client->priv->proxy, "DeviceRemoved",
-				     G_CALLBACK (dkp_client_device_removed_cb), client, NULL);
+				     G_CALLBACK (dkp_device_removed_cb), client, NULL);
 	dbus_g_proxy_connect_signal (client->priv->proxy, "DeviceChanged",
-				     G_CALLBACK (dkp_client_device_changed_cb), client, NULL);
+				     G_CALLBACK (dkp_device_changed_cb), client, NULL);
 	dbus_g_proxy_connect_signal (client->priv->proxy, "Changed",
 				     G_CALLBACK (dkp_client_changed_cb), client, NULL);
 
 	/* coldplug */
-	devices = dkp_client_enumerate_devices (client, NULL);
+	devices = dkp_client_enumerate_devices_private (client, NULL);
 	if (devices == NULL)
 		goto out;
 	for (i=0; i<devices->len; i++) {
@@ -423,7 +491,7 @@ static void
 dkp_client_finalize (GObject *object)
 {
 	DkpClient *client;
-	DkpClientDevice *device;
+	DkpDevice *device;
 	guint i;
 
 	g_return_if_fail (DKP_IS_CLIENT (object));
@@ -432,7 +500,7 @@ dkp_client_finalize (GObject *object)
 
 	/* free any devices */
 	for (i=0; i<client->priv->array->len; i++) {
-		device = (DkpClientDevice *) g_ptr_array_index (client->priv->array, i);
+		device = (DkpDevice *) g_ptr_array_index (client->priv->array, i);
 		dkp_client_remove (client, device);
 	}
 
