@@ -54,6 +54,7 @@ static void     dkp_wakeups_finalize   (GObject		*object);
 #define DKP_WAKEUPS_POLL_INTERVAL_USERSPACE	2 /* seconds */
 #define DKP_WAKEUPS_SOURCE_KERNEL		"/proc/interrupts"
 #define DKP_WAKEUPS_SOURCE_USERSPACE		"/proc/timer_stats"
+#define DKP_WAKEUPS_SMALLEST_VALUE		0.1f /* seconds */
 
 struct DkpWakeupsPrivate
 {
@@ -122,7 +123,7 @@ dkp_wakeups_data_print (DkpWakeups *wakeups)
 
 	for (i=0; i<wakeups->priv->data->len; i++) {
 		obj = g_ptr_array_index (wakeups->priv->data, i);
-		if (obj->value > 0.01f)
+		if (obj->value > DKP_WAKEUPS_SMALLEST_VALUE)
 			dkp_wakeups_obj_print (obj);
 	}
 }
@@ -206,7 +207,7 @@ dkp_wakeups_get_data (DkpWakeups *wakeups, GPtrArray **data, GError **error)
 		GValue elem = {0};
 
 		obj = g_ptr_array_index (array, i);
-		if (obj->value < 0.01f)
+		if (obj->value < DKP_WAKEUPS_SMALLEST_VALUE)
 			continue;
 		g_value_init (&elem, DKP_WAKEUPS_REQUESTS_STRUCT_TYPE);
 		g_value_take_boxed (&elem, dbus_g_type_specialized_construct (DKP_WAKEUPS_REQUESTS_STRUCT_TYPE));
@@ -309,8 +310,6 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 	GPtrArray *sections;
 	DkpWakeupsObj *obj;
 
-	egg_warning ("pOLL kernel");
-
 	/* set all kernel data objs to zero */
 	for (i=0; i<wakeups->priv->data->len; i++) {
 		obj = g_ptr_array_index (wakeups->priv->data, i);
@@ -402,11 +401,13 @@ skip:
 		g_ptr_array_free (sections, TRUE);
 	}
 
-	dkp_wakeups_data_print (wakeups);
+	if (0) dkp_wakeups_data_print (wakeups);
 
 	/* tell GUI we've changed */
 	total = dkp_wakeups_data_get_total (wakeups);
 	g_signal_emit (wakeups, signals [TOTAL_CHANGED], 0, total);
+	g_signal_emit (wakeups, signals [DATA_CHANGED], 0);
+
 out:
 	g_free (data);
 	g_strfreev (lines);
@@ -508,7 +509,7 @@ dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
 			else {
 				/* try to get a better command line */
 				obj->cmdline = dkp_wakeups_get_cmdline (pid);
-				if (obj->cmdline == NULL)
+				if (egg_strzero (obj->cmdline))
 					obj->cmdline = g_strdup (string);
 			}
 			string = g_ptr_array_index (sections, 3);
@@ -526,8 +527,9 @@ skip:
 	/* tell GUI we've changed */
 	total = dkp_wakeups_data_get_total (wakeups);
 	g_signal_emit (wakeups, signals [TOTAL_CHANGED], 0, total);
+	g_signal_emit (wakeups, signals [DATA_CHANGED], 0);
 
-	dkp_wakeups_data_print (wakeups);
+	if (0) dkp_wakeups_data_print (wakeups);
 
 out:
 	g_free (data);
