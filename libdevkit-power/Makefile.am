@@ -21,12 +21,14 @@ libdevkit_power_la_SOURCES =					\
 	egg-obj-list.h						\
 	dkp-client.c						\
 	dkp-client.h						\
-	dkp-device.c					\
-	dkp-device.h					\
+	dkp-device.c						\
+	dkp-device.h						\
 	dkp-history-obj.h					\
 	dkp-history-obj.c					\
 	dkp-stats-obj.h						\
 	dkp-stats-obj.c						\
+	dkp-wakeups-obj.h					\
+	dkp-wakeups-obj.c					\
 	dkp-enum.c						\
 	dkp-enum.h						\
 	dkp-object.c						\
