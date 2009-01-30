@@ -45,6 +45,7 @@
 
 #include "dkp-daemon.h"
 #include "dkp-qos.h"
+#include "dkp-wakeups.h"
 
 #define NAME_TO_CLAIM "org.freedesktop.DeviceKit.Power"
 static GMainLoop *loop = NULL;
@@ -121,6 +122,7 @@ main (int argc, char **argv)
 	GError *error;
 	DkpDaemon *daemon;
 	DkpQos *qos;
+	DkpWakeups *wakeups;
 	GOptionContext *context;
 	DBusGProxy *bus_proxy;
 	DBusGConnection *bus;
@@ -167,6 +169,7 @@ main (int argc, char **argv)
 	egg_debug ("Starting devkit-power-daemon version %s", PACKAGE_VERSION);
 
 	qos = dkp_qos_new ();
+	wakeups = dkp_wakeups_new ();
 	daemon = dkp_daemon_new ();
 	if (daemon == NULL)
 		goto out;
@@ -175,6 +178,7 @@ main (int argc, char **argv)
 	g_main_loop_run (loop);
 
 	g_object_unref (qos);
+	g_object_unref (wakeups);
 	g_object_unref (daemon);
 	g_main_loop_unref (loop);
 	ret = 0;
