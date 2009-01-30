@@ -23,6 +23,8 @@ libdevkit_power_la_SOURCES =					\
 	dkp-client.h						\
 	dkp-device.c						\
 	dkp-device.h						\
+	dkp-wakeups.c						\
+	dkp-wakeups.h						\
 	dkp-history-obj.h					\
 	dkp-history-obj.c					\
 	dkp-stats-obj.h						\
