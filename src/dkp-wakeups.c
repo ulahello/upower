@@ -304,6 +304,7 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 	GError *error = NULL;
 	guint cpus = 0;
 	const gchar *found;
+	const gchar *found2;
 	guint irq;
 	guint interrupts;
 	guint total;
@@ -383,13 +384,21 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 		/* save in database */
 		obj = dkp_wakeups_data_get_or_create (wakeups, irq);
 		if (obj->details == NULL) {
-			if (strcmp (found, "i8042") == 0)
-				obj->details = g_strdup_printf ("<interrupt> : %s", "PS/2 keyboard/mouse/touchpad");
-			else if (special_ipi)
-				obj->details = g_strdup_printf ("<kernel IPI> : %s", found);
+
+			/* remove the interrupt type */
+			found2 = strstr (found, "IO-APIC-fasteoi");
+			if (found2 != NULL)
+				found = g_strchug ((gchar*)found2+16);
+			found2 = strstr (found, "IO-APIC-edge");
+			if (found2 != NULL)
+				found = g_strchug ((gchar*)found2+14);
+			obj->details = g_strdup (found);
+
+			/* we special */
+			if (special_ipi)
+				obj->cmdline = g_strdup ("kernel-ipi");
 			else
-				obj->details = g_strdup_printf ("<interrupt> : %s", found);
-			obj->cmdline = g_strdup ("<kernel>");
+				obj->cmdline = g_strdup ("interrupt");
 			obj->is_userspace = FALSE;
 		}
 		/* we report this in minutes, not seconds */
@@ -500,21 +509,20 @@ dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
 		if (obj->details == NULL) {
 			/* get process name (truncated) */
 			string = g_ptr_array_index (sections, 2);
-			if (strcmp (string, "insmod") == 0)
-				obj->cmdline = g_strdup ("<kernel module>");
-			else if (strcmp (string, "modprobe") == 0)
-				obj->cmdline = g_strdup ("<kernel module>");
-			else if (strcmp (string, "swapper") == 0)
-				obj->cmdline = g_strdup ("<kernel core>");
-			else {
+			if (strcmp (string, "insmod") == 0 ||
+			    strcmp (string, "modprobe") == 0 ||
+			    strcmp (string, "swapper") == 0) {
+				obj->cmdline = g_strdup (string);
+				obj->is_userspace = FALSE;
+			} else {
 				/* try to get a better command line */
 				obj->cmdline = dkp_wakeups_get_cmdline (pid);
 				if (egg_strzero (obj->cmdline))
 					obj->cmdline = g_strdup (string);
+				obj->is_userspace = TRUE;
 			}
 			string = g_ptr_array_index (sections, 3);
 			obj->details = g_strdup (string);
-			obj->is_userspace = TRUE;
 		}
 		/* we report this in minutes, not seconds */
 		obj->value = (gfloat) interrupts / interval;
