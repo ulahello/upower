@@ -31,7 +31,7 @@ typedef struct
 	gboolean		 is_userspace;
 	guint			 id;
 	guint			 old;
-	guint			 value;
+	gfloat			 value;
 	gchar			*cmdline;
 	gchar			*details;
 } DkpWakeupsObj;

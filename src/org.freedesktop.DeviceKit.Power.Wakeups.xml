@@ -4,11 +4,11 @@
   <!ENTITY ERROR_GENERAL "org.freedesktop.DeviceKit.Power.GeneralError">
 ]>
 <node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
-  <interface name="org.freedesktop.DeviceKit.Power.Wakeup">
+  <interface name="org.freedesktop.DeviceKit.Power.Wakeups">
     <doc:doc>
       <doc:description>
         <doc:para>
-          org.freedesktop.DeviceKit.Power.Wakeup is a DBus interface implimented
+          org.freedesktop.DeviceKit.Power.Wakeups is a DBus interface implimented
           by DeviceKit-power.
           It allows applications to watch what applications and drivers are
           causing the wakeups on the system.
@@ -18,7 +18,7 @@
 
     <!-- ************************************************************ -->
     <method name="GetTotal">
-      <arg name="value" direction="out" type="i">
+      <arg name="value" direction="out" type="u">
         <doc:doc>
           <doc:summary>
             The number of wakeups per second.
@@ -57,7 +57,7 @@
 
     <!-- ************************************************************ -->
     <method name="GetData">
-      <arg name="data" direction="out" type="a(buuss)">
+      <arg name="data" direction="out" type="a(budss)">
         <doc:doc>
           <doc:summary>
             The data of all the processes and drivers which contribute to the
@@ -70,15 +70,15 @@
                 </doc:definition>
               </doc:item>
               <doc:item>
-                <doc:term>value</doc:term>
-                <doc:definition>
-                  The number of wakeups per minute.
-                </doc:definition>
-              </doc:item>
-              <doc:item>
                 <doc:term>id</doc:term>
                 <doc:definition>
                   The process ID of the application, or the IRQ for kernel drivers.
+                </doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>value</doc:term>
+                <doc:definition>
+                  The number of wakeups per second.
                 </doc:definition>
               </doc:item>
               <doc:item>

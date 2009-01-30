@@ -35,7 +35,7 @@ dkp_wakeups_obj_clear_internal (DkpWakeupsObj *obj)
 {
 	obj->id = 0;
 	obj->old = 0;
-	obj->value = 0;
+	obj->value = 0.0f;
 	obj->is_userspace = FALSE;
 	obj->cmdline = NULL;
 	obj->details = NULL;
@@ -72,7 +72,7 @@ dkp_wakeups_obj_equal (const DkpWakeupsObj *obj1, const DkpWakeupsObj *obj2)
 gboolean
 dkp_wakeups_obj_print (const DkpWakeupsObj *obj)
 {
-	g_print ("userspace:%i id:%i, interrupts:%i, cmdline:%s, details:%s\n", obj->is_userspace, obj->id, obj->value, obj->cmdline, obj->details);
+	g_print ("userspace:%i id:%i, interrupts:%.1f, cmdline:%s, details:%s\n", obj->is_userspace, obj->id, obj->value, obj->cmdline, obj->details);
 	return TRUE;
 }
 

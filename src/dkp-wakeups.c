@@ -45,7 +45,7 @@ static void     dkp_wakeups_finalize   (GObject		*object);
 #define DKP_WAKEUPS_REQUESTS_STRUCT_TYPE (dbus_g_type_get_struct ("GValueArray",	\
 							      G_TYPE_BOOLEAN,	\
 							      G_TYPE_UINT,	\
-							      G_TYPE_UINT,	\
+							      G_TYPE_DOUBLE,	\
 							      G_TYPE_STRING,	\
 							      G_TYPE_STRING,	\
 							      G_TYPE_INVALID))
@@ -122,7 +122,7 @@ dkp_wakeups_data_print (DkpWakeups *wakeups)
 
 	for (i=0; i<wakeups->priv->data->len; i++) {
 		obj = g_ptr_array_index (wakeups->priv->data, i);
-		if (obj->value > 0)
+		if (obj->value > 0.01f)
 			dkp_wakeups_obj_print (obj);
 	}
 }
@@ -155,14 +155,14 @@ static guint
 dkp_wakeups_data_get_total (DkpWakeups *wakeups)
 {
 	guint i;
-	guint total = 0;
+	gfloat total = 0;
 	DkpWakeupsObj *obj;
 
 	for (i=0; i<wakeups->priv->data->len; i++) {
 		obj = g_ptr_array_index (wakeups->priv->data, i);
 		total += obj->value;
 	}
-	return total;
+	return (guint) total;
 }
 
 /**
@@ -206,14 +206,14 @@ dkp_wakeups_get_data (DkpWakeups *wakeups, GPtrArray **data, GError **error)
 		GValue elem = {0};
 
 		obj = g_ptr_array_index (array, i);
-		if (obj->value == 0)
+		if (obj->value < 0.01f)
 			continue;
 		g_value_init (&elem, DKP_WAKEUPS_REQUESTS_STRUCT_TYPE);
 		g_value_take_boxed (&elem, dbus_g_type_specialized_construct (DKP_WAKEUPS_REQUESTS_STRUCT_TYPE));
 		dbus_g_type_struct_set (&elem,
-					0, FALSE,
-					1, obj->value,
-					2, obj->id,
+					0, obj->is_userspace,
+					1, obj->id,
+					2, obj->value,
 					3, obj->cmdline,
 					4, obj->details,
 					G_MAXUINT);
@@ -315,7 +315,7 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 	for (i=0; i<wakeups->priv->data->len; i++) {
 		obj = g_ptr_array_index (wakeups->priv->data, i);
 		if (!obj->is_userspace)
-			obj->value = 0;
+			obj->value = 0.0f;
 	}
 
 	/* get the data */
@@ -395,7 +395,7 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 		}
 		/* we report this in minutes, not seconds */
 		if (obj->old > 0)
-			obj->value = (interrupts - obj->old) * 60 / DKP_WAKEUPS_POLL_INTERVAL_KERNEL;
+			obj->value = (interrupts - obj->old) / (gfloat) DKP_WAKEUPS_POLL_INTERVAL_KERNEL;
 		obj->old = interrupts;
 skip:
 		g_ptr_array_foreach (sections, (GFunc) g_free, NULL);
@@ -436,7 +436,7 @@ dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
 	for (i=0; i<wakeups->priv->data->len; i++) {
 		obj = g_ptr_array_index (wakeups->priv->data, i);
 		if (obj->is_userspace)
-			obj->value = 0;
+			obj->value = 0.0f;
 	}
 
 	/* get the data */
@@ -516,7 +516,7 @@ dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
 			obj->is_userspace = TRUE;
 		}
 		/* we report this in minutes, not seconds */
-		obj->value = (gfloat) interrupts * 60.0f / interval;
+		obj->value = (gfloat) interrupts / interval;
 skip:
 		g_ptr_array_foreach (sections, (GFunc) g_free, NULL);
 		g_ptr_array_free (sections, TRUE);
