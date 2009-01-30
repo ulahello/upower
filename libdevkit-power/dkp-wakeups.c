@@ -57,7 +57,7 @@ G_DEFINE_TYPE (DkpWakeups, dkp_wakeups, G_TYPE_OBJECT)
 guint
 dkp_wakeups_get_total (DkpWakeups *wakeups, GError **error)
 {
-	guint total;
+	guint total = 0;
 	gboolean ret;
 	GError *error_local = NULL;
 
