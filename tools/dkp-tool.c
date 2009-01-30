@@ -33,6 +33,7 @@
 #include "dkp-marshal.h"
 #include "dkp-client.h"
 #include "dkp-device.h"
+#include "dkp-wakeups.h"
 
 #include "egg-debug.h"
 
@@ -124,15 +125,16 @@ dkp_tool_do_monitor (DkpClient *client)
 int
 main (int argc, char **argv)
 {
-	int ret = 1;
+	gint ret = 1;
+	guint i;
 	GOptionContext *context;
 	gboolean verbose = FALSE;
 	gboolean opt_dump = FALSE;
+	gboolean opt_wakeups = FALSE;
 	gboolean opt_enumerate = FALSE;
 	gboolean opt_monitor = FALSE;
 	gchar *opt_show_info = FALSE;
 	gboolean opt_version = FALSE;
-	unsigned int n;
 
 	DkpClient *client;
 	DkpDevice *device;
@@ -141,6 +143,7 @@ main (int argc, char **argv)
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, _("Show extra debugging information"), NULL },
 		{ "enumerate", 'e', 0, G_OPTION_ARG_NONE, &opt_enumerate, _("Enumerate objects paths for devices"), NULL },
 		{ "dump", 'd', 0, G_OPTION_ARG_NONE, &opt_dump, _("Dump all parameters for all objects"), NULL },
+		{ "wakeups", 'w', 0, G_OPTION_ARG_NONE, &opt_wakeups, _("Get the wakeup data"), NULL },
 		{ "monitor", 'm', 0, G_OPTION_ARG_NONE, &opt_monitor, _("Monitor activity from the power daemon"), NULL },
 		{ "monitor-detail", 0, 0, G_OPTION_ARG_NONE, &opt_monitor_detail, _("Monitor with detail"), NULL },
 		{ "show-info", 'i', 0, G_OPTION_ARG_STRING, &opt_show_info, _("Show information about object path"), NULL },
@@ -168,13 +171,31 @@ main (int argc, char **argv)
 		goto out;
 	}
 
-	if (opt_enumerate || opt_dump) {
+	if (opt_wakeups) {
+		DkpWakeups *wakeups;
+		DkpWakeupsObj *obj;
+		guint total;
+		GPtrArray *array;
+		wakeups = dkp_wakeups_new ();
+		total = dkp_wakeups_get_total (wakeups, NULL);
+		g_print ("Total wakeups per minute: %i\n", total);
+		array = dkp_wakeups_get_data (wakeups, NULL);
+		if (array == NULL)
+			goto out;
+		g_print ("Wakeup sources:\n");
+		for (i=0; i<array->len; i++) {
+			obj = g_ptr_array_index (array, i);
+			dkp_wakeups_obj_print (obj);
+		}
+		g_ptr_array_foreach (array, (GFunc) dkp_wakeups_obj_free, NULL);
+		g_ptr_array_free (array, TRUE);
+	} else if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
 		devices = dkp_client_enumerate_devices (client);
 		if (devices == NULL)
 			goto out;
-		for (n=0; n < devices->len; n++) {
-			device = (DkpDevice*) g_ptr_array_index (devices, n);
+		for (i=0; i < devices->len; i++) {
+			device = (DkpDevice*) g_ptr_array_index (devices, i);
 			if (opt_enumerate) {
 				g_print ("%s\n", dkp_device_get_object_path (device));
 			} else {
