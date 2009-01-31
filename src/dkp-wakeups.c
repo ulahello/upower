@@ -55,11 +55,14 @@ static void     dkp_wakeups_finalize   (GObject		*object);
 #define DKP_WAKEUPS_SOURCE_KERNEL		"/proc/interrupts"
 #define DKP_WAKEUPS_SOURCE_USERSPACE		"/proc/timer_stats"
 #define DKP_WAKEUPS_SMALLEST_VALUE		0.1f /* seconds */
+#define DKP_WAKEUPS_TOTAL_SMOOTH_FACTOR		0.125f
 
 struct DkpWakeupsPrivate
 {
 	GPtrArray		*data;
 	DBusGConnection		*connection;
+	guint			 total_old;
+	guint			 total_ave;
 };
 
 enum {
@@ -174,17 +177,14 @@ dkp_wakeups_data_get_total (DkpWakeups *wakeups)
 gboolean
 dkp_wakeups_get_total (DkpWakeups *wakeups, guint *value, GError **error)
 {
-	guint total;
-
 	/* no data */
-	total = dkp_wakeups_data_get_total (wakeups);
-	if (total == 0) {
+	if (wakeups->priv->total_ave == 0) {
 		*error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "no interrupt data");
 		return FALSE;
 	}
 
-	/* return total */
-	*value = total;
+	/* return total averaged */
+	*value = wakeups->priv->total_ave;
 	return TRUE;
 }
 
@@ -290,6 +290,31 @@ dkp_strsplit_complete_set (const gchar *string, const gchar *delimiters, guint m
 }
 
 /**
+ * dkp_wakeups_perhaps_data_changed:
+ **/
+static void
+dkp_wakeups_perhaps_data_changed (DkpWakeups *wakeups)
+{
+	guint total;
+
+	if (0) dkp_wakeups_data_print (wakeups);
+
+	/* total has changed */
+	total = dkp_wakeups_data_get_total (wakeups);
+	if (total != wakeups->priv->total_old) {
+		/* no old data, assume this is true */
+		if (wakeups->priv->total_old == 0)
+			wakeups->priv->total_ave = total;
+		else
+			wakeups->priv->total_ave = DKP_WAKEUPS_TOTAL_SMOOTH_FACTOR * (gfloat) (total - wakeups->priv->total_old);
+		g_signal_emit (wakeups, signals [TOTAL_CHANGED], 0, wakeups->priv->total_ave);
+	}
+
+	/* unconditionally emit */
+	g_signal_emit (wakeups, signals [DATA_CHANGED], 0);
+}
+
+/**
  * dkp_wakeups_poll_kernel_cb:
  **/
 static gboolean
@@ -307,7 +332,6 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 	const gchar *found2;
 	guint irq;
 	guint interrupts;
-	guint total;
 	GPtrArray *sections;
 	DkpWakeupsObj *obj;
 
@@ -410,13 +434,8 @@ skip:
 		g_ptr_array_free (sections, TRUE);
 	}
 
-	if (0) dkp_wakeups_data_print (wakeups);
-
 	/* tell GUI we've changed */
-	total = dkp_wakeups_data_get_total (wakeups);
-	g_signal_emit (wakeups, signals [TOTAL_CHANGED], 0, total);
-	g_signal_emit (wakeups, signals [DATA_CHANGED], 0);
-
+	dkp_wakeups_perhaps_data_changed (wakeups);
 out:
 	g_free (data);
 	g_strfreev (lines);
@@ -430,7 +449,6 @@ static gboolean
 dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
 {
 	guint i;
-	guint total;
 	gboolean ret;
 	GError *error = NULL;
 	gchar *data = NULL;
@@ -533,12 +551,7 @@ skip:
 	}
 
 	/* tell GUI we've changed */
-	total = dkp_wakeups_data_get_total (wakeups);
-	g_signal_emit (wakeups, signals [TOTAL_CHANGED], 0, total);
-	g_signal_emit (wakeups, signals [DATA_CHANGED], 0);
-
-	if (0) dkp_wakeups_data_print (wakeups);
-
+	dkp_wakeups_perhaps_data_changed (wakeups);
 out:
 	g_free (data);
 	g_strfreev (lines);
@@ -601,6 +614,8 @@ dkp_wakeups_init (DkpWakeups *wakeups)
 
 	wakeups->priv = DKP_WAKEUPS_GET_PRIVATE (wakeups);
 	wakeups->priv->data = g_ptr_array_new ();
+	wakeups->priv->total_old = 0;
+	wakeups->priv->total_ave = 0;
 
 	wakeups->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (error != NULL) {
