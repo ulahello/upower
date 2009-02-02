@@ -1,3 +1,11 @@
+Version 005
+~~~~~~~~~~~
+Released: 2009-02-02
+
+New Features:
+ - Add a wakeups interface so we can get data from the system over DBus (Richard Hughes)
+ - Allow showing the wakeup data in the devkit-power command line tool (Richard Hughes)
+
 Version 004
 ~~~~~~~~~~~
 Released: 2009-01-23
