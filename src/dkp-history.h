@@ -60,7 +60,7 @@ typedef enum {
 } DkpHistoryType;
 
 
-GType		 dkp_history_get_type			(void) G_GNUC_CONST;
+GType		 dkp_history_get_type			(void);
 DkpHistory	*dkp_history_new			(void);
 EggObjList	*dkp_history_get_data			(DkpHistory		*history,
 							 DkpHistoryType		 type,

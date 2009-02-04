@@ -47,7 +47,7 @@ typedef struct
 	GObjectClass		 parent_class;
 } DkpPolkitClass;
 
-GType		 dkp_polkit_get_type		(void) G_GNUC_CONST;
+GType		 dkp_polkit_get_type		(void);
 DkpPolkit	*dkp_polkit_new			(void);
 PolKitCaller	*dkp_polkit_get_caller		(DkpPolkit		*polkit,
 						 DBusGMethodInvocation	*context);

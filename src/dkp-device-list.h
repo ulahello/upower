@@ -51,7 +51,7 @@ typedef struct
 	GObjectClass		 parent_class;
 } DkpDeviceListClass;
 
-GType		 dkp_device_list_get_type		(void) G_GNUC_CONST;
+GType		 dkp_device_list_get_type		(void);
 DkpDeviceList	*dkp_device_list_new			(void);
 DkpDevice	*dkp_device_list_lookup			(DkpDeviceList		*list,
 							 DevkitDevice		*d);
