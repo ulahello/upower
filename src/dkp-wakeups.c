@@ -39,6 +39,7 @@
 static void     dkp_wakeups_class_init (DkpWakeupsClass *klass);
 static void     dkp_wakeups_init       (DkpWakeups      *wakeups);
 static void     dkp_wakeups_finalize   (GObject		*object);
+static gboolean	dkp_wakeups_timerstats_enable (DkpWakeups *wakeups);
 
 #define DKP_WAKEUPS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_WAKEUPS, DkpWakeupsPrivate))
 
@@ -52,6 +53,7 @@ static void     dkp_wakeups_finalize   (GObject		*object);
 
 #define DKP_WAKEUPS_POLL_INTERVAL_KERNEL	2 /* seconds */
 #define DKP_WAKEUPS_POLL_INTERVAL_USERSPACE	2 /* seconds */
+#define DKP_WAKEUPS_DISABLE_INTERVAL		30 /* seconds */
 #define DKP_WAKEUPS_SOURCE_KERNEL		"/proc/interrupts"
 #define DKP_WAKEUPS_SOURCE_USERSPACE		"/proc/timer_stats"
 #define DKP_WAKEUPS_SMALLEST_VALUE		0.1f /* seconds */
@@ -63,6 +65,10 @@ struct DkpWakeupsPrivate
 	DBusGConnection		*connection;
 	guint			 total_old;
 	guint			 total_ave;
+	guint			 poll_userspace_id;
+	guint			 poll_kernel_id;
+	guint			 disable_id;
+	gboolean		 polling_enabled;
 };
 
 enum {
@@ -113,25 +119,6 @@ dkp_wakeups_data_obj_compare (const DkpWakeupsObj **obj1, const DkpWakeupsObj **
 }
 
 /**
- * dkp_wakeups_data_print:
- **/
-static void
-dkp_wakeups_data_print (DkpWakeups *wakeups)
-{
-	guint i;
-	DkpWakeupsObj *obj;
-
-	/* sort data */
-	g_ptr_array_sort (wakeups->priv->data, (GCompareFunc) dkp_wakeups_data_obj_compare);
-
-	for (i=0; i<wakeups->priv->data->len; i++) {
-		obj = g_ptr_array_index (wakeups->priv->data, i);
-		if (obj->value > DKP_WAKEUPS_SMALLEST_VALUE)
-			dkp_wakeups_obj_print (obj);
-	}
-}
-
-/**
  * dkp_wakeups_data_get_or_create:
  **/
 static DkpWakeupsObj *
@@ -177,9 +164,14 @@ dkp_wakeups_data_get_total (DkpWakeups *wakeups)
 gboolean
 dkp_wakeups_get_total (DkpWakeups *wakeups, guint *value, GError **error)
 {
+	gboolean ret;
+
+	/* start if not already started */
+	ret = dkp_wakeups_timerstats_enable (wakeups);
+
 	/* no data */
-	if (wakeups->priv->total_ave == 0) {
-		*error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "no interrupt data");
+	if (!ret) {
+		*error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "cannot enable timerstats");
 		return FALSE;
 	}
 
@@ -197,6 +189,9 @@ dkp_wakeups_get_data (DkpWakeups *wakeups, GPtrArray **data, GError **error)
 	guint i;
 	GPtrArray *array;
 	DkpWakeupsObj *obj;
+
+	/* start if not already started */
+	dkp_wakeups_timerstats_enable (wakeups);
 
 	/* sort data */
 	g_ptr_array_sort (wakeups->priv->data, (GCompareFunc) dkp_wakeups_data_obj_compare);
@@ -297,8 +292,6 @@ dkp_wakeups_perhaps_data_changed (DkpWakeups *wakeups)
 {
 	guint total;
 
-	if (0) dkp_wakeups_data_print (wakeups);
-
 	/* total has changed */
 	total = dkp_wakeups_data_get_total (wakeups);
 	if (total != wakeups->priv->total_old) {
@@ -334,6 +327,8 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 	guint interrupts;
 	GPtrArray *sections;
 	DkpWakeupsObj *obj;
+
+	egg_debug ("event");
 
 	/* set all kernel data objs to zero */
 	for (i=0; i<wakeups->priv->data->len; i++) {
@@ -460,6 +455,8 @@ dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
 	guint interrupts;
 	gfloat interval = 5.0f;
 
+	egg_debug ("event");
+
 	/* set all userspace data objs to zero */
 	for (i=0; i<wakeups->priv->data->len; i++) {
 		obj = g_ptr_array_index (wakeups->priv->data, i);
@@ -559,20 +556,84 @@ out:
 }
 
 /**
- * dkp_wakeups_timerstats_enable:
+ * dkp_wakeups_timerstats_disable:
  **/
 static gboolean
-dkp_wakeups_timerstats_enable (DkpWakeups *wakeups, gboolean enabled)
+dkp_wakeups_timerstats_disable (DkpWakeups *wakeups)
 {
 	FILE *file;
+
+	/* already same state */
+	if (!wakeups->priv->polling_enabled)
+		return TRUE;
+
+	egg_debug ("disabling timer stats");
+
+	/* clear polling */
+	if (wakeups->priv->poll_kernel_id != 0) {
+		g_source_remove (wakeups->priv->poll_kernel_id);
+		wakeups->priv->poll_kernel_id = 0;
+	}
+	if (wakeups->priv->poll_userspace_id != 0) {
+		g_source_remove (wakeups->priv->poll_userspace_id);
+		wakeups->priv->poll_userspace_id = 0;
+	}
+	if (wakeups->priv->disable_id != 0) {
+		g_source_remove (wakeups->priv->disable_id);
+		wakeups->priv->disable_id = 0;
+	}
+
 	file = fopen (DKP_WAKEUPS_SOURCE_USERSPACE, "w");
 	if (file == NULL)
 		return FALSE;
-	if (enabled)
-		fprintf (file, "1\n");
-	else
-		fprintf (file, "0\n");
+	fprintf (file, "0\n");
 	fclose (file);
+	wakeups->priv->polling_enabled = FALSE;
+	return TRUE;
+}
+
+/**
+ * dkp_wakeups_disable_cb:
+ **/
+static gboolean
+dkp_wakeups_disable_cb (DkpWakeups *wakeups)
+{
+	egg_debug ("disabling timer stats as we are idle");
+	dkp_wakeups_timerstats_disable (wakeups);
+
+	/* never repeat */
+	return FALSE;
+}
+
+/**
+ * dkp_wakeups_timerstats_enable:
+ **/
+static gboolean
+dkp_wakeups_timerstats_enable (DkpWakeups *wakeups)
+{
+	FILE *file;
+
+	/* reset timeout */
+	if (wakeups->priv->disable_id != 0)
+		g_source_remove (wakeups->priv->disable_id);
+	wakeups->priv->disable_id = g_timeout_add_seconds (DKP_WAKEUPS_DISABLE_INTERVAL, (GSourceFunc) dkp_wakeups_disable_cb, wakeups);
+
+	/* already same state */
+	if (wakeups->priv->polling_enabled)
+		return TRUE;
+
+	egg_debug ("enabling timer stats");
+
+	/* setup polls */
+	wakeups->priv->poll_kernel_id = g_timeout_add_seconds (DKP_WAKEUPS_POLL_INTERVAL_KERNEL, (GSourceFunc) dkp_wakeups_poll_kernel_cb, wakeups);
+	wakeups->priv->poll_userspace_id = g_timeout_add_seconds (DKP_WAKEUPS_POLL_INTERVAL_USERSPACE, (GSourceFunc) dkp_wakeups_poll_userspace_cb, wakeups);
+
+	file = fopen (DKP_WAKEUPS_SOURCE_USERSPACE, "w");
+	if (file == NULL)
+		return FALSE;
+	fprintf (file, "1\n");
+	fclose (file);
+	wakeups->priv->polling_enabled = TRUE;
 	return TRUE;
 }
 
@@ -616,6 +677,9 @@ dkp_wakeups_init (DkpWakeups *wakeups)
 	wakeups->priv->data = g_ptr_array_new ();
 	wakeups->priv->total_old = 0;
 	wakeups->priv->total_ave = 0;
+	wakeups->priv->poll_userspace_id = 0;
+	wakeups->priv->poll_kernel_id = 0;
+	wakeups->priv->polling_enabled = FALSE;
 
 	wakeups->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (error != NULL) {
@@ -626,13 +690,6 @@ dkp_wakeups_init (DkpWakeups *wakeups)
 
 	/* register on the bus */
 	dbus_g_connection_register_g_object (wakeups->priv->connection, "/org/freedesktop/DeviceKit/Power/Wakeups", G_OBJECT (wakeups));
-
-	/* setup polls */
-	g_timeout_add_seconds (DKP_WAKEUPS_POLL_INTERVAL_KERNEL, (GSourceFunc) dkp_wakeups_poll_kernel_cb, wakeups);
-	g_timeout_add_seconds (DKP_WAKEUPS_POLL_INTERVAL_USERSPACE, (GSourceFunc) dkp_wakeups_poll_userspace_cb, wakeups);
-
-	/* setup timerstats */
-	dkp_wakeups_timerstats_enable (wakeups, TRUE);
 }
 
 /**
@@ -650,7 +707,7 @@ dkp_wakeups_finalize (GObject *object)
 	wakeups->priv = DKP_WAKEUPS_GET_PRIVATE (wakeups);
 
 	/* stop timerstats */
-	dkp_wakeups_timerstats_enable (wakeups, FALSE);
+	dkp_wakeups_timerstats_disable (wakeups);
 
 	g_ptr_array_foreach (wakeups->priv->data, (GFunc) dkp_wakeups_obj_free, NULL);
 	g_ptr_array_free (wakeups->priv->data, TRUE);
