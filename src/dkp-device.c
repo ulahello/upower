@@ -741,7 +741,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 		g_param_spec_string ("type", NULL, NULL, NULL, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
-		PROP_BATTERY_IS_PRESENT,
+		PROP_BATTERY_POWER_SUPPLY,
 		g_param_spec_boolean ("power-supply", NULL, NULL, FALSE, G_PARAM_READABLE));
 	g_object_class_install_property (
 		object_class,
