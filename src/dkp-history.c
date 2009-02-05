@@ -146,12 +146,18 @@ dkp_history_array_limit_resolution (EggObjList *array, guint max_num)
 	guint step = 1;
 	gfloat preset;
 
+	/* check length */
+	length = array->len;
+	if (length < max_num) {
+		new = g_object_ref (array);
+		goto out;
+	}
+
 	new = dkp_history_new_stats_list ();
 	nobj = dkp_history_obj_new ();
 	egg_debug ("length of array (before) %i", array->len);
 
 	/* last element */
-	length = array->len;
 	obj = (const DkpHistoryObj *) egg_obj_list_index (array, length-1);
 	last = obj->time;
 	obj = (const DkpHistoryObj *) egg_obj_list_index (array, 0);
@@ -194,6 +200,7 @@ dkp_history_array_limit_resolution (EggObjList *array, guint max_num)
 	/* check length */
 	egg_debug ("length of array (after) %i", new->len);
 	dkp_history_obj_free (nobj);
+out:
 	return new;
 }
 
