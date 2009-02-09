@@ -38,7 +38,7 @@ static void	dkp_history_finalize	(GObject		*object);
 
 #define DKP_HISTORY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_HISTORY, DkpHistoryPrivate))
 
-#define DKP_HISTORY_SAVE_INTERVAL	5 /* seconds */
+#define DKP_HISTORY_SAVE_INTERVAL	10*60 /* seconds */
 
 struct DkpHistoryPrivate
 {
