@@ -40,7 +40,7 @@ dkp_qos_obj_clear_internal (DkpQosObj *obj)
 	obj->cmdline = NULL;
 	obj->cookie = 0;
 	obj->timespec = 0;
-	obj->persistent;
+	obj->persistent = FALSE;
 	obj->type = DKP_QOS_TYPE_UNKNOWN;
 	obj->value = 0;
 }
