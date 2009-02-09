@@ -39,6 +39,7 @@
 #include "dkp-marshal.h"
 #include "dkp-daemon.h"
 #include "dkp-polkit.h"
+#include "dkp-qos-obj.h"
 #include "dkp-qos-glue.h"
 
 static void     dkp_qos_class_init (DkpQosClass *klass);
@@ -55,27 +56,8 @@ static void     dkp_qos_finalize   (GObject	*object);
 							      G_TYPE_UINT64,	\
 							      G_TYPE_BOOLEAN,	\
 							      G_TYPE_STRING,	\
-							      G_TYPE_STRING,	\
 							      G_TYPE_INT,	\
 							      G_TYPE_INVALID))
-
-typedef enum {
-	DKP_QOS_TYPE_NETWORK,
-	DKP_QOS_TYPE_CPU_DMA,
-	DKP_QOS_TYPE_UNKNOWN
-} DkpQosType;
-
-typedef struct
-{
-	gint			 value;
-	guint			 uid;
-	guint			 pid;
-	gchar			*sender;
-	gchar			*cmdline;
-	guint32			 cookie;
-	gboolean		 persistent;
-	DkpQosType		 type;
-} DkpQosRequestObj;
 
 struct DkpQosPrivate
 {
@@ -99,40 +81,14 @@ static guint signals [LAST_SIGNAL] = { 0 };
 G_DEFINE_TYPE (DkpQos, dkp_qos, G_TYPE_OBJECT)
 
 /**
- * dkp_qos_type_to_text:
- **/
-static const gchar *
-dkp_qos_type_to_text (DkpQosType type)
-{
-	if (type == DKP_QOS_TYPE_NETWORK)
-		return "network";
-	if (type == DKP_QOS_TYPE_CPU_DMA)
-		return "cpu_dma";
-	return NULL;
-}
-
-/**
- * dkp_qos_type_from_text:
- **/
-static DkpQosType
-dkp_qos_type_from_text (const gchar *type)
-{
-	if (egg_strequal (type, "network"))
-		return DKP_QOS_TYPE_NETWORK;
-	if (egg_strequal (type, "cpu_dma"))
-		return DKP_QOS_TYPE_CPU_DMA;
-	return DKP_QOS_TYPE_UNKNOWN;
-}
-
-/**
  * dkp_qos_find_from_cookie:
  **/
-static DkpQosRequestObj *
+static DkpQosObj *
 dkp_qos_find_from_cookie (DkpQos *qos, guint32 cookie)
 {
 	guint i;
 	GPtrArray *data;
-	DkpQosRequestObj *obj;
+	DkpQosObj *obj;
 
 	/* search list */
 	data = qos->priv->data;
@@ -173,7 +129,7 @@ dkp_qos_get_lowest (DkpQos *qos, DkpQosType type)
 	guint i;
 	gint lowest = G_MAXINT;
 	GPtrArray *data;
-	DkpQosRequestObj *obj;
+	DkpQosObj *obj;
 
 	/* find lowest */
 	data = qos->priv->data;
@@ -290,7 +246,7 @@ out:
 void
 dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboolean persistent, DBusGMethodInvocation *context)
 {
-	DkpQosRequestObj *obj;
+	DkpQosObj *obj;
 	gchar *sender = NULL;
 	const gchar *auth;
 	gchar *cmdline = NULL;
@@ -355,7 +311,7 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	}
 
 	/* seems okay, add to list */
-	obj = g_new (DkpQosRequestObj, 1);
+	obj = g_new (DkpQosObj, 1);
 	obj->cookie = dkp_qos_generate_cookie (qos);
 	obj->sender = g_strdup (sender);
 	obj->value = value;
@@ -385,7 +341,7 @@ out:
  * dkp_qos_free_data_obj:
  **/
 static void
-dkp_qos_free_data_obj (DkpQosRequestObj *obj)
+dkp_qos_free_data_obj (DkpQosObj *obj)
 {
 	g_free (obj->cmdline);
 	g_free (obj->sender);
@@ -395,12 +351,12 @@ dkp_qos_free_data_obj (DkpQosRequestObj *obj)
 /**
  * dkp_qos_cancel_request:
  *
- * Removes a cookie and associated data from the DkpQosRequestObj struct.
+ * Removes a cookie and associated data from the DkpQosObj struct.
  **/
 void
 dkp_qos_cancel_request (DkpQos *qos, guint cookie, DBusGMethodInvocation *context)
 {
-	DkpQosRequestObj *obj;
+	DkpQosObj *obj;
 	GError *error;
 	gchar *sender = NULL;
 	PolKitCaller *caller = NULL;
@@ -503,7 +459,7 @@ dkp_qos_get_latency_requests (DkpQos *qos, GPtrArray **requests, GError **error)
 {
 	guint i;
 	GPtrArray *data;
-	DkpQosRequestObj *obj;
+	DkpQosObj *obj;
 
 	*requests = g_ptr_array_new ();
 	data = qos->priv->data;
@@ -542,7 +498,7 @@ dkp_qos_remove_dbus (DkpQos *qos, const gchar *sender)
 {
 	guint i;
 	GPtrArray *data;
-	DkpQosRequestObj *obj;
+	DkpQosObj *obj;
 
 	/* remove *any* senders that match the sender */
 	data = qos->priv->data;

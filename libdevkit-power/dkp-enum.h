@@ -56,12 +56,20 @@ typedef enum {
 	DKP_DEVICE_TECHNOLGY_UNKNOWN
 } DkpDeviceTechnology;
 
+typedef enum {
+	DKP_QOS_TYPE_NETWORK,
+	DKP_QOS_TYPE_CPU_DMA,
+	DKP_QOS_TYPE_UNKNOWN
+} DkpQosType;
+
 const gchar	*dkp_device_type_to_text	(DkpDeviceType		 type_enum);
 const gchar	*dkp_device_state_to_text	(DkpDeviceState		 state_enum);
 const gchar	*dkp_device_technology_to_text	(DkpDeviceTechnology	 technology_enum);
 DkpDeviceType	 dkp_device_type_from_text	(const gchar		*type);
 DkpDeviceState	 dkp_device_state_from_text	(const gchar		*state);
 DkpDeviceTechnology dkp_device_technology_from_text (const gchar	*technology);
+const gchar	*dkp_qos_type_to_text		(DkpQosType		 type);
+DkpQosType	 dkp_qos_type_from_text		(const gchar		*type);
 
 G_END_DECLS
 

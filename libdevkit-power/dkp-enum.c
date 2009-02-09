@@ -203,3 +203,29 @@ dkp_device_technology_from_text (const gchar *technology)
 	return DKP_DEVICE_TECHNOLGY_UNKNOWN;
 }
 
+/**
+ * dkp_qos_type_to_text:
+ **/
+const gchar *
+dkp_qos_type_to_text (DkpQosType type)
+{
+	if (type == DKP_QOS_TYPE_NETWORK)
+		return "network";
+	if (type == DKP_QOS_TYPE_CPU_DMA)
+		return "cpu_dma";
+	return NULL;
+}
+
+/**
+ * dkp_qos_type_from_text:
+ **/
+DkpQosType
+dkp_qos_type_from_text (const gchar *type)
+{
+	if (egg_strequal (type, "network"))
+		return DKP_QOS_TYPE_NETWORK;
+	if (egg_strequal (type, "cpu_dma"))
+		return DKP_QOS_TYPE_CPU_DMA;
+	return DKP_QOS_TYPE_UNKNOWN;
+}
+
