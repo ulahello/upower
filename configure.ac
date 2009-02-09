@@ -82,6 +82,11 @@ if test "x$GCC" = "xyes"; then
   *) CFLAGS="$CFLAGS -Wsign-compare" ;;
   esac
 
+  case " $CFLAGS " in
+  *[\ \	]-Wno-strict-aliasing[\ \	]*) ;;
+  *) CFLAGS="$CFLAGS -Wno-strict-aliasing" ;;
+  esac
+
   if test "x$enable_ansi" = "xyes"; then
     case " $CFLAGS " in
     *[\ \	]-ansi[\ \	]*) ;;
