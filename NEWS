@@ -1,3 +1,15 @@
+Version 006
+~~~~~~~~~~~
+Released: 2009-02-10
+
+Bugfixes:
+ - Fix compile failure with gcc-4.4.0 and old versions of glib2 (Richard Hughes)
+ - Only enable the wakeups polling if a client requires the data (Richard Hughes)
+ - Correctly set the power-supply property (David Zeuthen)
+ - Don't crash when we limit the resolution of a small dataset (Richard Hughes)
+ - Don't sync to disk every 5 seconds, do it every 10 minutes (Richard Hughes)
+ - Fix the QoS interface with the proper signature (Richard Hughes)
+
 Version 005
 ~~~~~~~~~~~
 Released: 2009-02-02
