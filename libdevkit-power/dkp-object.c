@@ -536,7 +536,7 @@ dkp_object_get_id (DkpObject *obj)
 		id = g_strdup_printf ("%s-%s-%s", obj->vendor, obj->model, obj->serial);
 	}
 
-	g_strdelimit (id, "\\\t\"?' /", '_');
+	g_strdelimit (id, "\\\t\"?' /,.", '_');
 
 out:
 	return id;
