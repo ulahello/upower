@@ -19,13 +19,16 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#if !defined (__DEVICEKIT_POWER_H_INSIDE__) && !defined (DKP_COMPILATION)
+#error "Only <devicekit-power.h> can be included directly."
+#endif
+
 #ifndef __DKP_DEVICE_H
 #define __DKP_DEVICE_H
 
 #include <glib-object.h>
-#include <dkp-enum.h>
-#include <dkp-object.h>
-#include "egg-obj-list.h"
+#include <libdevkit-power/dkp-enum.h>
+#include <libdevkit-power/dkp-object.h>
 
 G_BEGIN_DECLS
 
@@ -63,11 +66,11 @@ gboolean	 dkp_device_set_object_path		(DkpDevice		*device,
 
 gboolean	 dkp_device_print			(const DkpDevice	*device);
 gboolean	 dkp_device_refresh			(DkpDevice		*device);
-EggObjList	*dkp_device_get_history			(const DkpDevice	*device,
+GPtrArray	*dkp_device_get_history			(const DkpDevice	*device,
 							 const gchar		*type,
 							 guint			 timespec,
 							 guint			 resolution);
-EggObjList	*dkp_device_get_statistics		(const DkpDevice	*device,
+GPtrArray	*dkp_device_get_statistics		(const DkpDevice	*device,
 							 const gchar		*type);
 
 G_END_DECLS

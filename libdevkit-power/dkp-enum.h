@@ -19,6 +19,10 @@
  *
  */
 
+#if !defined (__DEVICEKIT_POWER_H_INSIDE__) && !defined (DKP_COMPILATION)
+#error "Only <devicekit-power.h> can be included directly."
+#endif
+
 #ifndef __DKP_ENUM_H__
 #define __DKP_ENUM_H__
 

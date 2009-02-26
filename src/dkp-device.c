@@ -337,7 +337,7 @@ gboolean
 dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvocation *context)
 {
 	GError *error;
-	EggObjList *array = NULL;
+	GPtrArray *array = NULL;
 	GPtrArray *complex;
 	const DkpStatsObj *obj;
 	GValue *value;
@@ -376,7 +376,7 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvo
 	/* copy data to dbus struct */
 	complex = g_ptr_array_sized_new (array->len);
 	for (i=0; i<array->len; i++) {
-		obj = (const DkpStatsObj *) egg_obj_list_index (array, i);
+		obj = (const DkpStatsObj *) g_ptr_array_index (array, i);
 		value = g_new0 (GValue, 1);
 		g_value_init (value, DKP_DBUS_STRUCT_DOUBLE_DOUBLE);
 		g_value_take_boxed (value, dbus_g_type_specialized_construct (DKP_DBUS_STRUCT_DOUBLE_DOUBLE));
@@ -387,8 +387,10 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvo
 
 	dbus_g_method_return (context, complex);
 out:
-	if (array != NULL)
-		g_object_unref (array);
+	if (array != NULL) {
+		g_ptr_array_foreach (array, (GFunc) dkp_stats_obj_free, NULL);
+		g_ptr_array_free (array, TRUE);
+	}
 	return TRUE;
 }
 
@@ -399,7 +401,7 @@ gboolean
 dkp_device_get_history (DkpDevice *device, const gchar *type_string, guint timespan, guint resolution, DBusGMethodInvocation *context)
 {
 	GError *error;
-	EggObjList *array = NULL;
+	GPtrArray *array = NULL;
 	GPtrArray *complex;
 	const DkpHistoryObj *obj;
 	GValue *value;
@@ -440,7 +442,7 @@ dkp_device_get_history (DkpDevice *device, const gchar *type_string, guint times
 	/* copy data to dbus struct */
 	complex = g_ptr_array_sized_new (array->len);
 	for (i=0; i<array->len; i++) {
-		obj = (const DkpHistoryObj *) egg_obj_list_index (array, i);
+		obj = (const DkpHistoryObj *) g_ptr_array_index (array, i);
 		value = g_new0 (GValue, 1);
 		g_value_init (value, DKP_DBUS_STRUCT_UINT_DOUBLE_STRING);
 		g_value_take_boxed (value, dbus_g_type_specialized_construct (DKP_DBUS_STRUCT_UINT_DOUBLE_STRING));
@@ -451,8 +453,10 @@ dkp_device_get_history (DkpDevice *device, const gchar *type_string, guint times
 
 	dbus_g_method_return (context, complex);
 out:
-	if (array != NULL)
-		g_object_unref (array);
+	if (array != NULL) {
+		g_ptr_array_foreach (array, (GFunc) dkp_history_obj_free, NULL);
+		g_ptr_array_free (array, TRUE);
+	}
 	return TRUE;
 }
 

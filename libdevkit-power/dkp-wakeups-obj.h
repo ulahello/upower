@@ -18,11 +18,15 @@
  *
  */
 
+#if !defined (__DEVICEKIT_POWER_H_INSIDE__) && !defined (DKP_COMPILATION)
+#error "Only <devicekit-power.h> can be included directly."
+#endif
+
 #ifndef __DKP_WAKEUPS_OBJ_H__
 #define __DKP_WAKEUPS_OBJ_H__
 
 #include <glib.h>
-#include "dkp-enum.h"
+#include <libdevkit-power/dkp-enum.h>
 
 G_BEGIN_DECLS
 

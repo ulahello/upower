@@ -1,7 +1,9 @@
 INCLUDES = \
 	$(GLIB_CFLAGS)						\
 	$(DBUS_GLIB_CFLAGS)					\
+	-I$(top_srcdir)						\
 	-I$(top_srcdir)/libdevkit-power				\
+	-DDKP_COMPILATION					\
 	-DEGG_LOG_FILE=\""$(DKP_LOG_DIR)/DeviceKit-power"\"	\
 	-DEGG_VERBOSE="\"DKP_VERBOSE\""				\
 	-DEGG_LOGGING="\"DKP_LOGGING\""				\
@@ -17,8 +19,7 @@ libdevkit_power_la_SOURCES =					\
 	egg-debug.h						\
 	egg-string.c						\
 	egg-string.h						\
-	egg-obj-list.c						\
-	egg-obj-list.h						\
+	devicekit-power.h					\
 	dkp-client.c						\
 	dkp-client.h						\
 	dkp-device.c						\
