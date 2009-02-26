@@ -1,22 +1,23 @@
 ## Process this file with automake to produce Makefile.in
 
 INCLUDES = \
-	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\" \
-	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
-	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
-	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
-	-DPACKAGE_LOCALSTATE_DIR=\""$(localstatedir)"\" \
-	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
-	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
-	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
+	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\"		\
+	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\"		\
+	-DPACKAGE_DATA_DIR=\""$(datadir)"\"			\
+	-DPACKAGE_BIN_DIR=\""$(bindir)"\"			\
+	-DPACKAGE_LOCALSTATE_DIR=\""$(localstatedir)"\"		\
+	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\"			\
+	-DPACKAGE_LIB_DIR=\""$(libdir)"\"			\
+	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT			\
 	-DDKP_COMPILATION					\
 	-DEGG_LOG_FILE=\""$(DKP_LOG_DIR)/DeviceKit-power"\"	\
 	-DEGG_VERBOSE="\"DKP_VERBOSE\""				\
 	-DEGG_LOGGING="\"DKP_LOGGING\""				\
 	-DEGG_CONSOLE="\"DKP_CONSOLE\""				\
-	-I$(top_srcdir)/libdevkit-power \
-	$(DBUS_GLIB_CFLAGS) \
-	$(POLKIT_DBUS_CFLAGS) \
+	-I$(top_srcdir)						\
+	-I$(top_srcdir)/libdevkit-power				\
+	$(DBUS_GLIB_CFLAGS)					\
+	$(POLKIT_DBUS_CFLAGS)					\
 	$(GLIB_CFLAGS)
 
 DEVKIT_POWER_LIBS = $(top_builddir)/libdevkit-power/libdevkit-power.la
