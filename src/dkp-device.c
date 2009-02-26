@@ -37,7 +37,6 @@
 #include "sysfs-utils.h"
 #include "egg-debug.h"
 #include "egg-string.h"
-#include "egg-obj-list.h"
 
 #include "dkp-supply.h"
 #include "dkp-device.h"

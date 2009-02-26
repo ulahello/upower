@@ -25,8 +25,6 @@
 #include <glib-object.h>
 #include <dkp-enum.h>
 
-#include "egg-obj-list.h"
-
 G_BEGIN_DECLS
 
 #define DKP_TYPE_HISTORY		(dkp_history_get_type ())

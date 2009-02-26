@@ -27,8 +27,6 @@
 #include <devkit-gobject/devkit-gobject.h>
 #include <dbus/dbus-glib.h>
 
-#include "egg-obj-list.h"
-
 #include "dkp-object.h"
 #include "dkp-daemon.h"
 
