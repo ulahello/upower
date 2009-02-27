@@ -38,7 +38,6 @@
 #include "egg-string.h"
 
 #include "dkp-enum.h"
-#include "dkp-object.h"
 #include "dkp-csr.h"
 
 #define DKP_CSR_REFRESH_TIMEOUT		30L
@@ -78,9 +77,8 @@ dkp_csr_poll_cb (DkpCsr *csr)
 {
 	gboolean ret;
 	DkpDevice *device = DKP_DEVICE (csr);
-	DkpObject *obj = dkp_device_get_obj (device);
 
-	egg_debug ("Polling: %s", obj->native_path);
+	egg_debug ("Polling: %s", dkp_device_get_object_path (device));
 	ret = dkp_csr_refresh (device);
 	if (ret)
 		dkp_device_emit_changed (device);
@@ -137,7 +135,7 @@ dkp_csr_coldplug (DkpDevice *device)
 	DevkitDevice *d;
 	gboolean ret = FALSE;
 	const gchar *type;
-	DkpObject *obj = dkp_device_get_obj (device);
+	const gchar *native_path;
 
 	/* detect what kind of device we are */
 	d = dkp_device_get_d (device);
@@ -151,19 +149,18 @@ dkp_csr_coldplug (DkpDevice *device)
 
 	/* which one? */
 	if (egg_strequal (type, "mouse"))
-		obj->type = DKP_DEVICE_TYPE_MOUSE;
-	if (egg_strequal (type, "keyboard"))
-		obj->type = DKP_DEVICE_TYPE_KEYBOARD;
-
-	/* nothing known */
-	if (obj->type == DKP_DEVICE_TYPE_UNKNOWN) {
+		g_object_set (device, "type", DKP_DEVICE_TYPE_MOUSE, NULL);
+	else if (egg_strequal (type, "keyboard"))
+		g_object_set (device, "type", DKP_DEVICE_TYPE_KEYBOARD, NULL);
+	else {
 		egg_debug ("not a recognised csr device");
 		goto out;
 	}
 
 	/* get what USB device we are */
-	csr->priv->bus_num = sysfs_get_int (obj->native_path, "busnum");
-	csr->priv->dev_num = sysfs_get_int (obj->native_path, "devnum");
+	native_path = devkit_device_get_native_path (d);
+	csr->priv->bus_num = sysfs_get_int (native_path, "busnum");
+	csr->priv->dev_num = sysfs_get_int (native_path, "devnum");
 
 	/* get correct bus numbers? */
 	if (csr->priv->bus_num == 0 || csr->priv->dev_num == 0) {
@@ -184,13 +181,15 @@ dkp_csr_coldplug (DkpDevice *device)
 		csr->priv->is_dual = devkit_device_get_property_as_boolean (d, "DKP_CSR_DUAL");
 	egg_debug ("is_dual=%i", csr->priv->is_dual);
 
-	obj->vendor = g_strdup (devkit_device_get_property (d, "ID_VENDOR"));
-	obj->model = g_strdup (devkit_device_get_property (d, "ID_PRODUCT"));
-	obj->power_supply = FALSE;
-	obj->is_present = TRUE;
-	obj->is_rechargeable = TRUE;
-	obj->state = DKP_DEVICE_STATE_DISCHARGING;
-	obj->has_history = TRUE;
+	g_object_set (device,
+		      "vendor", devkit_device_get_property (d, "ID_VENDOR"),
+		      "model", devkit_device_get_property (d, "ID_PRODUCT"),
+		      "power-supply", FALSE,
+		      "is-present", TRUE,
+		      "is-rechargeable", TRUE,
+		      "state", DKP_DEVICE_STATE_DISCHARGING,
+		      "has-history", TRUE,
+		      NULL);
 
 	/* coldplug */
 	ret = dkp_csr_refresh (device);
@@ -214,14 +213,14 @@ dkp_csr_refresh (DkpDevice *device)
 	gboolean ret = TRUE;
 	GTimeVal time;
 	DkpCsr *csr = DKP_CSR (device);
-	DkpObject *obj = dkp_device_get_obj (device);
 	usb_dev_handle *handle;
 	char buf[80];
 	unsigned int addr;
+	gdouble percentage;
 	guint written;
 
 	g_get_current_time (&time);
-	obj->update_time = time.tv_sec;
+	g_object_set (device, "update-time", (guint64) time.tv_sec, NULL);
 
 	/* For dual receivers C502, C504 and C505, the mouse is the
 	 * second device and uses an addr of 1 in the value and index
@@ -257,9 +256,10 @@ dkp_csr_refresh (DkpDevice *device)
 	/* get battery status */
 	csr->priv->raw_value = CSR_P5 & 0x07;
 	egg_debug ("charge level: %d", csr->priv->raw_value);
-		if (csr->priv->raw_value != 0) {
-			obj->percentage = (100.0 / 7.0) * csr->priv->raw_value;
-			egg_debug ("percentage=%f", obj->percentage);
+	if (csr->priv->raw_value != 0) {
+		percentage = (100.0 / 7.0) * csr->priv->raw_value;
+		g_object_set (device, "percentage", percentage, NULL);
+		egg_debug ("percentage=%f", percentage);
 	}
 
 out:

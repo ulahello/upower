@@ -51,7 +51,6 @@
 #include "egg-string.h"
 
 #include "dkp-enum.h"
-#include "dkp-object.h"
 #include "dkp-hid.h"
 
 #define DKP_HID_REFRESH_TIMEOUT			30l
@@ -137,9 +136,8 @@ dkp_hid_poll (DkpHid *hid)
 {
 	gboolean ret;
 	DkpDevice *device = DKP_DEVICE (hid);
-	DkpObject *obj = dkp_device_get_obj (device);
 
-	egg_debug ("Polling: %s", obj->native_path);
+	egg_debug ("Polling: %s", dkp_device_get_object_path (device));
 	ret = dkp_hid_refresh (device);
 	if (ret)
 		dkp_device_emit_changed (device);
@@ -175,11 +173,11 @@ static DkpDeviceTechnology
 dkp_hid_convert_device_technology (const gchar *type)
 {
 	if (type == NULL)
-		return DKP_DEVICE_TECHNOLGY_UNKNOWN;
+		return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
 	if (strcasecmp (type, "pb") == 0 ||
 	    strcasecmp (type, "pbac") == 0)
-		return DKP_DEVICE_TECHNOLGY_LEAD_ACID;
-	return DKP_DEVICE_TECHNOLGY_UNKNOWN;
+		return DKP_DEVICE_TECHNOLOGY_LEAD_ACID;
+	return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
 }
 
 /**
@@ -191,47 +189,46 @@ dkp_hid_set_obj (DkpHid *hid, int code, int value)
 	const gchar *type;
 	gboolean ret = TRUE;
 	DkpDevice *device = DKP_DEVICE (hid);
-	DkpObject *obj = dkp_device_get_obj (device);
 
 	switch (code) {
 	case DKP_HID_REMAINING_CAPACITY:
-		obj->percentage = value;
+		g_object_set (device, "percentage", value, NULL);
 		break;
 	case DKP_HID_RUNTIME_TO_EMPTY:
-		obj->time_to_empty = value;
+		g_object_set (device, "time-to-empty", value, NULL);
 		break;
 	case DKP_HID_CHARGING:
 		if (value != 0)
-			obj->state = DKP_DEVICE_STATE_CHARGING;
+			g_object_set (device, "state", DKP_DEVICE_STATE_CHARGING, NULL);
 		break;
 	case DKP_HID_DISCHARGING:
 		if (value != 0)
-			obj->state = DKP_DEVICE_STATE_DISCHARGING;
+			g_object_set (device, "state", DKP_DEVICE_STATE_DISCHARGING, NULL);
 		break;
 	case DKP_HID_BATTERY_PRESENT:
-		obj->is_present = (value != 0);
+		g_object_set (device, "is-present", (value != 0), NULL);
 		break;
 	case DKP_HID_DEVICE_NAME:
-		//obj->device_name = dkp_hid_get_string (hid, value);
+		g_object_set (device, "device-name", dkp_hid_get_string (hid, value), NULL);
 		break;
 	case DKP_HID_CHEMISTRY:
 		type = dkp_hid_get_string (hid, value);
-		obj->technology = dkp_hid_convert_device_technology (type);
+		g_object_set (device, "technology", dkp_hid_convert_device_technology (type), NULL);
 		break;
 	case DKP_HID_RECHARGEABLE:
-		obj->is_rechargeable = (value != 0);
+		g_object_set (device, "is-rechargeable", (value != 0), NULL);
 		break;
 	case DKP_HID_OEM_INFORMATION:
-		obj->vendor = g_strdup (dkp_hid_get_string (hid, value));
+		g_object_set (device, "vendor", dkp_hid_get_string (hid, value), NULL);
 		break;
 	case DKP_HID_PRODUCT:
-		obj->model = g_strdup (dkp_hid_get_string (hid, value));
+		g_object_set (device, "model", dkp_hid_get_string (hid, value), NULL);
 		break;
 	case DKP_HID_SERIAL_NUMBER:
-		obj->serial = g_strdup (dkp_hid_get_string (hid, value));
+		g_object_set (device, "serial", dkp_hid_get_string (hid, value), NULL);
 		break;
 	case DKP_HID_DESIGN_CAPACITY:
-		obj->energy_full_design = value;
+		g_object_set (device, "energy-full-design", value, NULL);
 		break;
 	default:
 		ret = FALSE;
@@ -294,7 +291,6 @@ dkp_hid_coldplug (DkpDevice *device)
 	gboolean ret = FALSE;
 	const gchar *device_file;
 	const gchar *type;
-	DkpObject *obj = dkp_device_get_obj (device);
 
 	/* detect what kind of device we are */
 	d = dkp_device_get_d (device);
@@ -328,16 +324,15 @@ dkp_hid_coldplug (DkpDevice *device)
 	}
 
 	/* hardcode some values */
-	obj->type = DKP_DEVICE_TYPE_UPS;
-	obj->is_rechargeable = TRUE;
-	obj->power_supply = TRUE;
-	obj->is_present = TRUE;
-	obj->has_history = TRUE;
-	obj->has_statistics = TRUE;
-
-	/* try and get from udev if UPS is being difficult */
-	if (obj->vendor == NULL)
-		obj->vendor = g_strdup (devkit_device_get_property (d, "ID_VENDOR"));
+	g_object_set (device,
+		      "type", DKP_DEVICE_TYPE_UPS,
+		      "is-rechargeable", TRUE,
+		      "power-supply", TRUE,
+		      "is-present", TRUE,
+		      "vendor", devkit_device_get_property (d, "ID_VENDOR"),
+		      "has-history", TRUE,
+		      "has-statistics", TRUE,
+		      NULL);
 
 	/* coldplug everything */
 	dkp_hid_get_all_data (hid);
@@ -362,11 +357,10 @@ dkp_hid_refresh (DkpDevice *device)
 	struct hiddev_event ev[64];
 	int rd;
 	DkpHid *hid = DKP_HID (device);
-	DkpObject *obj = dkp_device_get_obj (device);
 
 	/* reset time */
 	g_get_current_time (&time);
-	obj->update_time = time.tv_sec;
+	g_object_set (device, "update-time", (guint64) time.tv_sec, NULL);
 
 	/* read any data -- it's okay if there's nothing as we are non-blocking */
 	rd = read (hid->priv->fd, ev, sizeof (ev));

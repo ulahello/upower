@@ -152,25 +152,25 @@ dkp_device_technology_to_text (DkpDeviceTechnology technology_enum)
 {
 	const gchar *technology = NULL;
 	switch (technology_enum) {
-	case DKP_DEVICE_TECHNOLGY_LITHIUM_ION:
+	case DKP_DEVICE_TECHNOLOGY_LITHIUM_ION:
 		technology = "lithium-ion";
 		break;
-	case DKP_DEVICE_TECHNOLGY_LITHIUM_POLYMER:
+	case DKP_DEVICE_TECHNOLOGY_LITHIUM_POLYMER:
 		technology = "lithium-polymer";
 		break;
-	case DKP_DEVICE_TECHNOLGY_LITHIUM_IRON_PHOSPHATE:
+	case DKP_DEVICE_TECHNOLOGY_LITHIUM_IRON_PHOSPHATE:
 		technology = "lithium-iron-phosphate";
 		break;
-	case DKP_DEVICE_TECHNOLGY_LEAD_ACID:
+	case DKP_DEVICE_TECHNOLOGY_LEAD_ACID:
 		technology = "lead-acid";
 		break;
-	case DKP_DEVICE_TECHNOLGY_NICKEL_CADMIUM:
+	case DKP_DEVICE_TECHNOLOGY_NICKEL_CADMIUM:
 		technology = "nickel-cadmium";
 		break;
-	case DKP_DEVICE_TECHNOLGY_NICKEL_METAL_HYDRIDE:
+	case DKP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE:
 		technology = "nickel-metal-hydride";
 		break;
-	case DKP_DEVICE_TECHNOLGY_UNKNOWN:
+	case DKP_DEVICE_TECHNOLOGY_UNKNOWN:
 		technology = "unknown";
 		break;
 	default:
@@ -187,20 +187,20 @@ DkpDeviceTechnology
 dkp_device_technology_from_text (const gchar *technology)
 {
 	if (technology == NULL)
-		return DKP_DEVICE_TECHNOLGY_UNKNOWN;
+		return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
 	if (egg_strequal (technology, "lithium-ion"))
-		return DKP_DEVICE_TECHNOLGY_LITHIUM_ION;
+		return DKP_DEVICE_TECHNOLOGY_LITHIUM_ION;
 	if (egg_strequal (technology, "lithium-polymer"))
-		return DKP_DEVICE_TECHNOLGY_LITHIUM_POLYMER;
+		return DKP_DEVICE_TECHNOLOGY_LITHIUM_POLYMER;
 	if (egg_strequal (technology, "lithium-iron-phosphate"))
-		return DKP_DEVICE_TECHNOLGY_LITHIUM_IRON_PHOSPHATE;
+		return DKP_DEVICE_TECHNOLOGY_LITHIUM_IRON_PHOSPHATE;
 	if (egg_strequal (technology, "lead-acid"))
-		return DKP_DEVICE_TECHNOLGY_LEAD_ACID;
+		return DKP_DEVICE_TECHNOLOGY_LEAD_ACID;
 	if (egg_strequal (technology, "nickel-cadmium"))
-		return DKP_DEVICE_TECHNOLGY_NICKEL_CADMIUM;
+		return DKP_DEVICE_TECHNOLOGY_NICKEL_CADMIUM;
 	if (egg_strequal (technology, "nickel-metal-hydride"))
-		return DKP_DEVICE_TECHNOLGY_NICKEL_METAL_HYDRIDE;
-	return DKP_DEVICE_TECHNOLGY_UNKNOWN;
+		return DKP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE;
+	return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
 }
 
 /**

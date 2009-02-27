@@ -51,7 +51,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       )
       dict entry(
          string "type"
-         variant             string "battery"
+         variant             uint 2
       )
       dict entry(
          string "power-supply"
@@ -111,7 +111,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       )
       dict entry(
          string "state"
-         variant             string "fully-charged"
+         variant             uint 3
       )
       dict entry(
          string "is-rechargeable"
@@ -123,7 +123,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       )
       dict entry(
          string "technology"
-         variant             string "lithium-ion"
+         variant             uint 1
       )
    ]
             </doc:code>
@@ -182,7 +182,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
           </doc:summary>
         </doc:doc>
       </arg>
-      <arg name="data" direction="out" type="a(uds)">
+      <arg name="data" direction="out" type="a(udu)">
         <doc:doc><doc:summary>
             The history data for the power device, if the device supports history.
             Data is ordered from the earliest in time, to the newest data point.
@@ -258,121 +258,208 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
 
     <!-- ************************************************************ -->
     <property name="native-path" type="s" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             OS specific native path of the power source. On Linux this
             is the sysfs path, for
             example <doc:tt>/sys/devices/LNXSYSTM:00/device:00/PNP0C0A:00/power_supply/BAT0</doc:tt>. Is
             blank if the device is being driven by a user space
             driver.
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="vendor" type="s" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             Name of the vendor of the battery.
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="model" type="s" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             Name of the model of this battery.
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="serial" type="s" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             Unique serial number of the battery.
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="update-time" type="t" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             The point in time (seconds since the Epoch Jan 1, 1970
             0:00 UTC) that data was read from the power source.
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
-    <property name="type" type="s" access="read">
-      <doc:doc><doc:description><doc:para>
-            Type of power source. Known values are "battery" and "line-power".
-      </doc:para></doc:description></doc:doc>
+    <property name="type" type="u" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Type of power source.
+          </doc:para>
+          <doc:list>
+            <doc:item>
+              <doc:term>0</doc:term><doc:definition>Unknown</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>1</doc:term><doc:definition>Line Power</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>2</doc:term><doc:definition>Battery</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>3</doc:term><doc:definition>Ups</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>4</doc:term><doc:definition>Monitor</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>5</doc:term><doc:definition>Mouse</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>6</doc:term><doc:definition>Keyboard</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>7</doc:term><doc:definition>Pda</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>8</doc:term><doc:definition>Phone</doc:definition>
+            </doc:item>
+          </doc:list>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="power-supply" type="b" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             If the power device is used to supply the system.
             This would be set TRUE for laptop batteries and UPS devices,
             but set FALSE for wireless mice or PDAs.
-          </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="has-history" type="b" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             If the power device has history.
-          </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="has-statistics" type="b" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             If the power device has statistics.
-          </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="online" type="b" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             Whether power is currently being provided through line power.
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "line-power".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="energy" type="d" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             Amount of energy (measured in Wh) currently available in
             the power source.
           </doc:para><doc:para>
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "battery".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="energy-empty" type="d" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             Amount of energy (measured in Wh) in the power source when
             it's considered to be empty.
           </doc:para><doc:para>
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "battery".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="energy-full" type="d" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             Amount of energy (measured in Wh) in the power source when
             it's considered full.
           </doc:para><doc:para>
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "battery".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="energy-full-design" type="d" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             Amount of energy (measured in Wh) the power source is
             designed to hold when it's considered full.
           </doc:para><doc:para>
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "battery".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="energy-rate" type="d" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             Amount of energy being drained from the source, measured
             in W. If positive, the source is being discharged, if
             negative it's being charged.
@@ -380,39 +467,55 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "battery".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="voltage" type="d" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             Voltage in the Cell or being recorded by the meter.
-          </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="time-to-empty" type="x" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             Number of seconds until the power source is considered empty.
             Is set to 0 if unknown.
           </doc:para><doc:para>
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "battery".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="time-to-full" type="x" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             Number of seconds until the power source is considered full.
             Is set to 0 if unknown.
           </doc:para><doc:para>
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "battery".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="percentage" type="d" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             The amount of energy left in the power source expressed as
             a percentage between 0 and 100. Typically this is the same as
             (<doc:ref type="property" to="Source:energy">energy</doc:ref> -
@@ -426,11 +529,15 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "battery".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="is-present" type="b" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             If the power source is present in the bay.
             This field is required as some batteries are hot-removable, for example
             expensive UPS and most laptop batteries.
@@ -438,33 +545,61 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "battery".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
-    <property name="state" type="s" access="read">
-      <doc:doc><doc:description><doc:para>
+    <property name="state" type="u" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             The battery power state.
-            Known values are "fully-charged", "empty", "charging",
-            "discharging" or "unknown".
-          </doc:para><doc:para>
+          </doc:para>
+          <doc:list>
+            <doc:item>
+              <doc:term>0</doc:term><doc:definition>Unknown</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>1</doc:term><doc:definition>Charging</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>2</doc:term><doc:definition>Discharging</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>3</doc:term><doc:definition>Empty</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>4</doc:term><doc:definition>Fully charged</doc:definition>
+            </doc:item>
+          </doc:list>
+          <doc:para>
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "battery".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="is-rechargeable" type="b" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             If the power source is rechargeable.
           </doc:para><doc:para>
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "battery".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
     <property name="capacity" type="d" access="read">
-      <doc:doc><doc:description><doc:para>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
             The capacity of the power source expressed as a percentage between 0 and 100.
             The capacity of the battery will reduce with age.
             A capacity value less than 75% is usually a sign that you should renew your battery.
@@ -477,18 +612,47 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "battery".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
-    <property name="technology" type="s" access="read">
-      <doc:doc><doc:description><doc:para>
-            Technology used in the battery; known values are "lithium-ion", "lead-acid",
-            "lithium-polymer", "nickel-metal-hydride", "lithium-iron-phosphate" or "unknown".
-          </doc:para><doc:para>
+    <property name="technology" type="u" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Technology used in the battery:
+          </doc:para>
+          <doc:list>
+            <doc:item>
+              <doc:term>0</doc:term><doc:definition>Unknown</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>1</doc:term><doc:definition>Lithium ion</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>2</doc:term><doc:definition>Lithium polymer</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>3</doc:term><doc:definition>Lithium iron phosphate</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>4</doc:term><doc:definition>Lead acid</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>5</doc:term><doc:definition>Nickel cadmium</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>6</doc:term><doc:definition>Nickel metal hydride</doc:definition>
+            </doc:item>
+          </doc:list>
+          <doc:para>
             This property is only valid if the property
             <doc:ref type="property" to="Source:type">type</doc:ref>
             has the value "battery".
-      </doc:para></doc:description></doc:doc>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
     </property>
 
   </interface>

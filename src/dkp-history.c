@@ -64,6 +64,15 @@ G_DEFINE_TYPE (DkpHistory, dkp_history, G_TYPE_OBJECT)
 #define DKP_HISTORY_FILE_HEADER	"PackageKit Profile"
 
 /**
+ * dkp_history_array_copy_cb:
+ **/
+static void
+dkp_history_array_copy_cb (const DkpHistoryObj *obj, GPtrArray *dest)
+{
+	g_ptr_array_add (dest, dkp_history_obj_copy (obj));
+}
+
+/**
  * dkp_history_array_limit_resolution:
  * @array: The data we have for a specific graph
  * @max_num: The max desired points
@@ -114,15 +123,16 @@ dkp_history_array_limit_resolution (GPtrArray *array, guint max_num)
 	guint step = 1;
 	gfloat preset;
 
+	new = g_ptr_array_new ();
+	egg_debug ("length of array (before) %i", array->len);
+
 	/* check length */
 	length = array->len;
 	if (length < max_num) {
-		new = g_object_ref (array);
+		/* need to copy array */
+		g_ptr_array_foreach (array, (GFunc) dkp_history_array_copy_cb, new);
 		goto out;
 	}
-
-	new = g_ptr_array_new ();
-	egg_debug ("length of array (before) %i", array->len);
 
 	/* last element */
 	obj = (const DkpHistoryObj *) g_ptr_array_index (array, length-1);

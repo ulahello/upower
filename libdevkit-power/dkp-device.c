@@ -25,11 +25,12 @@
 #include <stdio.h>
 #include <glib.h>
 #include <dbus/dbus-glib.h>
+#include <string.h>
 
 #include "egg-debug.h"
+#include "egg-string.h"
 
 #include "dkp-device.h"
-#include "dkp-object.h"
 #include "dkp-stats-obj.h"
 #include "dkp-history-obj.h"
 
@@ -42,10 +43,63 @@ static void	dkp_device_finalize	(GObject		*object);
 struct DkpDevicePrivate
 {
 	gchar			*object_path;
-	DkpObject		*obj;
 	DBusGConnection		*bus;
 	DBusGProxy		*proxy_device;
 	DBusGProxy		*proxy_props;
+
+	/* properties */
+	guint64		 	 update_time;
+	gchar			*vendor;
+	gchar			*model;
+	gchar			*serial;
+	gchar			*native_path;
+	gboolean		 power_supply;
+	gboolean		 online;
+	gboolean		 is_present;
+	gboolean		 is_rechargeable;
+	gboolean		 has_history;
+	gboolean		 has_statistics;
+	DkpDeviceType		 type;
+	DkpDeviceState		 state;
+	DkpDeviceTechnology	 technology;
+	gdouble			 capacity;		/* percent */
+	gdouble			 energy;		/* Watt Hours */
+	gdouble			 energy_empty;		/* Watt Hours */
+	gdouble			 energy_full;		/* Watt Hours */
+	gdouble			 energy_full_design;	/* Watt Hours */
+	gdouble			 energy_rate;		/* Watts */
+	gdouble			 voltage;		/* Volts */
+	gint64			 time_to_empty;		/* seconds */
+	gint64			 time_to_full;		/* seconds */
+	gdouble			 percentage;		/* percent */
+};
+
+enum {
+	PROP_0,
+	PROP_UPDATE_TIME,
+	PROP_VENDOR,
+	PROP_MODEL,
+	PROP_SERIAL,
+	PROP_NATIVE_PATH,
+	PROP_POWER_SUPPLY,
+	PROP_ONLINE,
+	PROP_IS_PRESENT,
+	PROP_IS_RECHARGEABLE,
+	PROP_HAS_HISTORY,
+	PROP_HAS_STATISTICS,
+	PROP_TYPE,
+	PROP_STATE,
+	PROP_TECHNOLOGY,
+	PROP_CAPACITY,
+	PROP_ENERGY,
+	PROP_ENERGY_EMPTY,
+	PROP_ENERGY_FULL,
+	PROP_ENERGY_FULL_DESIGN,
+	PROP_ENERGY_RATE,
+	PROP_VOLTAGE,
+	PROP_TIME_TO_EMPTY,
+	PROP_TIME_TO_FULL,
+	PROP_PERCENTAGE
 };
 
 enum {
@@ -83,6 +137,69 @@ out:
 }
 
 /**
+ * dkp_device_collect_props_cb:
+ **/
+static void
+dkp_device_collect_props_cb (const char *key, const GValue *value, DkpDevice *device)
+{
+	gboolean handled = TRUE;
+
+	if (g_strcmp0 (key, "native-path") == 0)
+		device->priv->native_path = g_strdup (g_value_get_string (value));
+	else if (g_strcmp0 (key, "vendor") == 0)
+		device->priv->vendor = g_strdup (g_value_get_string (value));
+	else if (g_strcmp0 (key, "model") == 0)
+		device->priv->model = g_strdup (g_value_get_string (value));
+	else if (g_strcmp0 (key, "serial") == 0)
+		device->priv->serial = g_strdup (g_value_get_string (value));
+	else if (g_strcmp0 (key, "update-time") == 0)
+		device->priv->update_time = g_value_get_uint64 (value);
+	else if (g_strcmp0 (key, "type") == 0)
+		device->priv->type = g_value_get_uint (value);
+	else if (g_strcmp0 (key, "online") == 0)
+		device->priv->online = g_value_get_boolean (value);
+	else if (g_strcmp0 (key, "has-history") == 0)
+		device->priv->has_history = g_value_get_boolean (value);
+	else if (g_strcmp0 (key, "has-statistics") == 0)
+		device->priv->has_statistics = g_value_get_boolean (value);
+	else if (g_strcmp0 (key, "energy") == 0)
+		device->priv->energy = g_value_get_double (value);
+	else if (g_strcmp0 (key, "energy-empty") == 0)
+		device->priv->energy_empty = g_value_get_double (value);
+	else if (g_strcmp0 (key, "energy-full") == 0)
+		device->priv->energy_full = g_value_get_double (value);
+	else if (g_strcmp0 (key, "energy-full-design") == 0)
+		device->priv->energy_full_design = g_value_get_double (value);
+	else if (g_strcmp0 (key, "energy-rate") == 0)
+		device->priv->energy_rate = g_value_get_double (value);
+	else if (g_strcmp0 (key, "voltage") == 0)
+		device->priv->voltage = g_value_get_double (value);
+	else if (g_strcmp0 (key, "time-to-full") == 0)
+		device->priv->time_to_full = g_value_get_int64 (value);
+	else if (g_strcmp0 (key, "time-to-empty") == 0)
+		device->priv->time_to_empty = g_value_get_int64 (value);
+	else if (g_strcmp0 (key, "percentage") == 0)
+		device->priv->percentage = g_value_get_double (value);
+	else if (g_strcmp0 (key, "technology") == 0)
+		device->priv->technology = g_value_get_uint (value);
+	else if (g_strcmp0 (key, "is-present") == 0)
+		device->priv->is_present = g_value_get_boolean (value);
+	else if (g_strcmp0 (key, "is-rechargeable") == 0)
+		device->priv->is_rechargeable = g_value_get_boolean (value);
+	else if (g_strcmp0 (key, "power-supply") == 0)
+		device->priv->power_supply = g_value_get_boolean (value);
+	else if (g_strcmp0 (key, "capacity") == 0)
+		device->priv->capacity = g_value_get_double (value);
+	else if (g_strcmp0 (key, "state") == 0)
+		device->priv->state = g_value_get_uint (value);
+	else
+		handled = FALSE;
+
+	if (!handled)
+		egg_warning ("unhandled property '%s'", key);
+}
+
+/**
  * dkp_device_refresh_internal:
  **/
 static gboolean
@@ -96,7 +213,7 @@ dkp_device_refresh_internal (DkpDevice *device)
 		egg_warning ("Cannot get device properties for %s", device->priv->object_path);
 		return FALSE;
 	}
-	dkp_object_set_from_map (device->priv->obj, hash);
+	g_hash_table_foreach (hash, (GHFunc) dkp_device_collect_props_cb, device);
 	g_hash_table_unref (hash);
 	return TRUE;
 }
@@ -109,7 +226,7 @@ dkp_device_changed_cb (DBusGProxy *proxy, DkpDevice *device)
 {
 	g_return_if_fail (DKP_IS_DEVICE (device));
 	dkp_device_refresh_internal (device);
-	g_signal_emit (device, signals [DKP_DEVICE_CHANGED], 0, device->priv->obj);
+	g_signal_emit (device, signals [DKP_DEVICE_CHANGED], 0, NULL); //TODO
 }
 
 /**
@@ -184,16 +301,6 @@ dkp_device_get_object_path (const DkpDevice *device)
 }
 
 /**
- * dkp_device_get_object:
- **/
-const DkpObject *
-dkp_device_get_object (const DkpDevice *device)
-{
-	g_return_val_if_fail (DKP_IS_DEVICE (device), NULL);
-	return device->priv->obj;
-}
-
-/**
  * dkp_device_print_history:
  **/
 static gboolean
@@ -223,15 +330,117 @@ out:
 }
 
 /**
+ * dkp_device_print_bool_to_text:
+ **/
+static const gchar *
+dkp_device_print_bool_to_text (gboolean ret)
+{
+	return ret ? "yes" : "no";
+}
+
+/**
+ * dkp_device_print_time_to_text:
+ **/
+static gchar *
+dkp_device_print_time_to_text (gint seconds)
+{
+	gfloat value = seconds;
+
+	if (value < 0)
+		return g_strdup ("unknown");
+	if (value < 60)
+		return g_strdup_printf ("%.0f seconds", value);
+	value /= 60.0;
+	if (value < 60)
+		return g_strdup_printf ("%.1f minutes", value);
+	value /= 60.0;
+	if (value < 60)
+		return g_strdup_printf ("%.1f hours", value);
+	value /= 24.0;
+	return g_strdup_printf ("%.1f days", value);
+}
+
+/**
  * dkp_device_print:
  **/
 gboolean
 dkp_device_print (const DkpDevice *device)
 {
+	struct tm *time_tm;
+	time_t t;
+	gchar time_buf[256];
+	gchar *time_str;
+
 	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 
-	/* print to screen */
-	dkp_object_print (device->priv->obj);
+	/* get a human readable time */
+	t = (time_t) device->priv->update_time;
+	time_tm = localtime (&t);
+	strftime (time_buf, sizeof time_buf, "%c", time_tm);
+
+	g_print ("  native-path:          %s\n", device->priv->native_path);
+	if (!egg_strzero (device->priv->vendor))
+		g_print ("  vendor:               %s\n", device->priv->vendor);
+	if (!egg_strzero (device->priv->model))
+		g_print ("  model:                %s\n", device->priv->model);
+	if (!egg_strzero (device->priv->serial))
+		g_print ("  serial:               %s\n", device->priv->serial);
+	g_print ("  power supply:         %s\n", dkp_device_print_bool_to_text (device->priv->power_supply));
+	g_print ("  updated:              %s (%d seconds ago)\n", time_buf, (int) (time (NULL) - device->priv->update_time));
+	g_print ("  has history:          %s\n", dkp_device_print_bool_to_text (device->priv->has_history));
+	g_print ("  has statistics:       %s\n", dkp_device_print_bool_to_text (device->priv->has_statistics));
+	g_print ("  %s\n", dkp_device_type_to_text (device->priv->type));
+
+	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY ||
+	    device->priv->type == DKP_DEVICE_TYPE_MOUSE ||
+	    device->priv->type == DKP_DEVICE_TYPE_KEYBOARD ||
+	    device->priv->type == DKP_DEVICE_TYPE_UPS)
+		g_print ("    present:             %s\n", dkp_device_print_bool_to_text (device->priv->is_present));
+	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY ||
+	    device->priv->type == DKP_DEVICE_TYPE_MOUSE ||
+	    device->priv->type == DKP_DEVICE_TYPE_KEYBOARD)
+		g_print ("    rechargeable:        %s\n", dkp_device_print_bool_to_text (device->priv->is_rechargeable));
+	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY ||
+	    device->priv->type == DKP_DEVICE_TYPE_MOUSE ||
+	    device->priv->type == DKP_DEVICE_TYPE_KEYBOARD)
+		g_print ("    state:               %s\n", dkp_device_state_to_text (device->priv->state));
+	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY) {
+		g_print ("    energy:              %g Wh\n", device->priv->energy);
+		g_print ("    energy-empty:        %g Wh\n", device->priv->energy_empty);
+		g_print ("    energy-full:         %g Wh\n", device->priv->energy_full);
+		g_print ("    energy-full-design:  %g Wh\n", device->priv->energy_full_design);
+	}
+	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY ||
+	    device->priv->type == DKP_DEVICE_TYPE_MONITOR)
+		g_print ("    energy-rate:         %g W\n", device->priv->energy_rate);
+	if (device->priv->type == DKP_DEVICE_TYPE_UPS ||
+	    device->priv->type == DKP_DEVICE_TYPE_BATTERY ||
+	    device->priv->type == DKP_DEVICE_TYPE_MONITOR)
+		g_print ("    voltage:             %g V\n", device->priv->voltage);
+	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY ||
+	    device->priv->type == DKP_DEVICE_TYPE_UPS) {
+		if (device->priv->time_to_full >= 0) {
+			time_str = dkp_device_print_time_to_text (device->priv->time_to_full);
+			g_print ("    time to full:        %s\n", time_str);
+			g_free (time_str);
+		}
+		if (device->priv->time_to_empty >= 0) {
+			time_str = dkp_device_print_time_to_text (device->priv->time_to_empty);
+			g_print ("    time to empty:       %s\n", time_str);
+			g_free (time_str);
+		}
+	}
+	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY ||
+	    device->priv->type == DKP_DEVICE_TYPE_MOUSE ||
+	    device->priv->type == DKP_DEVICE_TYPE_KEYBOARD ||
+	    device->priv->type == DKP_DEVICE_TYPE_UPS)
+		g_print ("    percentage:          %g%%\n", device->priv->percentage);
+	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY)
+		g_print ("    capacity:            %g%%\n", device->priv->capacity);
+	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY)
+		g_print ("    technology:          %s\n", dkp_device_technology_to_text (device->priv->technology));
+	if (device->priv->type == DKP_DEVICE_TYPE_LINE_POWER)
+		g_print ("    online:             %s\n", dkp_device_print_bool_to_text (device->priv->online));
 
 	/* if we can, get history */
 	dkp_device_print_history (device, "charge");
@@ -289,7 +498,7 @@ dkp_device_get_history (const DkpDevice *device, const gchar *type, guint timesp
 					dbus_g_type_get_struct("GValueArray",
 						G_TYPE_UINT,
 						G_TYPE_DOUBLE,
-						G_TYPE_STRING,
+						G_TYPE_UINT,
 						G_TYPE_INVALID));
 
 	/* get compound data */
@@ -327,7 +536,7 @@ dkp_device_get_history (const DkpDevice *device, const gchar *type, guint timesp
 		g_value_unset (gv);
 		/* 2 */
 		gv = g_value_array_get_nth (gva, 2);
-		obj->state = dkp_device_state_from_text (g_value_get_string (gv));
+		obj->state = g_value_get_uint (gv);
 		g_value_unset (gv);
 		g_ptr_array_add (array, obj);
 		g_value_array_free (gva);
@@ -408,6 +617,114 @@ out:
 }
 
 /**
+ * dkp_device_set_property:
+ **/
+static void
+dkp_device_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
+{
+//	DkpDevice *device = DKP_DEVICE (object);
+
+	switch (prop_id) {
+//	case PROP_SUBSYSTEMS:
+//		if (device->priv->subsystems != NULL)
+//			g_strfreev (device->priv->subsystems);
+//		device->priv->subsystems = g_strdupv (g_value_get_boxed (value));
+//		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
+}
+
+/**
+ * dkp_device_get_property:
+ **/
+static void
+dkp_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
+{
+	DkpDevice *device = DKP_DEVICE (object);
+
+	switch (prop_id) {
+	case PROP_UPDATE_TIME:
+		g_value_set_uint64 (value, device->priv->update_time);
+		break;
+	case PROP_VENDOR:
+		g_value_set_string (value, device->priv->vendor);
+		break;
+	case PROP_MODEL:
+		g_value_set_string (value, device->priv->model);
+		break;
+	case PROP_SERIAL:
+		g_value_set_string (value, device->priv->serial);
+		break;
+	case PROP_NATIVE_PATH:
+		g_value_set_string (value, device->priv->native_path);
+		break;
+	case PROP_POWER_SUPPLY:
+		g_value_set_boolean (value, device->priv->power_supply);
+		break;
+	case PROP_ONLINE:
+		g_value_set_boolean (value, device->priv->online);
+		break;
+	case PROP_IS_PRESENT:
+		g_value_set_boolean (value, device->priv->is_present);
+		break;
+	case PROP_IS_RECHARGEABLE:
+		g_value_set_boolean (value, device->priv->is_rechargeable);
+		break;
+	case PROP_HAS_HISTORY:
+		g_value_set_boolean (value, device->priv->has_history);
+		break;
+	case PROP_HAS_STATISTICS:
+		g_value_set_boolean (value, device->priv->has_statistics);
+		break;
+	case PROP_TYPE:
+		g_value_set_uint (value, device->priv->type);
+		break;
+	case PROP_STATE:
+		g_value_set_uint (value, device->priv->state);
+		break;
+	case PROP_TECHNOLOGY:
+		g_value_set_uint (value, device->priv->technology);
+		break;
+	case PROP_CAPACITY:
+		g_value_set_double (value, device->priv->capacity);
+		break;
+	case PROP_ENERGY:
+		g_value_set_double (value, device->priv->energy);
+		break;
+	case PROP_ENERGY_EMPTY:
+		g_value_set_double (value, device->priv->energy_empty);
+		break;
+	case PROP_ENERGY_FULL:
+		g_value_set_double (value, device->priv->energy_full);
+		break;
+	case PROP_ENERGY_FULL_DESIGN:
+		g_value_set_double (value, device->priv->energy_full_design);
+		break;
+	case PROP_ENERGY_RATE:
+		g_value_set_double (value, device->priv->energy_rate);
+		break;
+	case PROP_VOLTAGE:
+		g_value_set_double (value, device->priv->voltage);
+		break;
+	case PROP_TIME_TO_EMPTY:
+		g_value_set_int64 (value, device->priv->time_to_empty);
+		break;
+	case PROP_TIME_TO_FULL:
+		g_value_set_int64 (value, device->priv->time_to_full);
+		break;
+	case PROP_PERCENTAGE:
+		g_value_set_double (value, device->priv->percentage);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+    }
+}
+
+
+/**
  * dkp_device_class_init:
  * @klass: The DkpDeviceClass
  **/
@@ -416,11 +733,13 @@ dkp_device_class_init (DkpDeviceClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = dkp_device_finalize;
+	object_class->set_property = dkp_device_set_property;
+	object_class->get_property = dkp_device_get_property;
 
 	/**
 	 * PkClient::changed:
 	 * @device: the #DkpDevice instance that emitted the signal
-	 * @obj: the #DkpObject that has changed
+	 * @obj: the #DkpObject that has changed //TODO
 	 *
 	 * The ::changed signal is emitted when the device data has changed.
 	 **/
@@ -430,6 +749,219 @@ dkp_device_class_init (DkpDeviceClass *klass)
 			      G_STRUCT_OFFSET (DkpDeviceClass, changed),
 			      NULL, NULL, g_cclosure_marshal_VOID__POINTER,
 			      G_TYPE_NONE, 1, G_TYPE_POINTER);
+
+	/**
+	 * DkpDevice:update-time:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_UPDATE_TIME,
+					 g_param_spec_uint64 ("update-time",
+					 		      NULL, NULL,
+					 		      0, G_MAXUINT64, 0,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:vendor:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_VENDOR,
+					 g_param_spec_string ("vendor",
+					 		      NULL, NULL,
+							      NULL,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:model:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_MODEL,
+					 g_param_spec_string ("model",
+					 		      NULL, NULL,
+							      NULL,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:serial:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_SERIAL,
+					 g_param_spec_string ("serial",
+					 		      NULL, NULL,
+							      NULL,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:native-path:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_NATIVE_PATH,
+					 g_param_spec_string ("native-path",
+					 		      NULL, NULL,
+							      NULL,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:power-supply:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_POWER_SUPPLY,
+					 g_param_spec_boolean ("power-supply",
+					 		       NULL, NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
+	/**
+	 * DkpDevice:online:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_ONLINE,
+					 g_param_spec_boolean ("online",
+					 		       NULL, NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
+	/**
+	 * DkpDevice:is-present:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_IS_PRESENT,
+					 g_param_spec_boolean ("is-present",
+					 		       NULL, NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
+	/**
+	 * DkpDevice:is-rechargeable:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_IS_RECHARGEABLE,
+					 g_param_spec_boolean ("is-rechargeable",
+					 		       NULL, NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
+	/**
+	 * DkpDevice:has-history:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_HAS_HISTORY,
+					 g_param_spec_boolean ("has-history",
+					 		       NULL, NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
+	/**
+	 * DkpDevice:has-statistics:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_HAS_STATISTICS,
+					 g_param_spec_boolean ("has-statistics",
+					 		       NULL, NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
+	/**
+	 * DkpDevice:type:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_TYPE,
+					 g_param_spec_uint ("type",
+					 		    NULL, NULL,
+					 		    0,
+					 		    DKP_DEVICE_TYPE_UNKNOWN,
+					 		    DKP_DEVICE_TYPE_UNKNOWN,
+							    G_PARAM_READABLE));
+	/**
+	 * DkpDevice:state:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_STATE,
+					 g_param_spec_uint ("state",
+					 		    NULL, NULL,
+					 		    0,
+					 		    DKP_DEVICE_STATE_UNKNOWN,
+					 		    DKP_DEVICE_STATE_UNKNOWN,
+							    G_PARAM_READABLE));
+	/**
+	 * DkpDevice:technology:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_TECHNOLOGY,
+					 g_param_spec_uint ("technology",
+					 		    NULL, NULL,
+					 		    0,
+					 		    DKP_DEVICE_TECHNOLOGY_UNKNOWN,
+					 		    DKP_DEVICE_TECHNOLOGY_UNKNOWN,
+							    G_PARAM_READABLE));
+	/**
+	 * DkpDevice:capacity:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_CAPACITY,
+					 g_param_spec_double ("capacity", NULL, NULL,
+							      0.0, 100.f, 100.0,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:energy:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_ENERGY,
+					 g_param_spec_double ("energy", NULL, NULL,
+							      0.0, G_MAXDOUBLE, 0.0,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:energy-empty:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_ENERGY_EMPTY,
+					 g_param_spec_double ("energy-empty", NULL, NULL,
+							      0.0, G_MAXDOUBLE, 0.0,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:energy-full:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_ENERGY_FULL,
+					 g_param_spec_double ("energy-full", NULL, NULL,
+							      0.0, G_MAXDOUBLE, 0.0,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:energy-full-design:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_ENERGY_FULL_DESIGN,
+					 g_param_spec_double ("energy-full-design", NULL, NULL,
+							      0.0, G_MAXDOUBLE, 0.0,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:energy-rate:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_ENERGY_RATE,
+					 g_param_spec_double ("energy-rate", NULL, NULL,
+							      0.0, G_MAXDOUBLE, 0.0,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:voltage:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_VOLTAGE,
+					 g_param_spec_double ("voltage", NULL, NULL,
+							      0.0, G_MAXDOUBLE, 0.0,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:time-to-empty:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_TIME_TO_EMPTY,
+					 g_param_spec_int64 ("time-to-empty", NULL, NULL,
+					 		      0, G_MAXINT64, 0,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:time-to-full:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_TIME_TO_FULL,
+					 g_param_spec_int64 ("time-to-full", NULL, NULL,
+					 		      0, G_MAXINT64, 0,
+							      G_PARAM_READABLE));
+	/**
+	 * DkpDevice:percentage:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_PERCENTAGE,
+					 g_param_spec_double ("percentage", NULL, NULL,
+							      0.0, 100.f, 100.0,
+							      G_PARAM_READABLE));
 
 	g_type_class_add_private (klass, sizeof (DkpDevicePrivate));
 }
@@ -445,7 +977,6 @@ dkp_device_init (DkpDevice *device)
 	device->priv->object_path = NULL;
 	device->priv->proxy_device = NULL;
 	device->priv->proxy_props = NULL;
-	device->priv->obj = dkp_object_new ();
 }
 
 /**
@@ -462,7 +993,10 @@ dkp_device_finalize (GObject *object)
 	device = DKP_DEVICE (object);
 
 	g_free (device->priv->object_path);
-	dkp_object_free (device->priv->obj);
+	g_free (device->priv->vendor);
+	g_free (device->priv->model);
+	g_free (device->priv->serial);
+	g_free (device->priv->native_path);
 	if (device->priv->proxy_device != NULL)
 		g_object_unref (device->priv->proxy_device);
 	if (device->priv->proxy_props != NULL)

@@ -27,12 +27,11 @@
 #include <devkit-gobject/devkit-gobject.h>
 #include <dbus/dbus-glib.h>
 
-#include "dkp-object.h"
 #include "dkp-daemon.h"
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_DEVICE	(dkp_device_get_type ())
+#define DKP_TYPE_DEVICE		(dkp_device_get_type ())
 #define DKP_DEVICE(o)	   	(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_DEVICE, DkpDevice))
 #define DKP_DEVICE_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_DEVICE, DkpDeviceClass))
 #define DKP_IS_DEVICE(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_DEVICE))
@@ -80,7 +79,6 @@ gboolean	 dkp_device_changed	 	(DkpDevice	*device,
 						 DevkitDevice	*d,
 						 gboolean	 synthesized);
 void		 dkp_device_removed	 	(DkpDevice	*device);
-DkpObject	*dkp_device_get_obj		(DkpDevice	*device);
 DevkitDevice	*dkp_device_get_d		(DkpDevice	*device);
 const gchar	*dkp_device_get_object_path	(DkpDevice	*device);
 gboolean	 dkp_device_get_on_battery	(DkpDevice	*device,

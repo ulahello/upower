@@ -35,9 +35,7 @@ libdevkit_power_la_SOURCES =					\
 	dkp-wakeups-obj.h					\
 	dkp-wakeups-obj.c					\
 	dkp-enum.c						\
-	dkp-enum.h						\
-	dkp-object.c						\
-	dkp-object.h
+	dkp-enum.h
 
 libdevkit_power_la_LIBADD = $(INTLLIBS) $(GLIB_LIBS) $(DBUS_GLIB_LIBS)
 

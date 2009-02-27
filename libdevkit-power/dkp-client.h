@@ -59,6 +59,16 @@ typedef struct
 	void			(*device_removed)      	(DkpClient		*client,
 							 const DkpDevice	*device);
 	void			(*changed)              (DkpClient		*client);
+	/*< private >*/
+	/* Padding for future expansion */
+	void (*_dkp_client_reserved1) (void);
+	void (*_dkp_client_reserved2) (void);
+	void (*_dkp_client_reserved3) (void);
+	void (*_dkp_client_reserved4) (void);
+	void (*_dkp_client_reserved5) (void);
+	void (*_dkp_client_reserved6) (void);
+	void (*_dkp_client_reserved7) (void);
+	void (*_dkp_client_reserved8) (void);
 } DkpClientClass;
 
 GType		 dkp_client_get_type			(void);

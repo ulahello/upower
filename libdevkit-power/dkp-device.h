@@ -28,7 +28,6 @@
 
 #include <glib-object.h>
 #include <libdevkit-power/dkp-enum.h>
-#include <libdevkit-power/dkp-object.h>
 
 G_BEGIN_DECLS
 
@@ -53,13 +52,22 @@ typedef struct
 {
 	GObjectClass		 parent_class;
 	void			(*changed)		(DkpDevice		*device,
-							 const DkpObject	*obj);
+							 gpointer		*obj);
+	/*< private >*/
+	/* Padding for future expansion */
+	void (*_dkp_device_reserved1) (void);
+	void (*_dkp_device_reserved2) (void);
+	void (*_dkp_device_reserved3) (void);
+	void (*_dkp_device_reserved4) (void);
+	void (*_dkp_device_reserved5) (void);
+	void (*_dkp_device_reserved6) (void);
+	void (*_dkp_device_reserved7) (void);
+	void (*_dkp_device_reserved8) (void);
 } DkpDeviceClass;
 
 GType		 dkp_device_get_type			(void);
 DkpDevice	*dkp_device_new				(void);
 
-const DkpObject	*dkp_device_get_object			(const DkpDevice	*device);
 const gchar	*dkp_device_get_object_path		(const DkpDevice	*device);
 gboolean	 dkp_device_set_object_path		(DkpDevice		*device,
 							 const gchar		*object_path);
