@@ -18,7 +18,6 @@ libdevkit_power_include_HEADERS =				\
 	dkp-wakeups.h						\
 	dkp-qos-obj.h						\
 	dkp-history-obj.h					\
-	dkp-stats-obj.c						\
 	dkp-wakeups-obj.h					\
 	dkp-enum.h
 
