@@ -73,7 +73,8 @@ typedef struct
 
 GType		 dkp_client_get_type			(void);
 DkpClient	*dkp_client_new				(void);
-GPtrArray	*dkp_client_enumerate_devices		(DkpClient		*client);
+GPtrArray	*dkp_client_enumerate_devices		(DkpClient		*client,
+							 GError			**error);
 gboolean	 dkp_client_suspend			(DkpClient		*client,
 							 GError			**error);
 gboolean	 dkp_client_hibernate			(DkpClient		*client,

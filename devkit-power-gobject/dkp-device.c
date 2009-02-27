@@ -27,8 +27,6 @@
 #include <dbus/dbus-glib.h>
 #include <string.h>
 
-#include "egg-debug.h"
-
 #include "dkp-device.h"
 #include "dkp-stats-obj.h"
 #include "dkp-history-obj.h"
@@ -114,21 +112,22 @@ G_DEFINE_TYPE (DkpDevice, dkp_device, G_TYPE_OBJECT)
  * dkp_device_get_device_properties:
  **/
 static GHashTable *
-dkp_device_get_device_properties (DkpDevice *device)
+dkp_device_get_device_properties (DkpDevice *device, GError **error)
 {
 	gboolean ret;
-	GError *error = NULL;
+	GError *error_local = NULL;
 	GHashTable *hash_table = NULL;
 
-	ret = dbus_g_proxy_call (device->priv->proxy_props, "GetAll", &error,
+	ret = dbus_g_proxy_call (device->priv->proxy_props, "GetAll", &error_local,
 				 G_TYPE_STRING, "org.freedesktop.DeviceKit.Power.Device",
 				 G_TYPE_INVALID,
 				 dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_VALUE),
 				 &hash_table,
 				 G_TYPE_INVALID);
 	if (!ret) {
-		egg_debug ("Couldn't call GetAll() to get properties for %s: %s", device->priv->object_path, error->message);
-		g_error_free (error);
+		if (error != NULL)
+			*error = g_error_new (1, 0, "Couldn't call GetAll() to get properties for %s: %s", device->priv->object_path, error_local->message);
+		g_error_free (error_local);
 		goto out;
 	}
 out:
@@ -141,8 +140,6 @@ out:
 static void
 dkp_device_collect_props_cb (const char *key, const GValue *value, DkpDevice *device)
 {
-	gboolean handled = TRUE;
-
 	if (g_strcmp0 (key, "native-path") == 0)
 		device->priv->native_path = g_strdup (g_value_get_string (value));
 	else if (g_strcmp0 (key, "vendor") == 0)
@@ -191,25 +188,27 @@ dkp_device_collect_props_cb (const char *key, const GValue *value, DkpDevice *de
 		device->priv->capacity = g_value_get_double (value);
 	else if (g_strcmp0 (key, "state") == 0)
 		device->priv->state = g_value_get_uint (value);
-	else
-		handled = FALSE;
-
-	if (!handled)
-		egg_warning ("unhandled property '%s'", key);
+	else {
+		g_warning ("unhandled property '%s'", key);
+		g_assert_not_reached ();
+	}
 }
 
 /**
  * dkp_device_refresh_internal:
  **/
 static gboolean
-dkp_device_refresh_internal (DkpDevice *device)
+dkp_device_refresh_internal (DkpDevice *device, GError **error)
 {
 	GHashTable *hash;
+	GError *error_local = NULL;
 
 	/* get all the properties */
-	hash = dkp_device_get_device_properties (device);
+	hash = dkp_device_get_device_properties (device, &error_local);
 	if (hash == NULL) {
-		egg_warning ("Cannot get device properties for %s", device->priv->object_path);
+		if (error != NULL)
+			*error = g_error_new (1, 0, "Cannot get device properties for %s: %s", device->priv->object_path, error_local->message);
+		g_error_free (error_local);
 		return FALSE;
 	}
 	g_hash_table_foreach (hash, (GHFunc) dkp_device_collect_props_cb, device);
@@ -224,17 +223,17 @@ static void
 dkp_device_changed_cb (DBusGProxy *proxy, DkpDevice *device)
 {
 	g_return_if_fail (DKP_IS_DEVICE (device));
-	dkp_device_refresh_internal (device);
-	g_signal_emit (device, signals [DKP_DEVICE_CHANGED], 0, NULL); //TODO
+	dkp_device_refresh_internal (device, NULL);
+	g_signal_emit (device, signals [DKP_DEVICE_CHANGED], 0, NULL); //TODO xxx
 }
 
 /**
  * dkp_device_set_object_path:
  **/
 gboolean
-dkp_device_set_object_path (DkpDevice *device, const gchar *object_path)
+dkp_device_set_object_path (DkpDevice *device, const gchar *object_path, GError **error)
 {
-	GError *error = NULL;
+	GError *error_local = NULL;
 	gboolean ret = FALSE;
 	DBusGProxy *proxy_device;
 	DBusGProxy *proxy_props;
@@ -247,10 +246,11 @@ dkp_device_set_object_path (DkpDevice *device, const gchar *object_path)
 		return FALSE;
 
 	/* connect to the bus */
-	device->priv->bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
+	device->priv->bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error_local);
 	if (device->priv->bus == NULL) {
-		egg_warning ("Couldn't connect to system bus: %s", error->message);
-		g_error_free (error);
+		if (error != NULL)
+			*error = g_error_new (1, 0, "Couldn't connect to system bus: %s", error_local->message);
+		g_error_free (error_local);
 		goto out;
 	}
 
@@ -258,7 +258,8 @@ dkp_device_set_object_path (DkpDevice *device, const gchar *object_path)
 	proxy_props = dbus_g_proxy_new_for_name (device->priv->bus, "org.freedesktop.DeviceKit.Power",
 						 object_path, "org.freedesktop.DBus.Properties");
 	if (proxy_props == NULL) {
-		egg_warning ("Couldn't connect to proxy");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "Couldn't connect to proxy");
 		goto out;
 	}
 
@@ -266,7 +267,8 @@ dkp_device_set_object_path (DkpDevice *device, const gchar *object_path)
 	proxy_device = dbus_g_proxy_new_for_name (device->priv->bus, "org.freedesktop.DeviceKit.Power",
 						  object_path, "org.freedesktop.DeviceKit.Power.Device");
 	if (proxy_device == NULL) {
-		egg_warning ("Couldn't connect to proxy");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "Couldn't connect to proxy");
 		goto out;
 	}
 
@@ -276,15 +278,17 @@ dkp_device_set_object_path (DkpDevice *device, const gchar *object_path)
 				     G_CALLBACK (dkp_device_changed_cb), device, NULL);
 
 	/* yay */
-	egg_debug ("using object_path: %s", object_path);
 	device->priv->proxy_device = proxy_device;
 	device->priv->proxy_props = proxy_props;
 	device->priv->object_path = g_strdup (object_path);
 
 	/* coldplug */
-	ret = dkp_device_refresh_internal (device);
-	if (!ret)
-		egg_warning ("cannot refresh");
+	ret = dkp_device_refresh_internal (device, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "cannot refresh: %s", error_local->message);
+		g_error_free (error_local);
+	}
 out:
 	return ret;
 }
@@ -311,7 +315,7 @@ dkp_device_print_history (const DkpDevice *device, const gchar *type)
 	gboolean ret = FALSE;
 
 	/* get a fair chunk of data */
-	array = dkp_device_get_history (device, type, 120, 10);
+	array = dkp_device_get_history (device, type, 120, 10, NULL);
 	if (array == NULL)
 		goto out;
 
@@ -452,20 +456,21 @@ dkp_device_print (const DkpDevice *device)
  * dkp_device_refresh:
  **/
 gboolean
-dkp_device_refresh (DkpDevice *device)
+dkp_device_refresh (DkpDevice *device, GError **error)
 {
-	GError *error = NULL;
+	GError *error_local = NULL;
 	gboolean ret;
 
 	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 	g_return_val_if_fail (device->priv->proxy_device != NULL, FALSE);
 
 	/* just refresh the device */
-	ret = dbus_g_proxy_call (device->priv->proxy_device, "Refresh", &error,
+	ret = dbus_g_proxy_call (device->priv->proxy_device, "Refresh", &error_local,
 				 G_TYPE_INVALID, G_TYPE_INVALID);
 	if (!ret) {
-		egg_debug ("Refresh() on %s failed: %s", device->priv->object_path, error->message);
-		g_error_free (error);
+		if (error != NULL)
+			*error = g_error_new (1, 0, "Refresh() on %s failed: %s", device->priv->object_path, error_local->message);
+		g_error_free (error_local);
 		goto out;
 	}
 out:
@@ -478,9 +483,9 @@ out:
  * Returns an array of %DkpHistoryObj's
  **/
 GPtrArray *
-dkp_device_get_history (const DkpDevice *device, const gchar *type, guint timespec, guint resolution)
+dkp_device_get_history (const DkpDevice *device, const gchar *type, guint timespec, guint resolution, GError **error)
 {
-	GError *error = NULL;
+	GError *error_local = NULL;
 	GType g_type_gvalue_array;
 	GPtrArray *gvalue_ptr_array = NULL;
 	GValueArray *gva;
@@ -501,7 +506,7 @@ dkp_device_get_history (const DkpDevice *device, const gchar *type, guint timesp
 						G_TYPE_INVALID));
 
 	/* get compound data */
-	ret = dbus_g_proxy_call (device->priv->proxy_device, "GetHistory", &error,
+	ret = dbus_g_proxy_call (device->priv->proxy_device, "GetHistory", &error_local,
 				 G_TYPE_STRING, type,
 				 G_TYPE_UINT, timespec,
 				 G_TYPE_UINT, resolution,
@@ -509,15 +514,19 @@ dkp_device_get_history (const DkpDevice *device, const gchar *type, guint timesp
 				 g_type_gvalue_array, &gvalue_ptr_array,
 				 G_TYPE_INVALID);
 	if (!ret) {
-		egg_debug ("GetHistory(%s,%i) on %s failed: %s", type, timespec,
-			   device->priv->object_path, error->message);
-		g_error_free (error);
+		if (error != NULL)
+			*error = g_error_new (1, 0, "GetHistory(%s,%i) on %s failed: %s", type, timespec,
+			   device->priv->object_path, error_local->message);
+		g_error_free (error_local);
 		goto out;
 	}
 
 	/* no data */
-	if (gvalue_ptr_array->len == 0)
+	if (gvalue_ptr_array->len == 0) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no data");
 		goto out;
+	}
 
 	/* convert */
 	array = g_ptr_array_new ();
@@ -553,9 +562,9 @@ out:
  * Returns an array of %DkpStatsObj's
  **/
 GPtrArray *
-dkp_device_get_statistics (const DkpDevice *device, const gchar *type)
+dkp_device_get_statistics (const DkpDevice *device, const gchar *type, GError **error)
 {
-	GError *error = NULL;
+	GError *error_local = NULL;
 	GType g_type_gvalue_array;
 	GPtrArray *gvalue_ptr_array = NULL;
 	GValueArray *gva;
@@ -575,21 +584,25 @@ dkp_device_get_statistics (const DkpDevice *device, const gchar *type)
 						G_TYPE_INVALID));
 
 	/* get compound data */
-	ret = dbus_g_proxy_call (device->priv->proxy_device, "GetStatistics", &error,
+	ret = dbus_g_proxy_call (device->priv->proxy_device, "GetStatistics", &error_local,
 				 G_TYPE_STRING, type,
 				 G_TYPE_INVALID,
 				 g_type_gvalue_array, &gvalue_ptr_array,
 				 G_TYPE_INVALID);
 	if (!ret) {
-		egg_debug ("GetStatistics(%s) on %s failed: %s", type,
-			   device->priv->object_path, error->message);
-		g_error_free (error);
+		if (error != NULL)
+			*error = g_error_new (1, 0, "GetStatistics(%s) on %s failed: %s", type,
+					      device->priv->object_path, error_local->message);
+		g_error_free (error_local);
 		goto out;
 	}
 
 	/* no data */
-	if (gvalue_ptr_array->len == 0)
+	if (gvalue_ptr_array->len == 0) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no data");
 		goto out;
+	}
 
 	/* convert */
 	array = g_ptr_array_new ();

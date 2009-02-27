@@ -70,16 +70,19 @@ DkpDevice	*dkp_device_new				(void);
 
 const gchar	*dkp_device_get_object_path		(const DkpDevice	*device);
 gboolean	 dkp_device_set_object_path		(DkpDevice		*device,
-							 const gchar		*object_path);
-
+							 const gchar		*object_path,
+							 GError			**error);
 gboolean	 dkp_device_print			(const DkpDevice	*device);
-gboolean	 dkp_device_refresh			(DkpDevice		*device);
+gboolean	 dkp_device_refresh			(DkpDevice		*device,
+							 GError			**error);
 GPtrArray	*dkp_device_get_history			(const DkpDevice	*device,
 							 const gchar		*type,
 							 guint			 timespec,
-							 guint			 resolution);
+							 guint			 resolution,
+							 GError			**error);
 GPtrArray	*dkp_device_get_statistics		(const DkpDevice	*device,
-							 const gchar		*type);
+							 const gchar		*type,
+							 GError			**error);
 
 G_END_DECLS
 

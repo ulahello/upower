@@ -21,7 +21,6 @@
 
 #include <glib.h>
 #include <string.h>
-#include "egg-debug.h"
 
 #include "dkp-enum.h"
 

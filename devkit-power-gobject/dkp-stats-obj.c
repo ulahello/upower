@@ -23,7 +23,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "egg-debug.h"
 #include "dkp-stats-obj.h"
 
 /**
@@ -94,7 +93,7 @@ dkp_stats_obj_from_string (const gchar *text)
 	parts = g_strsplit (text, "\t", 0);
 	length = g_strv_length (parts);
 	if (length != 2) {
-		egg_warning ("invalid string: '%s'", text);
+		g_warning ("invalid string: '%s'", text);
 		goto out;
 	}
 

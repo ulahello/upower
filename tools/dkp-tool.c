@@ -125,7 +125,7 @@ dkp_tool_do_monitor (DkpClient *client)
 int
 main (int argc, char **argv)
 {
-	gint ret = 1;
+	gint retval = 1;
 	guint i;
 	GOptionContext *context;
 	gboolean verbose = FALSE;
@@ -135,6 +135,8 @@ main (int argc, char **argv)
 	gboolean opt_monitor = FALSE;
 	gchar *opt_show_info = FALSE;
 	gboolean opt_version = FALSE;
+	gboolean ret;
+	GError *error = NULL;
 
 	DkpClient *client;
 	DkpDevice *device;
@@ -167,7 +169,7 @@ main (int argc, char **argv)
 			 "DeviceKit-power daemon version %s\n",
 			 PACKAGE_VERSION,
 			 dkp_client_get_daemon_version (client));
-		ret = 0;
+		retval = 0;
 		goto out;
 	}
 
@@ -191,7 +193,7 @@ main (int argc, char **argv)
 		g_ptr_array_free (array, TRUE);
 	} else if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
-		devices = dkp_client_enumerate_devices (client);
+		devices = dkp_client_enumerate_devices (client, NULL);
 		if (devices == NULL)
 			goto out;
 		for (i=0; i < devices->len; i++) {
@@ -215,13 +217,19 @@ main (int argc, char **argv)
 			goto out;
 	} else if (opt_show_info != NULL) {
 		device = dkp_device_new ();
-		dkp_device_set_object_path (device, opt_show_info);
-		dkp_device_print (device);
+		ret = dkp_device_set_object_path (device, opt_show_info, &error);
+		if (!ret) {
+			g_print ("failed to set path: %s\n", error->message);
+			g_error_free (error);
+		} else {
+			dkp_device_print (device);
+			retval = 0;
+		}
 		g_object_unref (device);
 	}
 
-	ret = 0;
+	retval = 0;
 out:
 	g_object_unref (client);
-	return ret;
+	return retval;
 }

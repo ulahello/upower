@@ -26,7 +26,6 @@
 #include <glib.h>
 #include <dbus/dbus-glib.h>
 
-#include "egg-debug.h"
 #include "dkp-client.h"
 #include "dkp-device.h"
 
@@ -83,7 +82,7 @@ dkp_client_get_device (DkpClient *client, const gchar *object_path)
  * to be freed
  **/
 GPtrArray *
-dkp_client_enumerate_devices (DkpClient *client)
+dkp_client_enumerate_devices (DkpClient *client, GError **error)
 {
 	guint i;
 	GPtrArray *array;
@@ -115,7 +114,7 @@ dkp_client_enumerate_devices_private (DkpClient *client, GError **error)
 				 g_type_array, &devices,
 				 G_TYPE_INVALID);
 	if (!ret) {
-		egg_warning ("Couldn't enumerate devices: %s", error_local->message);
+		g_warning ("Couldn't enumerate devices: %s", error_local->message);
 		if (error != NULL)
 			*error = g_error_new (1, 0, "%s", error_local->message);
 		g_error_free (error_local);
@@ -138,7 +137,7 @@ dkp_client_suspend (DkpClient *client, GError **error)
 	ret = dbus_g_proxy_call (client->priv->proxy, "Suspend", &error_local,
 				 G_TYPE_INVALID, G_TYPE_INVALID);
 	if (!ret) {
-		egg_warning ("Couldn't suspend: %s", error_local->message);
+		g_warning ("Couldn't suspend: %s", error_local->message);
 		if (error != NULL)
 			*error = g_error_new (1, 0, "%s", error_local->message);
 		g_error_free (error_local);
@@ -161,7 +160,7 @@ dkp_client_hibernate (DkpClient *client, GError **error)
 	ret = dbus_g_proxy_call (client->priv->proxy, "Hibernate", &error_local,
 				 G_TYPE_INVALID, G_TYPE_INVALID);
 	if (!ret) {
-		egg_warning ("Couldn't hibernate: %s", error_local->message);
+		g_warning ("Couldn't hibernate: %s", error_local->message);
 		if (error != NULL)
 			*error = g_error_new (1, 0, "%s", error_local->message);
 		g_error_free (error_local);
@@ -306,7 +305,7 @@ dkp_client_add (DkpClient *client, const gchar *object_path)
 
 	/* create new device */
 	device = dkp_device_new ();
-	dkp_device_set_object_path (device, object_path);
+	dkp_device_set_object_path (device, object_path, NULL);
 
 	g_ptr_array_add (client->priv->array, device);
 	g_hash_table_insert (client->priv->hash, g_strdup (object_path), device);
@@ -432,7 +431,7 @@ dkp_client_init (DkpClient *client)
 	/* get on the bus */
 	client->priv->bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (client->priv->bus == NULL) {
-		egg_warning ("Couldn't connect to system bus: %s", error->message);
+		g_warning ("Couldn't connect to system bus: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -443,7 +442,7 @@ dkp_client_init (DkpClient *client)
 							 "/org/freedesktop/DeviceKit/Power",
 							 "org.freedesktop.DeviceKit.Power");
 	if (client->priv->proxy == NULL) {
-		egg_warning ("Couldn't connect to proxy");
+		g_warning ("Couldn't connect to proxy");
 		goto out;
 	}
 
@@ -452,7 +451,7 @@ dkp_client_init (DkpClient *client)
 							      "/org/freedesktop/DeviceKit/Power",
 							      "org.freedesktop.DBus.Properties");
 	if (client->priv->prop_proxy == NULL) {
-		egg_warning ("Couldn't connect to proxy");
+		g_warning ("Couldn't connect to proxy");
 		goto out;
 	}
 

@@ -4,10 +4,7 @@ INCLUDES = \
 	-I$(top_srcdir)						\
 	-I$(top_srcdir)/devkit-power-gobject			\
 	-DDKP_COMPILATION					\
-	-DEGG_LOG_FILE=\""$(DKP_LOG_DIR)/DeviceKit-power"\"	\
-	-DEGG_VERBOSE="\"DKP_VERBOSE\""				\
-	-DEGG_LOGGING="\"DKP_LOGGING\""				\
-	-DEGG_CONSOLE="\"DKP_CONSOLE\""				\
+	-DG_LOG_DOMAIN=\"devkit-power-gobject\"			\
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\"			\
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
@@ -26,8 +23,6 @@ libdevkit_power_include_HEADERS =				\
 	dkp-enum.h
 
 libdevkit_power_gobject_la_SOURCES =				\
-	egg-debug.c						\
-	egg-debug.h						\
 	devicekit-power.h					\
 	dkp-client.c						\
 	dkp-client.h						\

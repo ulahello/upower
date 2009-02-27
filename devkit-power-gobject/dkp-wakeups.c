@@ -26,7 +26,6 @@
 #include <glib.h>
 #include <dbus/dbus-glib.h>
 
-#include "egg-debug.h"
 #include "dkp-wakeups.h"
 
 static void	dkp_wakeups_class_init	(DkpWakeupsClass	*klass);
@@ -69,7 +68,7 @@ dkp_wakeups_get_total (DkpWakeups *wakeups, GError **error)
 				 G_TYPE_UINT, &total,
 				 G_TYPE_INVALID);
 	if (!ret) {
-		egg_warning ("Couldn't get total: %s", error_local->message);
+		g_warning ("Couldn't get total: %s", error_local->message);
 		if (error != NULL)
 			*error = g_error_new (1, 0, "%s", error_local->message);
 		g_error_free (error_local);
@@ -113,7 +112,7 @@ dkp_wakeups_get_data (DkpWakeups *wakeups, GError **error)
 				 g_type_gvalue_array, &gvalue_ptr_array,
 				 G_TYPE_INVALID);
 	if (!ret) {
-		egg_debug ("GetData on failed: %s", error_local->message);
+		g_warning ("GetData on failed: %s", error_local->message);
 		if (error != NULL)
 			*error = g_error_new (1, 0, "%s", error_local->message);
 		g_error_free (error_local);
@@ -223,7 +222,7 @@ dkp_wakeups_init (DkpWakeups *wakeups)
 	/* get on the bus */
 	wakeups->priv->bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (wakeups->priv->bus == NULL) {
-		egg_warning ("Couldn't connect to system bus: %s", error->message);
+		g_warning ("Couldn't connect to system bus: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -234,7 +233,7 @@ dkp_wakeups_init (DkpWakeups *wakeups)
 							 "/org/freedesktop/DeviceKit/Power/Wakeups",
 							 "org.freedesktop.DeviceKit.Power.Wakeups");
 	if (wakeups->priv->proxy == NULL) {
-		egg_warning ("Couldn't connect to proxy");
+		g_warning ("Couldn't connect to proxy");
 		goto out;
 	}
 	dbus_g_proxy_add_signal (wakeups->priv->proxy, "TotalChanged", G_TYPE_UINT, G_TYPE_INVALID);

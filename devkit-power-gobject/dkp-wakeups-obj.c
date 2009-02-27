@@ -23,7 +23,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "egg-debug.h"
 #include "dkp-enum.h"
 #include "dkp-wakeups-obj.h"
 
