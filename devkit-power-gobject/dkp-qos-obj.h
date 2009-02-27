@@ -22,32 +22,35 @@
 #error "Only <devicekit-power.h> can be included directly."
 #endif
 
-#ifndef __DKP_WAKEUPS_OBJ_H__
-#define __DKP_WAKEUPS_OBJ_H__
+#ifndef __DKP_QOS_OBJ_H__
+#define __DKP_QOS_OBJ_H__
 
 #include <glib.h>
-#include <libdevkit-power/dkp-enum.h>
+#include <devkit-power-gobject/dkp-enum.h>
 
 G_BEGIN_DECLS
 
 typedef struct
 {
-	gboolean		 is_userspace;
-	guint			 id;
-	guint			 old;
-	gfloat			 value;
+	guint			 uid;
+	guint			 pid;
+	gchar			*sender; /* only used in the daemon */
 	gchar			*cmdline;
-	gchar			*details;
-} DkpWakeupsObj;
+	guint			 cookie;
+	guint64			 timespec;
+	gboolean		 persistent;
+	DkpQosType		 type;
+	gint			 value;
+} DkpQosObj;
 
-DkpWakeupsObj	*dkp_wakeups_obj_new		(void);
-void		 dkp_wakeups_obj_free		(DkpWakeupsObj		*obj);
-DkpWakeupsObj	*dkp_wakeups_obj_copy		(const DkpWakeupsObj	*cobj);
-gboolean	 dkp_wakeups_obj_print		(const DkpWakeupsObj	*obj);
-gboolean	 dkp_wakeups_obj_equal		(const DkpWakeupsObj	*obj1,
-						 const DkpWakeupsObj	*obj2);
+DkpQosObj	*dkp_qos_obj_new		(void);
+void		 dkp_qos_obj_free		(DkpQosObj		*obj);
+DkpQosObj	*dkp_qos_obj_copy		(const DkpQosObj	*cobj);
+gboolean	 dkp_qos_obj_print		(const DkpQosObj	*obj);
+gboolean	 dkp_qos_obj_equal		(const DkpQosObj	*obj1,
+						 const DkpQosObj	*obj2);
 
 G_END_DECLS
 
-#endif /* __DKP_WAKEUPS_OBJ_H__ */
+#endif /* __DKP_QOS_OBJ_H__ */
 

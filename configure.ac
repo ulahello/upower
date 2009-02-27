@@ -158,7 +158,7 @@ doc/version.xml
 doc/man/Makefile
 doc/dbus/Makefile
 policy/Makefile
-libdevkit-power/Makefile
+devkit-power-gobject/Makefile
 po/Makefile.in
 ])
 

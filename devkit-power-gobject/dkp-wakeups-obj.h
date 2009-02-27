@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,29 +22,32 @@
 #error "Only <devicekit-power.h> can be included directly."
 #endif
 
-#ifndef __DKP_STATS_OBJ_H__
-#define __DKP_STATS_OBJ_H__
+#ifndef __DKP_WAKEUPS_OBJ_H__
+#define __DKP_WAKEUPS_OBJ_H__
 
 #include <glib.h>
-#include <libdevkit-power/dkp-enum.h>
+#include <devkit-power-gobject/dkp-enum.h>
 
 G_BEGIN_DECLS
 
 typedef struct
 {
-	gdouble			 value;
-	gdouble			 accuracy;
-} DkpStatsObj;
+	gboolean		 is_userspace;
+	guint			 id;
+	guint			 old;
+	gfloat			 value;
+	gchar			*cmdline;
+	gchar			*details;
+} DkpWakeupsObj;
 
-DkpStatsObj	*dkp_stats_obj_new		(void);
-gboolean	 dkp_stats_obj_free		(DkpStatsObj		*obj);
-DkpStatsObj	*dkp_stats_obj_copy		(const DkpStatsObj	*cobj);
-DkpStatsObj	*dkp_stats_obj_create		(gdouble		 value,
-						 gdouble		 accuracy);
-DkpStatsObj	*dkp_stats_obj_from_string	(const gchar		*text);
-gchar		*dkp_stats_obj_to_string	(const DkpStatsObj	*obj);
+DkpWakeupsObj	*dkp_wakeups_obj_new		(void);
+void		 dkp_wakeups_obj_free		(DkpWakeupsObj		*obj);
+DkpWakeupsObj	*dkp_wakeups_obj_copy		(const DkpWakeupsObj	*cobj);
+gboolean	 dkp_wakeups_obj_print		(const DkpWakeupsObj	*obj);
+gboolean	 dkp_wakeups_obj_equal		(const DkpWakeupsObj	*obj1,
+						 const DkpWakeupsObj	*obj2);
 
 G_END_DECLS
 
-#endif /* __DKP_STATS_OBJ_H__ */
+#endif /* __DKP_WAKEUPS_OBJ_H__ */
 

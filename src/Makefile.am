@@ -15,7 +15,7 @@ INCLUDES = \
 	-DEGG_VERBOSE="\"DKP_VERBOSE\""				\
 	-DEGG_LOGGING="\"DKP_LOGGING\""				\
 	-DEGG_CONSOLE="\"DKP_CONSOLE\""				\
-	-I$(top_srcdir)/libdevkit-power				\
+	-I$(top_srcdir)/devkit-power-gobject			\
 	-I$(top_srcdir)						\
 	$(GIO_CFLAGS)						\
 	$(DBUS_GLIB_CFLAGS)					\
@@ -23,7 +23,7 @@ INCLUDES = \
 	$(DEVKIT_CFLAGS)					\
 	$(GLIB_CFLAGS)
 
-DEVKIT_POWER_LIBS = $(top_builddir)/libdevkit-power/libdevkit-power.la
+DEVKIT_POWER_LIBS = $(top_builddir)/devkit-power-gobject/libdevkit-power-gobject.la
 
 BUILT_SOURCES =							\
 	dkp-daemon-glue.h					\

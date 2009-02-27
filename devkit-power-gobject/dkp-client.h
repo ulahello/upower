@@ -27,8 +27,8 @@
 #define __DKP_CLIENT_H
 
 #include <glib-object.h>
-#include <libdevkit-power/dkp-enum.h>
-#include <libdevkit-power/dkp-device.h>
+#include <devkit-power-gobject/dkp-enum.h>
+#include <devkit-power-gobject/dkp-device.h>
 
 G_BEGIN_DECLS
 

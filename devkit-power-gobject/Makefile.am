@@ -2,7 +2,7 @@ INCLUDES = \
 	$(GLIB_CFLAGS)						\
 	$(DBUS_GLIB_CFLAGS)					\
 	-I$(top_srcdir)						\
-	-I$(top_srcdir)/libdevkit-power				\
+	-I$(top_srcdir)/devkit-power-gobject			\
 	-DDKP_COMPILATION					\
 	-DEGG_LOG_FILE=\""$(DKP_LOG_DIR)/DeviceKit-power"\"	\
 	-DEGG_VERBOSE="\"DKP_VERBOSE\""				\
@@ -12,9 +12,9 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
 noinst_LTLIBRARIES =						\
-	libdevkit-power.la
+	libdevkit-power-gobject.la
 
-libdevkit_power_la_SOURCES =					\
+libdevkit_power_gobject_la_SOURCES =				\
 	egg-debug.c						\
 	egg-debug.h						\
 	egg-string.c						\
@@ -37,7 +37,7 @@ libdevkit_power_la_SOURCES =					\
 	dkp-enum.c						\
 	dkp-enum.h
 
-libdevkit_power_la_LIBADD = $(INTLLIBS) $(GLIB_LIBS) $(DBUS_GLIB_LIBS)
+libdevkit_power_gobject_la_LIBADD = $(INTLLIBS) $(GLIB_LIBS) $(DBUS_GLIB_LIBS)
 
 
 clean-local:

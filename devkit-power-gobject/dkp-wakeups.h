@@ -27,9 +27,9 @@
 #define __DKP_WAKEUPS_H
 
 #include <glib-object.h>
-#include <libdevkit-power/dkp-enum.h>
-#include <libdevkit-power/dkp-device.h>
-#include <libdevkit-power/dkp-wakeups-obj.h>
+#include <devkit-power-gobject/dkp-enum.h>
+#include <devkit-power-gobject/dkp-device.h>
+#include <devkit-power-gobject/dkp-wakeups-obj.h>
 
 G_BEGIN_DECLS
 
