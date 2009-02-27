@@ -23,6 +23,9 @@ EXTRA_DIST = 			\
 	HACKING 		\
 	ChangeLog
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = devicekit-power-gobject.pc
+
 # xsltproc barfs on 'make distcheck'; disable for now
 DISTCHECK_CONFIGURE_FLAGS=--disable-man-pages --disable-gtk-doc
 

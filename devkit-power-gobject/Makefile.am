@@ -11,8 +11,19 @@ INCLUDES = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\"			\
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
-noinst_LTLIBRARIES =						\
+lib_LTLIBRARIES =						\
 	libdevkit-power-gobject.la
+
+libdevkit_power_includedir = $(includedir)/DeviceKit-power/devkit-power-gobject
+libdevkit_power_include_HEADERS =				\
+	dkp-client.h						\
+	dkp-device.h						\
+	dkp-wakeups.h						\
+	dkp-qos-obj.h						\
+	dkp-history-obj.h					\
+	dkp-stats-obj.c						\
+	dkp-wakeups-obj.h					\
+	dkp-enum.h
 
 libdevkit_power_gobject_la_SOURCES =				\
 	egg-debug.c						\
@@ -37,8 +48,16 @@ libdevkit_power_gobject_la_SOURCES =				\
 	dkp-enum.c						\
 	dkp-enum.h
 
-libdevkit_power_gobject_la_LIBADD = $(INTLLIBS) $(GLIB_LIBS) $(DBUS_GLIB_LIBS)
+libdevkit_power_gobject_la_LIBADD =				\
+	$(INTLLIBS)						\
+	$(GLIB_LIBS)						\
+	$(DBUS_GLIB_LIBS)
 
+libdevkit_power_gobject_la_LDFLAGS =				\
+	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)	\
+	-export-dynamic						\
+	-no-undefined						\
+	-export-symbols-regex '^dkp_.*'
 
 clean-local:
 	rm -f *~
