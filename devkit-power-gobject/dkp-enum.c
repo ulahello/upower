@@ -22,7 +22,6 @@
 #include <glib.h>
 #include <string.h>
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #include "dkp-enum.h"
 
@@ -76,21 +75,21 @@ dkp_device_type_from_text (const gchar *type)
 {
 	if (type == NULL)
 		return DKP_DEVICE_TYPE_UNKNOWN;
-	if (egg_strequal (type, "line-power"))
+	if (g_strcmp0 (type, "line-power") == 0)
 		return DKP_DEVICE_TYPE_LINE_POWER;
-	if (egg_strequal (type, "battery"))
+	if (g_strcmp0 (type, "battery") == 0)
 		return DKP_DEVICE_TYPE_BATTERY;
-	if (egg_strequal (type, "ups"))
+	if (g_strcmp0 (type, "ups") == 0)
 		return DKP_DEVICE_TYPE_UPS;
-	if (egg_strequal (type, "monitor"))
+	if (g_strcmp0 (type, "monitor") == 0)
 		return DKP_DEVICE_TYPE_MONITOR;
-	if (egg_strequal (type, "mouse"))
+	if (g_strcmp0 (type, "mouse") == 0)
 		return DKP_DEVICE_TYPE_MOUSE;
-	if (egg_strequal (type, "keyboard"))
+	if (g_strcmp0 (type, "keyboard") == 0)
 		return DKP_DEVICE_TYPE_KEYBOARD;
-	if (egg_strequal (type, "pda"))
+	if (g_strcmp0 (type, "pda") == 0)
 		return DKP_DEVICE_TYPE_PDA;
-	if (egg_strequal (type, "phone"))
+	if (g_strcmp0 (type, "phone") == 0)
 		return DKP_DEVICE_TYPE_PHONE;
 	return DKP_DEVICE_TYPE_UNKNOWN;
 }
@@ -133,13 +132,13 @@ dkp_device_state_from_text (const gchar *state)
 {
 	if (state == NULL)
 		return DKP_DEVICE_STATE_UNKNOWN;
-	if (egg_strequal (state, "charging"))
+	if (g_strcmp0 (state, "charging") == 0)
 		return DKP_DEVICE_STATE_CHARGING;
-	if (egg_strequal (state, "discharging"))
+	if (g_strcmp0 (state, "discharging") == 0)
 		return DKP_DEVICE_STATE_DISCHARGING;
-	if (egg_strequal (state, "empty"))
+	if (g_strcmp0 (state, "empty") == 0)
 		return DKP_DEVICE_STATE_EMPTY;
-	if (egg_strequal (state, "fully-charged"))
+	if (g_strcmp0 (state, "fully-charged") == 0)
 		return DKP_DEVICE_STATE_FULLY_CHARGED;
 	return DKP_DEVICE_STATE_UNKNOWN;
 }
@@ -188,17 +187,17 @@ dkp_device_technology_from_text (const gchar *technology)
 {
 	if (technology == NULL)
 		return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
-	if (egg_strequal (technology, "lithium-ion"))
+	if (g_strcmp0 (technology, "lithium-ion") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LITHIUM_ION;
-	if (egg_strequal (technology, "lithium-polymer"))
+	if (g_strcmp0 (technology, "lithium-polymer") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LITHIUM_POLYMER;
-	if (egg_strequal (technology, "lithium-iron-phosphate"))
+	if (g_strcmp0 (technology, "lithium-iron-phosphate") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LITHIUM_IRON_PHOSPHATE;
-	if (egg_strequal (technology, "lead-acid"))
+	if (g_strcmp0 (technology, "lead-acid") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LEAD_ACID;
-	if (egg_strequal (technology, "nickel-cadmium"))
+	if (g_strcmp0 (technology, "nickel-cadmium") == 0)
 		return DKP_DEVICE_TECHNOLOGY_NICKEL_CADMIUM;
-	if (egg_strequal (technology, "nickel-metal-hydride"))
+	if (g_strcmp0 (technology, "nickel-metal-hydride") == 0)
 		return DKP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE;
 	return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
 }
@@ -222,9 +221,9 @@ dkp_qos_type_to_text (DkpQosType type)
 DkpQosType
 dkp_qos_type_from_text (const gchar *type)
 {
-	if (egg_strequal (type, "network"))
+	if (g_strcmp0 (type, "network") == 0)
 		return DKP_QOS_TYPE_NETWORK;
-	if (egg_strequal (type, "cpu_dma"))
+	if (g_strcmp0 (type, "cpu_dma") == 0)
 		return DKP_QOS_TYPE_CPU_DMA;
 	return DKP_QOS_TYPE_UNKNOWN;
 }

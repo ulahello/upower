@@ -35,7 +35,6 @@
 
 #include "sysfs-utils.h"
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #include "dkp-enum.h"
 #include "dkp-csr.h"
@@ -148,9 +147,9 @@ dkp_csr_coldplug (DkpDevice *device)
 		goto out;
 
 	/* which one? */
-	if (egg_strequal (type, "mouse"))
+	if (g_strcmp0 (type, "mouse") == 0)
 		g_object_set (device, "type", DKP_DEVICE_TYPE_MOUSE, NULL);
-	else if (egg_strequal (type, "keyboard"))
+	else if (g_strcmp0 (type, "keyboard") == 0)
 		g_object_set (device, "type", DKP_DEVICE_TYPE_KEYBOARD, NULL);
 	else {
 		egg_debug ("not a recognised csr device");

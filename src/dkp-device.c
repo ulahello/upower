@@ -36,7 +36,6 @@
 
 #include "sysfs-utils.h"
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #include "dkp-supply.h"
 #include "dkp-device.h"
@@ -525,9 +524,9 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvo
 	}
 
 	/* get the correct data */
-	if (egg_strequal (type, "charging"))
+	if (g_strcmp0 (type, "charging") == 0)
 		array = dkp_history_get_profile_data (device->priv->history, TRUE);
-	else if (egg_strequal (type, "discharging"))
+	else if (g_strcmp0 (type, "discharging") == 0)
 		array = dkp_history_get_profile_data (device->priv->history, FALSE);
 
 	/* maybe the device doesn't support histories */
@@ -590,13 +589,13 @@ dkp_device_get_history (DkpDevice *device, const gchar *type_string, guint times
 	}
 
 	/* get the correct data */
-	if (egg_strequal (type_string, "rate"))
+	if (g_strcmp0 (type_string, "rate") == 0)
 		type = DKP_HISTORY_TYPE_RATE;
-	else if (egg_strequal (type_string, "charge"))
+	else if (g_strcmp0 (type_string, "charge") == 0)
 		type = DKP_HISTORY_TYPE_CHARGE;
-	else if (egg_strequal (type_string, "time-full"))
+	else if (g_strcmp0 (type_string, "time-full") == 0)
 		type = DKP_HISTORY_TYPE_TIME_FULL;
-	else if (egg_strequal (type_string, "time-empty"))
+	else if (g_strcmp0 (type_string, "time-empty") == 0)
 		type = DKP_HISTORY_TYPE_TIME_EMPTY;
 
 	/* something recognised */

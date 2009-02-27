@@ -28,7 +28,6 @@
 #include <stdio.h>
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #include "dkp-wakeups.h"
 #include "dkp-daemon.h"
@@ -532,7 +531,7 @@ dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
 			} else {
 				/* try to get a better command line */
 				obj->cmdline = dkp_wakeups_get_cmdline (pid);
-				if (egg_strzero (obj->cmdline))
+				if (obj->cmdline == NULL || obj->cmdline[0] == '\0')
 					obj->cmdline = g_strdup (string);
 				obj->is_userspace = TRUE;
 			}

@@ -33,7 +33,6 @@
 #include <string.h>
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #include "dkp-qos.h"
 #include "dkp-marshal.h"
@@ -379,7 +378,7 @@ dkp_qos_cancel_request (DkpQos *qos, guint cookie, DBusGMethodInvocation *contex
 	}
 
 	/* are we not the sender? */
-	if (!egg_strequal (sender, obj->sender)) {
+	if (g_strcmp0 (sender, obj->sender) != 0) {
 		caller = dkp_polkit_get_caller (qos->priv->polkit, context);
 		if (caller == NULL)
 			goto out;

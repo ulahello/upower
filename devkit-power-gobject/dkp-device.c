@@ -28,7 +28,6 @@
 #include <string.h>
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #include "dkp-device.h"
 #include "dkp-stats-obj.h"
@@ -379,11 +378,11 @@ dkp_device_print (const DkpDevice *device)
 	strftime (time_buf, sizeof time_buf, "%c", time_tm);
 
 	g_print ("  native-path:          %s\n", device->priv->native_path);
-	if (!egg_strzero (device->priv->vendor))
+	if (device->priv->vendor != NULL)
 		g_print ("  vendor:               %s\n", device->priv->vendor);
-	if (!egg_strzero (device->priv->model))
+	if (device->priv->model != NULL)
 		g_print ("  model:                %s\n", device->priv->model);
-	if (!egg_strzero (device->priv->serial))
+	if (device->priv->serial != NULL)
 		g_print ("  serial:               %s\n", device->priv->serial);
 	g_print ("  power supply:         %s\n", dkp_device_print_bool_to_text (device->priv->power_supply));
 	g_print ("  updated:              %s (%d seconds ago)\n", time_buf, (int) (time (NULL) - device->priv->update_time));

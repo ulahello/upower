@@ -48,7 +48,6 @@
 
 #include "sysfs-utils.h"
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #include "dkp-enum.h"
 #include "dkp-hid.h"
@@ -299,7 +298,7 @@ dkp_hid_coldplug (DkpDevice *device)
 
 	/* get the type */
 	type = devkit_device_get_property (d, "DKP_BATTERY_TYPE");
-	if (type == NULL || !egg_strequal (type, "ups"))
+	if (type == NULL || g_strcmp0 (type, "ups") != 0)
 		goto out;
 
 	/* get the device file */

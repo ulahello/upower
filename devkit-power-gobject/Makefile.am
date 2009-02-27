@@ -28,8 +28,6 @@ libdevkit_power_include_HEADERS =				\
 libdevkit_power_gobject_la_SOURCES =				\
 	egg-debug.c						\
 	egg-debug.h						\
-	egg-string.c						\
-	egg-string.h						\
 	devicekit-power.h					\
 	dkp-client.c						\
 	dkp-client.h						\

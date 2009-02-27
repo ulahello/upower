@@ -33,7 +33,6 @@
 #include <devkit-gobject/devkit-gobject.h>
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #include "dkp-polkit.h"
 #include "dkp-daemon.h"
@@ -430,7 +429,7 @@ gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 	gboolean ret;
 
 	subsys = devkit_device_get_subsystem (d);
-	if (egg_strequal (subsys, "power_supply")) {
+	if (g_strcmp0 (subsys, "power_supply") == 0) {
 
 		/* are we a valid power supply */
 		device = DKP_DEVICE (dkp_supply_new ());
@@ -442,7 +441,7 @@ gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 		/* no valid power supply object */
 		device = NULL;
 
-	} else if (egg_strequal (subsys, "tty")) {
+	} else if (g_strcmp0 (subsys, "tty") == 0) {
 
 		/* try to detect a Watts Up? Pro monitor */
 		device = DKP_DEVICE (dkp_wup_new ());
@@ -454,7 +453,7 @@ gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 		/* no valid TTY object ;-( */
 		device = NULL;
 
-	} else if (egg_strequal (subsys, "usb")) {
+	} else if (g_strcmp0 (subsys, "usb") == 0) {
 
 		/* see if this is a CSR mouse or keyboard */
 		device = DKP_DEVICE (dkp_csr_new ());
@@ -548,13 +547,13 @@ gpk_daemon_device_event_signal_handler (DevkitClient *client, const char *action
 {
 	DkpDaemon *daemon = DKP_DAEMON (user_data);
 
-	if (egg_strequal (action, "add")) {
+	if (g_strcmp0 (action, "add") == 0) {
 		egg_debug ("add %s", devkit_device_get_native_path (device));
 		gpk_daemon_device_add (daemon, device, TRUE);
-	} else if (egg_strequal (action, "remove")) {
+	} else if (g_strcmp0 (action, "remove") == 0) {
 		egg_debug ("remove %s", devkit_device_get_native_path (device));
 		gpk_daemon_device_remove (daemon, device);
-	} else if (egg_strequal (action, "change")) {
+	} else if (g_strcmp0 (action, "change") == 0) {
 		egg_debug ("change %s", devkit_device_get_native_path (device));
 		gpk_daemon_device_changed (daemon, device, FALSE);
 	} else {

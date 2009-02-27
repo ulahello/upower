@@ -34,7 +34,6 @@
 
 #include "sysfs-utils.h"
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #include "dkp-enum.h"
 #include "dkp-supply.h"
