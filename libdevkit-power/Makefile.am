@@ -19,7 +19,6 @@ libdevkit_power_la_SOURCES =					\
 	egg-debug.h						\
 	egg-string.c						\
 	egg-string.h						\
-	devicekit-power.h					\
 	dkp-client.c						\
 	dkp-client.h						\
 	dkp-device.c						\
