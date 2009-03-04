@@ -41,7 +41,7 @@ intltool-merge.in
 intltool-merge
 intltool-update.in
 intltool-update
-devicekit-power.pc
+*.pc
 xmldocs.make
 omf.make
 gtk-doc.make
