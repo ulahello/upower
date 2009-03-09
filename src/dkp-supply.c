@@ -355,6 +355,11 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 
 		/* we only coldplug once, as these values will never change */
 		supply->priv->has_coldplug_values = TRUE;
+	} else {
+		/* get the old full */
+		g_object_get (device,
+			      "energy-full", &energy_full,
+			      NULL);
 	}
 
 	status = g_strstrip (sysfs_get_string (native_path, "status"));
@@ -384,8 +389,10 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	}
 
 	/* some batteries don't update last_full attribute */
-	if (energy > energy_full)
+	if (energy > energy_full) {
+		egg_warning ("energy %f bigger than full %f", energy, energy_full);
 		energy_full = energy;
+	}
 
 	/* present voltage */
 	voltage = sysfs_get_double (native_path, "voltage_now") / 1000000.0;
