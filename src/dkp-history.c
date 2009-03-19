@@ -119,7 +119,7 @@ dkp_history_array_limit_resolution (GPtrArray *array, guint max_num)
 	DkpDeviceState state = DKP_DEVICE_STATE_UNKNOWN;
 	guint64 time = 0;
 	gdouble value = 0;
-	guint64 count;
+	guint64 count = 0;
 	guint step = 1;
 	gfloat preset;
 
@@ -128,6 +128,8 @@ dkp_history_array_limit_resolution (GPtrArray *array, guint max_num)
 
 	/* check length */
 	length = array->len;
+	if (length == 0)
+		goto out;
 	if (length < max_num) {
 		/* need to copy array */
 		g_ptr_array_foreach (array, (GFunc) dkp_history_array_copy_cb, new);
@@ -170,11 +172,14 @@ dkp_history_array_limit_resolution (GPtrArray *array, guint max_num)
 		}
 	}
 
-	nobj = dkp_history_obj_new ();
-	nobj->time = time / count;
-	nobj->value = value / count;
-	nobj->state = state;
-	g_ptr_array_add (new, nobj);
+	/* only add if nonzero */
+	if (count > 0) {
+		nobj = dkp_history_obj_new ();
+		nobj->time = time / count;
+		nobj->value = value / count;
+		nobj->state = state;
+		g_ptr_array_add (new, nobj);
+	}
 
 	/* check length */
 	egg_debug ("length of array (after) %i", new->len);
