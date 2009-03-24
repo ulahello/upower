@@ -167,7 +167,7 @@ AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
 
 AC_OUTPUT([
 Makefile
-devicekit-power-gobject.pc
+devkit-power-gobject.pc
 src/Makefile
 tools/Makefile
 doc/Makefile
