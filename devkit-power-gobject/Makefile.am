@@ -13,11 +13,13 @@ lib_LTLIBRARIES =						\
 
 libdevkit_power_includedir = $(includedir)/DeviceKit-power/devkit-power-gobject
 libdevkit_power_include_HEADERS =				\
+	devicekit-power.h					\
 	dkp-client.h						\
 	dkp-device.h						\
 	dkp-wakeups.h						\
 	dkp-qos-obj.h						\
 	dkp-history-obj.h					\
+	dkp-stats-obj.h						\
 	dkp-wakeups-obj.h					\
 	dkp-enum.h
 
@@ -29,14 +31,14 @@ libdevkit_power_gobject_la_SOURCES =				\
 	dkp-device.h						\
 	dkp-wakeups.c						\
 	dkp-wakeups.h						\
-	dkp-qos-obj.h						\
 	dkp-qos-obj.c						\
-	dkp-history-obj.h					\
+	dkp-qos-obj.h						\
 	dkp-history-obj.c					\
-	dkp-stats-obj.h						\
+	dkp-history-obj.h					\
 	dkp-stats-obj.c						\
-	dkp-wakeups-obj.h					\
+	dkp-stats-obj.h						\
 	dkp-wakeups-obj.c					\
+	dkp-wakeups-obj.h					\
 	dkp-enum.c						\
 	dkp-enum.h
 

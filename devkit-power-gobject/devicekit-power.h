@@ -32,8 +32,6 @@
 #include <devkit-power-gobject/dkp-device.h>
 #include <devkit-power-gobject/dkp-enum.h>
 #include <devkit-power-gobject/dkp-history-obj.h>
-#include <devkit-power-gobject/dkp-object.h>
-#include <devkit-power-gobject/dkp-qos.h>
 #include <devkit-power-gobject/dkp-qos-obj.h>
 #include <devkit-power-gobject/dkp-stats-obj.h>
 #include <devkit-power-gobject/dkp-wakeups.h>

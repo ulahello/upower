@@ -3,7 +3,7 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: devicekit-power-gobject
+Name: devkit-power-gobject
 Description: DeviceKit-power is a system daemon for installing stuff.
 Version: @VERSION@
 Requires.private: dbus-1, gthread-2.0
