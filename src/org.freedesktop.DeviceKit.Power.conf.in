@@ -12,8 +12,12 @@
     <allow send_destination="org.freedesktop.DeviceKit.Power"
            send_interface="org.freedesktop.DeviceKit.Power"/>
     <allow send_destination="org.freedesktop.DeviceKit.Power"
+	   send_interface="org.freedesktop.DBus.Properties"/>
+    <allow send_destination="org.freedesktop.DeviceKit.Power"
            send_interface="org.freedesktop.DeviceKit.Power.Device"/>
     <allow send_destination="org.freedesktop.DeviceKit.Power"
            send_interface="org.freedesktop.DeviceKit.Power.QoS"/>
+    <allow send_destination="org.freedesktop.DeviceKit.Power"
+	   send_interface="org.freedesktop.DeviceKit.Power.Wakeups"/>
   </policy>
 </busconfig>
