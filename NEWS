@@ -1,3 +1,25 @@
+Version 007
+~~~~~~~~~~~
+Released: 2009-03-30
+
+Note:
+ - The DBus interface of DeviceKit-power may be subject to change in future
+   versions of this daemon.
+ - The experimental devkit-power-gobject library has no API or ABI guarantees.
+
+New Features:
+ - Get rid of internal Object and instead use the GObject property system (Richard Hughes)
+ - Move the library directory from libdevkit-power to devkit-power-gobject (Richard Hughes)
+ - Ship a shared library. There are now three external projects using copies of
+   this, which is rediculous (Richard Hughes)
+ - Require I_KNOW_THE_DEVICEKIT_POWER_API_IS_SUBJECT_TO_CHANGE (Richard Hughes)
+
+Bugfixes:
+ - Fix up DBus interface for CVE-2008-4311 (Stanislav Brabec)
+ - Fix g-p-m and DeviceKit-power when running with a permissive dbus. Fixes fd#20882 (Frederic Crozat)
+ - Remove use of EggObjList, and make the library more sane (Richard Hughes)
+ - Fix compile error in dkp-power. Fixes #20749 (Richard Hughes)
+
 Version 006
 ~~~~~~~~~~~
 Released: 2009-02-10
