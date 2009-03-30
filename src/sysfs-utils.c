@@ -38,6 +38,7 @@
 #include <grp.h>
 #include <linux/fs.h>
 #include <sys/ioctl.h>
+#include <glib.h>
 
 #include "sysfs-utils.h"
 
@@ -141,7 +142,7 @@ sysfs_get_bool (const char *dir, const char *attribute)
 	result = 0;
 	filename = g_build_filename (dir, attribute, NULL);
 	if (g_file_get_contents (filename, &contents, NULL, NULL)) {
-		if (strcmp (contents, "1") == 0)
+		if (g_strcmp0 (contents, "1") == 0)
 			result = TRUE;
 		g_free (contents);
 	}
