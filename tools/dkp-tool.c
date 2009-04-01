@@ -193,9 +193,11 @@ main (int argc, char **argv)
 		g_ptr_array_free (array, TRUE);
 	} else if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
-		devices = dkp_client_enumerate_devices (client, NULL);
-		if (devices == NULL)
+		devices = dkp_client_enumerate_devices (client, &error);
+		if (devices == NULL) {
+			egg_warning ("failed to enumerate: %s", error->message);
 			goto out;
+		}
 		for (i=0; i < devices->len; i++) {
 			device = (DkpDevice*) g_ptr_array_index (devices, i);
 			if (opt_enumerate) {
