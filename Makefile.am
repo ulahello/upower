@@ -23,6 +23,9 @@ EXTRA_DIST = 			\
 	HACKING 		\
 	ChangeLog
 
+snapshot:
+	$(MAKE) dist distdir=$(PACKAGE)-$(VERSION)-`date +"%Y%m%d"`
+
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = devkit-power-gobject.pc
 
