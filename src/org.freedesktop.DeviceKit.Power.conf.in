@@ -9,10 +9,21 @@
     <allow own="org.freedesktop.DeviceKit.Power"/>
   </policy>
   <policy context="default">
+
+    <allow send_destination="org.freedesktop.DeviceKit.Power"
+           send_interface="org.freedesktop.DBus.Introspectable"/>
+
+    <allow send_destination="org.freedesktop.DeviceKit.Power"
+           send_interface="org.freedesktop.DBus.Properties"/>
+    <allow send_destination="org.freedesktop.DeviceKit.Power.Device"
+           send_interface="org.freedesktop.DBus.Properties"/>
+    <allow send_destination="org.freedesktop.DeviceKit.Power.QoS"
+           send_interface="org.freedesktop.DBus.Properties"/>
+    <allow send_destination="org.freedesktop.DeviceKit.Power.Wakeups"
+           send_interface="org.freedesktop.DBus.Properties"/>
+
     <allow send_destination="org.freedesktop.DeviceKit.Power"
            send_interface="org.freedesktop.DeviceKit.Power"/>
-    <allow send_destination="org.freedesktop.DeviceKit.Power"
-	   send_interface="org.freedesktop.DBus.Properties"/>
     <allow send_destination="org.freedesktop.DeviceKit.Power"
            send_interface="org.freedesktop.DeviceKit.Power.Device"/>
     <allow send_destination="org.freedesktop.DeviceKit.Power"
