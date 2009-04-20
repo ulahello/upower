@@ -39,6 +39,7 @@
 #include <termios.h>
 #include <ctype.h>
 #include <getopt.h>
+#include <errno.h>
 
 #include "sysfs-utils.h"
 #include "egg-debug.h"
@@ -161,7 +162,7 @@ dkp_wup_read_command (DkpWup *wup)
 	gchar buffer[DKP_WUP_COMMAND_LEN];
 	retval = read (wup->priv->fd, &buffer, DKP_WUP_COMMAND_LEN);
 	if (retval < 0) {
-		egg_debug ("failed to read from fd");
+		egg_debug ("failed to read from fd: %s", strerror (errno));
 		return NULL;
 	}
 	return g_strdup (buffer);
@@ -367,6 +368,8 @@ dkp_wup_coldplug (DkpDevice *device)
 	/* coldplug */
 	egg_debug ("coldplug");
 	ret = dkp_wup_refresh (device);
+
+	/* hardcode true, as we'll retry later if busy */
 	ret = TRUE;
 
 out:
@@ -384,10 +387,6 @@ dkp_wup_refresh (DkpDevice *device)
 	gchar *data = NULL;
 	DkpWup *wup = DKP_WUP (device);
 
-	/* reset time */
-	g_get_current_time (&time);
-	g_object_set (device, "update-time", (guint64) time.tv_sec, NULL);
-
 	/* get data */
 	data = dkp_wup_read_command (wup);
 	if (data == NULL) {
@@ -402,8 +401,13 @@ dkp_wup_refresh (DkpDevice *device)
 		goto out;
 	}
 
+	/* reset time */
+	g_get_current_time (&time);
+	g_object_set (device, "update-time", (guint64) time.tv_sec, NULL);
+
 out:
 	g_free (data);
+	/* FIXME: always true? */
 	return TRUE;
 }
 
