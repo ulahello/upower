@@ -1,6 +1,8 @@
 ##############################################################################################################
 # Uninterruptable Power Supplies with USBHID interface
 #
+SUBSYSTEM!="usb", GOTO="dkp_hid_end"
+
 ATTR{idVendor}=="0463", ENV{ID_VENDOR}="MGE Systems"
 ATTR{idVendor}=="051d", ENV{ID_VENDOR}="APC"
 ATTR{idVendor}=="0764", ENV{ID_VENDOR}="CyberPower"
@@ -43,4 +45,6 @@ ATTR{idVendor}=="06da", ATTR{idProduct}=="ffff", ENV{DKP_BATTERY_TYPE}="ups"
 
 # Kebo
 ATTR{idVendor}=="0925", ATTR{idProduct}=="1234", ENV{DKP_BATTERY_TYPE}="ups"
+
+LABEL="dkp_hid_end"
 

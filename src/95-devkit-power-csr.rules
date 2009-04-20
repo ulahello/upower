@@ -4,6 +4,8 @@
 # These are properties defining the behavior:
 #  DKP_CSR_DUAL (Dual Receiver)
 #
+SUBSYSTEM!="usb", GOTO="dkp_csr_end"
+
 ATTR{idVendor}=="046d", ENV{ID_VENDOR}="Logitech, Inc."
 ATTR{idVendor}=="046d", ATTR{idProduct}=="c501", ENV{ID_PRODUCT}="Mouse Receiver", ENV{DKP_BATTERY_TYPE}="mouse"
 ATTR{idVendor}=="046d", ATTR{idProduct}=="c502", ENV{ID_PRODUCT}="Dual Receiver", ENV{DKP_BATTERY_TYPE}="mouse", ENV{DKP_CSR_DUAL}="1"
@@ -15,4 +17,6 @@ ATTR{idVendor}=="046d", ATTR{idProduct}=="c50e", ENV{ID_PRODUCT}="MX1000 Laser M
 ATTR{idVendor}=="046d", ATTR{idProduct}=="c510", ENV{ID_PRODUCT}="Click! Mouse", ENV{DKP_BATTERY_TYPE}="mouse"
 ATTR{idVendor}=="046d", ATTR{idProduct}=="c512", ENV{ID_PRODUCT}="Keyboard+Mouse Receiver", ENV{DKP_BATTERY_TYPE}="keyboard"
 ATTR{idVendor}=="046d", ATTR{idProduct}=="c702", ENV{ID_PRODUCT}="Presenter", ENV{DKP_BATTERY_TYPE}="mouse"
+
+LABEL="dkp_csr_end"
 
