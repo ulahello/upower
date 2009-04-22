@@ -16,6 +16,16 @@
       </doc:description>
     </doc:doc>
 
+    <property name="has-capability" type="b" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            If the system has the ability to profile wakeups.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </property>
+
     <!-- ************************************************************ -->
     <method name="GetTotal">
       <arg name="value" direction="out" type="u">

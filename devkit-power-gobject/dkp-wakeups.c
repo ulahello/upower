@@ -38,6 +38,9 @@ struct DkpWakeupsPrivate
 {
 	DBusGConnection		*bus;
 	DBusGProxy		*proxy;
+	DBusGProxy		*prop_proxy;
+	gboolean		 has_capability;
+	gboolean		 have_properties;
 };
 
 enum {
@@ -165,6 +168,60 @@ out:
 }
 
 /**
+ * dkp_wakeups_ensure_properties:
+ **/
+static void
+dkp_wakeups_ensure_properties (DkpWakeups *wakeups)
+{
+	gboolean ret;
+	GError *error;
+	GHashTable *props;
+	GValue *value;
+
+	props = NULL;
+
+	if (wakeups->priv->have_properties)
+		goto out;
+
+	error = NULL;
+	ret = dbus_g_proxy_call (wakeups->priv->prop_proxy, "GetAll", &error,
+				 G_TYPE_STRING, "org.freedesktop.DeviceKit.Power.Wakeups",
+				 G_TYPE_INVALID,
+				 dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_VALUE), &props,
+				 G_TYPE_INVALID);
+	if (!ret) {
+		g_warning ("Error invoking GetAll() to get properties: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	value = g_hash_table_lookup (props, "has-capability");
+	if (value == NULL) {
+		g_warning ("No 'has-capability' property");
+		goto out;
+	}
+	wakeups->priv->has_capability = g_value_get_boolean (value);
+
+	/* cached */
+	wakeups->priv->have_properties = TRUE;
+
+out:
+	if (props != NULL)
+		g_hash_table_unref (props);
+}
+
+/**
+ * dkp_wakeups_has_capability:
+ **/
+gboolean
+dkp_wakeups_has_capability (DkpWakeups *wakeups)
+{
+	g_return_val_if_fail (DKP_IS_WAKEUPS (wakeups), FALSE);
+	dkp_wakeups_ensure_properties (wakeups);
+	return wakeups->priv->has_capability;
+}
+
+/**
  * dkp_wakeups_total_changed_cb:
  **/
 static void
@@ -218,12 +275,24 @@ dkp_wakeups_init (DkpWakeups *wakeups)
 	GError *error = NULL;
 
 	wakeups->priv = DKP_WAKEUPS_GET_PRIVATE (wakeups);
+	wakeups->priv->has_capability = FALSE;
+	wakeups->priv->have_properties = FALSE;
 
 	/* get on the bus */
 	wakeups->priv->bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (wakeups->priv->bus == NULL) {
 		g_warning ("Couldn't connect to system bus: %s", error->message);
 		g_error_free (error);
+		goto out;
+	}
+
+	/* connect to properties interface */
+	wakeups->priv->prop_proxy = dbus_g_proxy_new_for_name (wakeups->priv->bus,
+							      "org.freedesktop.DeviceKit.Power",
+							      "/org/freedesktop/DeviceKit/Power/Wakeups",
+							      "org.freedesktop.DBus.Properties");
+	if (wakeups->priv->prop_proxy == NULL) {
+		g_warning ("Couldn't connect to proxy");
 		goto out;
 	}
 
@@ -262,6 +331,8 @@ dkp_wakeups_finalize (GObject *object)
 	wakeups = DKP_WAKEUPS (object);
 	if (wakeups->priv->proxy != NULL)
 		g_object_unref (wakeups->priv->proxy);
+	if (wakeups->priv->prop_proxy != NULL)
+		g_object_unref (wakeups->priv->prop_proxy);
 
 	G_OBJECT_CLASS (dkp_wakeups_parent_class)->finalize (object);
 }

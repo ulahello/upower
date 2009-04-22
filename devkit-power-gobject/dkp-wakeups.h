@@ -64,6 +64,7 @@ guint		 dkp_wakeups_get_total			(DkpWakeups		*wakeups,
 							 GError			**error);
 GPtrArray	*dkp_wakeups_get_data			(DkpWakeups		*wakeups,
 							 GError			**error);
+gboolean	 dkp_wakeups_has_capability		(DkpWakeups		*wakeups);
 
 G_END_DECLS
 

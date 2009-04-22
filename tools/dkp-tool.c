@@ -120,6 +120,49 @@ dkp_tool_do_monitor (DkpClient *client)
 }
 
 /**
+ * dkp_tool_show_wakeups:
+ **/
+static gboolean
+dkp_tool_show_wakeups (void)
+{
+	guint i;
+	gboolean ret;
+	DkpWakeups *wakeups;
+	DkpWakeupsObj *obj;
+	guint total;
+	GPtrArray *array;
+
+	/* create new object */
+	wakeups = dkp_wakeups_new ();
+
+	/* do we have support? */
+	ret = dkp_wakeups_has_capability (wakeups);
+	if (!ret) {
+		g_print ("No wakeup capability\n");
+		goto out;
+	}
+
+	/* get total */
+	total = dkp_wakeups_get_total (wakeups, NULL);
+	g_print ("Total wakeups per minute: %i\n", total);
+
+	/* get data */
+	array = dkp_wakeups_get_data (wakeups, NULL);
+	if (array == NULL)
+		goto out;
+	g_print ("Wakeup sources:\n");
+	for (i=0; i<array->len; i++) {
+		obj = g_ptr_array_index (array, i);
+		dkp_wakeups_obj_print (obj);
+	}
+	g_ptr_array_foreach (array, (GFunc) dkp_wakeups_obj_free, NULL);
+	g_ptr_array_free (array, TRUE);
+out:
+	g_object_unref (wakeups);
+	return ret;
+}
+
+/**
  * main:
  **/
 int
@@ -174,23 +217,7 @@ main (int argc, char **argv)
 	}
 
 	if (opt_wakeups) {
-		DkpWakeups *wakeups;
-		DkpWakeupsObj *obj;
-		guint total;
-		GPtrArray *array;
-		wakeups = dkp_wakeups_new ();
-		total = dkp_wakeups_get_total (wakeups, NULL);
-		g_print ("Total wakeups per minute: %i\n", total);
-		array = dkp_wakeups_get_data (wakeups, NULL);
-		if (array == NULL)
-			goto out;
-		g_print ("Wakeup sources:\n");
-		for (i=0; i<array->len; i++) {
-			obj = g_ptr_array_index (array, i);
-			dkp_wakeups_obj_print (obj);
-		}
-		g_ptr_array_foreach (array, (GFunc) dkp_wakeups_obj_free, NULL);
-		g_ptr_array_free (array, TRUE);
+		dkp_tool_show_wakeups ();
 	} else if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
 		devices = dkp_client_enumerate_devices (client, &error);

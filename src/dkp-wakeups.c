@@ -68,6 +68,12 @@ struct DkpWakeupsPrivate
 	guint			 poll_kernel_id;
 	guint			 disable_id;
 	gboolean		 polling_enabled;
+	gboolean		 has_capability;
+};
+
+enum {
+	PROP_0,
+	PROP_HAS_CAPABILITY,
 };
 
 enum {
@@ -165,6 +171,12 @@ dkp_wakeups_get_total (DkpWakeups *wakeups, guint *value, GError **error)
 {
 	gboolean ret;
 
+	/* no capability */
+	if (!wakeups->priv->has_capability) {
+		*error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "no hardware support");
+		return FALSE;
+	}
+
 	/* start if not already started */
 	ret = dkp_wakeups_timerstats_enable (wakeups);
 
@@ -188,6 +200,12 @@ dkp_wakeups_get_data (DkpWakeups *wakeups, GPtrArray **data, GError **error)
 	guint i;
 	GPtrArray *array;
 	DkpWakeupsObj *obj;
+
+	/* no capability */
+	if (!wakeups->priv->has_capability) {
+		*error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "no hardware support");
+		return FALSE;
+	}
 
 	/* start if not already started */
 	dkp_wakeups_timerstats_enable (wakeups);
@@ -637,6 +655,28 @@ dkp_wakeups_timerstats_enable (DkpWakeups *wakeups)
 }
 
 /**
+ * dkp_wakeups_get_property:
+ **/
+static void
+dkp_wakeups_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
+{
+	DkpWakeups *wakeups;
+
+	wakeups = DKP_WAKEUPS (object);
+
+	switch (prop_id) {
+
+	case PROP_HAS_CAPABILITY:
+		g_value_set_boolean (value, wakeups->priv->has_capability);
+		break;
+
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
+}
+
+/**
  * dkp_wakeups_class_init:
  **/
 static void
@@ -644,6 +684,7 @@ dkp_wakeups_class_init (DkpWakeupsClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = dkp_wakeups_finalize;
+	object_class->get_property = dkp_wakeups_get_property;
 
 	signals [TOTAL_CHANGED] =
 		g_signal_new ("total-changed",
@@ -657,6 +698,14 @@ dkp_wakeups_class_init (DkpWakeupsClass *klass)
 			      G_STRUCT_OFFSET (DkpWakeupsClass, data_changed),
 			      NULL, NULL, g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
+
+	g_object_class_install_property (object_class,
+					 PROP_HAS_CAPABILITY,
+					 g_param_spec_boolean ("has-capability",
+							       "Has capability",
+							       "If wakeups functionality is available",
+							       FALSE,
+							       G_PARAM_READABLE));
 
 	/* introspection */
 	dbus_g_object_type_install_info (DKP_TYPE_WAKEUPS, &dbus_glib_dkp_wakeups_object_info);
@@ -678,6 +727,7 @@ dkp_wakeups_init (DkpWakeups *wakeups)
 	wakeups->priv->total_ave = 0;
 	wakeups->priv->poll_userspace_id = 0;
 	wakeups->priv->poll_kernel_id = 0;
+	wakeups->priv->has_capability = FALSE;
 	wakeups->priv->polling_enabled = FALSE;
 
 	wakeups->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
@@ -685,6 +735,12 @@ dkp_wakeups_init (DkpWakeups *wakeups)
 		egg_warning ("Cannot connect to bus: %s", error->message);
 		g_error_free (error);
 		return;
+	}
+
+	/* test if we have an interface */
+	if (g_file_test (DKP_WAKEUPS_SOURCE_KERNEL, G_FILE_TEST_EXISTS) ||
+	    g_file_test (DKP_WAKEUPS_SOURCE_KERNEL, G_FILE_TEST_EXISTS)) {
+		wakeups->priv->has_capability = TRUE;
 	}
 
 	/* register on the bus */
