@@ -235,7 +235,7 @@ dkp_client_ensure_properties (DkpClient *client)
 	/* cached */
 	client->priv->have_properties = TRUE;
 
- out:
+out:
 	if (props != NULL)
 		g_hash_table_unref (props);
 }
@@ -427,6 +427,7 @@ dkp_client_init (DkpClient *client)
 	client->priv = DKP_CLIENT_GET_PRIVATE (client);
 	client->priv->hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 	client->priv->array = g_ptr_array_new ();
+	client->priv->have_properties = FALSE;
 
 	/* get on the bus */
 	client->priv->bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
@@ -446,6 +447,7 @@ dkp_client_init (DkpClient *client)
 		goto out;
 	}
 
+	/* connect to properties interface */
 	client->priv->prop_proxy = dbus_g_proxy_new_for_name (client->priv->bus,
 							      "org.freedesktop.DeviceKit.Power",
 							      "/org/freedesktop/DeviceKit/Power",
