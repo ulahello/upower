@@ -624,6 +624,8 @@ dkp_daemon_suspend (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	GError *error;
 	GError *error_local = NULL;
 	PolKitCaller *caller;
+	gchar *stdout = NULL;
+	gchar *stderr = NULL;
 
 	caller = dkp_polkit_get_caller (daemon->priv->polkit, context);
 	if (caller == NULL)
@@ -632,17 +634,19 @@ dkp_daemon_suspend (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	if (!dkp_polkit_check_auth (daemon->priv->polkit, caller, "org.freedesktop.devicekit.power.suspend", context))
 		goto out;
 
-	ret = g_spawn_command_line_async ("/usr/sbin/pm-suspend", &error_local);
+	ret = g_spawn_command_line_sync ("/usr/sbin/pm-suspend", &stdout, &stderr, NULL, &error_local);
 	if (!ret) {
 		error = g_error_new (DKP_DAEMON_ERROR,
 				     DKP_DAEMON_ERROR_GENERAL,
-				     "Cannot spawn: %s", error_local->message);
+				     "Failed to spawn: %s, stdout:%s, stderr:%s", error_local->message, stdout, stderr);
 		g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
 	dbus_g_method_return (context, NULL);
 out:
+	g_free (stdout);
+	g_free (stderr);
 	if (caller != NULL)
 		polkit_caller_unref (caller);
 	return TRUE;
@@ -658,6 +662,8 @@ dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	GError *error;
 	GError *error_local = NULL;
 	PolKitCaller *caller;
+	gchar *stdout = NULL;
+	gchar *stderr = NULL;
 
 	caller = dkp_polkit_get_caller (daemon->priv->polkit, context);
 	if (caller == NULL)
@@ -666,17 +672,19 @@ dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	if (!dkp_polkit_check_auth (daemon->priv->polkit, caller, "org.freedesktop.devicekit.power.hibernate", context))
 		goto out;
 
-	ret = g_spawn_command_line_async ("/usr/sbin/pm-hibernate", &error_local);
+	ret = g_spawn_command_line_sync ("/usr/sbin/pm-hibernate", &stdout, &stderr, NULL, &error_local);
 	if (!ret) {
 		error = g_error_new (DKP_DAEMON_ERROR,
 				     DKP_DAEMON_ERROR_GENERAL,
-				     "Cannot spawn: %s", error_local->message);
+				     "Failed to spawn: %s, stdout:%s, stderr:%s", error_local->message, stdout, stderr);
 		g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
 	dbus_g_method_return (context, NULL);
 out:
+	g_free (stdout);
+	g_free (stderr);
 	if (caller != NULL)
 		polkit_caller_unref (caller);
 	return TRUE;
