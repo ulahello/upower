@@ -162,6 +162,16 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
       </doc:para></doc:description></doc:doc>
     </property>
 
+    <property name="lid-is-closed" type="b" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Indicates if the laptop lid is closed where the display cannot be seen.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </property>
+
     <signal name="Changed">
       <doc:doc>
         <doc:description>

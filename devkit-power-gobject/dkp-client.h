@@ -81,6 +81,7 @@ gboolean	 dkp_client_hibernate			(DkpClient		*client,
 							 GError			**error);
 const gchar	*dkp_client_get_daemon_version		(DkpClient		*client);
 gboolean	 dkp_client_can_hibernate		(DkpClient		*client);
+gboolean	 dkp_client_lid_is_closed		(DkpClient		*client);
 gboolean	 dkp_client_can_suspend			(DkpClient		*client);
 gboolean	 dkp_client_on_battery			(DkpClient		*client);
 gboolean	 dkp_client_on_low_battery		(DkpClient		*client);

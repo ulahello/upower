@@ -41,6 +41,7 @@
 #include "dkp-csr.h"
 #include "dkp-wup.h"
 #include "dkp-hid.h"
+#include "dkp-input.h"
 #include "dkp-device-list.h"
 
 #include "dkp-daemon-glue.h"
@@ -54,6 +55,7 @@ enum
 	PROP_CAN_HIBERNATE,
 	PROP_ON_BATTERY,
 	PROP_ON_LOW_BATTERY,
+	PROP_LID_IS_CLOSED,
 };
 
 enum
@@ -65,7 +67,7 @@ enum
 	LAST_SIGNAL,
 };
 
-static const gchar *subsystems[] = {"power_supply", "usb", "tty", NULL};
+static const gchar *subsystems[] = {"power_supply", "usb", "tty", "input", NULL};
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
@@ -75,20 +77,46 @@ struct DkpDaemonPrivate
 	DBusGProxy		*proxy;
 	DkpPolkit		*polkit;
 	DkpDeviceList		*list;
+	GPtrArray		*inputs;
 	gboolean		 on_battery;
 	gboolean		 low_battery;
 	DevkitClient		*devkit_client;
+	gboolean		 lid_is_closed;
 };
 
-static void	dkp_daemon_class_init	(DkpDaemonClass *klass);
-static void	dkp_daemon_init		(DkpDaemon	*seat);
-static void	dkp_daemon_finalize	(GObject	*object);
-static gboolean	dkp_daemon_get_on_battery_local (DkpDaemon *daemon);
-static gboolean	dkp_daemon_get_low_battery_local (DkpDaemon *daemon);
+static void	dkp_daemon_class_init		(DkpDaemonClass *klass);
+static void	dkp_daemon_init			(DkpDaemon	*seat);
+static void	dkp_daemon_finalize		(GObject	*object);
+static gboolean	dkp_daemon_get_on_battery_local	(DkpDaemon	*daemon);
+static gboolean	dkp_daemon_get_low_battery_local (DkpDaemon	*daemon);
 
 G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
 
 #define DKP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_DAEMON, DkpDaemonPrivate))
+
+/**
+ * dkp_daemon_set_lid_is_closed:
+ **/
+gboolean
+dkp_daemon_set_lid_is_closed (DkpDaemon *daemon, gboolean lid_is_closed)
+{
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (DKP_IS_DAEMON (daemon), FALSE);
+
+	egg_debug ("lid_is_closed=%i", lid_is_closed);
+	if (daemon->priv->lid_is_closed == lid_is_closed) {
+		egg_debug ("ignoring duplicate");
+		goto out;
+	}
+
+	/* save */
+	g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
+	daemon->priv->lid_is_closed = lid_is_closed;
+	ret = TRUE;
+out:
+	return ret;
+}
 
 /**
  * dkp_daemon_error_quark:
@@ -175,6 +203,10 @@ dkp_daemon_get_property (GObject         *object,
 
 	case PROP_ON_LOW_BATTERY:
 		g_value_set_boolean (value, daemon->priv->on_battery && daemon->priv->low_battery);
+		break;
+
+	case PROP_LID_IS_CLOSED:
+		g_value_set_boolean (value, daemon->priv->lid_is_closed);
 		break;
 
 	default:
@@ -270,6 +302,14 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 							       FALSE,
 							       G_PARAM_READABLE));
 
+	g_object_class_install_property (object_class,
+					 PROP_LID_IS_CLOSED,
+					 g_param_spec_boolean ("lid-is-closed",
+							       "Laptop lid is closed",
+							       "If the laptop lid is closed",
+							       FALSE,
+							       G_PARAM_READABLE));
+
 	dbus_g_object_type_install_info (DKP_TYPE_DAEMON, &dbus_glib_dkp_daemon_object_info);
 
 	dbus_g_error_domain_register (DKP_DAEMON_ERROR, NULL, DKP_DAEMON_TYPE_ERROR);
@@ -283,6 +323,8 @@ dkp_daemon_init (DkpDaemon *daemon)
 {
 	daemon->priv = DKP_DAEMON_GET_PRIVATE (daemon);
 	daemon->priv->polkit = dkp_polkit_new ();
+	daemon->priv->lid_is_closed = FALSE;
+	daemon->priv->inputs = g_ptr_array_new ();
 }
 
 /**
@@ -309,6 +351,10 @@ dkp_daemon_finalize (GObject *object)
 	if (daemon->priv->list != NULL)
 		g_object_unref (daemon->priv->list);
 	g_object_unref (daemon->priv->polkit);
+
+	/* unref inputs */
+	g_ptr_array_foreach (daemon->priv->inputs, (GFunc) g_object_unref, NULL);
+	g_ptr_array_free (daemon->priv->inputs, TRUE);
 
 	G_OBJECT_CLASS (dkp_daemon_parent_class)->finalize (object);
 }
@@ -426,6 +472,7 @@ gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 	const gchar *subsys;
 	const gchar *native_path;
 	DkpDevice *device = NULL;
+	DkpInput *input;
 	gboolean ret;
 
 	subsys = devkit_device_get_subsystem (d);
@@ -472,6 +519,22 @@ gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 		/* no valid USB object ;-( */
 		device = NULL;
 
+	} else if (g_strcmp0 (subsys, "input") == 0) {
+
+		/* check input device */
+		input = dkp_input_new ();
+		ret = dkp_input_coldplug (input, daemon, d);
+		if (!ret) {
+			g_object_unref (input);
+			goto out;
+		}
+
+		/* we can't use the device list as it's not a DkpDevice */
+		g_ptr_array_add (daemon->priv->inputs, input);
+
+		/* no valid input object */
+		device = NULL;
+
 	} else {
 		native_path = devkit_device_get_native_path (d);
 		egg_warning ("native path %s (%s) ignoring", native_path, subsys);
@@ -500,7 +563,7 @@ gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 		/* get the right sort of device */
 		device = gpk_daemon_device_get (daemon, d);
 		if (device == NULL) {
-			egg_debug ("ignoring add event on %s", devkit_device_get_native_path (d));
+			egg_debug ("not adding device %s", devkit_device_get_native_path (d));
 			ret = FALSE;
 			goto out;
 		}

@@ -79,6 +79,8 @@ gboolean	 dkp_daemon_can_suspend		(DkpDaemon		*daemon,
 gboolean	 dkp_daemon_can_hibernate	(DkpDaemon		*daemon,
 						 gboolean		 interactive,
 						 DBusGMethodInvocation	*context);
+gboolean	 dkp_daemon_set_lid_is_closed	(DkpDaemon		*daemon,
+						 gboolean		 lid_is_closed);
 
 G_END_DECLS
 

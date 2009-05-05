@@ -69,6 +69,7 @@ devkit_power_daemon_SOURCES = 					\
 	dkp-device-list.h		dkp-device-list.c	\
 	dkp-supply.h			dkp-supply.c		\
 	dkp-csr.h			dkp-csr.c		\
+	dkp-input.h			dkp-input.c		\
 	dkp-wup.h			dkp-wup.c		\
 	dkp-hid.h			dkp-hid.c		\
 	dkp-qos.h			dkp-qos.c		\

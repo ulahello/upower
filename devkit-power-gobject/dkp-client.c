@@ -48,6 +48,7 @@ struct DkpClientPrivate
 	gchar			*daemon_version;
 	gboolean		 can_suspend;
 	gboolean		 can_hibernate;
+	gboolean		 lid_is_closed;
 	gboolean		 on_battery;
 	gboolean		 on_low_battery;
 };
@@ -238,6 +239,13 @@ dkp_client_ensure_properties (DkpClient *client)
 	}
 	client->priv->can_hibernate = g_value_get_boolean (value);
 
+	value = g_hash_table_lookup (props, "lid-is-closed");
+	if (value == NULL) {
+		g_warning ("No 'lid-is-closed' property");
+		goto out;
+	}
+	client->priv->lid_is_closed = g_value_get_boolean (value);
+
 	value = g_hash_table_lookup (props, "on-battery");
 	if (value == NULL) {
 		g_warning ("No 'on-battery' property");
@@ -280,6 +288,17 @@ dkp_client_can_hibernate (DkpClient *client)
 	g_return_val_if_fail (DKP_IS_CLIENT (client), FALSE);
 	dkp_client_ensure_properties (client);
 	return client->priv->can_hibernate;
+}
+
+/**
+ * dkp_client_lid_is_closed:
+ **/
+gboolean
+dkp_client_lid_is_closed (DkpClient *client)
+{
+	g_return_val_if_fail (DKP_IS_CLIENT (client), FALSE);
+	dkp_client_ensure_properties (client);
+	return client->priv->lid_is_closed;
 }
 
 /**

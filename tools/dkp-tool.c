@@ -86,6 +86,7 @@ dkp_client_print (DkpClient *client)
 	g_print ("  can-hibernate    %s\n", dkp_client_can_hibernate (client) ? "yes" : "no");
 	g_print ("  on-battery:      %s\n", dkp_client_on_battery (client) ? "yes" : "no");
 	g_print ("  on-low-battery:  %s\n", dkp_client_on_low_battery (client) ? "yes" : "no");
+	g_print ("  lid-is-closed:   %s\n", dkp_client_lid_is_closed (client) ? "yes" : "no");
 }
 
 /**
