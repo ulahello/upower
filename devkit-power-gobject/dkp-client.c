@@ -41,7 +41,6 @@ struct DkpClientPrivate
 	DBusGProxy		*proxy;
 	DBusGProxy		*prop_proxy;
 	GHashTable		*hash;
-	GPtrArray		*array;
 
 	gboolean		 have_properties;
 
@@ -59,6 +58,16 @@ enum {
 	DKP_DEVICE_REMOVED,
 	DKP_CLIENT_CHANGED,
 	DKP_CLIENT_LAST_SIGNAL
+};
+
+enum {
+	PROP_0,
+	PROP_DAEMON_VERSION,
+	PROP_CAN_SUSPEND,
+	PROP_CAN_HIBERNATE,
+	PROP_ON_BATTERY,
+	PROP_ON_LOW_BATTERY,
+	PROP_LID_IS_CLOSED
 };
 
 static guint signals [DKP_CLIENT_LAST_SIGNAL] = { 0 };
@@ -88,13 +97,21 @@ dkp_client_enumerate_devices (DkpClient *client, GError **error)
 	guint i;
 	GPtrArray *array;
 	DkpDevice *device;
+	GList *list;
+	guint len;
 
 	array = g_ptr_array_new ();
-	for (i=0; i<client->priv->array->len; i++) {
-		device = g_ptr_array_index (client->priv->array, i);
-		g_object_ref (device);
-		g_ptr_array_add (array, device);
+
+	list = g_hash_table_get_values (client->priv->hash);
+
+	len = g_list_length (list);
+	for (i=0; i < len; i++) {
+		device = g_list_nth_data (list, i);
+		g_ptr_array_add (array, g_object_ref (device));
 	}
+	if (list != NULL)
+		g_list_free (list);
+
 	return array;
 }
 
@@ -125,6 +142,15 @@ dkp_client_enumerate_devices_private (DkpClient *client, GError **error)
 
 /**
  * dkp_client_suspend:
+ * @client : a #DkpClient instance.
+ * @error  : a #GError.
+ *
+ * Puts the computer into a low power state, but state is not preserved if the
+ * power is lost.
+ *
+ * NOTE: The system is still consuming a small amount of power
+ *
+ * Return value: TRUE if system suspended okay, FALSE other wise.
  **/
 gboolean
 dkp_client_suspend (DkpClient *client, GError **error)
@@ -158,6 +184,13 @@ out:
 
 /**
  * dkp_client_hibernate:
+ * @client : a #DkpClient instance.
+ * @error  : a #GError.
+ *
+ * Puts the computer into a low power state, where state is preserved if the
+ * power is lost.
+ *
+ * Return value: TRUE if system suspended okay, FALSE other wise.
  **/
 gboolean
 dkp_client_hibernate (DkpClient *client, GError **error)
@@ -270,6 +303,11 @@ out:
 
 /**
  * dkp_client_get_daemon_version:
+ * @client : a #DkpClient instance.
+ *
+ * Get DeviceKit-power daemon version.
+ *
+ * Return value: string containing the daemon version, e.g. 008
  **/
 const gchar *
 dkp_client_get_daemon_version (DkpClient *client)
@@ -281,6 +319,11 @@ dkp_client_get_daemon_version (DkpClient *client)
 
 /**
  * dkp_client_can_hibernate:
+ * @client : a #DkpClient instance.
+ *
+ * Get whether the system is able to hibernate.
+ *
+ * Return value: TRUE if system can hibernate, FALSE other wise.
  **/
 gboolean
 dkp_client_can_hibernate (DkpClient *client)
@@ -292,7 +335,12 @@ dkp_client_can_hibernate (DkpClient *client)
 
 /**
  * dkp_client_lid_is_closed:
- **/
+ * @client : a #DkpClient instance.
+ *
+ * Get whether the laptop lid is closed.
+ *
+ * Return value: TRUE if lid is closed FALSE other wise.
+ */
 gboolean
 dkp_client_lid_is_closed (DkpClient *client)
 {
@@ -303,6 +351,11 @@ dkp_client_lid_is_closed (DkpClient *client)
 
 /**
  * dkp_client_can_suspend:
+ * @client : a #DkpClient instance.
+ *
+ * Get whether the system is able to suspend.
+ *
+ * Return value: TRUE if system can suspend, FALSE other wise.
  **/
 gboolean
 dkp_client_can_suspend (DkpClient *client)
@@ -314,6 +367,11 @@ dkp_client_can_suspend (DkpClient *client)
 
 /**
  * dkp_client_on_battery:
+ * @client : a #DkpClient instance.
+ *
+ * Get whether the system is running on battery power.
+ *
+ * Return value: TRUE if the system is currently running on battery, FALSE other wise.
  **/
 gboolean
 dkp_client_on_battery (DkpClient *client)
@@ -325,6 +383,11 @@ dkp_client_on_battery (DkpClient *client)
 
 /**
  * dkp_client_on_low_battery:
+ * @client : a #DkpClient instance.
+ *
+ * Get whether the system is running on low battery power.
+ *
+ * Return value: TRUE if the system is currently on low battery power, FALSE other wise.
  **/
 gboolean
 dkp_client_on_low_battery (DkpClient *client)
@@ -346,23 +409,8 @@ dkp_client_add (DkpClient *client, const gchar *object_path)
 	device = dkp_device_new ();
 	dkp_device_set_object_path (device, object_path, NULL);
 
-	g_ptr_array_add (client->priv->array, device);
 	g_hash_table_insert (client->priv->hash, g_strdup (object_path), device);
 	return device;
-}
-
-/**
- * dkp_client_remove:
- **/
-static gboolean
-dkp_client_remove (DkpClient *client, DkpDevice *device)
-{
-	/* deallocate it */
-	g_object_unref (device);
-
-	g_ptr_array_remove (client->priv->array, device);
-	g_hash_table_remove (client->priv->hash, device);
-	return TRUE;
 }
 
 /**
@@ -400,7 +448,7 @@ dkp_device_removed_cb (DBusGProxy *proxy, const gchar *object_path, DkpClient *c
 	device = dkp_client_get_device (client, object_path);
 	if (device != NULL)
 		g_signal_emit (client, signals [DKP_DEVICE_REMOVED], 0, device);
-	dkp_client_remove (client, device);
+	g_hash_table_remove (client->priv->hash, dkp_device_get_object_path (device));
 }
 
 /**
@@ -413,6 +461,42 @@ dkp_client_changed_cb (DBusGProxy *proxy, DkpClient *client)
 	g_signal_emit (client, signals [DKP_CLIENT_CHANGED], 0);
 }
 
+static void
+dkp_client_get_property (GObject *object,
+			 guint prop_id,
+			 GValue *value,
+			 GParamSpec *pspec)
+{
+	DkpClient *client;
+	client = DKP_CLIENT (object);
+
+	dkp_client_ensure_properties (client);
+
+	switch (prop_id) {
+	case PROP_DAEMON_VERSION:
+		g_value_set_string (value, client->priv->daemon_version);
+		break;
+	case PROP_CAN_SUSPEND:
+		g_value_set_boolean (value, client->priv->can_suspend);
+		break;
+        case PROP_CAN_HIBERNATE:
+		g_value_set_boolean (value, client->priv->can_hibernate);
+		break;
+	case PROP_ON_BATTERY:
+		g_value_set_boolean (value, client->priv->on_battery);
+		break;
+        case PROP_ON_LOW_BATTERY:
+		g_value_set_boolean (value, client->priv->on_low_battery);
+		break;
+        case PROP_LID_IS_CLOSED:
+		g_value_set_boolean (value, client->priv->lid_is_closed);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
+}
+
 /**
  * dkp_client_class_init:
  * @klass: The DkpClientClass
@@ -421,7 +505,53 @@ static void
 dkp_client_class_init (DkpClientClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+	object_class->get_property = dkp_client_get_property;
 	object_class->finalize = dkp_client_finalize;
+
+
+
+	g_object_class_install_property (object_class,
+					 PROP_DAEMON_VERSION,
+					 g_param_spec_string ("daemon-version",
+							      NULL, NULL,
+							      NULL,
+							      G_PARAM_READABLE));
+
+	g_object_class_install_property (object_class,
+					 PROP_CAN_SUSPEND,
+					 g_param_spec_boolean ("can-suspend",
+							       NULL, NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
+
+	g_object_class_install_property (object_class,
+					 PROP_CAN_HIBERNATE,
+					 g_param_spec_boolean ("can-hibernate",
+							       NULL, NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
+
+	g_object_class_install_property (object_class,
+					 PROP_ON_BATTERY,
+					 g_param_spec_boolean ("on-battery",
+							       NULL, NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
+
+	g_object_class_install_property (object_class,
+					 PROP_ON_LOW_BATTERY,
+					 g_param_spec_boolean ("on-low-battery",
+							       NULL, NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
+
+	g_object_class_install_property (object_class,
+					 PROP_LID_IS_CLOSED,
+					 g_param_spec_boolean ("lid-is-closed",
+							       NULL, NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
 
 	signals [DKP_DEVICE_ADDED] =
 		g_signal_new ("device-added",
@@ -464,8 +594,8 @@ dkp_client_init (DkpClient *client)
 	guint i;
 
 	client->priv = DKP_CLIENT_GET_PRIVATE (client);
-	client->priv->hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-	client->priv->array = g_ptr_array_new ();
+	client->priv->hash = g_hash_table_new_full (g_str_hash, g_str_equal,
+						    g_free, g_object_unref);
 	client->priv->have_properties = FALSE;
 
 	/* get on the bus */
@@ -531,21 +661,13 @@ static void
 dkp_client_finalize (GObject *object)
 {
 	DkpClient *client;
-	DkpDevice *device;
-	guint i;
 
 	g_return_if_fail (DKP_IS_CLIENT (object));
 
 	client = DKP_CLIENT (object);
 
-	/* free any devices */
-	for (i=0; i<client->priv->array->len; i++) {
-		device = (DkpDevice *) g_ptr_array_index (client->priv->array, i);
-		dkp_client_remove (client, device);
-	}
+	g_hash_table_destroy (client->priv->hash);
 
-	g_ptr_array_free (client->priv->array, TRUE);
-	g_hash_table_unref (client->priv->hash);
 	dbus_g_connection_unref (client->priv->bus);
 
 	if (client->priv->proxy != NULL)
