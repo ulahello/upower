@@ -359,6 +359,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		/* get the old full */
 		g_object_get (device,
 			      "energy-full", &energy_full,
+			      "energy-full-design", &energy_full_design,
 			      NULL);
 	}
 
