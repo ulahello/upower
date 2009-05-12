@@ -535,19 +535,18 @@ dkp_supply_refresh (DkpDevice *device)
 
 	g_get_current_time (&time);
 	g_object_set (device, "update-time", (guint64) time.tv_sec, NULL);
-	g_object_get (device,
-		      "type", &type,
-		      "state", &state,
-		      NULL);
+	g_object_get (device, "type", &type, NULL);
 	switch (type) {
 	case DKP_DEVICE_TYPE_LINE_POWER:
 		ret = dkp_supply_refresh_line_power (supply);
 		break;
 	case DKP_DEVICE_TYPE_BATTERY:
 		ret = dkp_supply_refresh_battery (supply);
+
 		/* Seems that we don't get change uevents from the
 		 * kernel on some BIOS types; set up a timer to poll
 		 * if we are charging or discharging */
+		g_object_get (device, "state", &state, NULL);
 		if (state == DKP_DEVICE_STATE_CHARGING ||
 		    state == DKP_DEVICE_STATE_DISCHARGING)
 			supply->priv->poll_timer_id =
