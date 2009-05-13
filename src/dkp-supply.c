@@ -548,7 +548,8 @@ dkp_supply_refresh (DkpDevice *device)
 		 * if we are charging or discharging */
 		g_object_get (device, "state", &state, NULL);
 		if (state == DKP_DEVICE_STATE_CHARGING ||
-		    state == DKP_DEVICE_STATE_DISCHARGING)
+		    state == DKP_DEVICE_STATE_DISCHARGING ||
+		    state == DKP_DEVICE_STATE_UNKNOWN)
 			supply->priv->poll_timer_id =
 				g_timeout_add_seconds (DKP_SUPPLY_REFRESH_TIMEOUT,
 						       (GSourceFunc) dkp_supply_poll_battery, supply);
