@@ -544,12 +544,9 @@ dkp_supply_refresh (DkpDevice *device)
 		ret = dkp_supply_refresh_battery (supply);
 
 		/* Seems that we don't get change uevents from the
-		 * kernel on some BIOS types; set up a timer to poll
-		 * if we are charging or discharging */
+		 * kernel on some BIOS types */
 		g_object_get (device, "state", &state, NULL);
-		if (state == DKP_DEVICE_STATE_CHARGING ||
-		    state == DKP_DEVICE_STATE_DISCHARGING ||
-		    state == DKP_DEVICE_STATE_UNKNOWN)
+		if (state != DKP_DEVICE_STATE_FULLY_CHARGED)
 			supply->priv->poll_timer_id =
 				g_timeout_add_seconds (DKP_SUPPLY_REFRESH_TIMEOUT,
 						       (GSourceFunc) dkp_supply_poll_battery, supply);
