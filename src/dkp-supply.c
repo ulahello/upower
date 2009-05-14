@@ -474,7 +474,7 @@ dkp_supply_poll_battery (DkpSupply *supply)
 	gboolean ret;
 	DkpDevice *device = DKP_DEVICE (supply);
 
-	egg_debug ("No updates on supply %s for 30 seconds; forcing update", dkp_device_get_object_path (device));
+	egg_debug ("No updates on supply %s for %i seconds; forcing update", dkp_device_get_object_path (device), DKP_SUPPLY_REFRESH_TIMEOUT);
 	supply->priv->poll_timer_id = 0;
 	ret = dkp_supply_refresh (device);
 	if (ret)
