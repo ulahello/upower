@@ -38,7 +38,8 @@
 #include "dkp-enum.h"
 #include "dkp-supply.h"
 
-#define DKP_SUPPLY_REFRESH_TIMEOUT	2 /* seconds */
+#define DKP_SUPPLY_REFRESH_TIMEOUT	30	/* seconds */
+#define DKP_SUPPLY_UNKNOWN_TIMEOUT	2	/* seconds */
 
 struct DkpSupplyPrivate
 {
@@ -297,8 +298,11 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	guint64 time_to_full;
 
 	d = dkp_device_get_d (device);
-	if (d == NULL)
-		egg_error ("could not get device");
+	if (d == NULL) {
+		egg_warning ("could not get device");
+		ret = FALSE;
+		goto out;
+	}
 
 	native_path = devkit_device_get_native_path (d);
 
@@ -543,6 +547,37 @@ dkp_supply_coldplug (DkpDevice *device)
 }
 
 /**
+ * dkp_supply_setup_poll:
+ **/
+static gboolean
+dkp_supply_setup_poll (DkpDevice *device)
+{
+	DkpDeviceState state;
+	DkpSupply *supply = DKP_SUPPLY (device);
+
+	g_object_get (device, "state", &state, NULL);
+
+	/* if it's fully charged, don't poll at all */
+	if (state == DKP_DEVICE_STATE_FULLY_CHARGED)
+		goto out;
+
+	/* if it's unknown, poll faster */
+	if (state == DKP_DEVICE_STATE_UNKNOWN) {
+		supply->priv->poll_timer_id =
+			g_timeout_add_seconds (DKP_SUPPLY_UNKNOWN_TIMEOUT,
+					       (GSourceFunc) dkp_supply_poll_battery, supply);
+		goto out;
+	}
+
+	/* any other state just fall back */
+	supply->priv->poll_timer_id =
+		g_timeout_add_seconds (DKP_SUPPLY_REFRESH_TIMEOUT,
+				       (GSourceFunc) dkp_supply_poll_battery, supply);
+out:
+	return (supply->priv->poll_timer_id != 0);
+}
+
+/**
  * dkp_supply_refresh:
  **/
 static gboolean
@@ -552,7 +587,6 @@ dkp_supply_refresh (DkpDevice *device)
 	GTimeVal time;
 	DkpSupply *supply = DKP_SUPPLY (device);
 	DkpDeviceType type;
-	DkpDeviceState state;
 
 	if (supply->priv->poll_timer_id > 0) {
 		g_source_remove (supply->priv->poll_timer_id);
@@ -571,11 +605,7 @@ dkp_supply_refresh (DkpDevice *device)
 
 		/* Seems that we don't get change uevents from the
 		 * kernel on some BIOS types */
-		g_object_get (device, "state", &state, NULL);
-		if (state != DKP_DEVICE_STATE_FULLY_CHARGED)
-			supply->priv->poll_timer_id =
-				g_timeout_add_seconds (DKP_SUPPLY_REFRESH_TIMEOUT,
-						       (GSourceFunc) dkp_supply_poll_battery, supply);
+		dkp_supply_setup_poll (device);
 		break;
 	default:
 		g_assert_not_reached ();
