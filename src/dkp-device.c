@@ -397,6 +397,25 @@ dkp_device_get_low_battery (DkpDevice *device, gboolean *low_battery)
 }
 
 /**
+ * dkp_device_get_online:
+ *
+ * Note: Only implement for system devices, i.e. devices supplying the system
+ **/
+gboolean
+dkp_device_get_online (DkpDevice *device, gboolean *online)
+{
+	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+
+	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
+
+	/* no support */
+	if (klass->get_online == NULL)
+		return FALSE;
+
+	return klass->get_online (device, online);
+}
+
+/**
  * dkp_device_get_id:
  **/
 static gchar *

@@ -89,6 +89,7 @@ static void	dkp_daemon_init			(DkpDaemon	*seat);
 static void	dkp_daemon_finalize		(GObject	*object);
 static gboolean	dkp_daemon_get_on_battery_local	(DkpDaemon	*daemon);
 static gboolean	dkp_daemon_get_low_battery_local (DkpDaemon	*daemon);
+static gboolean	dkp_daemon_get_on_ac_local 	(DkpDaemon	*daemon);
 
 G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
 
@@ -419,6 +420,34 @@ dkp_daemon_get_low_battery_local (DkpDaemon *daemon)
 }
 
 /**
+ * dkp_daemon_get_on_ac_local:
+ *
+ * As soon as _any_ ac supply goes online, this is true
+ **/
+static gboolean
+dkp_daemon_get_on_ac_local (DkpDaemon *daemon)
+{
+	guint i;
+	gboolean ret;
+	gboolean result = FALSE;
+	gboolean online;
+	DkpDevice *device;
+	const GPtrArray *array;
+
+	/* ask each device */
+	array = dkp_device_list_get_array (daemon->priv->list);
+	for (i=0; i<array->len; i++) {
+		device = (DkpDevice *) g_ptr_array_index (array, i);
+		ret = dkp_device_get_online (device, &online);
+		if (ret && online) {
+			result = TRUE;
+			break;
+		}
+	}
+	return result;
+}
+
+/**
  * gpk_daemon_device_changed:
  **/
 static void
@@ -438,7 +467,7 @@ gpk_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesi
 	}
 
 	/* second, check if the on_battery and low_battery state has changed */
-	ret = dkp_daemon_get_on_battery_local (daemon);
+	ret = (dkp_daemon_get_on_battery_local (daemon) && !dkp_daemon_get_on_ac_local (daemon));
 	if (ret != daemon->priv->on_battery) {
 		daemon->priv->on_battery = ret;
 		egg_debug ("now on_battery = %s", ret ? "yes" : "no");
@@ -842,7 +871,8 @@ dkp_daemon_new (void)
 	g_list_foreach (devices, (GFunc) g_object_unref, NULL);
 	g_list_free (devices);
 
-	daemon->priv->on_battery = dkp_daemon_get_on_battery_local (daemon);
+	daemon->priv->on_battery = (dkp_daemon_get_on_battery_local (daemon) &&
+				    !dkp_daemon_get_on_ac_local (daemon));
 	daemon->priv->low_battery = dkp_daemon_get_low_battery_local (daemon);
 
 	return daemon;

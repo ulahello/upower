@@ -178,6 +178,32 @@ dkp_supply_get_low_battery (DkpDevice *device, gboolean *low_battery)
 }
 
 /**
+ * dkp_supply_get_online:
+ **/
+static gboolean
+dkp_supply_get_online (DkpDevice *device, gboolean *online)
+{
+	DkpSupply *supply = DKP_SUPPLY (device);
+	DkpDeviceType type;
+	gboolean online_tmp;
+
+	g_return_val_if_fail (DKP_IS_SUPPLY (supply), FALSE);
+	g_return_val_if_fail (online != NULL, FALSE);
+
+	g_object_get (device,
+		      "type", &type,
+		      "online", &online_tmp,
+		      NULL);
+
+	if (type != DKP_DEVICE_TYPE_LINE_POWER)
+		return FALSE;
+
+	*online = online_tmp;
+
+	return TRUE;
+}
+
+/**
  * dkp_supply_calculate_rate:
  **/
 static void
@@ -599,6 +625,7 @@ dkp_supply_class_init (DkpSupplyClass *klass)
 	object_class->finalize = dkp_supply_finalize;
 	device_class->get_on_battery = dkp_supply_get_on_battery;
 	device_class->get_low_battery = dkp_supply_get_low_battery;
+	device_class->get_online = dkp_supply_get_online;
 	device_class->coldplug = dkp_supply_coldplug;
 	device_class->refresh = dkp_supply_refresh;
 

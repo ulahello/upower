@@ -58,6 +58,8 @@ typedef struct
 						 gboolean	*on_battery);
 	gboolean	 (*get_low_battery)	(DkpDevice	*device,
 						 gboolean	*low_battery);
+	gboolean	 (*get_online)		(DkpDevice	*device,
+						 gboolean	*online);
 } DkpDeviceClass;
 
 typedef enum
@@ -85,6 +87,8 @@ gboolean	 dkp_device_get_on_battery	(DkpDevice	*device,
 						 gboolean	*on_battery);
 gboolean	 dkp_device_get_low_battery	(DkpDevice	*device,
 						 gboolean	*low_battery);
+gboolean	 dkp_device_get_online		(DkpDevice	*device,
+						 gboolean	*online);
 void		 dkp_device_emit_changed	(DkpDevice	*device);
 
 /* exported methods */
