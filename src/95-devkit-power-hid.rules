@@ -13,32 +13,32 @@ ATTR{idVendor}=="0925", ENV{DKP_VENDOR}="Kebo"
 
 # MGE UPS SYSTEMS
 ATTR{idVendor}=="0463", ATTR{idProduct}=="0001", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="0463", ATTR{idProduct}=="0xffff", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="0463", ATTR{idProduct}=="ffff", ENV{DKP_BATTERY_TYPE}="ups"
 
 # APC
 ATTR{idVendor}=="051d", ATTR{idProduct}=="0002", ENV{DKP_BATTERY_TYPE}="ups"
 
 # CyberPower
 ATTR{idVendor}=="0764", ATTR{idProduct}=="0005", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="0764", ATTR{idProduct}=="0x0501", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="0764", ATTR{idProduct}=="0501", ENV{DKP_BATTERY_TYPE}="ups"
 
 # Tripp Lite
 ATTR{idVendor}=="09ae", ATTR{idProduct}=="1003", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="09ae", ATTR{idProduct}=="0x2005", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="09ae", ATTR{idProduct}=="0x2007", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="09ae", ATTR{idProduct}=="0x3012", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="09ae", ATTR{idProduct}=="0x4002", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="09ae", ATTR{idProduct}=="0x4003", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="09ae", ATTR{idProduct}=="2005", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="09ae", ATTR{idProduct}=="2007", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="09ae", ATTR{idProduct}=="3012", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="09ae", ATTR{idProduct}=="4002", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="09ae", ATTR{idProduct}=="4003", ENV{DKP_BATTERY_TYPE}="ups"
 
 # Belkin
 ATTR{idVendor}=="050d", ATTR{idProduct}=="0375", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="050d", ATTR{idProduct}=="0x0551", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="050d", ATTR{idProduct}=="0x0751", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="050d", ATTR{idProduct}=="0x0900", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="050d", ATTR{idProduct}=="0x0910", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="050d", ATTR{idProduct}=="0x0912", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="050d", ATTR{idProduct}=="0x0980", ENV{DKP_BATTERY_TYPE}="ups"
-ATTR{idVendor}=="050d", ATTR{idProduct}=="0x1100", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0551", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0751", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0900", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0910", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0912", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="0980", ENV{DKP_BATTERY_TYPE}="ups"
+ATTR{idVendor}=="050d", ATTR{idProduct}=="1100", ENV{DKP_BATTERY_TYPE}="ups"
 
 # Liebert
 ATTR{idVendor}=="06da", ATTR{idProduct}=="ffff", ENV{DKP_BATTERY_TYPE}="ups"
