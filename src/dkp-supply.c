@@ -40,6 +40,7 @@
 
 #define DKP_SUPPLY_REFRESH_TIMEOUT	30	/* seconds */
 #define DKP_SUPPLY_UNKNOWN_TIMEOUT	2	/* seconds */
+#define DKP_SUPPLY_UNKNOWN_RETRIES	30
 
 struct DkpSupplyPrivate
 {
@@ -47,6 +48,7 @@ struct DkpSupplyPrivate
 	gboolean		 has_coldplug_values;
 	gdouble			 energy_old;
 	GTimeVal		 energy_old_timespec;
+	guint			 unknown_retries;
 };
 
 static void	dkp_supply_class_init	(DkpSupplyClass	*klass);
@@ -407,6 +409,12 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		state = DKP_DEVICE_STATE_UNKNOWN;
 	}
 
+	/* reset unknown counter */
+	if (state != DKP_DEVICE_STATE_UNKNOWN) {
+		egg_debug ("resetting unknown timeout after %i retries", supply->priv->unknown_retries);
+		supply->priv->unknown_retries = 0;
+	}
+
 	/* get rate; it seems odd as it's either in uVh or uWh */
 	energy_rate = fabs (sysfs_get_double (native_path, "current_now") / 1000000.0);
 
@@ -561,11 +569,14 @@ dkp_supply_setup_poll (DkpDevice *device)
 	if (state == DKP_DEVICE_STATE_FULLY_CHARGED)
 		goto out;
 
-	/* if it's unknown, poll faster */
-	if (state == DKP_DEVICE_STATE_UNKNOWN) {
+	/* if it's unknown, poll faster than we would normally */
+	if (state == DKP_DEVICE_STATE_UNKNOWN &&
+	    supply->priv->unknown_retries < DKP_SUPPLY_UNKNOWN_RETRIES) {
 		supply->priv->poll_timer_id =
 			g_timeout_add_seconds (DKP_SUPPLY_UNKNOWN_TIMEOUT,
 					       (GSourceFunc) dkp_supply_poll_battery, supply);
+		/* increase count, we don't want to poll at 0.5Hz forever */
+		supply->priv->unknown_retries++;
 		goto out;
 	}
 
@@ -621,6 +632,8 @@ static void
 dkp_supply_init (DkpSupply *supply)
 {
 	supply->priv = DKP_SUPPLY_GET_PRIVATE (supply);
+	supply->priv->unknown_retries = 0;
+	supply->priv->poll_timer_id = 0;
 }
 
 /**
