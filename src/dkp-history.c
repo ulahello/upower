@@ -196,7 +196,7 @@ dkp_history_copy_array_timespan (const GPtrArray *array, guint timespan)
 	guint i;
 	const DkpHistoryObj *obj;
 	GPtrArray *array_new;
-	guint start;
+	GTimeVal timeval;
 
 	/* no data */
 	if (array->len == 0)
@@ -204,14 +204,13 @@ dkp_history_copy_array_timespan (const GPtrArray *array, guint timespan)
 
 	/* new data */
 	array_new = g_ptr_array_new ();
+	g_get_current_time (&timeval);
 
 	/* treat the timespan like a range, and search backwards */
-	obj = (const DkpHistoryObj *) g_ptr_array_index (array, array->len-1);
-	start = obj->time;
 	timespan *= 0.95f;
 	for (i=array->len-1; i>0; i--) {
 		obj = (const DkpHistoryObj *) g_ptr_array_index (array, i);
-		if (start - obj->time < timespan)
+		if (timeval.tv_sec - obj->time < timespan)
 			g_ptr_array_add (array_new, dkp_history_obj_copy (obj));
 	}
 
