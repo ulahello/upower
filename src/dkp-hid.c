@@ -290,6 +290,7 @@ dkp_hid_coldplug (DkpDevice *device)
 	gboolean ret = FALSE;
 	const gchar *device_file;
 	const gchar *type;
+	const gchar *vendor;
 
 	/* detect what kind of device we are */
 	d = dkp_device_get_d (device);
@@ -322,13 +323,18 @@ dkp_hid_coldplug (DkpDevice *device)
 		goto out;
 	}
 
+	/* prefer DKP names */
+	vendor = devkit_device_get_property (d, "DKP_VENDOR");
+	if (vendor == NULL)
+		vendor = devkit_device_get_property (d, "ID_VENDOR");
+
 	/* hardcode some values */
 	g_object_set (device,
 		      "type", DKP_DEVICE_TYPE_UPS,
 		      "is-rechargeable", TRUE,
 		      "power-supply", TRUE,
 		      "is-present", TRUE,
-		      "vendor", devkit_device_get_property (d, "ID_VENDOR"),
+		      "vendor", vendor,
 		      "has-history", TRUE,
 		      "has-statistics", TRUE,
 		      NULL);

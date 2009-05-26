@@ -135,6 +135,8 @@ dkp_csr_coldplug (DkpDevice *device)
 	gboolean ret = FALSE;
 	const gchar *type;
 	const gchar *native_path;
+	const gchar *vendor;
+	const gchar *product;
 
 	/* detect what kind of device we are */
 	d = dkp_device_get_d (device);
@@ -180,9 +182,18 @@ dkp_csr_coldplug (DkpDevice *device)
 		csr->priv->is_dual = devkit_device_get_property_as_boolean (d, "DKP_CSR_DUAL");
 	egg_debug ("is_dual=%i", csr->priv->is_dual);
 
+	/* prefer DKP names */
+	vendor = devkit_device_get_property (d, "DKP_VENDOR");
+	if (vendor == NULL)
+		vendor = devkit_device_get_property (d, "ID_VENDOR");
+	product = devkit_device_get_property (d, "DKP_PRODUCT");
+	if (product == NULL)
+		product = devkit_device_get_property (d, "ID_PRODUCT");
+
+	/* hardcode some values */
 	g_object_set (device,
-		      "vendor", devkit_device_get_property (d, "ID_VENDOR"),
-		      "model", devkit_device_get_property (d, "ID_PRODUCT"),
+		      "vendor", vendor,
+		      "model", product,
 		      "power-supply", FALSE,
 		      "is-present", TRUE,
 		      "is-rechargeable", TRUE,

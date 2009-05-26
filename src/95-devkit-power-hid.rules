@@ -3,13 +3,13 @@
 #
 SUBSYSTEM!="usb", GOTO="dkp_hid_end"
 
-ATTR{idVendor}=="0463", ENV{ID_VENDOR}="MGE Systems"
-ATTR{idVendor}=="051d", ENV{ID_VENDOR}="APC"
-ATTR{idVendor}=="0764", ENV{ID_VENDOR}="CyberPower"
-ATTR{idVendor}=="09ae", ENV{ID_VENDOR}="Tripp Lite"
-ATTR{idVendor}=="050d", ENV{ID_VENDOR}="Belkin"
-ATTR{idVendor}=="06da", ENV{ID_VENDOR}="Liebert"
-ATTR{idVendor}=="0925", ENV{ID_VENDOR}="Kebo"
+ATTR{idVendor}=="0463", ENV{DKP_VENDOR}="MGE Systems"
+ATTR{idVendor}=="051d", ENV{DKP_VENDOR}="APC"
+ATTR{idVendor}=="0764", ENV{DKP_VENDOR}="CyberPower"
+ATTR{idVendor}=="09ae", ENV{DKP_VENDOR}="Tripp Lite"
+ATTR{idVendor}=="050d", ENV{DKP_VENDOR}="Belkin"
+ATTR{idVendor}=="06da", ENV{DKP_VENDOR}="Liebert"
+ATTR{idVendor}=="0925", ENV{DKP_VENDOR}="Kebo"
 
 # MGE UPS SYSTEMS
 ATTR{idVendor}=="0463", ATTR{idProduct}=="0001", ENV{DKP_BATTERY_TYPE}="ups"

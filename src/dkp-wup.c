@@ -302,6 +302,8 @@ dkp_wup_coldplug (DkpDevice *device)
 	const gchar *type;
 	const gchar *native_path;
 	gchar *data;
+	const gchar *vendor;
+	const gchar *product;
 
 	/* detect what kind of device we are */
 	d = dkp_device_get_d (device);
@@ -351,6 +353,14 @@ dkp_wup_coldplug (DkpDevice *device)
 	dkp_wup_parse_command (wup, data);
 	g_free (data);
 
+	/* prefer DKP names */
+	vendor = devkit_device_get_property (d, "DKP_VENDOR");
+	if (vendor == NULL)
+		vendor = devkit_device_get_property (d, "ID_VENDOR");
+	product = devkit_device_get_property (d, "DKP_PRODUCT");
+	if (product == NULL)
+		product = devkit_device_get_property (d, "ID_PRODUCT");
+
 	/* hardcode some values */
 	native_path = devkit_device_get_native_path (d);
 	g_object_set (device,
@@ -358,8 +368,8 @@ dkp_wup_coldplug (DkpDevice *device)
 		      "is-rechargeable", FALSE,
 		      "power-supply", FALSE,
 		      "is-present", FALSE,
-		      "vendor", devkit_device_get_property (d, "ID_VENDOR"),
-		      "model", devkit_device_get_property (d, "ID_PRODUCT"),
+		      "vendor", vendor,
+		      "model", product,
 		      "serial", g_strstrip (sysfs_get_string (native_path, "serial")),
 		      "has-history", TRUE,
 		      "state", DKP_DEVICE_STATE_DISCHARGING,
