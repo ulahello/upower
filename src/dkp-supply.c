@@ -38,7 +38,7 @@
 #include "dkp-enum.h"
 #include "dkp-supply.h"
 
-#define DKP_SUPPLY_REFRESH_TIMEOUT	2L
+#define DKP_SUPPLY_REFRESH_TIMEOUT	2 /* seconds */
 
 struct DkpSupplyPrivate
 {
