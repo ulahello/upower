@@ -281,6 +281,8 @@ dkp_hid_get_all_data (DkpHid *hid)
 
 /**
  * dkp_hid_coldplug:
+ *
+ * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 static gboolean
 dkp_hid_coldplug (DkpDevice *device)
@@ -351,6 +353,8 @@ out:
 
 /**
  * dkp_hid_refresh:
+ *
+ * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
 dkp_hid_refresh (DkpDevice *device)
@@ -370,7 +374,7 @@ dkp_hid_refresh (DkpDevice *device)
 	/* read any data -- it's okay if there's nothing as we are non-blocking */
 	rd = read (hid->priv->fd, ev, sizeof (ev));
 	if (rd < (int) sizeof (ev[0])) {
-		ret = TRUE;
+		ret = FALSE;
 		goto out;
 	}
 

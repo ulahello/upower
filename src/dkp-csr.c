@@ -126,6 +126,8 @@ out:
 
 /**
  * dkp_csr_coldplug:
+ *
+ * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 static gboolean
 dkp_csr_coldplug (DkpDevice *device)
@@ -216,14 +218,16 @@ out:
 
 /**
  * dkp_csr_refresh:
+ *
+ * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
 dkp_csr_refresh (DkpDevice *device)
 {
-	gboolean ret = TRUE;
+	gboolean ret = FALSE;
 	GTimeVal time;
 	DkpCsr *csr = DKP_CSR (device);
-	usb_dev_handle *handle;
+	usb_dev_handle *handle = NULL;
 	char buf[80];
 	unsigned int addr;
 	gdouble percentage;
@@ -239,14 +243,14 @@ dkp_csr_refresh (DkpDevice *device)
 
 	if (csr->priv->device == NULL) {
 		egg_warning ("no device!");
-		return FALSE;
+		goto out;
 	}
 
 	/* open USB device */
 	handle = usb_open (csr->priv->device);
 	if (handle == NULL) {
 		egg_warning ("could not open device");
-		return FALSE;
+		goto out;
 	}
 
 	/* get the charge */
@@ -273,7 +277,8 @@ dkp_csr_refresh (DkpDevice *device)
 	}
 
 out:
-	usb_close (handle);
+	if (handle != NULL)
+		usb_close (handle);
 	return ret;
 }
 

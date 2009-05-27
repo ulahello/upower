@@ -60,6 +60,8 @@ static gboolean		 dkp_supply_refresh	 	(DkpDevice *device);
 
 /**
  * dkp_supply_refresh_line_power:
+ *
+ * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
 dkp_supply_refresh_line_power (DkpSupply *supply)
@@ -274,7 +276,7 @@ dkp_supply_convert_device_technology (const gchar *type)
 /**
  * dkp_supply_refresh_battery:
  *
- * Return value: TRUE if we changed
+ * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
 dkp_supply_refresh_battery (DkpSupply *supply)
@@ -522,11 +524,14 @@ dkp_supply_poll_battery (DkpSupply *supply)
 
 /**
  * dkp_supply_coldplug:
+ *
+ * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 static gboolean
 dkp_supply_coldplug (DkpDevice *device)
 {
 	DkpSupply *supply = DKP_SUPPLY (device);
+	gboolean ret;
 	DevkitDevice *d;
 	const gchar *native_path;
 
@@ -549,9 +554,9 @@ dkp_supply_coldplug (DkpDevice *device)
 	}
 
 	/* coldplug values */
-	dkp_supply_refresh (device);
+	ret = dkp_supply_refresh (device);
 
-	return TRUE;
+	return ret;
 }
 
 /**
@@ -590,6 +595,8 @@ out:
 
 /**
  * dkp_supply_refresh:
+ *
+ * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
 dkp_supply_refresh (DkpDevice *device)

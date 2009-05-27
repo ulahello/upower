@@ -291,6 +291,8 @@ out:
 
 /**
  * dkp_wup_coldplug:
+ *
+ * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 static gboolean
 dkp_wup_coldplug (DkpDevice *device)
@@ -388,6 +390,8 @@ out:
 
 /**
  * dkp_wup_refresh:
+ *
+ * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
 dkp_wup_refresh (DkpDevice *device)

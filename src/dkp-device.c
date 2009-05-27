@@ -476,6 +476,8 @@ out:
 
 /**
  * dkp_device_coldplug:
+ *
+ * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 gboolean
 dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, DevkitDevice *d)
@@ -677,6 +679,8 @@ out:
 
 /**
  * dkp_device_refresh:
+ *
+ * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 gboolean
 dkp_device_refresh (DkpDevice *device, DBusGMethodInvocation *context)
@@ -697,24 +701,23 @@ dkp_device_refresh (DkpDevice *device, DBusGMethodInvocation *context)
 gboolean
 dkp_device_changed (DkpDevice *device, DevkitDevice *d, gboolean synthesized)
 {
-	gboolean changed;
+	gboolean ret;
 
 	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 
 	g_object_unref (device->priv->d);
 	device->priv->d = g_object_ref (d);
 
-	changed = dkp_device_refresh_internal (device);
+	ret = dkp_device_refresh_internal (device);
 
-	/* this 'change' event might prompt us to remove the supply */
-	if (!changed)
+	/* we failed to refresh, don't emit changed */
+	if (!ret)
 		goto out;
 
 	/* no, it's good .. keep it */
 	dkp_device_emit_changed (device);
-
 out:
-	return changed;
+	return ret;
 }
 
 /**
