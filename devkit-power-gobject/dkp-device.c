@@ -446,8 +446,10 @@ dkp_device_print (const DkpDevice *device)
 		g_print ("    online:             %s\n", dkp_device_print_bool_to_text (device->priv->online));
 
 	/* if we can, get history */
-	dkp_device_print_history (device, "charge");
-	dkp_device_print_history (device, "rate");
+	if (device->priv->has_history) {
+		dkp_device_print_history (device, "charge");
+		dkp_device_print_history (device, "rate");
+	}
 
 	return TRUE;
 }
