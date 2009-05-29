@@ -636,14 +636,85 @@ out:
 static void
 dkp_device_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
 {
-//	DkpDevice *device = DKP_DEVICE (object);
+	DkpDevice *device = DKP_DEVICE (object);
 
 	switch (prop_id) {
-//	case PROP_SUBSYSTEMS:
-//		if (device->priv->subsystems != NULL)
-//			g_strfreev (device->priv->subsystems);
-//		device->priv->subsystems = g_strdupv (g_value_get_boxed (value));
-//		break;
+	case PROP_NATIVE_PATH:
+		g_free (device->priv->native_path);
+		device->priv->native_path = g_strdup (g_value_get_string (value));
+		break;
+	case PROP_VENDOR:
+		g_free (device->priv->vendor);
+		device->priv->vendor = g_strdup (g_value_get_string (value));
+		break;
+	case PROP_MODEL:
+		g_free (device->priv->model);
+		device->priv->model = g_strdup (g_value_get_string (value));
+		break;
+	case PROP_SERIAL:
+		g_free (device->priv->serial);
+		device->priv->serial = g_strdup (g_value_get_string (value));
+		break;
+	case PROP_UPDATE_TIME:
+		device->priv->update_time = g_value_get_uint64 (value);
+		break;
+	case PROP_TYPE:
+		device->priv->type = g_value_get_uint (value);
+		break;
+	case PROP_POWER_SUPPLY:
+		device->priv->power_supply = g_value_get_boolean (value);
+		break;
+	case PROP_ONLINE:
+		device->priv->online = g_value_get_boolean (value);
+		break;
+	case PROP_IS_PRESENT:
+		device->priv->is_present = g_value_get_boolean (value);
+		break;
+	case PROP_IS_RECHARGEABLE:
+		device->priv->is_rechargeable = g_value_get_boolean (value);
+		break;
+	case PROP_HAS_HISTORY:
+		device->priv->has_history = g_value_get_boolean (value);
+		break;
+	case PROP_HAS_STATISTICS:
+		device->priv->has_statistics = g_value_get_boolean (value);
+		break;
+	case PROP_STATE:
+		device->priv->state = g_value_get_uint (value);
+		break;
+	case PROP_CAPACITY:
+		device->priv->capacity = g_value_get_double (value);
+		break;
+	case PROP_ENERGY:
+		device->priv->energy = g_value_get_double (value);
+		break;
+	case PROP_ENERGY_EMPTY:
+		device->priv->energy_empty = g_value_get_double (value);
+		break;
+	case PROP_ENERGY_FULL:
+		device->priv->energy_full = g_value_get_double (value);
+		break;
+	case PROP_ENERGY_FULL_DESIGN:
+		device->priv->energy_full_design = g_value_get_double (value);
+		break;
+	case PROP_ENERGY_RATE:
+		device->priv->energy_rate = g_value_get_double (value);
+		break;
+	case PROP_VOLTAGE:
+		device->priv->voltage = g_value_get_double (value);
+		break;
+	case PROP_TIME_TO_EMPTY:
+		device->priv->time_to_empty = g_value_get_int64 (value);
+		break;
+	case PROP_TIME_TO_FULL:
+		device->priv->time_to_full = g_value_get_int64 (value);
+		break;
+	case PROP_PERCENTAGE:
+		device->priv->percentage = g_value_get_double (value);
+		break;
+	case PROP_TECHNOLOGY:
+		device->priv->technology = g_value_get_uint (value);
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -770,132 +841,132 @@ dkp_device_class_init (DkpDeviceClass *klass)
 	g_object_class_install_property (object_class,
 					 PROP_UPDATE_TIME,
 					 g_param_spec_uint64 ("update-time",
-					 		      NULL, NULL,
-					 		      0, G_MAXUINT64, 0,
-							      G_PARAM_READABLE));
+							      NULL, NULL,
+							      0, G_MAXUINT64, 0,
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:vendor:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_VENDOR,
 					 g_param_spec_string ("vendor",
-					 		      NULL, NULL,
+							      NULL, NULL,
 							      NULL,
-							      G_PARAM_READABLE));
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:model:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_MODEL,
 					 g_param_spec_string ("model",
-					 		      NULL, NULL,
+							      NULL, NULL,
 							      NULL,
-							      G_PARAM_READABLE));
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:serial:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_SERIAL,
 					 g_param_spec_string ("serial",
-					 		      NULL, NULL,
+							      NULL, NULL,
 							      NULL,
-							      G_PARAM_READABLE));
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:native-path:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_NATIVE_PATH,
 					 g_param_spec_string ("native-path",
-					 		      NULL, NULL,
+							      NULL, NULL,
 							      NULL,
-							      G_PARAM_READABLE));
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:power-supply:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_POWER_SUPPLY,
 					 g_param_spec_boolean ("power-supply",
-					 		       NULL, NULL,
+							       NULL, NULL,
 							       FALSE,
-							       G_PARAM_READABLE));
+							       G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:online:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_ONLINE,
 					 g_param_spec_boolean ("online",
-					 		       NULL, NULL,
+							       NULL, NULL,
 							       FALSE,
-							       G_PARAM_READABLE));
+							       G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:is-present:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_IS_PRESENT,
 					 g_param_spec_boolean ("is-present",
-					 		       NULL, NULL,
+							       NULL, NULL,
 							       FALSE,
-							       G_PARAM_READABLE));
+							       G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:is-rechargeable:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_IS_RECHARGEABLE,
 					 g_param_spec_boolean ("is-rechargeable",
-					 		       NULL, NULL,
+							       NULL, NULL,
 							       FALSE,
-							       G_PARAM_READABLE));
+							       G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:has-history:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_HAS_HISTORY,
 					 g_param_spec_boolean ("has-history",
-					 		       NULL, NULL,
+							       NULL, NULL,
 							       FALSE,
-							       G_PARAM_READABLE));
+							       G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:has-statistics:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_HAS_STATISTICS,
 					 g_param_spec_boolean ("has-statistics",
-					 		       NULL, NULL,
+							       NULL, NULL,
 							       FALSE,
-							       G_PARAM_READABLE));
+							       G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:type:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_TYPE,
 					 g_param_spec_uint ("type",
-					 		    NULL, NULL,
-					 		    0,
-					 		    DKP_DEVICE_TYPE_UNKNOWN,
-					 		    DKP_DEVICE_TYPE_UNKNOWN,
-							    G_PARAM_READABLE));
+							    NULL, NULL,
+							    DKP_DEVICE_TYPE_UNKNOWN,
+							    DKP_DEVICE_TYPE_LAST,
+							    DKP_DEVICE_TYPE_UNKNOWN,
+							    G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:state:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_STATE,
 					 g_param_spec_uint ("state",
-					 		    NULL, NULL,
-					 		    0,
-					 		    DKP_DEVICE_STATE_UNKNOWN,
-					 		    DKP_DEVICE_STATE_UNKNOWN,
-							    G_PARAM_READABLE));
+							    NULL, NULL,
+							    DKP_DEVICE_STATE_UNKNOWN,
+							    DKP_DEVICE_STATE_LAST,
+							    DKP_DEVICE_STATE_UNKNOWN,
+							    G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:technology:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_TECHNOLOGY,
 					 g_param_spec_uint ("technology",
-					 		    NULL, NULL,
-					 		    0,
-					 		    DKP_DEVICE_TECHNOLOGY_UNKNOWN,
-					 		    DKP_DEVICE_TECHNOLOGY_UNKNOWN,
-							    G_PARAM_READABLE));
+							    NULL, NULL,
+							    DKP_DEVICE_TECHNOLOGY_UNKNOWN,
+							    DKP_DEVICE_TECHNOLOGY_LAST,
+							    DKP_DEVICE_TECHNOLOGY_UNKNOWN,
+							    G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:capacity:
 	 */
@@ -903,7 +974,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 					 PROP_CAPACITY,
 					 g_param_spec_double ("capacity", NULL, NULL,
 							      0.0, 100.f, 100.0,
-							      G_PARAM_READABLE));
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:energy:
 	 */
@@ -911,7 +982,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 					 PROP_ENERGY,
 					 g_param_spec_double ("energy", NULL, NULL,
 							      0.0, G_MAXDOUBLE, 0.0,
-							      G_PARAM_READABLE));
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:energy-empty:
 	 */
@@ -919,7 +990,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 					 PROP_ENERGY_EMPTY,
 					 g_param_spec_double ("energy-empty", NULL, NULL,
 							      0.0, G_MAXDOUBLE, 0.0,
-							      G_PARAM_READABLE));
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:energy-full:
 	 */
@@ -927,7 +998,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 					 PROP_ENERGY_FULL,
 					 g_param_spec_double ("energy-full", NULL, NULL,
 							      0.0, G_MAXDOUBLE, 0.0,
-							      G_PARAM_READABLE));
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:energy-full-design:
 	 */
@@ -935,7 +1006,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 					 PROP_ENERGY_FULL_DESIGN,
 					 g_param_spec_double ("energy-full-design", NULL, NULL,
 							      0.0, G_MAXDOUBLE, 0.0,
-							      G_PARAM_READABLE));
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:energy-rate:
 	 */
@@ -943,7 +1014,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 					 PROP_ENERGY_RATE,
 					 g_param_spec_double ("energy-rate", NULL, NULL,
 							      0.0, G_MAXDOUBLE, 0.0,
-							      G_PARAM_READABLE));
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:voltage:
 	 */
@@ -951,23 +1022,23 @@ dkp_device_class_init (DkpDeviceClass *klass)
 					 PROP_VOLTAGE,
 					 g_param_spec_double ("voltage", NULL, NULL,
 							      0.0, G_MAXDOUBLE, 0.0,
-							      G_PARAM_READABLE));
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:time-to-empty:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_TIME_TO_EMPTY,
 					 g_param_spec_int64 ("time-to-empty", NULL, NULL,
-					 		      0, G_MAXINT64, 0,
-							      G_PARAM_READABLE));
+							      0, G_MAXINT64, 0,
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:time-to-full:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_TIME_TO_FULL,
 					 g_param_spec_int64 ("time-to-full", NULL, NULL,
-					 		      0, G_MAXINT64, 0,
-							      G_PARAM_READABLE));
+							      0, G_MAXINT64, 0,
+							      G_PARAM_READWRITE));
 	/**
 	 * DkpDevice:percentage:
 	 */
@@ -975,7 +1046,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 					 PROP_PERCENTAGE,
 					 g_param_spec_double ("percentage", NULL, NULL,
 							      0.0, 100.f, 100.0,
-							      G_PARAM_READABLE));
+							      G_PARAM_READWRITE));
 
 	g_type_class_add_private (klass, sizeof (DkpDevicePrivate));
 }
