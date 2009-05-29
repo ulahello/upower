@@ -45,7 +45,7 @@ struct DkpDevicePrivate
 	DBusGProxy		*proxy_props;
 
 	/* properties */
-	guint64		 	 update_time;
+	guint64			 update_time;
 	gchar			*vendor;
 	gchar			*model;
 	gchar			*serial;
