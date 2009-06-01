@@ -1,3 +1,39 @@
+Version 008
+~~~~~~~~~~~
+Released: 2009-06-01
+
+Note:
+ - The DBus interface of DeviceKit-power may be subject to change in future
+   versions of this daemon.
+ - The experimental devkit-power-gobject library has no API or ABI guarantees.
+
+New Features:
+ - Allow the daemon to get the global online state for all devices (Matthew Garrett)
+ - Add a has-capability to the org.freedesktop.DeviceKit.Power.Wakeups interface (Richard Hughes)
+ - Add a property lid-is-closed for g-p-m and x-p-m to use (Richard Hughes)
+
+Bugfixes:
+ - Fix up some issues in DkpClient, and expose GObject properties (Ali Abdallah)
+ - Remove the 0x prefix from some rule matches (Ronald)
+ - Allow all DBus properties to be read with the new DBus (Richard Hughes)
+ - Only reset the update-time if the read was successful (Richard Hughes)
+ - Optimise the udev rules to skip non-usb devices (Richard Hughes)
+ - Ensure we get properties on devices correctly that have not yet been changed (Richard Hughes)
+ - Make the suspend and hibernate scripts execute synchronously. Fixes rh#497563 (Richard Hughes)
+ - Ignore method timeouts when we suspend and hibernate (Richard Hughes)
+ - Add two missing files to the last commit (Richard Hughes)
+ - Don't overwrite energy-full-design with zero after coldplug (Richard Hughes)
+ - Only get the device state for the poll after the refresh (Richard Hughes)
+ - Continue to poll when power supply device is marked unknown. Fixes rh#495493 (Richard Hughes)
+ - Correct a debugging statement (Richard Hughes)
+ - Never overwrite ID_PRODUCT or ID_VENDOR (Richard Hughes)
+ - Don't return history data relative to the earliest point (Richard Hughes)
+ - Setup different polls based on the battery state (Matthew Garrett)
+ - Don't poll on unknown forever. Based on a patch from Matthew Garrett (Richard Hughes)
+ - Fix up the return statuses from coldplug and refresh (Richard Hughes)
+ - Only attempt to print history if the device is capable (Richard Hughes)
+ - Allow properties in DkpDevice (client) to be set (Richard Hughes)
+
 Version 007
 ~~~~~~~~~~~
 Released: 2009-03-30
