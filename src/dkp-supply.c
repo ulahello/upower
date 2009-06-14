@@ -296,7 +296,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	gdouble energy_full_design;
 	gdouble energy_rate;
 	gdouble capacity;
-	gdouble percentage;
+	gdouble percentage = 0.0f;
 	gdouble voltage;
 	guint64 time_to_empty;
 	guint64 time_to_full;
@@ -463,11 +463,13 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		dkp_supply_calculate_rate (supply);
 
 	/* get a precise percentage */
-	percentage = 100.0 * energy / energy_full;
-	if (percentage < 0)
-		percentage = 0;
-	if (percentage > 100.0)
-		percentage = 100.0;
+	if (energy_full > 0.0f) {
+		percentage = 100.0 * energy / energy_full;
+		if (percentage < 0.0f)
+			percentage = 0.0f;
+		if (percentage > 100.0f)
+			percentage = 100.0f;
+	}
 
 	/* calculate a quick and dirty time remaining value */
 	time_to_empty = 0;
