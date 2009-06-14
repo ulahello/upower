@@ -411,6 +411,12 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		state = DKP_DEVICE_STATE_UNKNOWN;
 	}
 
+	/* if empty, and BIOS does not know what to do */
+	if (state == DKP_DEVICE_STATE_UNKNOWN && energy < 0.01) {
+		egg_warning ("Setting %s state empty as unknown and very low", native_path);
+		state = DKP_DEVICE_STATE_EMPTY;
+	}
+
 	/* reset unknown counter */
 	if (state != DKP_DEVICE_STATE_UNKNOWN) {
 		egg_debug ("resetting unknown timeout after %i retries", supply->priv->unknown_retries);
