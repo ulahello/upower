@@ -1,5 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
+ * Copyright (C) 2008 David Zeuthen <davidz@redhat.com>
  * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,38 +19,38 @@
  *
  */
 
-#ifndef __DKP_WUP_H__
-#define __DKP_WUP_H__
+#ifndef __DKP_DEVICE_CSR_H__
+#define __DKP_DEVICE_CSR_H__
 
 #include <glib-object.h>
 #include "dkp-device.h"
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_WUP  		(dkp_wup_get_type ())
-#define DKP_WUP(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_WUP, DkpWup))
-#define DKP_WUP_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_WUP, DkpWupClass))
-#define DKP_IS_WUP(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_WUP))
-#define DKP_IS_WUP_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_WUP))
-#define DKP_WUP_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_WUP, DkpWupClass))
+#define DKP_TYPE_CSR  			(dkp_device_csr_get_type ())
+#define DKP_DEVICE_CSR(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_CSR, DkpDeviceCsr))
+#define DKP_DEVICE_CSR_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_CSR, DkpDeviceCsrClass))
+#define DKP_IS_CSR(o)			(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_CSR))
+#define DKP_IS_CSR_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_CSR))
+#define DKP_DEVICE_CSR_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_CSR, DkpDeviceCsrClass))
 
-typedef struct DkpWupPrivate DkpWupPrivate;
+typedef struct DkpDeviceCsrPrivate DkpDeviceCsrPrivate;
 
 typedef struct
 {
 	DkpDevice		 parent;
-	DkpWupPrivate		*priv;
-} DkpWup;
+	DkpDeviceCsrPrivate	*priv;
+} DkpDeviceCsr;
 
 typedef struct
 {
 	DkpDeviceClass		 parent_class;
-} DkpWupClass;
+} DkpDeviceCsrClass;
 
-GType		 dkp_wup_get_type		(void);
-DkpWup		*dkp_wup_new			(void);
+GType		 dkp_device_csr_get_type		(void);
+DkpDeviceCsr	*dkp_device_csr_new			(void);
 
 G_END_DECLS
 
-#endif /* __DKP_WUP_H__ */
+#endif /* __DKP_DEVICE_CSR_H__ */
 

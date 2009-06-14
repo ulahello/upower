@@ -45,63 +45,63 @@
 #include "egg-debug.h"
 
 #include "dkp-enum.h"
-#include "dkp-wup.h"
+#include "dkp-device-wup.h"
 
-#define DKP_WUP_REFRESH_TIMEOUT			10 /* seconds */
-#define DKP_WUP_RESPONSE_OFFSET_WATTS		0x0
-#define DKP_WUP_RESPONSE_OFFSET_VOLTS		0x1
-#define DKP_WUP_RESPONSE_OFFSET_AMPS		0x2
-#define DKP_WUP_RESPONSE_OFFSET_KWH		0x3
-#define DKP_WUP_RESPONSE_OFFSET_COST		0x4
-#define DKP_WUP_RESPONSE_OFFSET_MONTHLY_KWH	0x5
-#define DKP_WUP_RESPONSE_OFFSET_MONTHLY_COST	0x6
-#define DKP_WUP_RESPONSE_OFFSET_MAX_WATTS	0x7
-#define DKP_WUP_RESPONSE_OFFSET_MAX_VOLTS	0x8
-#define DKP_WUP_RESPONSE_OFFSET_MAX_AMPS	0x9
-#define DKP_WUP_RESPONSE_OFFSET_MIN_WATTS	0xa
-#define DKP_WUP_RESPONSE_OFFSET_MIN_VOLTS	0xb
-#define DKP_WUP_RESPONSE_OFFSET_MIN_AMPS	0xc
-#define DKP_WUP_RESPONSE_OFFSET_POWER_FACTOR	0xd
-#define DKP_WUP_RESPONSE_OFFSET_DUTY_CYCLE	0xe
-#define DKP_WUP_RESPONSE_OFFSET_POWER_CYCLE	0xf
+#define DKP_DEVICE_WUP_REFRESH_TIMEOUT			10 /* seconds */
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_WATTS		0x0
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_VOLTS		0x1
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_AMPS		0x2
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_KWH		0x3
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_COST		0x4
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_MONTHLY_KWH	0x5
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_MONTHLY_COST	0x6
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_MAX_WATTS	0x7
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_MAX_VOLTS	0x8
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_MAX_AMPS	0x9
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_MIN_WATTS	0xa
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_MIN_VOLTS	0xb
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_MIN_AMPS	0xc
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_POWER_FACTOR	0xd
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_DUTY_CYCLE	0xe
+#define DKP_DEVICE_WUP_RESPONSE_OFFSET_POWER_CYCLE	0xf
 
 /* commands can never be bigger then this */
-#define DKP_WUP_COMMAND_LEN			256
+#define DKP_DEVICE_WUP_COMMAND_LEN			256
 
-struct DkpWupPrivate
+struct DkpDeviceWupPrivate
 {
 	guint			 poll_timer_id;
 	int			 fd;
 };
 
-static void	dkp_wup_class_init	(DkpWupClass	*klass);
+static void	dkp_device_wup_class_init	(DkpDeviceWupClass	*klass);
 
-G_DEFINE_TYPE (DkpWup, dkp_wup, DKP_TYPE_DEVICE)
-#define DKP_WUP_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_WUP, DkpWupPrivate))
+G_DEFINE_TYPE (DkpDeviceWup, dkp_device_wup, DKP_TYPE_DEVICE)
+#define DKP_DEVICE_WUP_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_WUP, DkpDeviceWupPrivate))
 
-static gboolean		 dkp_wup_refresh	 	(DkpDevice *device);
+static gboolean		 dkp_device_wup_refresh	 	(DkpDevice *device);
 
 /**
- * dkp_wup_poll_cb:
+ * dkp_device_wup_poll_cb:
  **/
 static gboolean
-dkp_wup_poll_cb (DkpWup *wup)
+dkp_device_wup_poll_cb (DkpDeviceWup *wup)
 {
 	gboolean ret;
 	DkpDevice *device = DKP_DEVICE (wup);
 
 	egg_debug ("Polling: %s", dkp_device_get_object_path (device));
-	ret = dkp_wup_refresh (device);
+	ret = dkp_device_wup_refresh (device);
 	if (ret)
 		dkp_device_emit_changed (device);
 	return TRUE;
 }
 
 /**
- * dkp_wup_set_speed:
+ * dkp_device_wup_set_speed:
  **/
 static gboolean
-dkp_wup_set_speed (DkpWup *wup)
+dkp_device_wup_set_speed (DkpDeviceWup *wup)
 {
 	struct termios t;
 	int retval;
@@ -129,12 +129,12 @@ dkp_wup_set_speed (DkpWup *wup)
 }
 
 /**
- * dkp_wup_write_command:
+ * dkp_device_wup_write_command:
  *
  * data: a command string in the form "#command,subcommand,datalen,data[n]", e.g. "#R,W,0"
  **/
 static gboolean
-dkp_wup_write_command (DkpWup *wup, const gchar *data)
+dkp_device_wup_write_command (DkpDeviceWup *wup, const gchar *data)
 {
 	guint ret = TRUE;
 	gint retval;
@@ -151,16 +151,16 @@ dkp_wup_write_command (DkpWup *wup, const gchar *data)
 }
 
 /**
- * dkp_wup_read_command:
+ * dkp_device_wup_read_command:
  *
  * Return value: Some data to parse
  **/
 static gchar *
-dkp_wup_read_command (DkpWup *wup)
+dkp_device_wup_read_command (DkpDeviceWup *wup)
 {
 	int retval;
-	gchar buffer[DKP_WUP_COMMAND_LEN];
-	retval = read (wup->priv->fd, &buffer, DKP_WUP_COMMAND_LEN);
+	gchar buffer[DKP_DEVICE_WUP_COMMAND_LEN];
+	retval = read (wup->priv->fd, &buffer, DKP_DEVICE_WUP_COMMAND_LEN);
 	if (retval < 0) {
 		egg_debug ("failed to read from fd: %s", strerror (errno));
 		return NULL;
@@ -169,12 +169,12 @@ dkp_wup_read_command (DkpWup *wup)
 }
 
 /**
- * dkp_wup_parse_command:
+ * dkp_device_wup_parse_command:
  *
  * Return value: Som data to parse
  **/
 static gboolean
-dkp_wup_parse_command (DkpWup *wup, const gchar *data)
+dkp_device_wup_parse_command (DkpDeviceWup *wup, const gchar *data)
 {
 	gboolean ret = FALSE;
 	gchar command;
@@ -275,8 +275,8 @@ dkp_wup_parse_command (DkpWup *wup, const gchar *data)
 	/* update the command fields */
 	if (command == 'd' && subcommand == '-' && number_tokens - offset == 18) {
 		g_object_set (device,
-			      "energy-rate", strtod (tokens[offset+DKP_WUP_RESPONSE_OFFSET_WATTS], NULL) / 10.0f,
-			      "voltage", strtod (tokens[offset+DKP_WUP_RESPONSE_OFFSET_VOLTS], NULL) / 10.0f,
+			      "energy-rate", strtod (tokens[offset+DKP_DEVICE_WUP_RESPONSE_OFFSET_WATTS], NULL) / 10.0f,
+			      "voltage", strtod (tokens[offset+DKP_DEVICE_WUP_RESPONSE_OFFSET_VOLTS], NULL) / 10.0f,
 			      NULL);
 		ret = TRUE;
 	} else {
@@ -290,14 +290,14 @@ out:
 }
 
 /**
- * dkp_wup_coldplug:
+ * dkp_device_wup_coldplug:
  *
  * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 static gboolean
-dkp_wup_coldplug (DkpDevice *device)
+dkp_device_wup_coldplug (DkpDevice *device)
 {
-	DkpWup *wup = DKP_WUP (device);
+	DkpDeviceWup *wup = DKP_DEVICE_WUP (device);
 	DevkitDevice *d;
 	gboolean ret = FALSE;
 	const gchar *device_file;
@@ -333,26 +333,26 @@ dkp_wup_coldplug (DkpDevice *device)
 	egg_debug ("opened %s", device_file);
 
 	/* set speed */
-	ret = dkp_wup_set_speed (wup);
+	ret = dkp_device_wup_set_speed (wup);
 	if (!ret) {
 		egg_debug ("not a WUP device (cannot set speed): %s", device_file);
 		goto out;
 	}
 
 	/* attempt to clear */
-	ret = dkp_wup_write_command (wup, "#R,W,0;");
+	ret = dkp_device_wup_write_command (wup, "#R,W,0;");
 
 	/* setup logging interval */
-	data = g_strdup_printf ("#L,W,3,E,1,%i;", DKP_WUP_REFRESH_TIMEOUT);
-	ret = dkp_wup_write_command (wup, data);
+	data = g_strdup_printf ("#L,W,3,E,1,%i;", DKP_DEVICE_WUP_REFRESH_TIMEOUT);
+	ret = dkp_device_wup_write_command (wup, data);
 	g_free (data);
 
 	/* dummy read */
-	data = dkp_wup_read_command (wup);
+	data = dkp_device_wup_read_command (wup);
 	egg_debug ("data after clear %s", data);
 
 	/* shouldn't do anything */
-	dkp_wup_parse_command (wup, data);
+	dkp_device_wup_parse_command (wup, data);
 	g_free (data);
 
 	/* prefer DKP names */
@@ -379,7 +379,7 @@ dkp_wup_coldplug (DkpDevice *device)
 
 	/* coldplug */
 	egg_debug ("coldplug");
-	ret = dkp_wup_refresh (device);
+	ret = dkp_device_wup_refresh (device);
 
 	/* hardcode true, as we'll retry later if busy */
 	ret = TRUE;
@@ -389,27 +389,27 @@ out:
 }
 
 /**
- * dkp_wup_refresh:
+ * dkp_device_wup_refresh:
  *
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
-dkp_wup_refresh (DkpDevice *device)
+dkp_device_wup_refresh (DkpDevice *device)
 {
 	gboolean ret = FALSE;
 	GTimeVal time;
 	gchar *data = NULL;
-	DkpWup *wup = DKP_WUP (device);
+	DkpDeviceWup *wup = DKP_DEVICE_WUP (device);
 
 	/* get data */
-	data = dkp_wup_read_command (wup);
+	data = dkp_device_wup_read_command (wup);
 	if (data == NULL) {
 		egg_debug ("no data");
 		goto out;
 	}
 
 	/* parse */
-	ret = dkp_wup_parse_command (wup, data);
+	ret = dkp_device_wup_parse_command (wup, data);
 	if (!ret) {
 		egg_debug ("failed to parse %s", data);
 		goto out;
@@ -426,29 +426,29 @@ out:
 }
 
 /**
- * dkp_wup_init:
+ * dkp_device_wup_init:
  **/
 static void
-dkp_wup_init (DkpWup *wup)
+dkp_device_wup_init (DkpDeviceWup *wup)
 {
-	wup->priv = DKP_WUP_GET_PRIVATE (wup);
+	wup->priv = DKP_DEVICE_WUP_GET_PRIVATE (wup);
 	wup->priv->fd = -1;
-	wup->priv->poll_timer_id = g_timeout_add_seconds (DKP_WUP_REFRESH_TIMEOUT,
-							  (GSourceFunc) dkp_wup_poll_cb, wup);
+	wup->priv->poll_timer_id = g_timeout_add_seconds (DKP_DEVICE_WUP_REFRESH_TIMEOUT,
+							  (GSourceFunc) dkp_device_wup_poll_cb, wup);
 }
 
 /**
- * dkp_wup_finalize:
+ * dkp_device_wup_finalize:
  **/
 static void
-dkp_wup_finalize (GObject *object)
+dkp_device_wup_finalize (GObject *object)
 {
-	DkpWup *wup;
+	DkpDeviceWup *wup;
 
 	g_return_if_fail (object != NULL);
 	g_return_if_fail (DKP_IS_WUP (object));
 
-	wup = DKP_WUP (object);
+	wup = DKP_DEVICE_WUP (object);
 	g_return_if_fail (wup->priv != NULL);
 
 	if (wup->priv->fd > 0)
@@ -456,30 +456,30 @@ dkp_wup_finalize (GObject *object)
 	if (wup->priv->poll_timer_id > 0)
 		g_source_remove (wup->priv->poll_timer_id);
 
-	G_OBJECT_CLASS (dkp_wup_parent_class)->finalize (object);
+	G_OBJECT_CLASS (dkp_device_wup_parent_class)->finalize (object);
 }
 
 /**
- * dkp_wup_class_init:
+ * dkp_device_wup_class_init:
  **/
 static void
-dkp_wup_class_init (DkpWupClass *klass)
+dkp_device_wup_class_init (DkpDeviceWupClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	DkpDeviceClass *device_class = DKP_DEVICE_CLASS (klass);
 
-	object_class->finalize = dkp_wup_finalize;
-	device_class->coldplug = dkp_wup_coldplug;
-	device_class->refresh = dkp_wup_refresh;
+	object_class->finalize = dkp_device_wup_finalize;
+	device_class->coldplug = dkp_device_wup_coldplug;
+	device_class->refresh = dkp_device_wup_refresh;
 
-	g_type_class_add_private (klass, sizeof (DkpWupPrivate));
+	g_type_class_add_private (klass, sizeof (DkpDeviceWupPrivate));
 }
 
 /**
- * dkp_wup_new:
+ * dkp_device_wup_new:
  **/
-DkpWup *
-dkp_wup_new (void)
+DkpDeviceWup *
+dkp_device_wup_new (void)
 {
 	return g_object_new (DKP_TYPE_WUP, NULL);
 }

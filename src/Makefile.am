@@ -67,11 +67,11 @@ devkit_power_daemon_SOURCES = 					\
 	dkp-daemon.h			dkp-daemon.c		\
 	dkp-device.h			dkp-device.c		\
 	dkp-device-list.h		dkp-device-list.c	\
-	dkp-supply.h			dkp-supply.c		\
-	dkp-csr.h			dkp-csr.c		\
+	dkp-device-supply.h		dkp-device-supply.c	\
+	dkp-device-csr.h		dkp-device-csr.c	\
+	dkp-device-wup.h		dkp-device-wup.c	\
+	dkp-device-hid.h		dkp-device-hid.c	\
 	dkp-input.h			dkp-input.c		\
-	dkp-wup.h			dkp-wup.c		\
-	dkp-hid.h			dkp-hid.c		\
 	dkp-qos.h			dkp-qos.c		\
 	dkp-wakeups.h			dkp-wakeups.c		\
 	dkp-history.h			dkp-history.c		\

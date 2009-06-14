@@ -1,5 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
+ * Copyright (C) 2008 David Zeuthen <davidz@redhat.com>
  * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,38 +19,38 @@
  *
  */
 
-#ifndef __DKP_HID_H__
-#define __DKP_HID_H__
+#ifndef __DKP_DEVICE_SUPPLY_H__
+#define __DKP_DEVICE_SUPPLY_H__
 
 #include <glib-object.h>
 #include "dkp-device.h"
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_HID  		(dkp_hid_get_type ())
-#define DKP_HID(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_HID, DkpHid))
-#define DKP_HID_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_HID, DkpHidClass))
-#define DKP_IS_HID(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_HID))
-#define DKP_IS_HID_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_HID))
-#define DKP_HID_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_HID, DkpHidClass))
+#define DKP_TYPE_SUPPLY  		(dkp_device_supply_get_type ())
+#define DKP_DEVICE_SUPPLY(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_SUPPLY, DkpDeviceSupply))
+#define DKP_DEVICE_SUPPLY_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_SUPPLY, DkpDeviceSupplyClass))
+#define DKP_IS_SUPPLY(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_SUPPLY))
+#define DKP_IS_SUPPLY_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_SUPPLY))
+#define DKP_DEVICE_SUPPLY_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_SUPPLY, DkpDeviceSupplyClass))
 
-typedef struct DkpHidPrivate DkpHidPrivate;
+typedef struct DkpDeviceSupplyPrivate DkpDeviceSupplyPrivate;
 
 typedef struct
 {
 	DkpDevice		 parent;
-	DkpHidPrivate		*priv;
-} DkpHid;
+	DkpDeviceSupplyPrivate	*priv;
+} DkpDeviceSupply;
 
 typedef struct
 {
 	DkpDeviceClass		 parent_class;
-} DkpHidClass;
+} DkpDeviceSupplyClass;
 
-GType		 dkp_hid_get_type		(void);
-DkpHid		*dkp_hid_new			(void);
+GType		 dkp_device_supply_get_type		(void);
+DkpDeviceSupply	*dkp_device_supply_new			(void);
 
 G_END_DECLS
 
-#endif /* __DKP_HID_H__ */
+#endif /* __DKP_DEVICE_SUPPLY_H__ */
 

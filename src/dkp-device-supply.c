@@ -36,13 +36,13 @@
 #include "egg-debug.h"
 
 #include "dkp-enum.h"
-#include "dkp-supply.h"
+#include "dkp-device-supply.h"
 
-#define DKP_SUPPLY_REFRESH_TIMEOUT	30	/* seconds */
-#define DKP_SUPPLY_UNKNOWN_TIMEOUT	2	/* seconds */
-#define DKP_SUPPLY_UNKNOWN_RETRIES	30
+#define DKP_DEVICE_SUPPLY_REFRESH_TIMEOUT	30	/* seconds */
+#define DKP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT	2	/* seconds */
+#define DKP_DEVICE_SUPPLY_UNKNOWN_RETRIES	30
 
-struct DkpSupplyPrivate
+struct DkpDeviceSupplyPrivate
 {
 	guint			 poll_timer_id;
 	gboolean		 has_coldplug_values;
@@ -51,20 +51,20 @@ struct DkpSupplyPrivate
 	guint			 unknown_retries;
 };
 
-static void	dkp_supply_class_init	(DkpSupplyClass	*klass);
+static void	dkp_device_supply_class_init	(DkpDeviceSupplyClass	*klass);
 
-G_DEFINE_TYPE (DkpSupply, dkp_supply, DKP_TYPE_DEVICE)
-#define DKP_SUPPLY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_SUPPLY, DkpSupplyPrivate))
+G_DEFINE_TYPE (DkpDeviceSupply, dkp_device_supply, DKP_TYPE_DEVICE)
+#define DKP_DEVICE_SUPPLY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_SUPPLY, DkpDeviceSupplyPrivate))
 
-static gboolean		 dkp_supply_refresh	 	(DkpDevice *device);
+static gboolean		 dkp_device_supply_refresh	 	(DkpDevice *device);
 
 /**
- * dkp_supply_refresh_line_power:
+ * dkp_device_supply_refresh_line_power:
  *
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
-dkp_supply_refresh_line_power (DkpSupply *supply)
+dkp_device_supply_refresh_line_power (DkpDeviceSupply *supply)
 {
 	DkpDevice *device = DKP_DEVICE (supply);
 	DevkitDevice *d;
@@ -85,10 +85,10 @@ dkp_supply_refresh_line_power (DkpSupply *supply)
 }
 
 /**
- * dkp_supply_reset_values:
+ * dkp_device_supply_reset_values:
  **/
 static void
-dkp_supply_reset_values (DkpSupply *supply)
+dkp_device_supply_reset_values (DkpDeviceSupply *supply)
 {
 	DkpDevice *device = DKP_DEVICE (supply);
 
@@ -124,12 +124,12 @@ dkp_supply_reset_values (DkpSupply *supply)
 }
 
 /**
- * dkp_supply_get_on_battery:
+ * dkp_device_supply_get_on_battery:
  **/
 static gboolean
-dkp_supply_get_on_battery (DkpDevice *device, gboolean *on_battery)
+dkp_device_supply_get_on_battery (DkpDevice *device, gboolean *on_battery)
 {
-	DkpSupply *supply = DKP_SUPPLY (device);
+	DkpDeviceSupply *supply = DKP_DEVICE_SUPPLY (device);
 	DkpDeviceType type;
 	DkpDeviceState state;
 	gboolean is_present;
@@ -153,21 +153,21 @@ dkp_supply_get_on_battery (DkpDevice *device, gboolean *on_battery)
 }
 
 /**
- * dkp_supply_get_low_battery:
+ * dkp_device_supply_get_low_battery:
  **/
 static gboolean
-dkp_supply_get_low_battery (DkpDevice *device, gboolean *low_battery)
+dkp_device_supply_get_low_battery (DkpDevice *device, gboolean *low_battery)
 {
 	gboolean ret;
 	gboolean on_battery;
-	DkpSupply *supply = DKP_SUPPLY (device);
+	DkpDeviceSupply *supply = DKP_DEVICE_SUPPLY (device);
 	guint percentage;
 
 	g_return_val_if_fail (DKP_IS_SUPPLY (supply), FALSE);
 	g_return_val_if_fail (low_battery != NULL, FALSE);
 
 	/* reuse the common checks */
-	ret = dkp_supply_get_on_battery (device, &on_battery);
+	ret = dkp_device_supply_get_on_battery (device, &on_battery);
 	if (!ret)
 		return FALSE;
 
@@ -183,12 +183,12 @@ dkp_supply_get_low_battery (DkpDevice *device, gboolean *low_battery)
 }
 
 /**
- * dkp_supply_get_online:
+ * dkp_device_supply_get_online:
  **/
 static gboolean
-dkp_supply_get_online (DkpDevice *device, gboolean *online)
+dkp_device_supply_get_online (DkpDevice *device, gboolean *online)
 {
-	DkpSupply *supply = DKP_SUPPLY (device);
+	DkpDeviceSupply *supply = DKP_DEVICE_SUPPLY (device);
 	DkpDeviceType type;
 	gboolean online_tmp;
 
@@ -209,10 +209,10 @@ dkp_supply_get_online (DkpDevice *device, gboolean *online)
 }
 
 /**
- * dkp_supply_calculate_rate:
+ * dkp_device_supply_calculate_rate:
  **/
 static void
-dkp_supply_calculate_rate (DkpSupply *supply)
+dkp_device_supply_calculate_rate (DkpDeviceSupply *supply)
 {
 	guint time;
 	gdouble energy;
@@ -249,10 +249,10 @@ dkp_supply_calculate_rate (DkpSupply *supply)
 }
 
 /**
- * dkp_supply_convert_device_technology:
+ * dkp_device_supply_convert_device_technology:
  **/
 static DkpDeviceTechnology
-dkp_supply_convert_device_technology (const gchar *type)
+dkp_device_supply_convert_device_technology (const gchar *type)
 {
 	if (type == NULL)
 		return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
@@ -274,12 +274,12 @@ dkp_supply_convert_device_technology (const gchar *type)
 }
 
 /**
- * dkp_supply_refresh_battery:
+ * dkp_device_supply_refresh_battery:
  *
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
-dkp_supply_refresh_battery (DkpSupply *supply)
+dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 {
 	gchar *status = NULL;
 	gchar *technology_native;
@@ -314,7 +314,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 	is_present = sysfs_get_bool (native_path, "present");
 	g_object_set (device, "is-present", is_present, NULL);
 	if (!is_present) {
-		dkp_supply_reset_values (supply);
+		dkp_device_supply_reset_values (supply);
 		goto out;
 	}
 
@@ -341,7 +341,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 
 		/* the ACPI spec is bad at defining battery type constants */
 		technology_native = g_strstrip (sysfs_get_string (native_path, "technology"));
-		g_object_set (device, "technology", dkp_supply_convert_device_technology (technology_native), NULL);
+		g_object_set (device, "technology", dkp_device_supply_convert_device_technology (technology_native), NULL);
 		g_free (technology_native);
 
 		g_object_set (device,
@@ -460,7 +460,7 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 
 	/* the hardware reporting failed -- try to calculate this */
 	if (energy_rate < 0)
-		dkp_supply_calculate_rate (supply);
+		dkp_device_supply_calculate_rate (supply);
 
 	/* get a precise percentage */
 	if (energy_full > 0.0f) {
@@ -516,36 +516,36 @@ out:
 }
 
 /**
- * dkp_supply_poll_battery:
+ * dkp_device_supply_poll_battery:
  **/
 static gboolean
-dkp_supply_poll_battery (DkpSupply *supply)
+dkp_device_supply_poll_battery (DkpDeviceSupply *supply)
 {
 	gboolean ret;
 	DkpDevice *device = DKP_DEVICE (supply);
 
-	egg_debug ("No updates on supply %s for %i seconds; forcing update", dkp_device_get_object_path (device), DKP_SUPPLY_REFRESH_TIMEOUT);
+	egg_debug ("No updates on supply %s for %i seconds; forcing update", dkp_device_get_object_path (device), DKP_DEVICE_SUPPLY_REFRESH_TIMEOUT);
 	supply->priv->poll_timer_id = 0;
-	ret = dkp_supply_refresh (device);
+	ret = dkp_device_supply_refresh (device);
 	if (ret)
 		dkp_device_emit_changed (device);
 	return FALSE;
 }
 
 /**
- * dkp_supply_coldplug:
+ * dkp_device_supply_coldplug:
  *
  * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 static gboolean
-dkp_supply_coldplug (DkpDevice *device)
+dkp_device_supply_coldplug (DkpDevice *device)
 {
-	DkpSupply *supply = DKP_SUPPLY (device);
+	DkpDeviceSupply *supply = DKP_DEVICE_SUPPLY (device);
 	gboolean ret;
 	DevkitDevice *d;
 	const gchar *native_path;
 
-	dkp_supply_reset_values (supply);
+	dkp_device_supply_reset_values (supply);
 
 	/* detect what kind of device we are */
 	d = dkp_device_get_d (device);
@@ -564,19 +564,19 @@ dkp_supply_coldplug (DkpDevice *device)
 	}
 
 	/* coldplug values */
-	ret = dkp_supply_refresh (device);
+	ret = dkp_device_supply_refresh (device);
 
 	return ret;
 }
 
 /**
- * dkp_supply_setup_poll:
+ * dkp_device_supply_setup_poll:
  **/
 static gboolean
-dkp_supply_setup_poll (DkpDevice *device)
+dkp_device_supply_setup_poll (DkpDevice *device)
 {
 	DkpDeviceState state;
-	DkpSupply *supply = DKP_SUPPLY (device);
+	DkpDeviceSupply *supply = DKP_DEVICE_SUPPLY (device);
 
 	g_object_get (device, "state", &state, NULL);
 
@@ -586,10 +586,10 @@ dkp_supply_setup_poll (DkpDevice *device)
 
 	/* if it's unknown, poll faster than we would normally */
 	if (state == DKP_DEVICE_STATE_UNKNOWN &&
-	    supply->priv->unknown_retries < DKP_SUPPLY_UNKNOWN_RETRIES) {
+	    supply->priv->unknown_retries < DKP_DEVICE_SUPPLY_UNKNOWN_RETRIES) {
 		supply->priv->poll_timer_id =
-			g_timeout_add_seconds (DKP_SUPPLY_UNKNOWN_TIMEOUT,
-					       (GSourceFunc) dkp_supply_poll_battery, supply);
+			g_timeout_add_seconds (DKP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT,
+					       (GSourceFunc) dkp_device_supply_poll_battery, supply);
 		/* increase count, we don't want to poll at 0.5Hz forever */
 		supply->priv->unknown_retries++;
 		goto out;
@@ -597,23 +597,23 @@ dkp_supply_setup_poll (DkpDevice *device)
 
 	/* any other state just fall back */
 	supply->priv->poll_timer_id =
-		g_timeout_add_seconds (DKP_SUPPLY_REFRESH_TIMEOUT,
-				       (GSourceFunc) dkp_supply_poll_battery, supply);
+		g_timeout_add_seconds (DKP_DEVICE_SUPPLY_REFRESH_TIMEOUT,
+				       (GSourceFunc) dkp_device_supply_poll_battery, supply);
 out:
 	return (supply->priv->poll_timer_id != 0);
 }
 
 /**
- * dkp_supply_refresh:
+ * dkp_device_supply_refresh:
  *
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
-dkp_supply_refresh (DkpDevice *device)
+dkp_device_supply_refresh (DkpDevice *device)
 {
 	gboolean ret;
 	GTimeVal time;
-	DkpSupply *supply = DKP_SUPPLY (device);
+	DkpDeviceSupply *supply = DKP_DEVICE_SUPPLY (device);
 	DkpDeviceType type;
 
 	if (supply->priv->poll_timer_id > 0) {
@@ -626,14 +626,14 @@ dkp_supply_refresh (DkpDevice *device)
 	g_object_get (device, "type", &type, NULL);
 	switch (type) {
 	case DKP_DEVICE_TYPE_LINE_POWER:
-		ret = dkp_supply_refresh_line_power (supply);
+		ret = dkp_device_supply_refresh_line_power (supply);
 		break;
 	case DKP_DEVICE_TYPE_BATTERY:
-		ret = dkp_supply_refresh_battery (supply);
+		ret = dkp_device_supply_refresh_battery (supply);
 
 		/* Seems that we don't get change uevents from the
 		 * kernel on some BIOS types */
-		dkp_supply_setup_poll (device);
+		dkp_device_supply_setup_poll (device);
 		break;
 	default:
 		g_assert_not_reached ();
@@ -643,60 +643,60 @@ dkp_supply_refresh (DkpDevice *device)
 }
 
 /**
- * dkp_supply_init:
+ * dkp_device_supply_init:
  **/
 static void
-dkp_supply_init (DkpSupply *supply)
+dkp_device_supply_init (DkpDeviceSupply *supply)
 {
-	supply->priv = DKP_SUPPLY_GET_PRIVATE (supply);
+	supply->priv = DKP_DEVICE_SUPPLY_GET_PRIVATE (supply);
 	supply->priv->unknown_retries = 0;
 	supply->priv->poll_timer_id = 0;
 }
 
 /**
- * dkp_supply_finalize:
+ * dkp_device_supply_finalize:
  **/
 static void
-dkp_supply_finalize (GObject *object)
+dkp_device_supply_finalize (GObject *object)
 {
-	DkpSupply *supply;
+	DkpDeviceSupply *supply;
 
 	g_return_if_fail (object != NULL);
 	g_return_if_fail (DKP_IS_SUPPLY (object));
 
-	supply = DKP_SUPPLY (object);
+	supply = DKP_DEVICE_SUPPLY (object);
 	g_return_if_fail (supply->priv != NULL);
 
 	if (supply->priv->poll_timer_id > 0)
 		g_source_remove (supply->priv->poll_timer_id);
 
-	G_OBJECT_CLASS (dkp_supply_parent_class)->finalize (object);
+	G_OBJECT_CLASS (dkp_device_supply_parent_class)->finalize (object);
 }
 
 /**
- * dkp_supply_class_init:
+ * dkp_device_supply_class_init:
  **/
 static void
-dkp_supply_class_init (DkpSupplyClass *klass)
+dkp_device_supply_class_init (DkpDeviceSupplyClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	DkpDeviceClass *device_class = DKP_DEVICE_CLASS (klass);
 
-	object_class->finalize = dkp_supply_finalize;
-	device_class->get_on_battery = dkp_supply_get_on_battery;
-	device_class->get_low_battery = dkp_supply_get_low_battery;
-	device_class->get_online = dkp_supply_get_online;
-	device_class->coldplug = dkp_supply_coldplug;
-	device_class->refresh = dkp_supply_refresh;
+	object_class->finalize = dkp_device_supply_finalize;
+	device_class->get_on_battery = dkp_device_supply_get_on_battery;
+	device_class->get_low_battery = dkp_device_supply_get_low_battery;
+	device_class->get_online = dkp_device_supply_get_online;
+	device_class->coldplug = dkp_device_supply_coldplug;
+	device_class->refresh = dkp_device_supply_refresh;
 
-	g_type_class_add_private (klass, sizeof (DkpSupplyPrivate));
+	g_type_class_add_private (klass, sizeof (DkpDeviceSupplyPrivate));
 }
 
 /**
- * dkp_supply_new:
+ * dkp_device_supply_new:
  **/
-DkpSupply *
-dkp_supply_new (void)
+DkpDeviceSupply *
+dkp_device_supply_new (void)
 {
 	return g_object_new (DKP_TYPE_SUPPLY, NULL);
 }

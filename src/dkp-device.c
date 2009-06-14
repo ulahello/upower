@@ -37,7 +37,7 @@
 #include "sysfs-utils.h"
 #include "egg-debug.h"
 
-#include "dkp-supply.h"
+#include "dkp-device-supply.h"
 #include "dkp-device.h"
 #include "dkp-history.h"
 #include "dkp-history-obj.h"

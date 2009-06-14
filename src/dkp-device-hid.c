@@ -50,58 +50,58 @@
 #include "egg-debug.h"
 
 #include "dkp-enum.h"
-#include "dkp-hid.h"
+#include "dkp-device-hid.h"
 
-#define DKP_HID_REFRESH_TIMEOUT			30l
+#define DKP_DEVICE_HID_REFRESH_TIMEOUT			30l
 
-#define DKP_HID_USAGE				0x840000
-#define DKP_HID_SERIAL				0x8400fe
-#define DKP_HID_CHEMISTRY			0x850089
-#define DKP_HID_CAPACITY_MODE			0x85002c
-#define DKP_HID_BATTERY_VOLTAGE			0x840030
-#define DKP_HID_BELOW_RCL			0x840042
-#define DKP_HID_SHUTDOWN_IMMINENT		0x840069
-#define DKP_HID_PRODUCT				0x8400fe
-#define DKP_HID_SERIAL_NUMBER			0x8400ff
-#define DKP_HID_CHARGING			0x850044
-#define DKP_HID_DISCHARGING 			0x850045
-#define DKP_HID_REMAINING_CAPACITY		0x850066
-#define DKP_HID_RUNTIME_TO_EMPTY		0x850068
-#define DKP_HID_AC_PRESENT			0x8500d0
-#define DKP_HID_BATTERY_PRESENT			0x8500d1
-#define DKP_HID_DESIGN_CAPACITY			0x850083
-#define DKP_HID_DEVICE_NAME			0x850088
-#define DKP_HID_DEVICE_CHEMISTRY		0x850089
-#define DKP_HID_RECHARGEABLE			0x85008b
-#define DKP_HID_OEM_INFORMATION			0x85008f
+#define DKP_DEVICE_HID_USAGE				0x840000
+#define DKP_DEVICE_HID_SERIAL				0x8400fe
+#define DKP_DEVICE_HID_CHEMISTRY			0x850089
+#define DKP_DEVICE_HID_CAPACITY_MODE			0x85002c
+#define DKP_DEVICE_HID_BATTERY_VOLTAGE			0x840030
+#define DKP_DEVICE_HID_BELOW_RCL			0x840042
+#define DKP_DEVICE_HID_SHUTDOWN_IMMINENT		0x840069
+#define DKP_DEVICE_HID_PRODUCT				0x8400fe
+#define DKP_DEVICE_HID_SERIAL_NUMBER			0x8400ff
+#define DKP_DEVICE_HID_CHARGING			0x850044
+#define DKP_DEVICE_HID_DISCHARGING 			0x850045
+#define DKP_DEVICE_HID_REMAINING_CAPACITY		0x850066
+#define DKP_DEVICE_HID_RUNTIME_TO_EMPTY		0x850068
+#define DKP_DEVICE_HID_AC_PRESENT			0x8500d0
+#define DKP_DEVICE_HID_BATTERY_PRESENT			0x8500d1
+#define DKP_DEVICE_HID_DESIGN_CAPACITY			0x850083
+#define DKP_DEVICE_HID_DEVICE_NAME			0x850088
+#define DKP_DEVICE_HID_DEVICE_CHEMISTRY		0x850089
+#define DKP_DEVICE_HID_RECHARGEABLE			0x85008b
+#define DKP_DEVICE_HID_OEM_INFORMATION			0x85008f
 
-#define DKP_HID_PAGE_GENERIC_DESKTOP		0x01
-#define DKP_HID_PAGE_CONSUMER_PRODUCT		0x0c
-#define DKP_HID_PAGE_USB_MONITOR		0x80
-#define DKP_HID_PAGE_USB_ENUMERATED_VALUES	0x81
-#define DKP_HID_PAGE_VESA_VIRTUAL_CONTROLS	0x82
-#define DKP_HID_PAGE_RESERVED_MONITOR		0x83
-#define DKP_HID_PAGE_POWER_DEVICE		0x84
-#define DKP_HID_PAGE_BATTERY_SYSTEM		0x85
+#define DKP_DEVICE_HID_PAGE_GENERIC_DESKTOP		0x01
+#define DKP_DEVICE_HID_PAGE_CONSUMER_PRODUCT		0x0c
+#define DKP_DEVICE_HID_PAGE_USB_MONITOR		0x80
+#define DKP_DEVICE_HID_PAGE_USB_ENUMERATED_VALUES	0x81
+#define DKP_DEVICE_HID_PAGE_VESA_VIRTUAL_CONTROLS	0x82
+#define DKP_DEVICE_HID_PAGE_RESERVED_MONITOR		0x83
+#define DKP_DEVICE_HID_PAGE_POWER_DEVICE		0x84
+#define DKP_DEVICE_HID_PAGE_BATTERY_SYSTEM		0x85
 
-struct DkpHidPrivate
+struct DkpDeviceHidPrivate
 {
 	guint			 poll_timer_id;
 	int			 fd;
 };
 
-static void	dkp_hid_class_init	(DkpHidClass	*klass);
+static void	dkp_device_hid_class_init	(DkpDeviceHidClass	*klass);
 
-G_DEFINE_TYPE (DkpHid, dkp_hid, DKP_TYPE_DEVICE)
-#define DKP_HID_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_HID, DkpHidPrivate))
+G_DEFINE_TYPE (DkpDeviceHid, dkp_device_hid, DKP_TYPE_DEVICE)
+#define DKP_DEVICE_HID_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_HID, DkpDeviceHidPrivate))
 
-static gboolean		 dkp_hid_refresh	 	(DkpDevice *device);
+static gboolean		 dkp_device_hid_refresh	 	(DkpDevice *device);
 
 /**
- * dkp_hid_is_ups:
+ * dkp_device_hid_is_ups:
  **/
 static gboolean
-dkp_hid_is_ups (DkpHid *hid)
+dkp_device_hid_is_ups (DkpDeviceHid *hid)
 {
 	guint i;
 	int retval;
@@ -118,7 +118,7 @@ dkp_hid_is_ups (DkpHid *hid)
 	/* can we use the hid device as a UPS? */
 	for (i = 0; i < device_info.num_applications; i++) {
 		retval = ioctl (hid->priv->fd, HIDIOCAPPLICATION, i);
-		if (retval >> 16 == DKP_HID_PAGE_POWER_DEVICE) {
+		if (retval >> 16 == DKP_DEVICE_HID_PAGE_POWER_DEVICE) {
 			ret = TRUE;
 			goto out;
 		}
@@ -128,26 +128,26 @@ out:
 }
 
 /**
- * dkp_hid_poll:
+ * dkp_device_hid_poll:
  **/
 static gboolean
-dkp_hid_poll (DkpHid *hid)
+dkp_device_hid_poll (DkpDeviceHid *hid)
 {
 	gboolean ret;
 	DkpDevice *device = DKP_DEVICE (hid);
 
 	egg_debug ("Polling: %s", dkp_device_get_object_path (device));
-	ret = dkp_hid_refresh (device);
+	ret = dkp_device_hid_refresh (device);
 	if (ret)
 		dkp_device_emit_changed (device);
 	return TRUE;
 }
 
 /**
- * dkp_hid_get_string:
+ * dkp_device_hid_get_string:
  **/
 static const gchar *
-dkp_hid_get_string (DkpHid *hid, int sindex)
+dkp_device_hid_get_string (DkpDeviceHid *hid, int sindex)
 {
 	static struct hiddev_string_descriptor sdesc;
 
@@ -166,10 +166,10 @@ dkp_hid_get_string (DkpHid *hid, int sindex)
 }
 
 /**
- * dkp_hid_convert_device_technology:
+ * dkp_device_hid_convert_device_technology:
  **/
 static DkpDeviceTechnology
-dkp_hid_convert_device_technology (const gchar *type)
+dkp_device_hid_convert_device_technology (const gchar *type)
 {
 	if (type == NULL)
 		return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
@@ -180,53 +180,53 @@ dkp_hid_convert_device_technology (const gchar *type)
 }
 
 /**
- * dkp_hid_set_obj:
+ * dkp_device_hid_set_obj:
  **/
 static gboolean
-dkp_hid_set_obj (DkpHid *hid, int code, int value)
+dkp_device_hid_set_obj (DkpDeviceHid *hid, int code, int value)
 {
 	const gchar *type;
 	gboolean ret = TRUE;
 	DkpDevice *device = DKP_DEVICE (hid);
 
 	switch (code) {
-	case DKP_HID_REMAINING_CAPACITY:
+	case DKP_DEVICE_HID_REMAINING_CAPACITY:
 		g_object_set (device, "percentage", value, NULL);
 		break;
-	case DKP_HID_RUNTIME_TO_EMPTY:
+	case DKP_DEVICE_HID_RUNTIME_TO_EMPTY:
 		g_object_set (device, "time-to-empty", value, NULL);
 		break;
-	case DKP_HID_CHARGING:
+	case DKP_DEVICE_HID_CHARGING:
 		if (value != 0)
 			g_object_set (device, "state", DKP_DEVICE_STATE_CHARGING, NULL);
 		break;
-	case DKP_HID_DISCHARGING:
+	case DKP_DEVICE_HID_DISCHARGING:
 		if (value != 0)
 			g_object_set (device, "state", DKP_DEVICE_STATE_DISCHARGING, NULL);
 		break;
-	case DKP_HID_BATTERY_PRESENT:
+	case DKP_DEVICE_HID_BATTERY_PRESENT:
 		g_object_set (device, "is-present", (value != 0), NULL);
 		break;
-	case DKP_HID_DEVICE_NAME:
-		g_object_set (device, "device-name", dkp_hid_get_string (hid, value), NULL);
+	case DKP_DEVICE_HID_DEVICE_NAME:
+		g_object_set (device, "device-name", dkp_device_hid_get_string (hid, value), NULL);
 		break;
-	case DKP_HID_CHEMISTRY:
-		type = dkp_hid_get_string (hid, value);
-		g_object_set (device, "technology", dkp_hid_convert_device_technology (type), NULL);
+	case DKP_DEVICE_HID_CHEMISTRY:
+		type = dkp_device_hid_get_string (hid, value);
+		g_object_set (device, "technology", dkp_device_hid_convert_device_technology (type), NULL);
 		break;
-	case DKP_HID_RECHARGEABLE:
+	case DKP_DEVICE_HID_RECHARGEABLE:
 		g_object_set (device, "is-rechargeable", (value != 0), NULL);
 		break;
-	case DKP_HID_OEM_INFORMATION:
-		g_object_set (device, "vendor", dkp_hid_get_string (hid, value), NULL);
+	case DKP_DEVICE_HID_OEM_INFORMATION:
+		g_object_set (device, "vendor", dkp_device_hid_get_string (hid, value), NULL);
 		break;
-	case DKP_HID_PRODUCT:
-		g_object_set (device, "model", dkp_hid_get_string (hid, value), NULL);
+	case DKP_DEVICE_HID_PRODUCT:
+		g_object_set (device, "model", dkp_device_hid_get_string (hid, value), NULL);
 		break;
-	case DKP_HID_SERIAL_NUMBER:
-		g_object_set (device, "serial", dkp_hid_get_string (hid, value), NULL);
+	case DKP_DEVICE_HID_SERIAL_NUMBER:
+		g_object_set (device, "serial", dkp_device_hid_get_string (hid, value), NULL);
 		break;
-	case DKP_HID_DESIGN_CAPACITY:
+	case DKP_DEVICE_HID_DESIGN_CAPACITY:
 		g_object_set (device, "energy-full-design", value, NULL);
 		break;
 	default:
@@ -237,10 +237,10 @@ dkp_hid_set_obj (DkpHid *hid, int code, int value)
 }
 
 /**
- * dkp_hid_get_all_data:
+ * dkp_device_hid_get_all_data:
  **/
 static gboolean
-dkp_hid_get_all_data (DkpHid *hid)
+dkp_device_hid_get_all_data (DkpDeviceHid *hid)
 {
 	struct hiddev_report_info rinfo;
 	struct hiddev_field_info finfo;
@@ -270,7 +270,7 @@ dkp_hid_get_all_data (DkpHid *hid)
 					ioctl (hid->priv->fd, HIDIOCGUSAGE, &uref);
 
 					/* process each */
-					dkp_hid_set_obj (hid, uref.usage_code, uref.value);
+					dkp_device_hid_set_obj (hid, uref.usage_code, uref.value);
 				}
 			}
 			rinfo.report_id |= HID_REPORT_ID_NEXT;
@@ -280,14 +280,14 @@ dkp_hid_get_all_data (DkpHid *hid)
 }
 
 /**
- * dkp_hid_coldplug:
+ * dkp_device_hid_coldplug:
  *
  * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 static gboolean
-dkp_hid_coldplug (DkpDevice *device)
+dkp_device_hid_coldplug (DkpDevice *device)
 {
-	DkpHid *hid = DKP_HID (device);
+	DkpDeviceHid *hid = DKP_DEVICE_HID (device);
 	DevkitDevice *d;
 	gboolean ret = FALSE;
 	const gchar *device_file;
@@ -319,7 +319,7 @@ dkp_hid_coldplug (DkpDevice *device)
 	}
 
 	/* first check that we are an UPS */
-	ret = dkp_hid_is_ups (hid);
+	ret = dkp_device_hid_is_ups (hid);
 	if (!ret) {
 		egg_debug ("not a HID device: %s", device_file);
 		goto out;
@@ -342,22 +342,22 @@ dkp_hid_coldplug (DkpDevice *device)
 		      NULL);
 
 	/* coldplug everything */
-	dkp_hid_get_all_data (hid);
+	dkp_device_hid_get_all_data (hid);
 
 	/* coldplug */
-	ret = dkp_hid_refresh (device);
+	ret = dkp_device_hid_refresh (device);
 
 out:
 	return ret;
 }
 
 /**
- * dkp_hid_refresh:
+ * dkp_device_hid_refresh:
  *
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
-dkp_hid_refresh (DkpDevice *device)
+dkp_device_hid_refresh (DkpDevice *device)
 {
 	gboolean set = FALSE;
 	gboolean ret = FALSE;
@@ -365,7 +365,7 @@ dkp_hid_refresh (DkpDevice *device)
 	guint i;
 	struct hiddev_event ev[64];
 	int rd;
-	DkpHid *hid = DKP_HID (device);
+	DkpDeviceHid *hid = DKP_DEVICE_HID (device);
 
 	/* reset time */
 	g_get_current_time (&time);
@@ -380,7 +380,7 @@ dkp_hid_refresh (DkpDevice *device)
 
 	/* process each event */
 	for (i=0; i < rd / sizeof (ev[0]); i++) {
-		set = dkp_hid_set_obj (hid, ev[i].hid, ev[i].value);
+		set = dkp_device_hid_set_obj (hid, ev[i].hid, ev[i].value);
 
 		/* if only takes one match to make refresh a success */
 		if (set)
@@ -391,29 +391,29 @@ out:
 }
 
 /**
- * dkp_hid_init:
+ * dkp_device_hid_init:
  **/
 static void
-dkp_hid_init (DkpHid *hid)
+dkp_device_hid_init (DkpDeviceHid *hid)
 {
-	hid->priv = DKP_HID_GET_PRIVATE (hid);
+	hid->priv = DKP_DEVICE_HID_GET_PRIVATE (hid);
 	hid->priv->fd = -1;
-	hid->priv->poll_timer_id = g_timeout_add_seconds (DKP_HID_REFRESH_TIMEOUT,
-							  (GSourceFunc) dkp_hid_poll, hid);
+	hid->priv->poll_timer_id = g_timeout_add_seconds (DKP_DEVICE_HID_REFRESH_TIMEOUT,
+							  (GSourceFunc) dkp_device_hid_poll, hid);
 }
 
 /**
- * dkp_hid_finalize:
+ * dkp_device_hid_finalize:
  **/
 static void
-dkp_hid_finalize (GObject *object)
+dkp_device_hid_finalize (GObject *object)
 {
-	DkpHid *hid;
+	DkpDeviceHid *hid;
 
 	g_return_if_fail (object != NULL);
 	g_return_if_fail (DKP_IS_HID (object));
 
-	hid = DKP_HID (object);
+	hid = DKP_DEVICE_HID (object);
 	g_return_if_fail (hid->priv != NULL);
 
 	if (hid->priv->fd > 0)
@@ -421,30 +421,30 @@ dkp_hid_finalize (GObject *object)
 	if (hid->priv->poll_timer_id > 0)
 		g_source_remove (hid->priv->poll_timer_id);
 
-	G_OBJECT_CLASS (dkp_hid_parent_class)->finalize (object);
+	G_OBJECT_CLASS (dkp_device_hid_parent_class)->finalize (object);
 }
 
 /**
- * dkp_hid_class_init:
+ * dkp_device_hid_class_init:
  **/
 static void
-dkp_hid_class_init (DkpHidClass *klass)
+dkp_device_hid_class_init (DkpDeviceHidClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	DkpDeviceClass *device_class = DKP_DEVICE_CLASS (klass);
 
-	object_class->finalize = dkp_hid_finalize;
-	device_class->coldplug = dkp_hid_coldplug;
-	device_class->refresh = dkp_hid_refresh;
+	object_class->finalize = dkp_device_hid_finalize;
+	device_class->coldplug = dkp_device_hid_coldplug;
+	device_class->refresh = dkp_device_hid_refresh;
 
-	g_type_class_add_private (klass, sizeof (DkpHidPrivate));
+	g_type_class_add_private (klass, sizeof (DkpDeviceHidPrivate));
 }
 
 /**
- * dkp_hid_new:
+ * dkp_device_hid_new:
  **/
-DkpHid *
-dkp_hid_new (void)
+DkpDeviceHid *
+dkp_device_hid_new (void)
 {
 	return g_object_new (DKP_TYPE_HID, NULL);
 }

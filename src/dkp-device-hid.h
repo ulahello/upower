@@ -1,6 +1,5 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 David Zeuthen <davidz@redhat.com>
  * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,38 +18,38 @@
  *
  */
 
-#ifndef __DKP_SUPPLY_H__
-#define __DKP_SUPPLY_H__
+#ifndef __DKP_DEVICE_HID_H__
+#define __DKP_DEVICE_HID_H__
 
 #include <glib-object.h>
 #include "dkp-device.h"
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_SUPPLY  	(dkp_supply_get_type ())
-#define DKP_SUPPLY(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_SUPPLY, DkpSupply))
-#define DKP_SUPPLY_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_SUPPLY, DkpSupplyClass))
-#define DKP_IS_SUPPLY(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_SUPPLY))
-#define DKP_IS_SUPPLY_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_SUPPLY))
-#define DKP_SUPPLY_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_SUPPLY, DkpSupplyClass))
+#define DKP_TYPE_HID  			(dkp_device_hid_get_type ())
+#define DKP_DEVICE_HID(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_HID, DkpDeviceHid))
+#define DKP_DEVICE_HID_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_HID, DkpDeviceHidClass))
+#define DKP_IS_HID(o)			(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_HID))
+#define DKP_IS_HID_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_HID))
+#define DKP_DEVICE_HID_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_HID, DkpDeviceHidClass))
 
-typedef struct DkpSupplyPrivate DkpSupplyPrivate;
+typedef struct DkpDeviceHidPrivate DkpDeviceHidPrivate;
 
 typedef struct
 {
 	DkpDevice		 parent;
-	DkpSupplyPrivate	*priv;
-} DkpSupply;
+	DkpDeviceHidPrivate	*priv;
+} DkpDeviceHid;
 
 typedef struct
 {
 	DkpDeviceClass		 parent_class;
-} DkpSupplyClass;
+} DkpDeviceHidClass;
 
-GType		 dkp_supply_get_type		(void);
-DkpSupply	*dkp_supply_new			(void);
+GType		 dkp_device_hid_get_type		(void);
+DkpDeviceHid	*dkp_device_hid_new			(void);
 
 G_END_DECLS
 
-#endif /* __DKP_SUPPLY_H__ */
+#endif /* __DKP_DEVICE_HID_H__ */
 
