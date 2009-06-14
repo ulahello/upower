@@ -406,6 +406,8 @@ dkp_supply_refresh_battery (DkpSupply *supply)
 		state = DKP_DEVICE_STATE_FULLY_CHARGED;
 	else if (strcasecmp (status, "empty") == 0)
 		state = DKP_DEVICE_STATE_EMPTY;
+	else if (strcasecmp (status, "unknown") == 0)
+		state = DKP_DEVICE_STATE_UNKNOWN;
 	else {
 		egg_warning ("unknown status string: %s", status);
 		state = DKP_DEVICE_STATE_UNKNOWN;
