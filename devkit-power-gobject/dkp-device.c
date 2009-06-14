@@ -418,16 +418,18 @@ dkp_device_print (const DkpDevice *device)
 		g_print ("    energy-rate:         %g W\n", device->priv->energy_rate);
 	if (device->priv->type == DKP_DEVICE_TYPE_UPS ||
 	    device->priv->type == DKP_DEVICE_TYPE_BATTERY ||
-	    device->priv->type == DKP_DEVICE_TYPE_MONITOR)
-		g_print ("    voltage:             %g V\n", device->priv->voltage);
+	    device->priv->type == DKP_DEVICE_TYPE_MONITOR) {
+		if (device->priv->voltage > 0)
+			g_print ("    voltage:             %g V\n", device->priv->voltage);
+	}
 	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY ||
 	    device->priv->type == DKP_DEVICE_TYPE_UPS) {
-		if (device->priv->time_to_full >= 0) {
+		if (device->priv->time_to_full > 0) {
 			time_str = dkp_device_print_time_to_text (device->priv->time_to_full);
 			g_print ("    time to full:        %s\n", time_str);
 			g_free (time_str);
 		}
-		if (device->priv->time_to_empty >= 0) {
+		if (device->priv->time_to_empty > 0) {
 			time_str = dkp_device_print_time_to_text (device->priv->time_to_empty);
 			g_print ("    time to empty:       %s\n", time_str);
 			g_free (time_str);
@@ -438,10 +440,14 @@ dkp_device_print (const DkpDevice *device)
 	    device->priv->type == DKP_DEVICE_TYPE_KEYBOARD ||
 	    device->priv->type == DKP_DEVICE_TYPE_UPS)
 		g_print ("    percentage:          %g%%\n", device->priv->percentage);
-	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY)
-		g_print ("    capacity:            %g%%\n", device->priv->capacity);
-	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY)
-		g_print ("    technology:          %s\n", dkp_device_technology_to_text (device->priv->technology));
+	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY) {
+		if (device->priv->capacity > 0)
+			g_print ("    capacity:            %g%%\n", device->priv->capacity);
+	}
+	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY) {
+		if (device->priv->technology != DKP_DEVICE_TECHNOLOGY_UNKNOWN)
+			g_print ("    technology:          %s\n", dkp_device_technology_to_text (device->priv->technology));
+	}
 	if (device->priv->type == DKP_DEVICE_TYPE_LINE_POWER)
 		g_print ("    online:             %s\n", dkp_device_print_bool_to_text (device->priv->online));
 
