@@ -39,7 +39,7 @@
 
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
-#include <devkit-gobject/devkit-gobject.h>
+#include <gudev/gudev.h>
 
 #include "egg-debug.h"
 

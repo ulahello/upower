@@ -37,7 +37,7 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n-lib.h>
 #include <glib-object.h>
-#include <devkit-gobject/devkit-gobject.h>
+#include <gudev/gudev.h>
 
 #include "sysfs-utils.h"
 #include "egg-debug.h"
@@ -164,7 +164,7 @@ out:
  * dkp_input_coldplug:
  **/
 gboolean
-dkp_input_coldplug (DkpInput *input, DkpDaemon *daemon, DevkitDevice *d)
+dkp_input_coldplug (DkpInput *input, DkpDaemon *daemon, GUdevDevice *d)
 {
 	gboolean ret = FALSE;
 	gchar *path;
@@ -177,7 +177,7 @@ dkp_input_coldplug (DkpInput *input, DkpDaemon *daemon, DevkitDevice *d)
 	GIOStatus status;
 
 	/* get sysfs path */
-	native_path = devkit_device_get_native_path (d);
+	native_path = g_udev_device_get_sysfs_path (d);
 
 	/* is a switch */
 	path = g_build_filename (native_path, "../capabilities/sw", NULL);
@@ -210,7 +210,7 @@ dkp_input_coldplug (DkpInput *input, DkpDaemon *daemon, DevkitDevice *d)
 	}
 
 	/* get device file */
-	device_file = devkit_device_get_device_file (d);
+	device_file = g_udev_device_get_device_file (d);
 	if (device_file == NULL || device_file[0] == '\0') {
 		egg_warning ("no device file");
 		ret = FALSE;

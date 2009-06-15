@@ -54,9 +54,9 @@ typedef struct
 GType		 dkp_device_list_get_type		(void);
 DkpDeviceList	*dkp_device_list_new			(void);
 DkpDevice	*dkp_device_list_lookup			(DkpDeviceList		*list,
-							 DevkitDevice		*d);
+							 GUdevDevice		*d);
 gboolean	 dkp_device_list_insert			(DkpDeviceList		*list,
-							 DevkitDevice		*d,
+							 GUdevDevice		*d,
 							 DkpDevice		*device);
 gboolean	 dkp_device_list_remove			(DkpDeviceList		*list,
 							 DkpDevice		*device);

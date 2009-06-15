@@ -29,7 +29,7 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <devkit-gobject/devkit-gobject.h>
+#include <gudev/gudev.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -298,7 +298,7 @@ static gboolean
 dkp_device_wup_coldplug (DkpDevice *device)
 {
 	DkpDeviceWup *wup = DKP_DEVICE_WUP (device);
-	DevkitDevice *d;
+	GUdevDevice *d;
 	gboolean ret = FALSE;
 	const gchar *device_file;
 	const gchar *type;
@@ -313,12 +313,12 @@ dkp_device_wup_coldplug (DkpDevice *device)
 		egg_error ("could not get device");
 
 	/* get the type */
-	type = devkit_device_get_property (d, "DKP_MONITOR_TYPE");
+	type = g_udev_device_get_property (d, "DKP_MONITOR_TYPE");
 	if (type == NULL || g_strcmp0 (type, "wup") != 0)
 		goto out;
 
 	/* get the device file */
-	device_file = devkit_device_get_device_file (d);
+	device_file = g_udev_device_get_device_file (d);
 	if (device_file == NULL) {
 		egg_debug ("could not get device file for WUP device");
 		goto out;
@@ -356,15 +356,15 @@ dkp_device_wup_coldplug (DkpDevice *device)
 	g_free (data);
 
 	/* prefer DKP names */
-	vendor = devkit_device_get_property (d, "DKP_VENDOR");
+	vendor = g_udev_device_get_property (d, "DKP_VENDOR");
 	if (vendor == NULL)
-		vendor = devkit_device_get_property (d, "ID_VENDOR");
-	product = devkit_device_get_property (d, "DKP_PRODUCT");
+		vendor = g_udev_device_get_property (d, "ID_VENDOR");
+	product = g_udev_device_get_property (d, "DKP_PRODUCT");
 	if (product == NULL)
-		product = devkit_device_get_property (d, "ID_PRODUCT");
+		product = g_udev_device_get_property (d, "ID_PRODUCT");
 
 	/* hardcode some values */
-	native_path = devkit_device_get_native_path (d);
+	native_path = g_udev_device_get_sysfs_path (d);
 	g_object_set (device,
 		      "type", DKP_DEVICE_TYPE_MONITOR,
 		      "is-rechargeable", FALSE,

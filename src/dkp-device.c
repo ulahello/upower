@@ -31,7 +31,7 @@
 #include <glib-object.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
-#include <devkit-gobject/devkit-gobject.h>
+#include <gudev/gudev.h>
 #include <polkit-dbus/polkit-dbus.h>
 
 #include "sysfs-utils.h"
@@ -52,7 +52,7 @@ struct DkpDevicePrivate
 	DBusGProxy		*system_bus_proxy;
 	DkpDaemon		*daemon;
 	DkpHistory		*history;
-	DevkitDevice		*d;
+	GUdevDevice		*d;
 	gboolean		 has_ever_refresh;
 
 	/* properties */
@@ -480,7 +480,7 @@ out:
  * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 gboolean
-dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, DevkitDevice *d)
+dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, GUdevDevice *d)
 {
 	gboolean ret;
 	const gchar *native_path;
@@ -493,7 +493,7 @@ dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, DevkitDevice *d)
 	device->priv->d = g_object_ref (d);
 	device->priv->daemon = g_object_ref (daemon);
 
-	native_path = devkit_device_get_native_path (d);
+	native_path = g_udev_device_get_sysfs_path (d);
 	device->priv->native_path = g_strdup (native_path);
 
 	/* coldplug source */
@@ -699,7 +699,7 @@ dkp_device_refresh (DkpDevice *device, DBusGMethodInvocation *context)
  * dkp_device_changed:
  **/
 gboolean
-dkp_device_changed (DkpDevice *device, DevkitDevice *d, gboolean synthesized)
+dkp_device_changed (DkpDevice *device, GUdevDevice *d, gboolean synthesized)
 {
 	gboolean ret;
 
@@ -730,7 +730,7 @@ dkp_device_get_object_path (DkpDevice *device)
 	return device->priv->object_path;
 }
 
-DevkitDevice *
+GUdevDevice *
 dkp_device_get_d (DkpDevice *device)
 {
 	g_return_val_if_fail (DKP_IS_DEVICE (device), NULL);

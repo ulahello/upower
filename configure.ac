@@ -127,7 +127,7 @@ if test "x$GCC" = "xyes"; then
   changequote([,])dnl
 fi
 
-PKG_CHECK_MODULES(DEVKIT, [devkit-gobject >= 002])
+PKG_CHECK_MODULES(DEVKIT, [gudev >= 001])
 AC_SUBST(DEVKIT_GOBJECT_CFLAGS)
 AC_SUBST(DEVKIT_GOBJECT_LIBS)
 

@@ -46,11 +46,11 @@ G_DEFINE_TYPE (DkpDeviceList, dkp_device_list, G_TYPE_OBJECT)
 /**
  * dkp_device_list_lookup:
  *
- * Convert a %DevkitDevice into a %DkpDevice -- we use the native path
+ * Convert a %GUdevDevice into a %DkpDevice -- we use the native path
  * to look these up as it's the only thing they share.
  **/
 DkpDevice *
-dkp_device_list_lookup (DkpDeviceList *list, DevkitDevice *d)
+dkp_device_list_lookup (DkpDeviceList *list, GUdevDevice *d)
 {
 	DkpDevice *device;
 	const gchar *native_path;
@@ -58,7 +58,7 @@ dkp_device_list_lookup (DkpDeviceList *list, DevkitDevice *d)
 	g_return_val_if_fail (DKP_IS_DEVICE_LIST (list), NULL);
 
 	/* does device exist in db? */
-	native_path = devkit_device_get_native_path (d);
+	native_path = g_udev_device_get_sysfs_path (d);
 	device = g_hash_table_lookup (list->priv->map_native_path_to_device, native_path);
 	return device;
 }
@@ -66,11 +66,11 @@ dkp_device_list_lookup (DkpDeviceList *list, DevkitDevice *d)
 /**
  * dkp_device_list_insert:
  *
- * Insert a %DevkitDevice device and it's mapping to a %DkpDevice device
+ * Insert a %GUdevDevice device and it's mapping to a %DkpDevice device
  * into a list of devices.
  **/
 gboolean
-dkp_device_list_insert (DkpDeviceList *list, DevkitDevice *d, DkpDevice *device)
+dkp_device_list_insert (DkpDeviceList *list, GUdevDevice *d, DkpDevice *device)
 {
 	const gchar *native_path;
 
@@ -78,7 +78,7 @@ dkp_device_list_insert (DkpDeviceList *list, DevkitDevice *d, DkpDevice *device)
 	g_return_val_if_fail (d != NULL, FALSE);
 	g_return_val_if_fail (device != NULL, FALSE);
 
-	native_path = devkit_device_get_native_path (d);
+	native_path = g_udev_device_get_sysfs_path (d);
 	g_hash_table_insert (list->priv->map_native_path_to_device,
 			     g_strdup (native_path), device);
 	g_ptr_array_add (list->priv->array, device);
@@ -118,7 +118,7 @@ dkp_device_list_remove (DkpDeviceList *list, DkpDevice *device)
 /**
  * dkp_device_list_get_array:
  *
- * This is quick to iterate when we don't have DevkitDevice's to resolve
+ * This is quick to iterate when we don't have GUdevDevice's to resolve
  **/
 const GPtrArray	*
 dkp_device_list_get_array (DkpDeviceList *list)

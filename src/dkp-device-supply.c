@@ -30,7 +30,7 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n-lib.h>
 #include <glib-object.h>
-#include <devkit-gobject/devkit-gobject.h>
+#include <gudev/gudev.h>
 
 #include "sysfs-utils.h"
 #include "egg-debug.h"
@@ -67,7 +67,7 @@ static gboolean
 dkp_device_supply_refresh_line_power (DkpDeviceSupply *supply)
 {
 	DkpDevice *device = DKP_DEVICE (supply);
-	DevkitDevice *d;
+	GUdevDevice *d;
 	const gchar *native_path;
 
 	d = dkp_device_get_d (device);
@@ -78,7 +78,7 @@ dkp_device_supply_refresh_line_power (DkpDeviceSupply *supply)
 	g_object_set (device, "power-supply", TRUE, NULL);
 
 	/* get new AC value */
-	native_path = devkit_device_get_native_path (d);
+	native_path = g_udev_device_get_sysfs_path (d);
 	g_object_set (device, "online", sysfs_get_int (native_path, "online"), NULL);
 
 	return TRUE;
@@ -290,7 +290,7 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	DkpDeviceState state;
 	DkpDevice *device = DKP_DEVICE (supply);
 	const gchar *native_path;
-	DevkitDevice *d;
+	GUdevDevice *d;
 	gboolean is_present;
 	gdouble energy;
 	gdouble energy_full;
@@ -309,7 +309,7 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		goto out;
 	}
 
-	native_path = devkit_device_get_native_path (d);
+	native_path = g_udev_device_get_sysfs_path (d);
 
 	/* have we just been removed? */
 	is_present = sysfs_get_bool (native_path, "present");
@@ -543,7 +543,7 @@ dkp_device_supply_coldplug (DkpDevice *device)
 {
 	DkpDeviceSupply *supply = DKP_DEVICE_SUPPLY (device);
 	gboolean ret;
-	DevkitDevice *d;
+	GUdevDevice *d;
 	const gchar *native_path;
 
 	dkp_device_supply_reset_values (supply);
@@ -553,7 +553,7 @@ dkp_device_supply_coldplug (DkpDevice *device)
 	if (d == NULL)
 		egg_error ("could not get device");
 
-	native_path = devkit_device_get_native_path (d);
+	native_path = g_udev_device_get_sysfs_path (d);
 	if (native_path == NULL)
 		egg_error ("could not get native path");
 

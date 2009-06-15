@@ -51,7 +51,7 @@ GType			 dkp_input_get_type		(void);
 DkpInput		*dkp_input_new			(void);
 gboolean		 dkp_input_coldplug		(DkpInput	*input,
 							 DkpDaemon	*daemon,
-							 DevkitDevice	*d);
+							 GUdevDevice	*d);
 
 G_END_DECLS
 
