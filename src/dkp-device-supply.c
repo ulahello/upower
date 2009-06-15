@@ -264,7 +264,8 @@ dkp_device_supply_convert_device_technology (const gchar *type)
 	    strcasecmp (type, "pbac") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LEAD_ACID;
 	if (strcasecmp (type, "lip") == 0 ||
-	    strcasecmp (type, "lipo") == 0)
+	    strcasecmp (type, "lipo") == 0 ||
+	    strcasecmp (type, "li-poly") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LITHIUM_POLYMER;
 	if (strcasecmp (type, "nimh") == 0)
 		return DKP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE;
