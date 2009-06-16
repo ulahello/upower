@@ -631,11 +631,11 @@ gpk_daemon_device_remove (DkpDaemon *daemon, GUdevDevice *d)
 }
 
 /**
- * gpk_daemon_device_event_signal_handler:
+ * gpk_daemon_uevent_signal_handler_cb:
  **/
 static void
-gpk_daemon_device_event_signal_handler (GUdevClient *client, const char *action,
-					GUdevDevice *device, gpointer user_data)
+gpk_daemon_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
+				     GUdevDevice *device, gpointer user_data)
 {
 	DkpDaemon *daemon = DKP_DAEMON (user_data);
 
@@ -823,14 +823,9 @@ gpk_daemon_register_power_daemon (DkpDaemon *daemon)
 	for (i=0; subsystems[i] != NULL; i++)
 		egg_debug ("registering subsystem : %s", subsystems[i]);
 
-	daemon->priv->gudev_client = gudev_client_new (subsystems);
-	if (!gudev_client_connect (daemon->priv->gudev_client, &error)) {
-		egg_warning ("Couldn't open connection to DeviceKit daemon: %s", error->message);
-		g_error_free (error);
-		goto error;
-	}
-	g_signal_connect (daemon->priv->gudev_client, "device-event",
-			  G_CALLBACK (gpk_daemon_device_event_signal_handler), daemon);
+	daemon->priv->gudev_client = g_udev_client_new (subsystems);
+	g_signal_connect (daemon->priv->gudev_client, "uevent",
+			  G_CALLBACK (gpk_daemon_uevent_signal_handler_cb), daemon);
 
 	return TRUE;
 error:
@@ -856,7 +851,8 @@ dkp_daemon_new (void)
 		return NULL;
 	}
 
-	devices = gudev_client_enumerate_by_subsystem (daemon->priv->gudev_client, subsystems, &error);
+	/* FIXME: only one subsystem? */
+	devices = g_udev_client_query_by_subsystem (daemon->priv->gudev_client, subsystems);
 	if (error != NULL) {
 		egg_warning ("Cannot enumerate devices: %s", error->message);
 		g_error_free (error);
