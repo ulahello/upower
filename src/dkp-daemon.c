@@ -839,9 +839,10 @@ DkpDaemon *
 dkp_daemon_new (void)
 {
 	DkpDaemon *daemon;
-	GError *error = NULL;
+	GUdevDevice *device;
 	GList *devices;
 	GList *l;
+	guint i;
 
 	daemon = DKP_DAEMON (g_object_new (DKP_TYPE_DAEMON, NULL));
 
@@ -851,21 +852,16 @@ dkp_daemon_new (void)
 		return NULL;
 	}
 
-	/* FIXME: only one subsystem? */
-	devices = g_udev_client_query_by_subsystem (daemon->priv->gudev_client, subsystems);
-	if (error != NULL) {
-		egg_warning ("Cannot enumerate devices: %s", error->message);
-		g_error_free (error);
-		g_object_unref (daemon);
-		return NULL;
+	/* add all subsystems */
+	for (i=0; subsystems[i] != NULL; i++) {
+		devices = g_udev_client_query_by_subsystem (daemon->priv->gudev_client, subsystems[i]);
+		for (l = devices; l != NULL; l = l->next) {
+			device = l->data;
+			gpk_daemon_device_add (daemon, device, FALSE);
+		}
+		g_list_foreach (devices, (GFunc) g_object_unref, NULL);
+		g_list_free (devices);
 	}
-
-	for (l = devices; l != NULL; l = l->next) {
-		GUdevDevice *device = l->data;
-		gpk_daemon_device_add (daemon, device, FALSE);
-	}
-	g_list_foreach (devices, (GFunc) g_object_unref, NULL);
-	g_list_free (devices);
 
 	daemon->priv->on_battery = (dkp_daemon_get_on_battery_local (daemon) &&
 				    !dkp_daemon_get_on_ac_local (daemon));
