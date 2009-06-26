@@ -275,6 +275,31 @@ dkp_device_supply_convert_device_technology (const gchar *type)
 }
 
 /**
+ * dkp_device_supply_get_string:
+ **/
+static gchar *
+dkp_device_supply_get_string (const gchar *native_path, const gchar *key)
+{
+	gchar *value;
+
+	/* get value, and strip to remove spaces */
+	value = g_strstrip (sysfs_get_string (native_path, key));
+
+	/* no value */
+	if (value == NULL)
+		goto out;
+
+	/* empty value */
+	if (value[0] == '\0') {
+		g_free (value);
+		value = NULL;
+		goto out;
+	}
+out:
+	return value;
+}
+
+/**
  * dkp_device_supply_refresh_battery:
  *
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
@@ -301,6 +326,9 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	gdouble voltage;
 	guint64 time_to_empty;
 	guint64 time_to_full;
+	gchar *manufacturer;
+	gchar *model_name;
+	gchar *serial_number;
 
 	d = dkp_device_get_d (device);
 	if (d == NULL) {
@@ -341,18 +369,27 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		g_object_set (device, "power-supply", TRUE, NULL);
 
 		/* the ACPI spec is bad at defining battery type constants */
-		technology_native = g_strstrip (sysfs_get_string (native_path, "technology"));
+		technology_native = dkp_device_supply_get_string (native_path, "technology");
 		g_object_set (device, "technology", dkp_device_supply_convert_device_technology (technology_native), NULL);
 		g_free (technology_native);
 
+		/* get values which may be blank */
+		manufacturer = dkp_device_supply_get_string (native_path, "manufacturer");
+		model_name = dkp_device_supply_get_string (native_path, "model_name");
+		serial_number = dkp_device_supply_get_string (native_path, "serial_number");
+
 		g_object_set (device,
-			      "vendor", g_strstrip (sysfs_get_string (native_path, "manufacturer")),
-			      "model", g_strstrip (sysfs_get_string (native_path, "model_name")),
-			      "serial", g_strstrip (sysfs_get_string (native_path, "serial_number")),
+			      "vendor", manufacturer,
+			      "model", model_name,
+			      "serial", serial_number,
 			      "is-rechargeable", TRUE, /* assume true for laptops */
 			      "has-history", TRUE,
 			      "has-statistics", TRUE,
 			      NULL);
+
+		g_free (manufacturer);
+		g_free (model_name);
+		g_free (serial_number);
 
 		/* these don't change at runtime */
 		energy_full = sysfs_get_double (native_path, "energy_full") / 1000000.0;
