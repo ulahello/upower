@@ -360,8 +360,8 @@ dkp_daemon_finalize (GObject *object)
 	G_OBJECT_CLASS (dkp_daemon_parent_class)->finalize (object);
 }
 
-static gboolean gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event);
-static void gpk_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d);
+static gboolean dkp_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event);
+static void dkp_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d);
 
 /**
  * dkp_daemon_get_on_battery_local:
@@ -472,10 +472,10 @@ dkp_daemon_set_pmutils_powersave (DkpDaemon *daemon, gboolean powersave)
 }
 
 /**
- * gpk_daemon_device_changed:
+ * dkp_daemon_device_changed:
  **/
 static void
-gpk_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesized)
+dkp_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesized)
 {
 	DkpDevice *device;
 	gboolean ret;
@@ -487,7 +487,7 @@ gpk_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesi
 		dkp_device_changed (device, d, synthesized);
 	} else {
 		egg_debug ("treating change event as add on %s", dkp_device_get_object_path (device));
-		gpk_daemon_device_add (daemon, d, TRUE);
+		dkp_daemon_device_add (daemon, d, TRUE);
 	}
 
 	/* second, check if the on_battery and low_battery state has changed */
@@ -509,10 +509,10 @@ gpk_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesi
 }
 
 /**
- * gpk_daemon_device_went_away:
+ * dkp_daemon_device_went_away:
  **/
 static void
-gpk_daemon_device_went_away (gpointer user_data, GObject *_device)
+dkp_daemon_device_went_away (gpointer user_data, GObject *_device)
 {
 	DkpDaemon *daemon = DKP_DAEMON (user_data);
 	DkpDevice *device = DKP_DEVICE (_device);
@@ -520,10 +520,10 @@ gpk_daemon_device_went_away (gpointer user_data, GObject *_device)
 }
 
 /**
- * gpk_daemon_device_get:
+ * dkp_daemon_device_get:
  **/
 static DkpDevice *
-gpk_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
+dkp_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 {
 	const gchar *subsys;
 	const gchar *native_path;
@@ -600,10 +600,10 @@ out:
 }
 
 /**
- * gpk_daemon_device_add:
+ * dkp_daemon_device_add:
  **/
 static gboolean
-gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
+dkp_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 {
 	DkpDevice *device;
 	gboolean ret = TRUE;
@@ -613,11 +613,11 @@ gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 	if (device != NULL) {
 		/* we already have the device; treat as change event */
 		egg_debug ("treating add event as change event on %s", dkp_device_get_object_path (device));
-		gpk_daemon_device_changed (daemon, d, FALSE);
+		dkp_daemon_device_changed (daemon, d, FALSE);
 	} else {
 
 		/* get the right sort of device */
-		device = gpk_daemon_device_get (daemon, d);
+		device = dkp_daemon_device_get (daemon, d);
 		if (device == NULL) {
 			egg_debug ("not adding device %s", devkit_device_get_native_path (d));
 			ret = FALSE;
@@ -626,7 +626,7 @@ gpk_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 		/* only take a weak ref; the device will stay on the bus until
 		 * it's unreffed. So if we ref it, it'll never go away.
 		 */
-		g_object_weak_ref (G_OBJECT (device), gpk_daemon_device_went_away, daemon);
+		g_object_weak_ref (G_OBJECT (device), dkp_daemon_device_went_away, daemon);
 		dkp_device_list_insert (daemon->priv->list, d, device);
 		if (emit_event) {
 			g_signal_emit (daemon, signals[DEVICE_ADDED_SIGNAL], 0,
@@ -638,10 +638,10 @@ out:
 }
 
 /**
- * gpk_daemon_device_remove:
+ * dkp_daemon_device_remove:
  **/
 static void
-gpk_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d)
+dkp_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d)
 {
 	DkpDevice *device;
 
@@ -658,23 +658,23 @@ gpk_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d)
 }
 
 /**
- * gpk_daemon_device_event_signal_handler:
+ * dkp_daemon_device_event_signal_handler:
  **/
 static void
-gpk_daemon_device_event_signal_handler (DevkitClient *client, const char *action,
+dkp_daemon_device_event_signal_handler (DevkitClient *client, const char *action,
 					DevkitDevice *device, gpointer user_data)
 {
 	DkpDaemon *daemon = DKP_DAEMON (user_data);
 
 	if (g_strcmp0 (action, "add") == 0) {
 		egg_debug ("add %s", devkit_device_get_native_path (device));
-		gpk_daemon_device_add (daemon, device, TRUE);
+		dkp_daemon_device_add (daemon, device, TRUE);
 	} else if (g_strcmp0 (action, "remove") == 0) {
 		egg_debug ("remove %s", devkit_device_get_native_path (device));
-		gpk_daemon_device_remove (daemon, device);
+		dkp_daemon_device_remove (daemon, device);
 	} else if (g_strcmp0 (action, "change") == 0) {
 		egg_debug ("change %s", devkit_device_get_native_path (device));
-		gpk_daemon_device_changed (daemon, device, FALSE);
+		dkp_daemon_device_changed (daemon, device, FALSE);
 	} else {
 		egg_warning ("unhandled action '%s' on %s", action, devkit_device_get_native_path (device));
 	}
@@ -682,10 +682,10 @@ gpk_daemon_device_event_signal_handler (DevkitClient *client, const char *action
 
 #if 0
 /**
- * gpk_daemon_throw_error:
+ * dkp_daemon_throw_error:
  **/
 static gboolean
-gpk_daemon_throw_error (DBusGMethodInvocation *context, int error_code, const char *format, ...)
+dkp_daemon_throw_error (DBusGMethodInvocation *context, int error_code, const char *format, ...)
 {
 	GError *error;
 	va_list args;
@@ -810,10 +810,10 @@ out:
 }
 
 /**
- * gpk_daemon_register_power_daemon:
+ * dkp_daemon_register_power_daemon:
  **/
 static gboolean
-gpk_daemon_register_power_daemon (DkpDaemon *daemon)
+dkp_daemon_register_power_daemon (DkpDaemon *daemon)
 {
 	DBusConnection *connection;
 	DBusError dbus_error;
@@ -857,7 +857,7 @@ gpk_daemon_register_power_daemon (DkpDaemon *daemon)
 		goto error;
 	}
 	g_signal_connect (daemon->priv->devkit_client, "device-event",
-			  G_CALLBACK (gpk_daemon_device_event_signal_handler), daemon);
+			  G_CALLBACK (dkp_daemon_device_event_signal_handler), daemon);
 
 	return TRUE;
 error:
@@ -878,7 +878,7 @@ dkp_daemon_new (void)
 	daemon = DKP_DAEMON (g_object_new (DKP_TYPE_DAEMON, NULL));
 
 	daemon->priv->list = dkp_device_list_new ();
-	if (!gpk_daemon_register_power_daemon (DKP_DAEMON (daemon))) {
+	if (!dkp_daemon_register_power_daemon (DKP_DAEMON (daemon))) {
 		g_object_unref (daemon);
 		return NULL;
 	}
@@ -893,7 +893,7 @@ dkp_daemon_new (void)
 
 	for (l = devices; l != NULL; l = l->next) {
 		DevkitDevice *device = l->data;
-		gpk_daemon_device_add (daemon, device, FALSE);
+		dkp_daemon_device_add (daemon, device, FALSE);
 	}
 	g_list_foreach (devices, (GFunc) g_object_unref, NULL);
 	g_list_free (devices);
