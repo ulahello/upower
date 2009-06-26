@@ -448,6 +448,30 @@ dkp_daemon_get_on_ac_local (DkpDaemon *daemon)
 }
 
 /**
+ * dkp_daemon_set_pmutils_powersave:
+ *
+ * Uses pm-utils to run scripts in power.d
+ **/
+static gboolean
+dkp_daemon_set_pmutils_powersave (DkpDaemon *daemon, gboolean powersave)
+{
+	gboolean ret;
+	gchar *command;
+	GError *error;
+
+	/* run script from pm-utils */
+	command = g_strdup_printf ("pm-powersave %s", powersave ? "true" : "false");
+	egg_debug ("excuting command: %s", command);
+	ret = g_spawn_command_line_async (command, &error);
+	if (!ret) {
+		egg_warning ("failed to run script: %s", error->message);
+		g_error_free (error);
+	}
+
+	return ret;
+}
+
+/**
  * gpk_daemon_device_changed:
  **/
 static void
@@ -472,6 +496,9 @@ gpk_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesi
 		daemon->priv->on_battery = ret;
 		egg_debug ("now on_battery = %s", ret ? "yes" : "no");
 		g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
+
+		/* set pm-utils power policy */
+		dkp_daemon_set_pmutils_powersave (daemon, daemon->priv->on_battery);
 	}
 	ret = dkp_daemon_get_low_battery_local (daemon);
 	if (ret != daemon->priv->low_battery) {
@@ -874,6 +901,9 @@ dkp_daemon_new (void)
 	daemon->priv->on_battery = (dkp_daemon_get_on_battery_local (daemon) &&
 				    !dkp_daemon_get_on_ac_local (daemon));
 	daemon->priv->low_battery = dkp_daemon_get_low_battery_local (daemon);
+
+	/* set pm-utils power policy */
+	dkp_daemon_set_pmutils_powersave (daemon, daemon->priv->on_battery);
 
 	return daemon;
 }
