@@ -460,7 +460,7 @@ dkp_daemon_set_pmutils_powersave (DkpDaemon *daemon, gboolean powersave)
 	GError *error = NULL;
 
 	/* run script from pm-utils */
-	command = g_strdup_printf ("pm-powersave %s", powersave ? "true" : "false");
+	command = g_strdup_printf ("/usr/sbin/pm-powersave %s", powersave ? "true" : "false");
 	egg_debug ("excuting command: %s", command);
 	ret = g_spawn_command_line_async (command, &error);
 	if (!ret) {
