@@ -457,7 +457,7 @@ dkp_daemon_set_pmutils_powersave (DkpDaemon *daemon, gboolean powersave)
 {
 	gboolean ret;
 	gchar *command;
-	GError *error;
+	GError *error = NULL;
 
 	/* run script from pm-utils */
 	command = g_strdup_printf ("pm-powersave %s", powersave ? "true" : "false");
@@ -466,8 +466,10 @@ dkp_daemon_set_pmutils_powersave (DkpDaemon *daemon, gboolean powersave)
 	if (!ret) {
 		egg_warning ("failed to run script: %s", error->message);
 		g_error_free (error);
+		goto out;
 	}
-
+out:
+	g_free (command);
 	return ret;
 }
 
