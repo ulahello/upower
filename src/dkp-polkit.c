@@ -92,10 +92,10 @@ pk_polkit_io_remove_watch (PolKitContext *context, int watch_id)
 }
 
 /**
- * gpk_polkit_dbus_filter:
+ * dkp_polkit_dbus_filter:
  **/
 static DBusHandlerResult
-gpk_polkit_dbus_filter (DBusConnection *connection, DBusMessage *message, void *user_data)
+dkp_polkit_dbus_filter (DBusConnection *connection, DBusMessage *message, void *user_data)
 {
 	DkpPolkit *polkit = DKP_POLKIT (user_data);
 	const gchar *interface;
@@ -274,7 +274,7 @@ dkp_polkit_init (DkpPolkit *polkit)
 		goto out;
 	}
 
-	if (!dbus_connection_add_filter (connection, gpk_polkit_dbus_filter, polkit, NULL)) {
+	if (!dbus_connection_add_filter (connection, dkp_polkit_dbus_filter, polkit, NULL)) {
 		egg_warning ("Cannot add D-Bus filter: %s: %s", dbus_error.name, dbus_error.message);
 		goto out;
 	}

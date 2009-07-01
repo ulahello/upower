@@ -102,6 +102,7 @@ gboolean
 dkp_daemon_set_lid_is_closed (DkpDaemon *daemon, gboolean lid_is_closed)
 {
 	gboolean ret = FALSE;
+	static gboolean initialized = FALSE;
 
 	g_return_val_if_fail (DKP_IS_DAEMON (daemon), FALSE);
 
@@ -112,7 +113,16 @@ dkp_daemon_set_lid_is_closed (DkpDaemon *daemon, gboolean lid_is_closed)
 	}
 
 	/* save */
-	g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
+	if (!initialized) {
+		/* Do not emit an event on startup. Otherwise, e. g.
+		 * gnome-power-manager would pick up a "lid is closed" change
+		 * event when dk-p gets D-BUS activated, and thus would
+		 * immediately suspend the machine on startup. FD#22574 */
+		egg_debug ("not emitting lid change event for daemon startup");
+		initialized = TRUE;
+	} else {
+		g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
+	}
 	daemon->priv->lid_is_closed = lid_is_closed;
 	ret = TRUE;
 out:
@@ -448,7 +458,33 @@ dkp_daemon_get_on_ac_local (DkpDaemon *daemon)
 }
 
 /**
- * gpk_daemon_device_changed:
+ * dkp_daemon_set_pmutils_powersave:
+ *
+ * Uses pm-utils to run scripts in power.d
+ **/
+static gboolean
+dkp_daemon_set_pmutils_powersave (DkpDaemon *daemon, gboolean powersave)
+{
+	gboolean ret;
+	gchar *command;
+	GError *error = NULL;
+
+	/* run script from pm-utils */
+	command = g_strdup_printf ("/usr/sbin/pm-powersave %s", powersave ? "true" : "false");
+	egg_debug ("excuting command: %s", command);
+	ret = g_spawn_command_line_async (command, &error);
+	if (!ret) {
+		egg_warning ("failed to run script: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+out:
+	g_free (command);
+	return ret;
+}
+
+/**
+ * dkp_daemon_device_changed:
  **/
 static void
 gpk_daemon_device_changed (DkpDaemon *daemon, GUdevDevice *d, gboolean synthesized)
@@ -463,7 +499,7 @@ gpk_daemon_device_changed (DkpDaemon *daemon, GUdevDevice *d, gboolean synthesiz
 		dkp_device_changed (device, d, synthesized);
 	} else {
 		egg_debug ("treating change event as add on %s", dkp_device_get_object_path (device));
-		gpk_daemon_device_add (daemon, d, TRUE);
+		dkp_daemon_device_add (daemon, d, TRUE);
 	}
 
 	/* second, check if the on_battery and low_battery state has changed */
@@ -472,6 +508,9 @@ gpk_daemon_device_changed (DkpDaemon *daemon, GUdevDevice *d, gboolean synthesiz
 		daemon->priv->on_battery = ret;
 		egg_debug ("now on_battery = %s", ret ? "yes" : "no");
 		g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
+
+		/* set pm-utils power policy */
+		dkp_daemon_set_pmutils_powersave (daemon, daemon->priv->on_battery);
 	}
 	ret = dkp_daemon_get_low_battery_local (daemon);
 	if (ret != daemon->priv->low_battery) {
@@ -482,10 +521,10 @@ gpk_daemon_device_changed (DkpDaemon *daemon, GUdevDevice *d, gboolean synthesiz
 }
 
 /**
- * gpk_daemon_device_went_away:
+ * dkp_daemon_device_went_away:
  **/
 static void
-gpk_daemon_device_went_away (gpointer user_data, GObject *_device)
+dkp_daemon_device_went_away (gpointer user_data, GObject *_device)
 {
 	DkpDaemon *daemon = DKP_DAEMON (user_data);
 	DkpDevice *device = DKP_DEVICE (_device);
@@ -493,7 +532,7 @@ gpk_daemon_device_went_away (gpointer user_data, GObject *_device)
 }
 
 /**
- * gpk_daemon_device_get:
+ * dkp_daemon_device_get:
  **/
 static DkpDevice *
 gpk_daemon_device_get (DkpDaemon *daemon, GUdevDevice *d)
@@ -573,7 +612,7 @@ out:
 }
 
 /**
- * gpk_daemon_device_add:
+ * dkp_daemon_device_add:
  **/
 static gboolean
 gpk_daemon_device_add (DkpDaemon *daemon, GUdevDevice *d, gboolean emit_event)
@@ -586,11 +625,11 @@ gpk_daemon_device_add (DkpDaemon *daemon, GUdevDevice *d, gboolean emit_event)
 	if (device != NULL) {
 		/* we already have the device; treat as change event */
 		egg_debug ("treating add event as change event on %s", dkp_device_get_object_path (device));
-		gpk_daemon_device_changed (daemon, d, FALSE);
+		dkp_daemon_device_changed (daemon, d, FALSE);
 	} else {
 
 		/* get the right sort of device */
-		device = gpk_daemon_device_get (daemon, d);
+		device = dkp_daemon_device_get (daemon, d);
 		if (device == NULL) {
 			egg_debug ("not adding device %s", g_udev_device_get_sysfs_path (d));
 			ret = FALSE;
@@ -599,7 +638,7 @@ gpk_daemon_device_add (DkpDaemon *daemon, GUdevDevice *d, gboolean emit_event)
 		/* only take a weak ref; the device will stay on the bus until
 		 * it's unreffed. So if we ref it, it'll never go away.
 		 */
-		g_object_weak_ref (G_OBJECT (device), gpk_daemon_device_went_away, daemon);
+		g_object_weak_ref (G_OBJECT (device), dkp_daemon_device_went_away, daemon);
 		dkp_device_list_insert (daemon->priv->list, d, device);
 		if (emit_event) {
 			g_signal_emit (daemon, signals[DEVICE_ADDED_SIGNAL], 0,
@@ -611,7 +650,7 @@ out:
 }
 
 /**
- * gpk_daemon_device_remove:
+ * dkp_daemon_device_remove:
  **/
 static void
 gpk_daemon_device_remove (DkpDaemon *daemon, GUdevDevice *d)
@@ -655,10 +694,10 @@ gpk_daemon_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 
 #if 0
 /**
- * gpk_daemon_throw_error:
+ * dkp_daemon_throw_error:
  **/
 static gboolean
-gpk_daemon_throw_error (DBusGMethodInvocation *context, int error_code, const char *format, ...)
+dkp_daemon_throw_error (DBusGMethodInvocation *context, int error_code, const char *format, ...)
 {
 	GError *error;
 	va_list args;
@@ -783,10 +822,10 @@ out:
 }
 
 /**
- * gpk_daemon_register_power_daemon:
+ * dkp_daemon_register_power_daemon:
  **/
 static gboolean
-gpk_daemon_register_power_daemon (DkpDaemon *daemon)
+dkp_daemon_register_power_daemon (DkpDaemon *daemon)
 {
 	DBusConnection *connection;
 	DBusError dbus_error;
@@ -847,7 +886,7 @@ dkp_daemon_new (void)
 	daemon = DKP_DAEMON (g_object_new (DKP_TYPE_DAEMON, NULL));
 
 	daemon->priv->list = dkp_device_list_new ();
-	if (!gpk_daemon_register_power_daemon (DKP_DAEMON (daemon))) {
+	if (!dkp_daemon_register_power_daemon (DKP_DAEMON (daemon))) {
 		g_object_unref (daemon);
 		return NULL;
 	}
@@ -866,6 +905,9 @@ dkp_daemon_new (void)
 	daemon->priv->on_battery = (dkp_daemon_get_on_battery_local (daemon) &&
 				    !dkp_daemon_get_on_ac_local (daemon));
 	daemon->priv->low_battery = dkp_daemon_get_low_battery_local (daemon);
+
+	/* set pm-utils power policy */
+	dkp_daemon_set_pmutils_powersave (daemon, daemon->priv->on_battery);
 
 	return daemon;
 }
