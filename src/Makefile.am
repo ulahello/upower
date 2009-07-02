@@ -108,7 +108,7 @@ dbusconf_DATA = $(dbusconf_in_files:.conf.in=.conf)
 $(dbusconf_DATA): $(dbusconf_in_files) Makefile
 	cp $< $@
 
-udevrulesdir = $(sysconfdir)/udev/rules.d
+udevrulesdir = $(slashlibdir)/udev/rules.d
 udevrules_DATA = 						\
 	95-devkit-power-wup.rules        			\
 	95-devkit-power-hid.rules        			\

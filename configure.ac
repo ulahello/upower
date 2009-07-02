@@ -53,6 +53,14 @@ AM_CONDITIONAL(MAN_PAGES_ENABLED, test x$enable_man_pages = xyes)
 
 GTK_DOC_CHECK([1.3])
 
+# udev rules go in /lib, not /usr/lib
+if test "$prefix" = "/usr" -o "$prefix" = "/usr/local" ; then
+  slashlibdir=/lib
+else
+  slashlibdir=$prefix/lib
+fi
+AC_SUBST(slashlibdir)
+
 #### gcc warning flags
 
 dnl ---------------------------------------------------------------------------
