@@ -489,16 +489,18 @@ out:
 static void
 dkp_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesized)
 {
+	GObject *object;
 	DkpDevice *device;
 	gboolean ret;
 
 	/* first, change the device and add it if it doesn't exist */
-	device = dkp_device_list_lookup (daemon->priv->list, d);
-	if (device != NULL) {
+	object = dkp_device_list_lookup (daemon->priv->list, d);
+	if (object != NULL) {
+		device = DKP_DEVICE (object);
 		egg_debug ("changed %s", dkp_device_get_object_path (device));
 		dkp_device_changed (device, d, synthesized);
 	} else {
-		egg_debug ("treating change event as add on %s", dkp_device_get_object_path (device));
+		egg_debug ("treating change event as add on %s", devkit_device_get_native_path (d));
 		dkp_daemon_device_add (daemon, d, TRUE);
 	}
 
@@ -524,10 +526,9 @@ dkp_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesi
  * dkp_daemon_device_went_away:
  **/
 static void
-dkp_daemon_device_went_away (gpointer user_data, GObject *_device)
+dkp_daemon_device_went_away (gpointer user_data, GObject *device)
 {
 	DkpDaemon *daemon = DKP_DAEMON (user_data);
-	DkpDevice *device = DKP_DEVICE (_device);
 	dkp_device_list_remove (daemon->priv->list, device);
 }
 
@@ -617,12 +618,14 @@ out:
 static gboolean
 dkp_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 {
+	GObject *object;
 	DkpDevice *device;
 	gboolean ret = TRUE;
 
 	/* does device exist in db? */
-	device = dkp_device_list_lookup (daemon->priv->list, d);
-	if (device != NULL) {
+	object = dkp_device_list_lookup (daemon->priv->list, d);
+	if (object != NULL) {
+		device = DKP_DEVICE (object);
 		/* we already have the device; treat as change event */
 		egg_debug ("treating add event as change event on %s", dkp_device_get_object_path (device));
 		dkp_daemon_device_changed (daemon, d, FALSE);
@@ -639,7 +642,7 @@ dkp_daemon_device_add (DkpDaemon *daemon, DevkitDevice *d, gboolean emit_event)
 		 * it's unreffed. So if we ref it, it'll never go away.
 		 */
 		g_object_weak_ref (G_OBJECT (device), dkp_daemon_device_went_away, daemon);
-		dkp_device_list_insert (daemon->priv->list, d, device);
+		dkp_device_list_insert (daemon->priv->list, d, G_OBJECT (device));
 		if (emit_event) {
 			g_signal_emit (daemon, signals[DEVICE_ADDED_SIGNAL], 0,
 				       dkp_device_get_object_path (device));
@@ -655,13 +658,15 @@ out:
 static void
 dkp_daemon_device_remove (DkpDaemon *daemon, DevkitDevice *d)
 {
+	GObject *object;
 	DkpDevice *device;
 
 	/* does device exist in db? */
-	device = dkp_device_list_lookup (daemon->priv->list, d);
-	if (device == NULL) {
+	object = dkp_device_list_lookup (daemon->priv->list, d);
+	if (object == NULL) {
 		egg_debug ("ignoring remove event on %s", devkit_device_get_native_path (d));
 	} else {
+		device = DKP_DEVICE (object);
 		dkp_device_removed (device);
 		g_signal_emit (daemon, signals[DEVICE_REMOVED_SIGNAL], 0,
 			       dkp_device_get_object_path (device));
