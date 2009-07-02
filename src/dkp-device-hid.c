@@ -191,10 +191,10 @@ dkp_device_hid_set_obj (DkpDeviceHid *hid, int code, int value)
 
 	switch (code) {
 	case DKP_DEVICE_HID_REMAINING_CAPACITY:
-		g_object_set (device, "percentage", value, NULL);
+		g_object_set (device, "percentage", (gfloat) value, NULL);
 		break;
 	case DKP_DEVICE_HID_RUNTIME_TO_EMPTY:
-		g_object_set (device, "time-to-empty", value, NULL);
+		g_object_set (device, "time-to-empty", (gint64) value, NULL);
 		break;
 	case DKP_DEVICE_HID_CHARGING:
 		if (value != 0)
@@ -227,7 +227,7 @@ dkp_device_hid_set_obj (DkpDeviceHid *hid, int code, int value)
 		g_object_set (device, "serial", dkp_device_hid_get_string (hid, value), NULL);
 		break;
 	case DKP_DEVICE_HID_DESIGN_CAPACITY:
-		g_object_set (device, "energy-full-design", value, NULL);
+		g_object_set (device, "energy-full-design", (gfloat) value, NULL);
 		break;
 	default:
 		ret = FALSE;
