@@ -498,18 +498,28 @@ dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, DevkitDevice *d)
 
 	/* coldplug source */
 	ret = klass->coldplug (device);
-	if (!ret)
+	if (!ret) {
+		egg_debug ("failed to coldplug %p", device);
 		goto out;
+	}
 
 	/* only put on the bus if we succeeded */
 	ret = dkp_device_register_device (device);
-	if (!ret)
+	if (!ret) {
+		egg_warning ("failed to register device");
 		goto out;
+	}
 
-	/* force a refresh */
+	/* force a refresh, although failure isn't fatal */
 	ret = dkp_device_refresh_internal (device);
-	if (!ret)
+	if (!ret) {
+		egg_debug ("failed to refresh");
+
+		/* TODO: refresh should really have seporate
+		 *       success _and_ changed parameters */
+		ret = TRUE;
 		goto out;
+	}
 
 	/* get the id so we can load the old history */
 	id = dkp_device_get_id (device);
