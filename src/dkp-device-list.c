@@ -81,7 +81,7 @@ dkp_device_list_insert (DkpDeviceList *list, DevkitDevice *device, GObject *obje
 	native_path = devkit_device_get_native_path (device);
 	g_hash_table_insert (list->priv->map_native_path_to_object,
 			     g_strdup (native_path), object);
-	g_ptr_array_add (list->priv->array, object);
+	g_ptr_array_add (list->priv->array, g_object_ref (object));
 	egg_debug ("added %s", native_path);
 	return TRUE;
 }
@@ -112,6 +112,7 @@ dkp_device_list_remove (DkpDeviceList *list, GObject *object)
 	g_hash_table_foreach_remove (list->priv->map_native_path_to_object,
 				     dkp_device_list_remove_cb, object);
 	g_ptr_array_remove (list->priv->array, object);
+	g_object_unref (object);
 	return TRUE;
 }
 
@@ -163,6 +164,8 @@ dkp_device_list_finalize (GObject *object)
 	g_return_if_fail (DKP_IS_DEVICE_LIST (object));
 
 	list = DKP_DEVICE_LIST (object);
+
+	g_ptr_array_foreach (list->priv->array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (list->priv->array, TRUE);
 	g_hash_table_unref (list->priv->map_native_path_to_object);
 
