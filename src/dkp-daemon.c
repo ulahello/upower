@@ -56,6 +56,8 @@ enum
 	PROP_ON_BATTERY,
 	PROP_ON_LOW_BATTERY,
 	PROP_LID_IS_CLOSED,
+	PROP_LID_IS_PRESENT,
+	PROP_LAST
 };
 
 enum
@@ -82,6 +84,7 @@ struct DkpDaemonPrivate
 	gboolean		 low_battery;
 	DevkitClient		*devkit_client;
 	gboolean		 lid_is_closed;
+	gboolean		 lid_is_present;
 };
 
 static void	dkp_daemon_class_init		(DkpDaemonClass *klass);
@@ -220,6 +223,10 @@ dkp_daemon_get_property (GObject         *object,
 		g_value_set_boolean (value, daemon->priv->lid_is_closed);
 		break;
 
+	case PROP_LID_IS_PRESENT:
+		g_value_set_boolean (value, daemon->priv->lid_is_present);
+		break;
+
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -282,6 +289,14 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 							      G_PARAM_READABLE));
 
 	g_object_class_install_property (object_class,
+					 PROP_LID_IS_PRESENT,
+					 g_param_spec_boolean ("lid-is-present",
+							       "Is a laptop",
+							       "If this computer is probably a laptop",
+							       FALSE,
+							       G_PARAM_READABLE));
+
+	g_object_class_install_property (object_class,
 					 PROP_CAN_SUSPEND,
 					 g_param_spec_boolean ("can-suspend",
 							       "Can Suspend",
@@ -334,6 +349,7 @@ dkp_daemon_init (DkpDaemon *daemon)
 {
 	daemon->priv = DKP_DAEMON_GET_PRIVATE (daemon);
 	daemon->priv->polkit = dkp_polkit_new ();
+	daemon->priv->lid_is_present = FALSE;
 	daemon->priv->lid_is_closed = FALSE;
 }
 
@@ -594,6 +610,9 @@ dkp_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 			g_object_unref (input);
 			goto out;
 		}
+
+		/* we now have a lid */
+		daemon->priv->lid_is_present = TRUE;
 
 		/* not a power device */
 		dkp_device_list_insert (daemon->priv->managed_devices, d, G_OBJECT (input));

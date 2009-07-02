@@ -50,6 +50,7 @@ struct DkpClientPrivate
 	gboolean		 lid_is_closed;
 	gboolean		 on_battery;
 	gboolean		 on_low_battery;
+	gboolean		 lid_is_present;
 };
 
 enum {
@@ -67,7 +68,9 @@ enum {
 	PROP_CAN_HIBERNATE,
 	PROP_ON_BATTERY,
 	PROP_ON_LOW_BATTERY,
-	PROP_LID_IS_CLOSED
+	PROP_LID_IS_CLOSED,
+	PROP_LID_IS_PRESENT,
+	PROP_LAST
 };
 
 static guint signals [DKP_CLIENT_LAST_SIGNAL] = { 0 };
@@ -293,6 +296,13 @@ dkp_client_ensure_properties (DkpClient *client)
 	}
 	client->priv->on_low_battery = g_value_get_boolean (value);
 
+	value = g_hash_table_lookup (props, "lid-is-present");
+	if (value == NULL) {
+		g_warning ("No 'lid-is-present' property");
+		goto out;
+	}
+	client->priv->lid_is_present = g_value_get_boolean (value);
+
 	/* cached */
 	client->priv->have_properties = TRUE;
 
@@ -339,7 +349,7 @@ dkp_client_can_hibernate (DkpClient *client)
  *
  * Get whether the laptop lid is closed.
  *
- * Return value: TRUE if lid is closed FALSE other wise.
+ * Return value: %TRUE if lid is closed or %FALSE otherwise.
  */
 gboolean
 dkp_client_lid_is_closed (DkpClient *client)
@@ -347,6 +357,22 @@ dkp_client_lid_is_closed (DkpClient *client)
 	g_return_val_if_fail (DKP_IS_CLIENT (client), FALSE);
 	dkp_client_ensure_properties (client);
 	return client->priv->lid_is_closed;
+}
+
+/**
+ * dkp_client_get_lid_is_present:
+ * @client : a #DkpClient instance.
+ *
+ * Gets if the system has a lide device.
+ *
+ * Return value: %TRUE if system has a lid that can be closed or %FALSE otherwise.
+ */
+gboolean
+dkp_client_get_lid_is_present (DkpClient *client)
+{
+	g_return_val_if_fail (DKP_IS_CLIENT (client), FALSE);
+	dkp_client_ensure_properties (client);
+	return client->priv->lid_is_present;
 }
 
 /**
@@ -479,17 +505,20 @@ dkp_client_get_property (GObject *object,
 	case PROP_CAN_SUSPEND:
 		g_value_set_boolean (value, client->priv->can_suspend);
 		break;
-        case PROP_CAN_HIBERNATE:
+	case PROP_CAN_HIBERNATE:
 		g_value_set_boolean (value, client->priv->can_hibernate);
 		break;
 	case PROP_ON_BATTERY:
 		g_value_set_boolean (value, client->priv->on_battery);
 		break;
-        case PROP_ON_LOW_BATTERY:
+	case PROP_ON_LOW_BATTERY:
 		g_value_set_boolean (value, client->priv->on_low_battery);
 		break;
-        case PROP_LID_IS_CLOSED:
+	case PROP_LID_IS_CLOSED:
 		g_value_set_boolean (value, client->priv->lid_is_closed);
+		break;
+	case PROP_LID_IS_PRESENT:
+		g_value_set_boolean (value, client->priv->lid_is_present);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -549,6 +578,13 @@ dkp_client_class_init (DkpClientClass *klass)
 	g_object_class_install_property (object_class,
 					 PROP_LID_IS_CLOSED,
 					 g_param_spec_boolean ("lid-is-closed",
+							       NULL, NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
+
+	g_object_class_install_property (object_class,
+					 PROP_LID_IS_PRESENT,
+					 g_param_spec_boolean ("lid-is-present",
 							       NULL, NULL,
 							       FALSE,
 							       G_PARAM_READABLE));
