@@ -405,7 +405,8 @@ dkp_device_print (const DkpDevice *device)
 		g_print ("    rechargeable:        %s\n", dkp_device_print_bool_to_text (device->priv->is_rechargeable));
 	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY ||
 	    device->priv->type == DKP_DEVICE_TYPE_MOUSE ||
-	    device->priv->type == DKP_DEVICE_TYPE_KEYBOARD)
+	    device->priv->type == DKP_DEVICE_TYPE_KEYBOARD ||
+	    device->priv->type == DKP_DEVICE_TYPE_UPS)
 		g_print ("    state:               %s\n", dkp_device_state_to_text (device->priv->state));
 	if (device->priv->type == DKP_DEVICE_TYPE_BATTERY) {
 		g_print ("    energy:              %g Wh\n", device->priv->energy);
