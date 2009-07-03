@@ -54,13 +54,13 @@ dkp-wakeups-glue.h: org.freedesktop.DeviceKit.Power.Wakeups.xml Makefile.am
 libexec_PROGRAMS = devkit-power-daemon
 
 dbusifdir = $(datadir)/dbus-1/interfaces
-dbusif_DATA = 							\
-	org.freedesktop.DeviceKit.Power.xml 			\
-	org.freedesktop.DeviceKit.Power.Device.xml 		\
-	org.freedesktop.DeviceKit.Power.QoS.xml 		\
+dbusif_DATA =							\
+	org.freedesktop.DeviceKit.Power.xml			\
+	org.freedesktop.DeviceKit.Power.Device.xml		\
+	org.freedesktop.DeviceKit.Power.QoS.xml			\
 	org.freedesktop.DeviceKit.Power.Wakeups.xml
 
-devkit_power_daemon_SOURCES = 					\
+devkit_power_daemon_SOURCES =					\
 	egg-debug.c						\
 	egg-debug.h						\
 	dkp-polkit.h			dkp-polkit.c		\
@@ -79,13 +79,13 @@ devkit_power_daemon_SOURCES = 					\
 	dkp-main.c						\
 	$(BUILT_SOURCES)
 
-devkit_power_daemon_CPPFLAGS = 					\
+devkit_power_daemon_CPPFLAGS =					\
 	-I$(top_srcdir)/src					\
 	-DG_LOG_DOMAIN=\"dkp-daemon\"				\
 	$(DISABLE_DEPRECATED)					\
 	$(AM_CPPFLAGS)
 
-devkit_power_daemon_LDADD = 					\
+devkit_power_daemon_LDADD =					\
 	-lm							\
 	$(USB_LIBS)						\
 	$(GIO_LIBS)						\
@@ -109,9 +109,15 @@ $(dbusconf_DATA): $(dbusconf_in_files) Makefile
 	cp $< $@
 
 udevrulesdir = $(slashlibdir)/udev/rules.d
-udevrules_DATA = 						\
-	95-devkit-power-wup.rules        			\
-	95-devkit-power-hid.rules        			\
+udevrules_DATA =						\
+	95-devkit-power-battery-recall-dell.rules		\
+	95-devkit-power-battery-recall-fujitsu.rules		\
+	95-devkit-power-battery-recall-gateway.rules		\
+	95-devkit-power-battery-recall-ibm.rules		\
+	95-devkit-power-battery-recall-lenovo.rules		\
+	95-devkit-power-battery-recall-toshiba.rules		\
+	95-devkit-power-wup.rules				\
+	95-devkit-power-hid.rules				\
 	95-devkit-power-csr.rules
 
 install-data-hook:
@@ -122,15 +128,13 @@ install-data-hook:
 CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST =							\
-	org.freedesktop.DeviceKit.Power.xml        		\
+	org.freedesktop.DeviceKit.Power.xml			\
 	org.freedesktop.DeviceKit.Power.Device.xml		\
 	org.freedesktop.DeviceKit.Power.QoS.xml			\
 	org.freedesktop.DeviceKit.Power.Wakeups.xml		\
 	dkp-marshal.list					\
-	95-devkit-power-csr.rules				\
-	95-devkit-power-hid.rules				\
-	95-devkit-power-wup.rules				\
-	$(service_in_files)                        		\
+	$(udevrules_DATA)					\
+	$(service_in_files)					\
 	$(dbusconf_in_files)
 
 clean-local :
