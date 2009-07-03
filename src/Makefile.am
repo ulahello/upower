@@ -109,18 +109,6 @@ dbusconf_DATA = $(dbusconf_in_files:.conf.in=.conf)
 $(dbusconf_DATA): $(dbusconf_in_files) Makefile
 	cp $< $@
 
-udevrulesdir = $(slashlibdir)/udev/rules.d
-udevrules_DATA =						\
-	95-devkit-power-battery-recall-dell.rules		\
-	95-devkit-power-battery-recall-fujitsu.rules		\
-	95-devkit-power-battery-recall-gateway.rules		\
-	95-devkit-power-battery-recall-ibm.rules		\
-	95-devkit-power-battery-recall-lenovo.rules		\
-	95-devkit-power-battery-recall-toshiba.rules		\
-	95-devkit-power-wup.rules				\
-	95-devkit-power-hid.rules				\
-	95-devkit-power-csr.rules
-
 install-data-hook:
 	if test -w $(DESTDIR)$(prefix)/; then \
 		mkdir -p $(DESTDIR)$(localstatedir)/lib/DeviceKit-power; \
@@ -134,7 +122,6 @@ EXTRA_DIST =							\
 	org.freedesktop.DeviceKit.Power.QoS.xml			\
 	org.freedesktop.DeviceKit.Power.Wakeups.xml		\
 	dkp-marshal.list					\
-	$(udevrules_DATA)					\
 	$(service_in_files)					\
 	$(dbusconf_in_files)
 

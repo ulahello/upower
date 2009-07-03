@@ -189,6 +189,7 @@ doc/version.xml
 doc/man/Makefile
 doc/dbus/Makefile
 policy/Makefile
+rules/Makefile
 devkit-power-gobject/Makefile
 devkit-power-gobject/dkp-version.h
 po/Makefile.in
