@@ -85,7 +85,6 @@ gboolean	 dkp_client_lid_is_closed		(DkpClient		*client);
 gboolean	 dkp_client_can_suspend			(DkpClient		*client);
 gboolean	 dkp_client_on_battery			(DkpClient		*client);
 gboolean	 dkp_client_on_low_battery		(DkpClient		*client);
-gboolean	 dkp_client_get_lid_is_present		(DkpClient		*client);
 
 G_END_DECLS
 

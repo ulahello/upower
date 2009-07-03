@@ -360,22 +360,6 @@ dkp_client_lid_is_closed (DkpClient *client)
 }
 
 /**
- * dkp_client_get_lid_is_present:
- * @client : a #DkpClient instance.
- *
- * Gets if the system has a lide device.
- *
- * Return value: %TRUE if system has a lid that can be closed or %FALSE otherwise.
- */
-gboolean
-dkp_client_get_lid_is_present (DkpClient *client)
-{
-	g_return_val_if_fail (DKP_IS_CLIENT (client), FALSE);
-	dkp_client_ensure_properties (client);
-	return client->priv->lid_is_present;
-}
-
-/**
  * dkp_client_can_suspend:
  * @client : a #DkpClient instance.
  *
