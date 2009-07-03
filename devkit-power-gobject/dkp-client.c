@@ -311,7 +311,7 @@ out:
 		g_hash_table_unref (props);
 }
 
-#ifndef DKP_DISABLE_DEPRECIATED
+#ifndef DKP_DISABLE_DEPRECATED
 /**
  * dkp_client_get_daemon_version:
  * @client : a #DkpClient instance.
