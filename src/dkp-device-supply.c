@@ -329,6 +329,9 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	gchar *manufacturer;
 	gchar *model_name;
 	gchar *serial_number;
+	gboolean recall_notice;
+	const gchar *recall_vendor = NULL;
+	const gchar *recall_url = NULL;
 
 	d = dkp_device_get_d (device);
 	if (d == NULL) {
@@ -378,6 +381,13 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		model_name = dkp_device_supply_get_string (native_path, "model_name");
 		serial_number = dkp_device_supply_get_string (native_path, "serial_number");
 
+		/* are we possibly recalled by the vendor? */
+		recall_notice = devkit_device_has_property (d, "DKP_RECALL_NOTICE");
+		if (recall_notice) {
+			recall_vendor = devkit_device_get_property (d, "DKP_RECALL_VENDOR");
+			recall_url = devkit_device_get_property (d, "DKP_RECALL_URL");
+		}
+
 		g_object_set (device,
 			      "vendor", manufacturer,
 			      "model", model_name,
@@ -385,6 +395,9 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 			      "is-rechargeable", TRUE, /* assume true for laptops */
 			      "has-history", TRUE,
 			      "has-statistics", TRUE,
+			      "recall-notice", recall_notice,
+			      "recall-vendor", recall_vendor,
+			      "recall-url", recall_url,
 			      NULL);
 
 		g_free (manufacturer);

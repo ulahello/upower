@@ -80,6 +80,9 @@ struct DkpDevicePrivate
 	gint64			 time_to_empty;		/* seconds */
 	gint64			 time_to_full;		/* seconds */
 	gdouble			 percentage;		/* percent */
+	gboolean		 recall_notice;
+	gchar			*recall_vendor;
+	gchar			*recall_url;
 };
 
 static void     dkp_device_class_init		(DkpDeviceClass *klass);
@@ -114,6 +117,10 @@ enum
 	PROP_TIME_TO_FULL,
 	PROP_PERCENTAGE,
 	PROP_TECHNOLOGY,
+	PROP_RECALL_NOTICE,
+	PROP_RECALL_VENDOR,
+	PROP_RECALL_URL,
+	PROP_LAST
 };
 
 enum
@@ -249,6 +256,15 @@ dkp_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 	case PROP_TECHNOLOGY:
 		g_value_set_uint (value, device->priv->technology);
 		break;
+	case PROP_RECALL_NOTICE:
+		g_value_set_boolean (value, device->priv->recall_notice);
+		break;
+	case PROP_RECALL_VENDOR:
+		g_value_set_string (value, device->priv->recall_vendor);
+		break;
+	case PROP_RECALL_URL:
+		g_value_set_string (value, device->priv->recall_url);
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -339,6 +355,17 @@ dkp_device_set_property (GObject *object, guint prop_id, const GValue *value, GP
 		break;
 	case PROP_TECHNOLOGY:
 		device->priv->technology = g_value_get_uint (value);
+		break;
+	case PROP_RECALL_NOTICE:
+		device->priv->recall_notice = g_value_get_boolean (value);
+		break;
+	case PROP_RECALL_VENDOR:
+		g_free (device->priv->recall_vendor);
+		device->priv->recall_vendor = g_strdup (g_value_get_string (value));
+		break;
+	case PROP_RECALL_URL:
+		g_free (device->priv->recall_url);
+		device->priv->recall_url = g_strdup (g_value_get_string (value));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -875,6 +902,8 @@ dkp_device_finalize (GObject *object)
 	g_free (device->priv->model);
 	g_free (device->priv->serial);
 	g_free (device->priv->native_path);
+	g_free (device->priv->recall_vendor);
+	g_free (device->priv->recall_url);
 
 	G_OBJECT_CLASS (dkp_device_parent_class)->finalize (object);
 }
@@ -1113,6 +1142,33 @@ dkp_device_class_init (DkpDeviceClass *klass)
 					 PROP_PERCENTAGE,
 					 g_param_spec_double ("percentage", NULL, NULL,
 							      0.0, 100.f, 100.0,
+							      G_PARAM_READWRITE));
+	/**
+	 * DkpDevice:recall-notice:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_RECALL_NOTICE,
+					 g_param_spec_boolean ("recall-notice",
+							       NULL, NULL,
+							       FALSE,
+							       G_PARAM_READWRITE));
+	/**
+	 * DkpDevice:recall-vendor:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_RECALL_VENDOR,
+					 g_param_spec_string ("recall-vendor",
+							      NULL, NULL,
+							      NULL,
+							      G_PARAM_READWRITE));
+	/**
+	 * DkpDevice:recall-url:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_RECALL_URL,
+					 g_param_spec_string ("recall-url",
+							      NULL, NULL,
+							      NULL,
 							      G_PARAM_READWRITE));
 
 	dbus_g_error_domain_register (DKP_DEVICE_ERROR, NULL, DKP_DEVICE_TYPE_ERROR);
