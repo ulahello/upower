@@ -175,8 +175,8 @@ dkp_backlight_set_brightness (DkpBacklight *backlight, guint value, DBusGMethodI
 	}
 
 	/* write chunk */
-	len = strlen (value_text);
 	value_text = g_strdup_printf ("%u", value);
+	len = strlen (value_text);
 	egg_debug ("Writing '%s' to '%s'", value_text, path);
 	wrote = write (fd, value_text, len);
 	if (wrote < len) {
