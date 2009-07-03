@@ -31,6 +31,7 @@ BUILT_SOURCES =							\
 	dkp-device-glue.h					\
 	dkp-qos-glue.h						\
 	dkp-wakeups-glue.h					\
+	dkp-backlight-glue.h					\
 	dkp-marshal.h						\
 	dkp-marshal.c
 
@@ -52,6 +53,9 @@ dkp-qos-glue.h: org.freedesktop.DeviceKit.Power.QoS.xml Makefile.am
 dkp-wakeups-glue.h: org.freedesktop.DeviceKit.Power.Wakeups.xml Makefile.am
 	dbus-binding-tool --prefix=dkp_wakeups --mode=glib-server --output=dkp-wakeups-glue.h org.freedesktop.DeviceKit.Power.Wakeups.xml
 
+dkp-backlight-glue.h: org.freedesktop.DeviceKit.Power.Backlight.xml Makefile.am
+	dbus-binding-tool --prefix=dkp_backlight --mode=glib-server --output=dkp-backlight-glue.h org.freedesktop.DeviceKit.Power.Backlight.xml
+
 libexec_PROGRAMS = devkit-power-daemon
 
 dbusifdir = $(datadir)/dbus-1/interfaces
@@ -59,6 +63,7 @@ dbusif_DATA =							\
 	org.freedesktop.DeviceKit.Power.xml			\
 	org.freedesktop.DeviceKit.Power.Device.xml		\
 	org.freedesktop.DeviceKit.Power.QoS.xml			\
+	org.freedesktop.DeviceKit.Power.Backlight.xml		\
 	org.freedesktop.DeviceKit.Power.Wakeups.xml
 
 devkit_power_daemon_SOURCES =					\
@@ -75,6 +80,7 @@ devkit_power_daemon_SOURCES =					\
 	dkp-input.h			dkp-input.c		\
 	dkp-qos.h			dkp-qos.c		\
 	dkp-wakeups.h			dkp-wakeups.c		\
+	dkp-backlight.h			dkp-backlight.c		\
 	dkp-history.h			dkp-history.c		\
 	sysfs-utils.h			sysfs-utils.c		\
 	dkp-main.c						\
@@ -120,6 +126,7 @@ EXTRA_DIST =							\
 	org.freedesktop.DeviceKit.Power.xml			\
 	org.freedesktop.DeviceKit.Power.Device.xml		\
 	org.freedesktop.DeviceKit.Power.QoS.xml			\
+	org.freedesktop.DeviceKit.Power.Backlight.xml		\
 	org.freedesktop.DeviceKit.Power.Wakeups.xml		\
 	dkp-marshal.list					\
 	$(service_in_files)					\

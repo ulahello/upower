@@ -16,6 +16,7 @@ libdevkit_power_include_HEADERS =				\
 	devicekit-power.h					\
 	dkp-version.h						\
 	dkp-client.h						\
+	dkp-backlight.h						\
 	dkp-device.h						\
 	dkp-wakeups.h						\
 	dkp-qos-obj.h						\
@@ -31,6 +32,8 @@ libdevkit_power_gobject_la_SOURCES =				\
 	dkp-client.h						\
 	dkp-device.c						\
 	dkp-device.h						\
+	dkp-backlight.c						\
+	dkp-backlight.h						\
 	dkp-wakeups.c						\
 	dkp-wakeups.h						\
 	dkp-qos-obj.c						\

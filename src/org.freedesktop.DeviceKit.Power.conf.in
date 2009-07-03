@@ -21,6 +21,8 @@
            send_interface="org.freedesktop.DBus.Properties"/>
     <allow send_destination="org.freedesktop.DeviceKit.Power.Wakeups"
            send_interface="org.freedesktop.DBus.Properties"/>
+    <allow send_destination="org.freedesktop.DeviceKit.Power.Backlight"
+           send_interface="org.freedesktop.DBus.Properties"/>
 
     <allow send_destination="org.freedesktop.DeviceKit.Power"
            send_interface="org.freedesktop.DeviceKit.Power"/>
@@ -30,5 +32,7 @@
            send_interface="org.freedesktop.DeviceKit.Power.QoS"/>
     <allow send_destination="org.freedesktop.DeviceKit.Power"
 	   send_interface="org.freedesktop.DeviceKit.Power.Wakeups"/>
+    <allow send_destination="org.freedesktop.DeviceKit.Power"
+	   send_interface="org.freedesktop.DeviceKit.Power.Backlight"/>
   </policy>
 </busconfig>

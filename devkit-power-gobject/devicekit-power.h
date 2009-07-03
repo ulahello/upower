@@ -37,6 +37,7 @@
 #include <devkit-power-gobject/dkp-stats-obj.h>
 #include <devkit-power-gobject/dkp-wakeups.h>
 #include <devkit-power-gobject/dkp-wakeups-obj.h>
+#include <devkit-power-gobject/dkp-backlight.h>
 
 #undef __DEVICEKIT_POWER_H_INSIDE__
 
