@@ -9,6 +9,9 @@ AM_MAINTAINER_MODE
 # enable nice build output on automake1.11
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
+# use this in dkp-version.h
+AC_SUBST(VERSION)
+
 # libtool versioning - this applies to devkit-power-gobject
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
@@ -187,6 +190,7 @@ doc/man/Makefile
 doc/dbus/Makefile
 policy/Makefile
 devkit-power-gobject/Makefile
+devkit-power-gobject/dkp-version.h
 po/Makefile.in
 ])
 
