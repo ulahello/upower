@@ -311,6 +311,7 @@ out:
 		g_hash_table_unref (props);
 }
 
+#ifndef DKP_DISABLE_DEPRECIATED
 /**
  * dkp_client_get_daemon_version:
  * @client : a #DkpClient instance.
@@ -406,6 +407,7 @@ dkp_client_on_low_battery (DkpClient *client)
 	dkp_client_ensure_properties (client);
 	return client->priv->on_low_battery;
 }
+#endif
 
 /**
  * dkp_client_add:
