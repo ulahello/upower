@@ -28,7 +28,7 @@
 
 /* compile time version
  */
-#define DKP_COMPILE_VERSION				(@VERSION@)
+#define DKP_COMPILE_VERSION				(0x@VERSION@)
 
 /* check whether a the version is above the compile time version.
  */
