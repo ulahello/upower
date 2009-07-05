@@ -4,21 +4,13 @@
   <!ENTITY ERROR_GENERAL "org.freedesktop.DeviceKit.Power.GeneralError">
 ]>
 <node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
-  <interface name="org.freedesktop.DeviceKit.Power.Backlight.Temporary.Interface">
+  <interface name="org.freedesktop.DeviceKit.Power.Backlight">
     <doc:doc>
       <doc:description>
         <doc:para>
           org.freedesktop.DeviceKit.Power.Backlight is a DBus interface implimented
           by DeviceKit-power.
           It allows applications to watch to change the system backlight brightness.
-        </doc:para>
-        <doc:para>
-          This interface should only be used as a fallback when the BACKLIGHT
-          property in X is not available.
-        </doc:para>
-        <doc:para>
-          THIS INTERFACE WILL BE REMOVED WITHOUT NOTICE WHEN ALL THE MAJOR XORG
-          DRIVERS ARE FIXED.
         </doc:para>
       </doc:description>
     </doc:doc>

@@ -124,7 +124,7 @@ dkp_backlight_ensure_properties (DkpBacklight *backlight)
 
 	error = NULL;
 	ret = dbus_g_proxy_call (backlight->priv->prop_proxy, "GetAll", &error,
-				 G_TYPE_STRING, "org.freedesktop.DeviceKit.Power.Backlight.Temporary.Interface",
+				 G_TYPE_STRING, "org.freedesktop.DeviceKit.Power.Backlight",
 				 G_TYPE_INVALID,
 				 dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_VALUE), &props,
 				 G_TYPE_INVALID);
@@ -317,7 +317,7 @@ dkp_backlight_init (DkpBacklight *backlight)
 	backlight->priv->proxy = dbus_g_proxy_new_for_name (backlight->priv->bus,
 							 "org.freedesktop.DeviceKit.Power",
 							 "/org/freedesktop/DeviceKit/Power/Backlight",
-							 "org.freedesktop.DeviceKit.Power.Backlight.Temporary.Interface");
+							 "org.freedesktop.DeviceKit.Power.Backlight");
 	if (backlight->priv->proxy == NULL) {
 		g_warning ("Couldn't connect to proxy");
 		goto out;

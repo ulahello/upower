@@ -23,10 +23,6 @@
 #error "Only <devicekit-power.h> can be included directly."
 #endif
 
-#if !defined (I_KNOW_DKP_BACKLIGHT_IS_TEMPORARY) && !defined (DKP_COMPILATION)
-#error You have to define I_KNOW_DKP_BACKLIGHT_IS_TEMPORARY to use this code
-#endif
-
 #ifndef __DKP_BACKLIGHT_H
 #define __DKP_BACKLIGHT_H
 
