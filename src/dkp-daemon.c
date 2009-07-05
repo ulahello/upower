@@ -41,9 +41,8 @@
 #include "dkp-device-csr.h"
 #include "dkp-device-wup.h"
 #include "dkp-device-hid.h"
-#include "dkp-device-list.h"
 #include "dkp-input.h"
-#include "dkp-backlight.h"
+#include "dkp-device-list.h"
 
 #include "dkp-daemon-glue.h"
 #include "dkp-marshal.h"
@@ -70,7 +69,7 @@ enum
 	LAST_SIGNAL,
 };
 
-static const gchar *subsystems[] = {"power_supply", "usb", "tty", "input", "backlight", NULL};
+static const gchar *subsystems[] = {"power_supply", "usb", "tty", "input", NULL};
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
@@ -505,26 +504,7 @@ dkp_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesi
 {
 	GObject *object;
 	DkpDevice *device;
-	const gchar *subsys;
 	gboolean ret;
-
-	/* certain types are treated specially */
-	subsys = devkit_device_get_subsystem (d);
-	if (g_strcmp0 (subsys, "backlight") == 0) {
-
-		/* does device exist in db? */
-		object = dkp_device_list_lookup (daemon->priv->managed_devices, d);
-		if (object != NULL) {
-			egg_debug ("device brightness changed %s", devkit_device_get_native_path (d));
-			dkp_backlight_changed (DKP_BACKLIGHT (object));
-		}
-
-		goto out;
-	}
-	if (g_strcmp0 (subsys, "input") == 0) {
-		egg_debug ("already handled by DkpInput");
-		goto out;
-	}
 
 	/* first, change the device and add it if it doesn't exist */
 	object = dkp_device_list_lookup (daemon->priv->power_devices, d);
@@ -533,7 +513,6 @@ dkp_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesi
 		egg_debug ("changed %s", dkp_device_get_object_path (device));
 		dkp_device_changed (device, d, synthesized);
 	} else {
-		/* TODO: is managed device? */
 		egg_debug ("treating change event as add on %s", devkit_device_get_native_path (d));
 		dkp_daemon_device_add (daemon, d, TRUE);
 	}
@@ -554,8 +533,6 @@ dkp_daemon_device_changed (DkpDaemon *daemon, DevkitDevice *d, gboolean synthesi
 		egg_debug ("now low_battery = %s", ret ? "yes" : "no");
 		g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
 	}
-out:
-	return;
 }
 
 /**
@@ -578,7 +555,6 @@ dkp_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 	const gchar *native_path;
 	DkpDevice *device = NULL;
 	DkpInput *input;
-	DkpBacklight *backlight;
 	gboolean ret;
 
 	subsys = devkit_device_get_subsystem (d);
@@ -641,18 +617,8 @@ dkp_daemon_device_get (DkpDaemon *daemon, DevkitDevice *d)
 		/* not a power device */
 		dkp_device_list_insert (daemon->priv->managed_devices, d, G_OBJECT (input));
 
-	} else if (g_strcmp0 (subsys, "backlight") == 0) {
-
-		/* check input device */
-		backlight = dkp_backlight_new ();
-		ret = dkp_backlight_set_device (backlight, d);
-		if (!ret) {
-			g_object_unref (backlight);
-			goto out;
-		}
-
-		/* not a power device */
-		dkp_device_list_insert (daemon->priv->managed_devices, d, G_OBJECT (backlight));
+		/* no valid input object */
+		device = NULL;
 
 	} else {
 		native_path = devkit_device_get_native_path (d);
