@@ -110,6 +110,12 @@ dkp_device_state_to_text (DkpDeviceState state_enum)
 	case DKP_DEVICE_STATE_FULLY_CHARGED:
 		state = "fully-charged";
 		break;
+	case DKP_DEVICE_STATE_PENDING_CHARGE:
+		state = "pending-charged";
+		break;
+	case DKP_DEVICE_STATE_PENDING_DISCHARGE:
+		state = "pending-discharge";
+		break;
 	default:
 		state = "unknown";
 		break;
@@ -133,6 +139,10 @@ dkp_device_state_from_text (const gchar *state)
 		return DKP_DEVICE_STATE_EMPTY;
 	if (g_strcmp0 (state, "fully-charged") == 0)
 		return DKP_DEVICE_STATE_FULLY_CHARGED;
+	if (g_strcmp0 (state, "pending-charge") == 0)
+		return DKP_DEVICE_STATE_PENDING_CHARGE;
+	if (g_strcmp0 (state, "pending-discharge") == 0)
+		return DKP_DEVICE_STATE_PENDING_DISCHARGE;
 	return DKP_DEVICE_STATE_UNKNOWN;
 }
 

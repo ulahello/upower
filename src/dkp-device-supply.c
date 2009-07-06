@@ -545,9 +545,9 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 
 		/* try to find a suitable icon depending on AC state */
 		if (on_battery) {
-			state = DKP_DEVICE_STATE_DISCHARGING;
+			state = DKP_DEVICE_STATE_PENDING_DISCHARGE;
 		} else {
-			state = DKP_DEVICE_STATE_CHARGING;
+			state = DKP_DEVICE_STATE_PENDING_CHARGE;
 		}
 
 		/* print what we did */
