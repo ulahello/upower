@@ -41,6 +41,7 @@
 #define DKP_DEVICE_SUPPLY_REFRESH_TIMEOUT	30	/* seconds */
 #define DKP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT	2	/* seconds */
 #define DKP_DEVICE_SUPPLY_UNKNOWN_RETRIES	30
+#define DKP_DEVICE_SUPPLY_CHARGED_THRESHOLD	95.0f	/* % */
 
 struct DkpDeviceSupplyPrivate
 {
@@ -520,6 +521,13 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 			percentage = 0.0f;
 		if (percentage > 100.0f)
 			percentage = 100.0f;
+	}
+
+	/* some batteries stop charging much before 100% */
+	if (state == DKP_DEVICE_STATE_UNKNOWN &&
+	    percentage > DKP_DEVICE_SUPPLY_CHARGED_THRESHOLD) {
+		egg_warning ("fixing up unknown %f", percentage);
+		state = DKP_DEVICE_STATE_FULLY_CHARGED;
 	}
 
 	/* calculate a quick and dirty time remaining value */
