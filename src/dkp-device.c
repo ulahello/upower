@@ -502,6 +502,19 @@ out:
 }
 
 /**
+ * dkp_device_get_daemon:
+ *
+ * Returns a refcounted #DkpDaemon instance, or %NULL
+ **/
+DkpDaemon *
+dkp_device_get_daemon (DkpDevice *device)
+{
+	if (device->priv->daemon == NULL)
+		return NULL;
+	return g_object_ref (device->priv->daemon);
+}
+
+/**
  * dkp_device_coldplug:
  *
  * Return %TRUE on success, %FALSE if we failed to get data and should be removed

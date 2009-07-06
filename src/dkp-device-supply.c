@@ -333,6 +333,8 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	gboolean recall_notice;
 	const gchar *recall_vendor = NULL;
 	const gchar *recall_url = NULL;
+	DkpDaemon *daemon;
+	gboolean on_battery;
 
 	d = dkp_device_get_d (device);
 	if (d == NULL) {
@@ -528,6 +530,29 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	    percentage > DKP_DEVICE_SUPPLY_CHARGED_THRESHOLD) {
 		egg_warning ("fixing up unknown %f", percentage);
 		state = DKP_DEVICE_STATE_FULLY_CHARGED;
+	}
+
+	/* the battery isn't charging or discharging, it's just
+	 * sitting there half full doing nothing: try to guess a state */
+	if (state == DKP_DEVICE_STATE_UNKNOWN) {
+
+		/* get global battery status */
+		daemon = dkp_device_get_daemon (device);
+		g_object_get (daemon,
+			      "on-battery", &on_battery,
+			      NULL);
+		g_object_unref (daemon);
+
+		/* try to find a suitable icon depending on AC state */
+		if (on_battery) {
+			state = DKP_DEVICE_STATE_DISCHARGING;
+		} else {
+			state = DKP_DEVICE_STATE_CHARGING;
+		}
+
+		/* print what we did */
+		egg_warning ("guessing battery state '%s' using global on-battery:%i",
+			     dkp_device_state_to_text (state), on_battery);
 	}
 
 	/* calculate a quick and dirty time remaining value */
