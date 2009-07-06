@@ -252,8 +252,8 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	GError *error;
 	guint uid;
 	gint pid;
-	PolKitCaller *caller = NULL;
-	polkit_bool_t retval;
+	PolkitSubject *subject = NULL;
+	gboolean retval;
 	DkpQosType type;
 
 	/* get correct data */
@@ -272,9 +272,9 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 		goto out;
 	}
 
-	/* get the caller */
-	caller = dkp_polkit_get_caller (qos->priv->polkit, context);
-	if (caller == NULL)
+	/* get the subject */
+	subject = dkp_polkit_get_subject (qos->priv->polkit, context);
+	if (subject == NULL)
 		goto out;
 
 	/* check auth */
@@ -282,11 +282,11 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 		auth = "org.freedesktop.devicekit.power.qos.request-latency-persistent";
 	else
 		auth = "org.freedesktop.devicekit.power.qos.request-latency";
-	if (!dkp_polkit_check_auth (qos->priv->polkit, caller, auth, context))
+	if (!dkp_polkit_check_auth (qos->priv->polkit, subject, auth, context))
 		goto out;
 
 	/* get uid */
-	retval = polkit_caller_get_uid (caller, &uid);
+	retval = dkp_polkit_get_uid (qos->priv->polkit, subject, &uid);
 	if (!retval) {
 		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "cannot get UID");
 		dbus_g_method_return_error (context, error);
@@ -294,7 +294,7 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	}
 
 	/* get pid */
-	retval = polkit_caller_get_pid (caller, &pid);
+	retval = dkp_polkit_get_pid (qos->priv->polkit, subject, &pid);
 	if (!retval) {
 		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "cannot get PID");
 		dbus_g_method_return_error (context, error);
@@ -330,8 +330,8 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	dkp_qos_latency_perhaps_changed (qos, type);
 	dbus_g_method_return (context, obj->cookie);
 out:
-	if (caller != NULL)
-		polkit_caller_unref (caller);
+	if (subject != NULL)
+		g_object_unref (subject);
 	g_free (sender);
 	g_free (cmdline);
 }
@@ -358,7 +358,7 @@ dkp_qos_cancel_request (DkpQos *qos, guint cookie, DBusGMethodInvocation *contex
 	DkpQosObj *obj;
 	GError *error;
 	gchar *sender = NULL;
-	PolKitCaller *caller = NULL;
+	PolkitSubject *subject = NULL;
 
 	/* find the correct cookie */
 	obj = dkp_qos_find_from_cookie (qos, cookie);
@@ -379,10 +379,10 @@ dkp_qos_cancel_request (DkpQos *qos, guint cookie, DBusGMethodInvocation *contex
 
 	/* are we not the sender? */
 	if (g_strcmp0 (sender, obj->sender) != 0) {
-		caller = dkp_polkit_get_caller (qos->priv->polkit, context);
-		if (caller == NULL)
+		subject = dkp_polkit_get_subject (qos->priv->polkit, context);
+		if (subject == NULL)
 			goto out;
-		if (!dkp_polkit_check_auth (qos->priv->polkit, caller, "org.freedesktop.devicekit.power.qos.cancel-request", context))
+		if (!dkp_polkit_check_auth (qos->priv->polkit, subject, "org.freedesktop.devicekit.power.qos.cancel-request", context))
 			goto out;
 	}
 
@@ -398,8 +398,8 @@ dkp_qos_cancel_request (DkpQos *qos, guint cookie, DBusGMethodInvocation *contex
 
 	g_signal_emit (qos, signals [REQUESTS_CHANGED], 0);
 out:
-	if (caller != NULL)
-		polkit_caller_unref (caller);
+	if (subject != NULL)
+		g_object_unref (subject);
 	g_free (sender);
 }
 

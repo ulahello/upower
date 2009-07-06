@@ -21,8 +21,8 @@ INCLUDES = \
 	-I$(top_srcdir)						\
 	$(GIO_CFLAGS)						\
 	$(DBUS_GLIB_CFLAGS)					\
-	$(POLKIT_DBUS_CFLAGS)					\
-	$(GUDEV_CFLAGS)					\
+	$(GUDEV_CFLAGS)						\
+	$(POLKIT_CFLAGS)					\
 	$(GLIB_CFLAGS)
 
 DEVKIT_POWER_LIBS = $(top_builddir)/devkit-power-gobject/libdevkit-power-gobject.la
@@ -92,7 +92,7 @@ devkit_power_daemon_LDADD =					\
 	$(USB_LIBS)						\
 	$(GIO_LIBS)						\
 	$(DBUS_GLIB_LIBS)					\
-	$(POLKIT_DBUS_LIBS)					\
+	$(POLKIT_LIBS)						\
 	$(DEVKIT_POWER_LIBS)					\
 	$(GUDEV_LIBS)
 

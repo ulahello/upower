@@ -1,8 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59c)
-AC_INIT(DeviceKit-power, 009, http://lists.freedesktop.org/mailman/listinfo/devkit-devel)
-AM_INIT_AUTOMAKE(DeviceKit-power, 009)
+AC_INIT(DeviceKit-power, 010, http://lists.freedesktop.org/mailman/listinfo/devkit-devel)
+AM_INIT_AUTOMAKE(DeviceKit-power, 010)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 
@@ -157,9 +157,9 @@ PKG_CHECK_MODULES(DBUS_GLIB, [dbus-glib-1 >= 0.76])
 AC_SUBST(DBUS_GLIB_CFLAGS)
 AC_SUBST(DBUS_GLIB_LIBS)
 
-PKG_CHECK_MODULES(POLKIT_DBUS, [polkit-dbus >= 0.7])
-AC_SUBST(POLKIT_DBUS_CFLAGS)
-AC_SUBST(POLKIT_DBUS_LIBS)
+PKG_CHECK_MODULES(POLKIT, [polkit-gobject-1 >= 0.91])
+AC_SUBST(POLKIT_CFLAGS)
+AC_SUBST(POLKIT_LIBS)
 
 PKG_CHECK_MODULES(GIO, [gio-2.0 >= 2.16.1])
 AC_SUBST(GIO_CFLAGS)

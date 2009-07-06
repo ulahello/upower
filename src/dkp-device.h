@@ -23,8 +23,8 @@
 #define __DKP_DEVICE_H__
 
 #include <glib-object.h>
-#include <polkit-dbus/polkit-dbus.h>
 #include <gudev/gudev.h>
+#include <polkit/polkit.h>
 #include <dbus/dbus-glib.h>
 
 #include "dkp-daemon.h"

@@ -32,7 +32,6 @@
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
 #include <gudev/gudev.h>
-#include <polkit-dbus/polkit-dbus.h>
 
 #include "sysfs-utils.h"
 #include "egg-debug.h"

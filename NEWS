@@ -1,3 +1,44 @@
+Version 009
+~~~~~~~~~~~
+Released: 2009-07-06
+
+Note:
+ - The DBus interface of DeviceKit-power may be subject to change in future
+   versions of this daemon.
+ - The experimental devkit-power-gobject library has no API or ABI guarantees.
+ - This is the first version of DeviceKit-power where multiple laptop batteries
+   are officially supported.
+
+New Features:
+ - Interface with pm-powersave as external vendors are using this (Richard Hughes)
+ - Enable pretty compiler output with new automake versions (Richard Hughes)
+ - udev rules files now live in /lib/udev/rules.d, not /etc/udev/rules.d (Richard Hughes)
+ - Add battery recall data rules (Richard Hughes)
+ - Export the recall-notice, recall-vendor and recall-url properties on power devices (Richard Hughes)
+ - Protect the non-GObject accessors with DKP_DISABLE_DEPRECATED (Richard Hughes)
+ - Add two new state enums, pending-discharge and pending-charge (Richard Hughes)
+ - Use the global state to fix the unknown battery status (Richard Hughes)
+
+Bugfixes:
+ - Suppress lid change event on startup (Martin Pitt)
+ - Fix two issues with the pm-powersave code (Roland Dreier)
+ - Mark batteries as empty if they have unknown state and a very low energy (Richard Hughes)
+ - For power_supply, unknown is a valid state from the kernel (Richard Hughes)
+ - Don't assume all batteries have positive energy_full values (Richard Hughes)
+ - Add one more variation of lithium-poly (Richard Hughes)
+ - Don't show empty vendor, model or serials in the debug outputs (Richard Hughes)
+ - Fix a small memory leak on supply coldplugging (Richard Hughes)
+ - Hardcode pm-powersave like we do pm-suspend and pm-hibernate (Richard Hughes)
+ - Initial refresh after coldplug is not fatal if it fails (Richard Hughes)
+ - Set the GObject properties correctly in the DkpDeviceHid class (Richard Hughes)
+ - The UPS can't expose empty or fully-charged, so fixup these states (Richard Hughes)
+ - Fix detecting the USB UPS devices (Richard Hughes)
+ - Add a lid-is-present property (Richard Hughes)
+ - Be less asserty when enum values are added in newer versions of the spec (Richard Hughes)
+ - Add a DKP_CHECK_VERSION macro which we can use in client tools (Richard Hughes)
+ - Move the udev rules to their own directory (Richard Hughes)
+ - Move a small rule about the fully charged level from g-p-m (Richard Hughes)
+
 Version 008
 ~~~~~~~~~~~
 Released: 2009-06-01
