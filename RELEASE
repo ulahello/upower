@@ -2,12 +2,12 @@ DeviceKit-power Release Notes
 
 1. Write NEWS entries for DeviceKit-power in the same format as usual.
 
-git shortlog DeviceKit-power-008.. | grep -i -v trivial | grep -v Merge > NEWS.new
+git shortlog DeviceKit-power-009.. | grep -i -v trivial | grep -v Merge > NEWS.new
 
 2. Commit changes in DeviceKit-power git:
 
-git commit -a -m "Released DeviceKit-power 009"
-git tag -a -f -m "Released DeviceKit-power 009" DeviceKit-power-009
+git commit -a -m "Released DeviceKit-power 010"
+git tag -a -f -m "Released DeviceKit-power 010" DeviceKit-power-010
 git push --tags
 git push
 
