@@ -102,10 +102,9 @@ G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
  * dkp_daemon_set_lid_is_closed:
  **/
 gboolean
-dkp_daemon_set_lid_is_closed (DkpDaemon *daemon, gboolean lid_is_closed)
+dkp_daemon_set_lid_is_closed (DkpDaemon *daemon, gboolean lid_is_closed, gboolean notify)
 {
 	gboolean ret = FALSE;
-	static gboolean initialized = FALSE;
 
 	g_return_val_if_fail (DKP_IS_DAEMON (daemon), FALSE);
 
@@ -116,13 +115,12 @@ dkp_daemon_set_lid_is_closed (DkpDaemon *daemon, gboolean lid_is_closed)
 	}
 
 	/* save */
-	if (!initialized) {
+	if (!notify) {
 		/* Do not emit an event on startup. Otherwise, e. g.
 		 * gnome-power-manager would pick up a "lid is closed" change
 		 * event when dk-p gets D-BUS activated, and thus would
 		 * immediately suspend the machine on startup. FD#22574 */
 		egg_debug ("not emitting lid change event for daemon startup");
-		initialized = TRUE;
 	} else {
 		g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
 	}

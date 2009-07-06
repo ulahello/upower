@@ -154,7 +154,7 @@ dkp_input_event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 
 		/* are we set */
 		ret = test_bit (input->priv->event.code, bitmask);
-		dkp_daemon_set_lid_is_closed (input->priv->daemon, ret);
+		dkp_daemon_set_lid_is_closed (input->priv->daemon, ret, TRUE);
 	}
 out:
 	return TRUE;
@@ -253,7 +253,7 @@ dkp_input_coldplug (DkpInput *input, DkpDaemon *daemon, GUdevDevice *d)
 
 	/* set if we are closed */
 	egg_debug ("using %s for lid event", native_path);
-	dkp_daemon_set_lid_is_closed (daemon, test_bit (SW_LID, bitmask));
+	dkp_daemon_set_lid_is_closed (daemon, test_bit (SW_LID, bitmask), FALSE);
 
 out:
 	g_free (path);

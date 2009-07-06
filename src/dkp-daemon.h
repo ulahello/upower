@@ -80,7 +80,8 @@ gboolean	 dkp_daemon_can_hibernate	(DkpDaemon		*daemon,
 						 gboolean		 interactive,
 						 DBusGMethodInvocation	*context);
 gboolean	 dkp_daemon_set_lid_is_closed	(DkpDaemon		*daemon,
-						 gboolean		 lid_is_closed);
+						 gboolean		 lid_is_closed,
+						 gboolean		 notify);
 
 G_END_DECLS
 
