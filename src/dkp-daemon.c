@@ -56,6 +56,8 @@ enum
 	PROP_ON_BATTERY,
 	PROP_ON_LOW_BATTERY,
 	PROP_LID_IS_CLOSED,
+	PROP_LID_IS_PRESENT,
+	PROP_LAST
 };
 
 enum
@@ -76,12 +78,13 @@ struct DkpDaemonPrivate
 	DBusGConnection		*connection;
 	DBusGProxy		*proxy;
 	DkpPolkit		*polkit;
-	DkpDeviceList		*list;
-	GPtrArray		*inputs;
+	DkpDeviceList		*power_devices;
+	DkpDeviceList		*managed_devices;
 	gboolean		 on_battery;
 	gboolean		 low_battery;
 	GUdevClient		*gudev_client;
 	gboolean		 lid_is_closed;
+	gboolean		 lid_is_present;
 };
 
 static void	dkp_daemon_class_init		(DkpDaemonClass *klass);
@@ -220,6 +223,10 @@ dkp_daemon_get_property (GObject         *object,
 		g_value_set_boolean (value, daemon->priv->lid_is_closed);
 		break;
 
+	case PROP_LID_IS_PRESENT:
+		g_value_set_boolean (value, daemon->priv->lid_is_present);
+		break;
+
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -282,6 +289,14 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 							      G_PARAM_READABLE));
 
 	g_object_class_install_property (object_class,
+					 PROP_LID_IS_PRESENT,
+					 g_param_spec_boolean ("lid-is-present",
+							       "Is a laptop",
+							       "If this computer is probably a laptop",
+							       FALSE,
+							       G_PARAM_READABLE));
+
+	g_object_class_install_property (object_class,
 					 PROP_CAN_SUSPEND,
 					 g_param_spec_boolean ("can-suspend",
 							       "Can Suspend",
@@ -334,8 +349,8 @@ dkp_daemon_init (DkpDaemon *daemon)
 {
 	daemon->priv = DKP_DAEMON_GET_PRIVATE (daemon);
 	daemon->priv->polkit = dkp_polkit_new ();
+	daemon->priv->lid_is_present = FALSE;
 	daemon->priv->lid_is_closed = FALSE;
-	daemon->priv->inputs = g_ptr_array_new ();
 }
 
 /**
@@ -359,13 +374,11 @@ dkp_daemon_finalize (GObject *object)
 		dbus_g_connection_unref (daemon->priv->connection);
 	if (daemon->priv->gudev_client != NULL)
 		g_object_unref (daemon->priv->gudev_client);
-	if (daemon->priv->list != NULL)
-		g_object_unref (daemon->priv->list);
+	if (daemon->priv->power_devices != NULL)
+		g_object_unref (daemon->priv->power_devices);
+	if (daemon->priv->managed_devices != NULL)
+		g_object_unref (daemon->priv->managed_devices);
 	g_object_unref (daemon->priv->polkit);
-
-	/* unref inputs */
-	g_ptr_array_foreach (daemon->priv->inputs, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (daemon->priv->inputs, TRUE);
 
 	G_OBJECT_CLASS (dkp_daemon_parent_class)->finalize (object);
 }
@@ -389,7 +402,7 @@ dkp_daemon_get_on_battery_local (DkpDaemon *daemon)
 	const GPtrArray *array;
 
 	/* ask each device */
-	array = dkp_device_list_get_array (daemon->priv->list);
+	array = dkp_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
 		device = (DkpDevice *) g_ptr_array_index (array, i);
 		ret = dkp_device_get_on_battery (device, &on_battery);
@@ -417,7 +430,7 @@ dkp_daemon_get_low_battery_local (DkpDaemon *daemon)
 	const GPtrArray *array;
 
 	/* ask each device */
-	array = dkp_device_list_get_array (daemon->priv->list);
+	array = dkp_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
 		device = (DkpDevice *) g_ptr_array_index (array, i);
 		ret = dkp_device_get_low_battery (device, &low_battery);
@@ -445,7 +458,7 @@ dkp_daemon_get_on_ac_local (DkpDaemon *daemon)
 	const GPtrArray *array;
 
 	/* ask each device */
-	array = dkp_device_list_get_array (daemon->priv->list);
+	array = dkp_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
 		device = (DkpDevice *) g_ptr_array_index (array, i);
 		ret = dkp_device_get_online (device, &online);
@@ -489,16 +502,18 @@ out:
 static void
 gpk_daemon_device_changed (DkpDaemon *daemon, GUdevDevice *d, gboolean synthesized)
 {
+	GObject *object;
 	DkpDevice *device;
 	gboolean ret;
 
 	/* first, change the device and add it if it doesn't exist */
-	device = dkp_device_list_lookup (daemon->priv->list, d);
-	if (device != NULL) {
+	object = dkp_device_list_lookup (daemon->priv->power_devices, d);
+	if (object != NULL) {
+		device = DKP_DEVICE (object);
 		egg_debug ("changed %s", dkp_device_get_object_path (device));
 		dkp_device_changed (device, d, synthesized);
 	} else {
-		egg_debug ("treating change event as add on %s", dkp_device_get_object_path (device));
+		egg_debug ("treating change event as add on %s", g_udev_device_get_sysfs_path (d));
 		dkp_daemon_device_add (daemon, d, TRUE);
 	}
 
@@ -524,11 +539,10 @@ gpk_daemon_device_changed (DkpDaemon *daemon, GUdevDevice *d, gboolean synthesiz
  * dkp_daemon_device_went_away:
  **/
 static void
-dkp_daemon_device_went_away (gpointer user_data, GObject *_device)
+dkp_daemon_device_went_away (gpointer user_data, GObject *device)
 {
 	DkpDaemon *daemon = DKP_DAEMON (user_data);
-	DkpDevice *device = DKP_DEVICE (_device);
-	dkp_device_list_remove (daemon->priv->list, device);
+	dkp_device_list_remove (daemon->priv->power_devices, device);
 }
 
 /**
@@ -597,8 +611,11 @@ gpk_daemon_device_get (DkpDaemon *daemon, GUdevDevice *d)
 			goto out;
 		}
 
-		/* we can't use the device list as it's not a DkpDevice */
-		g_ptr_array_add (daemon->priv->inputs, input);
+		/* we now have a lid */
+		daemon->priv->lid_is_present = TRUE;
+
+		/* not a power device */
+		dkp_device_list_insert (daemon->priv->managed_devices, d, G_OBJECT (input));
 
 		/* no valid input object */
 		device = NULL;
@@ -617,12 +634,14 @@ out:
 static gboolean
 gpk_daemon_device_add (DkpDaemon *daemon, GUdevDevice *d, gboolean emit_event)
 {
+	GObject *object;
 	DkpDevice *device;
 	gboolean ret = TRUE;
 
 	/* does device exist in db? */
-	device = dkp_device_list_lookup (daemon->priv->list, d);
-	if (device != NULL) {
+	object = dkp_device_list_lookup (daemon->priv->power_devices, d);
+	if (object != NULL) {
+		device = DKP_DEVICE (object);
 		/* we already have the device; treat as change event */
 		egg_debug ("treating add event as change event on %s", dkp_device_get_object_path (device));
 		dkp_daemon_device_changed (daemon, d, FALSE);
@@ -639,7 +658,7 @@ gpk_daemon_device_add (DkpDaemon *daemon, GUdevDevice *d, gboolean emit_event)
 		 * it's unreffed. So if we ref it, it'll never go away.
 		 */
 		g_object_weak_ref (G_OBJECT (device), dkp_daemon_device_went_away, daemon);
-		dkp_device_list_insert (daemon->priv->list, d, device);
+		dkp_device_list_insert (daemon->priv->power_devices, d, G_OBJECT (device));
 		if (emit_event) {
 			g_signal_emit (daemon, signals[DEVICE_ADDED_SIGNAL], 0,
 				       dkp_device_get_object_path (device));
@@ -655,13 +674,15 @@ out:
 static void
 gpk_daemon_device_remove (DkpDaemon *daemon, GUdevDevice *d)
 {
+	GObject *object;
 	DkpDevice *device;
 
 	/* does device exist in db? */
-	device = dkp_device_list_lookup (daemon->priv->list, d);
-	if (device == NULL) {
+	object = dkp_device_list_lookup (daemon->priv->power_devices, d);
+	if (object == NULL) {
 		egg_debug ("ignoring remove event on %s", g_udev_device_get_sysfs_path (d));
 	} else {
+		device = DKP_DEVICE (object);
 		dkp_device_removed (device);
 		g_signal_emit (daemon, signals[DEVICE_REMOVED_SIGNAL], 0,
 			       dkp_device_get_object_path (device));
@@ -692,31 +713,6 @@ gpk_daemon_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 	}
 }
 
-#if 0
-/**
- * dkp_daemon_throw_error:
- **/
-static gboolean
-dkp_daemon_throw_error (DBusGMethodInvocation *context, int error_code, const char *format, ...)
-{
-	GError *error;
-	va_list args;
-	gchar *message;
-
-	va_start (args, format);
-	message = g_strdup_vprintf (format, args);
-	va_end (args);
-
-	error = g_error_new (DKP_DAEMON_ERROR, error_code, message);
-	dbus_g_method_return_error (context, error);
-	g_error_free (error);
-	g_free (message);
-	return TRUE;
-}
-#endif
-
-/* exported methods */
-
 /**
  * dkp_daemon_enumerate_devices:
  **/
@@ -730,7 +726,7 @@ dkp_daemon_enumerate_devices (DkpDaemon *daemon, DBusGMethodInvocation *context)
 
 	/* build a pointer array of the object paths */
 	object_paths = g_ptr_array_new ();
-	array = dkp_device_list_get_array (daemon->priv->list);
+	array = dkp_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
 		device = (DkpDevice *) g_ptr_array_index (array, i);
 		g_ptr_array_add (object_paths, g_strdup (dkp_device_get_object_path (device)));
@@ -885,7 +881,9 @@ dkp_daemon_new (void)
 
 	daemon = DKP_DAEMON (g_object_new (DKP_TYPE_DAEMON, NULL));
 
-	daemon->priv->list = dkp_device_list_new ();
+	daemon->priv->power_devices = dkp_device_list_new ();
+	daemon->priv->managed_devices = dkp_device_list_new ();
+
 	if (!dkp_daemon_register_power_daemon (DKP_DAEMON (daemon))) {
 		g_object_unref (daemon);
 		return NULL;

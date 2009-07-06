@@ -14,6 +14,7 @@ lib_LTLIBRARIES =						\
 libdevkit_power_includedir = $(includedir)/DeviceKit-power/devkit-power-gobject
 libdevkit_power_include_HEADERS =				\
 	devicekit-power.h					\
+	dkp-version.h						\
 	dkp-client.h						\
 	dkp-device.h						\
 	dkp-wakeups.h						\
@@ -25,6 +26,7 @@ libdevkit_power_include_HEADERS =				\
 
 libdevkit_power_gobject_la_SOURCES =				\
 	devicekit-power.h					\
+	dkp-version.h						\
 	dkp-client.c						\
 	dkp-client.h						\
 	dkp-device.c						\
@@ -52,6 +54,9 @@ libdevkit_power_gobject_la_LDFLAGS =				\
 	-export-dynamic						\
 	-no-undefined						\
 	-export-symbols-regex '^dkp_.*'
+
+EXTRA_DIST =							\
+	dkp-version.h.in
 
 clean-local:
 	rm -f *~

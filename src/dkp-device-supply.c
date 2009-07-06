@@ -41,6 +41,7 @@
 #define DKP_DEVICE_SUPPLY_REFRESH_TIMEOUT	30	/* seconds */
 #define DKP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT	2	/* seconds */
 #define DKP_DEVICE_SUPPLY_UNKNOWN_RETRIES	30
+#define DKP_DEVICE_SUPPLY_CHARGED_THRESHOLD	95.0f	/* % */
 
 struct DkpDeviceSupplyPrivate
 {
@@ -329,6 +330,11 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	gchar *manufacturer;
 	gchar *model_name;
 	gchar *serial_number;
+	gboolean recall_notice;
+	const gchar *recall_vendor = NULL;
+	const gchar *recall_url = NULL;
+	DkpDaemon *daemon;
+	gboolean on_battery;
 
 	d = dkp_device_get_d (device);
 	if (d == NULL) {
@@ -378,6 +384,13 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		model_name = dkp_device_supply_get_string (native_path, "model_name");
 		serial_number = dkp_device_supply_get_string (native_path, "serial_number");
 
+		/* are we possibly recalled by the vendor? */
+		recall_notice = devkit_device_has_property (d, "DKP_RECALL_NOTICE");
+		if (recall_notice) {
+			recall_vendor = devkit_device_get_property (d, "DKP_RECALL_VENDOR");
+			recall_url = devkit_device_get_property (d, "DKP_RECALL_URL");
+		}
+
 		g_object_set (device,
 			      "vendor", manufacturer,
 			      "model", model_name,
@@ -385,6 +398,9 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 			      "is-rechargeable", TRUE, /* assume true for laptops */
 			      "has-history", TRUE,
 			      "has-statistics", TRUE,
+			      "recall-notice", recall_notice,
+			      "recall-vendor", recall_vendor,
+			      "recall-url", recall_url,
 			      NULL);
 
 		g_free (manufacturer);
@@ -507,6 +523,36 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 			percentage = 0.0f;
 		if (percentage > 100.0f)
 			percentage = 100.0f;
+	}
+
+	/* some batteries stop charging much before 100% */
+	if (state == DKP_DEVICE_STATE_UNKNOWN &&
+	    percentage > DKP_DEVICE_SUPPLY_CHARGED_THRESHOLD) {
+		egg_warning ("fixing up unknown %f", percentage);
+		state = DKP_DEVICE_STATE_FULLY_CHARGED;
+	}
+
+	/* the battery isn't charging or discharging, it's just
+	 * sitting there half full doing nothing: try to guess a state */
+	if (state == DKP_DEVICE_STATE_UNKNOWN) {
+
+		/* get global battery status */
+		daemon = dkp_device_get_daemon (device);
+		g_object_get (daemon,
+			      "on-battery", &on_battery,
+			      NULL);
+		g_object_unref (daemon);
+
+		/* try to find a suitable icon depending on AC state */
+		if (on_battery) {
+			state = DKP_DEVICE_STATE_DISCHARGING;
+		} else {
+			state = DKP_DEVICE_STATE_CHARGING;
+		}
+
+		/* print what we did */
+		egg_warning ("guessing battery state '%s' using global on-battery:%i",
+			     dkp_device_state_to_text (state), on_battery);
 	}
 
 	/* calculate a quick and dirty time remaining value */

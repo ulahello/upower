@@ -78,15 +78,39 @@ dkp_tool_device_removed_cb (DkpClient *client, const DkpDevice *device, gpointer
 		g_print ("\n");
 }
 
+/**
+ * dkp_client_print:
+ **/
 static void
 dkp_client_print (DkpClient *client)
 {
-	g_print ("  daemon-version:  %s\n", dkp_client_get_daemon_version (client));
-	g_print ("  can-suspend:     %s\n", dkp_client_can_suspend (client) ? "yes" : "no");
-	g_print ("  can-hibernate    %s\n", dkp_client_can_hibernate (client) ? "yes" : "no");
-	g_print ("  on-battery:      %s\n", dkp_client_on_battery (client) ? "yes" : "no");
-	g_print ("  on-low-battery:  %s\n", dkp_client_on_low_battery (client) ? "yes" : "no");
-	g_print ("  lid-is-closed:   %s\n", dkp_client_lid_is_closed (client) ? "yes" : "no");
+	gchar *daemon_version;
+	gboolean can_suspend;
+	gboolean can_hibernate;
+	gboolean on_battery;
+	gboolean on_low_battery;
+	gboolean lid_is_closed;
+	gboolean lid_is_present;
+
+	g_object_get (client,
+		      "daemon-version", &daemon_version,
+		      "can-suspend", &can_suspend,
+		      "can-hibernate", &can_hibernate,
+		      "on-battery", &on_battery,
+		      "on-low_battery", &on_low_battery,
+		      "lid-is-closed", &lid_is_closed,
+		      "lid-is-present", &lid_is_present,
+		      NULL);
+
+	g_print ("  daemon-version:  %s\n", daemon_version);
+	g_print ("  can-suspend:     %s\n", can_suspend ? "yes" : "no");
+	g_print ("  can-hibernate    %s\n", can_hibernate ? "yes" : "no");
+	g_print ("  on-battery:      %s\n", on_battery ? "yes" : "no");
+	g_print ("  on-low-battery:  %s\n", on_low_battery ? "yes" : "no");
+	g_print ("  lid-is-closed:   %s\n", lid_is_closed ? "yes" : "no");
+	g_print ("  lid-is-present:   %s\n", lid_is_present ? "yes" : "no");
+
+	g_free (daemon_version);
 }
 
 /**
@@ -209,10 +233,14 @@ main (int argc, char **argv)
 	client = dkp_client_new ();
 
 	if (opt_version) {
+		gchar *daemon_version;
+		g_object_get (client,
+			      "daemon-version", &daemon_version,
+			      NULL);
 		g_print ("DeviceKit-power client version %s\n"
 			 "DeviceKit-power daemon version %s\n",
-			 PACKAGE_VERSION,
-			 dkp_client_get_daemon_version (client));
+			 PACKAGE_VERSION, daemon_version);
+		g_free (daemon_version);
 		retval = 0;
 		goto out;
 	}

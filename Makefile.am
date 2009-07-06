@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = devkit-power-gobject src doc tools policy po
+SUBDIRS = devkit-power-gobject src doc tools policy po rules
 
 # Creating ChangeLog from git log (taken from cairo/Makefile.am):
 ChangeLog: $(srcdir)/ChangeLog

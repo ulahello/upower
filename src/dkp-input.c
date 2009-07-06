@@ -294,7 +294,6 @@ dkp_input_finalize (GObject *object)
 	if (input->priv->channel) {
 		g_io_channel_shutdown (input->priv->channel, FALSE, NULL);
 		g_io_channel_unref (input->priv->channel);
-		egg_error ("moooo");
 	}
 	G_OBJECT_CLASS (dkp_input_parent_class)->finalize (object);
 }

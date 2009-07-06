@@ -63,21 +63,21 @@
 #define DKP_DEVICE_HID_SHUTDOWN_IMMINENT		0x840069
 #define DKP_DEVICE_HID_PRODUCT				0x8400fe
 #define DKP_DEVICE_HID_SERIAL_NUMBER			0x8400ff
-#define DKP_DEVICE_HID_CHARGING			0x850044
+#define DKP_DEVICE_HID_CHARGING				0x850044
 #define DKP_DEVICE_HID_DISCHARGING 			0x850045
 #define DKP_DEVICE_HID_REMAINING_CAPACITY		0x850066
-#define DKP_DEVICE_HID_RUNTIME_TO_EMPTY		0x850068
+#define DKP_DEVICE_HID_RUNTIME_TO_EMPTY			0x850068
 #define DKP_DEVICE_HID_AC_PRESENT			0x8500d0
 #define DKP_DEVICE_HID_BATTERY_PRESENT			0x8500d1
 #define DKP_DEVICE_HID_DESIGN_CAPACITY			0x850083
 #define DKP_DEVICE_HID_DEVICE_NAME			0x850088
-#define DKP_DEVICE_HID_DEVICE_CHEMISTRY		0x850089
+#define DKP_DEVICE_HID_DEVICE_CHEMISTRY			0x850089
 #define DKP_DEVICE_HID_RECHARGEABLE			0x85008b
 #define DKP_DEVICE_HID_OEM_INFORMATION			0x85008f
 
 #define DKP_DEVICE_HID_PAGE_GENERIC_DESKTOP		0x01
 #define DKP_DEVICE_HID_PAGE_CONSUMER_PRODUCT		0x0c
-#define DKP_DEVICE_HID_PAGE_USB_MONITOR		0x80
+#define DKP_DEVICE_HID_PAGE_USB_MONITOR			0x80
 #define DKP_DEVICE_HID_PAGE_USB_ENUMERATED_VALUES	0x81
 #define DKP_DEVICE_HID_PAGE_VESA_VIRTUAL_CONTROLS	0x82
 #define DKP_DEVICE_HID_PAGE_RESERVED_MONITOR		0x83
@@ -180,10 +180,10 @@ dkp_device_hid_convert_device_technology (const gchar *type)
 }
 
 /**
- * dkp_device_hid_set_obj:
+ * dkp_device_hid_set_values:
  **/
 static gboolean
-dkp_device_hid_set_obj (DkpDeviceHid *hid, int code, int value)
+dkp_device_hid_set_values (DkpDeviceHid *hid, int code, int value)
 {
 	const gchar *type;
 	gboolean ret = TRUE;
@@ -191,10 +191,10 @@ dkp_device_hid_set_obj (DkpDeviceHid *hid, int code, int value)
 
 	switch (code) {
 	case DKP_DEVICE_HID_REMAINING_CAPACITY:
-		g_object_set (device, "percentage", value, NULL);
+		g_object_set (device, "percentage", (gfloat) value, NULL);
 		break;
 	case DKP_DEVICE_HID_RUNTIME_TO_EMPTY:
-		g_object_set (device, "time-to-empty", value, NULL);
+		g_object_set (device, "time-to-empty", (gint64) value, NULL);
 		break;
 	case DKP_DEVICE_HID_CHARGING:
 		if (value != 0)
@@ -227,7 +227,7 @@ dkp_device_hid_set_obj (DkpDeviceHid *hid, int code, int value)
 		g_object_set (device, "serial", dkp_device_hid_get_string (hid, value), NULL);
 		break;
 	case DKP_DEVICE_HID_DESIGN_CAPACITY:
-		g_object_set (device, "energy-full-design", value, NULL);
+		g_object_set (device, "energy-full-design", (gfloat) value, NULL);
 		break;
 	default:
 		ret = FALSE;
@@ -247,6 +247,7 @@ dkp_device_hid_get_all_data (DkpDeviceHid *hid)
 	struct hiddev_usage_ref uref;
 	int rtype;
 	guint i, j;
+	gboolean ret = FALSE;
 
 	/* get all results */
 	for (rtype = HID_REPORT_TYPE_MIN; rtype <= HID_REPORT_TYPE_MAX; rtype++) {
@@ -270,13 +271,32 @@ dkp_device_hid_get_all_data (DkpDeviceHid *hid)
 					ioctl (hid->priv->fd, HIDIOCGUSAGE, &uref);
 
 					/* process each */
-					dkp_device_hid_set_obj (hid, uref.usage_code, uref.value);
+					dkp_device_hid_set_values (hid, uref.usage_code, uref.value);
+
+					/* we got some data */
+					ret = TRUE;
 				}
 			}
 			rinfo.report_id |= HID_REPORT_ID_NEXT;
 		}
 	}
-	return TRUE;
+	return ret;
+}
+
+/**
+ * dkp_device_hid_fixup_state:
+ **/
+static void
+dkp_device_hid_fixup_state (DkpDevice *device)
+{
+	gdouble percentage;
+
+	/* map states the UPS cannot express */
+	g_object_get (device, "percentage", &percentage, NULL);
+	if (percentage < 0.01)
+		g_object_set (device, "state", DKP_DEVICE_STATE_EMPTY, NULL);
+	if (percentage > 99.9)
+		g_object_set (device, "state", DKP_DEVICE_STATE_FULLY_CHARGED, NULL);
 }
 
 /**
@@ -312,6 +332,7 @@ dkp_device_hid_coldplug (DkpDevice *device)
 	}
 
 	/* connect to the device */
+	egg_debug ("using device: %s", device_file);
 	hid->priv->fd = open (device_file, O_RDONLY | O_NONBLOCK);
 	if (hid->priv->fd < 0) {
 		egg_debug ("cannot open device file %s", device_file);
@@ -342,11 +363,14 @@ dkp_device_hid_coldplug (DkpDevice *device)
 		      NULL);
 
 	/* coldplug everything */
-	dkp_device_hid_get_all_data (hid);
+	ret = dkp_device_hid_get_all_data (hid);
+	if (!ret) {
+		egg_debug ("failed to coldplug: %s", device_file);
+		goto out;
+	}
 
-	/* coldplug */
-	ret = dkp_device_hid_refresh (device);
-
+	/* fix up device states */
+	dkp_device_hid_fixup_state (device);
 out:
 	return ret;
 }
@@ -371,21 +395,33 @@ dkp_device_hid_refresh (DkpDevice *device)
 	g_get_current_time (&time);
 	g_object_set (device, "update-time", (guint64) time.tv_sec, NULL);
 
-	/* read any data -- it's okay if there's nothing as we are non-blocking */
+	/* read any data */
 	rd = read (hid->priv->fd, ev, sizeof (ev));
-	if (rd < (int) sizeof (ev[0])) {
+
+	/* it's okay if there's nothing as we are non-blocking */
+	if (rd == -1) {
+		egg_debug ("no data");
 		ret = FALSE;
+		goto out;
+	}
+
+	/* did we read enough data? */
+	if (rd < (int) sizeof (ev[0])) {
+		egg_warning ("incomplete read (%i<%i)", rd, (int) sizeof (ev[0]));
 		goto out;
 	}
 
 	/* process each event */
 	for (i=0; i < rd / sizeof (ev[0]); i++) {
-		set = dkp_device_hid_set_obj (hid, ev[i].hid, ev[i].value);
+		set = dkp_device_hid_set_values (hid, ev[i].hid, ev[i].value);
 
 		/* if only takes one match to make refresh a success */
 		if (set)
 			ret = TRUE;
 	}
+
+	/* fix up device states */
+	dkp_device_hid_fixup_state (device);
 out:
 	return ret;
 }

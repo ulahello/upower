@@ -77,6 +77,7 @@ GType		 dkp_device_get_type		(void);
 gboolean	 dkp_device_coldplug		(DkpDevice	*device,
 						 DkpDaemon	*daemon,
 						 GUdevDevice	*d);
+DkpDaemon	*dkp_device_get_daemon		(DkpDevice	*device);
 gboolean	 dkp_device_changed	 	(DkpDevice	*device,
 						 GUdevDevice	*d,
 						 gboolean	 synthesized);
