@@ -750,15 +750,15 @@ dkp_daemon_suspend (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	gboolean ret;
 	GError *error;
 	GError *error_local = NULL;
-	PolKitCaller *caller;
+	PolkitSubject *subject;
 	gchar *stdout = NULL;
 	gchar *stderr = NULL;
 
-	caller = dkp_polkit_get_caller (daemon->priv->polkit, context);
-	if (caller == NULL)
+	subject = dkp_polkit_get_subject (daemon->priv->polkit, context);
+	if (subject == NULL)
 		goto out;
 
-	if (!dkp_polkit_check_auth (daemon->priv->polkit, caller, "org.freedesktop.devicekit.power.suspend", context))
+	if (!dkp_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.devicekit.power.suspend", context))
 		goto out;
 
 	ret = g_spawn_command_line_sync ("/usr/sbin/pm-suspend", &stdout, &stderr, NULL, &error_local);
@@ -774,8 +774,8 @@ dkp_daemon_suspend (DkpDaemon *daemon, DBusGMethodInvocation *context)
 out:
 	g_free (stdout);
 	g_free (stderr);
-	if (caller != NULL)
-		polkit_caller_unref (caller);
+	if (subject != NULL)
+		g_object_unref (subject);
 	return TRUE;
 }
 
@@ -788,15 +788,15 @@ dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	gboolean ret;
 	GError *error;
 	GError *error_local = NULL;
-	PolKitCaller *caller;
+	PolkitSubject *subject;
 	gchar *stdout = NULL;
 	gchar *stderr = NULL;
 
-	caller = dkp_polkit_get_caller (daemon->priv->polkit, context);
-	if (caller == NULL)
+	subject = dkp_polkit_get_subject (daemon->priv->polkit, context);
+	if (subject == NULL)
 		goto out;
 
-	if (!dkp_polkit_check_auth (daemon->priv->polkit, caller, "org.freedesktop.devicekit.power.hibernate", context))
+	if (!dkp_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.devicekit.power.hibernate", context))
 		goto out;
 
 	ret = g_spawn_command_line_sync ("/usr/sbin/pm-hibernate", &stdout, &stderr, NULL, &error_local);
@@ -812,8 +812,8 @@ dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 out:
 	g_free (stdout);
 	g_free (stderr);
-	if (caller != NULL)
-		polkit_caller_unref (caller);
+	if (subject != NULL)
+		g_object_unref (subject);
 	return TRUE;
 }
 

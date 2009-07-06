@@ -29,7 +29,6 @@
 #include <dbus/dbus-glib-lowlevel.h>
 
 #include <polkit/polkit.h>
-#include <polkit-dbus/polkit-dbus.h>
 
 #include "egg-debug.h"
 
@@ -41,134 +40,124 @@
 struct DkpPolkitPrivate
 {
 	DBusGConnection		*connection;
-	PolKitContext		*context;
-	PolKitTracker		*tracker;
+	PolkitAuthority         *authority;
 };
 
 G_DEFINE_TYPE (DkpPolkit, dkp_polkit, G_TYPE_OBJECT)
 static gpointer dkp_polkit_object = NULL;
 
 /**
- * pk_polkit_io_watch_have_data:
+ * dkp_polkit_get_subject:
  **/
-static gboolean
-pk_polkit_io_watch_have_data (GIOChannel *channel, GIOCondition condition, gpointer user_data)
-{
-	int fd;
-	PolKitContext *context = user_data;
-	fd = g_io_channel_unix_get_fd (channel);
-	polkit_context_io_func (context, fd);
-	return TRUE;
-}
-
-/**
- * pk_polkit_io_add_watch:
- **/
-static int
-pk_polkit_io_add_watch (PolKitContext *context, int fd)
-{
-	guint id = 0;
-	GIOChannel *channel;
-	channel = g_io_channel_unix_new (fd);
-	if (channel == NULL)
-		goto out;
-	id = g_io_add_watch (channel, G_IO_IN, pk_polkit_io_watch_have_data, context);
-	if (id == 0) {
-		g_io_channel_unref (channel);
-		goto out;
-	}
-	g_io_channel_unref (channel);
-out:
-	return id;
-}
-
-/**
- * pk_polkit_io_remove_watch:
- **/
-static void
-pk_polkit_io_remove_watch (PolKitContext *context, int watch_id)
-{
-	g_source_remove (watch_id);
-}
-
-/**
- * dkp_polkit_dbus_filter:
- **/
-static DBusHandlerResult
-dkp_polkit_dbus_filter (DBusConnection *connection, DBusMessage *message, void *user_data)
-{
-	DkpPolkit *polkit = DKP_POLKIT (user_data);
-	const gchar *interface;
-
-	interface = dbus_message_get_interface (message);
-
-	/* pass NameOwnerChanged signals from the bus to PolKitTracker */
-	if (dbus_message_is_signal (message, DBUS_INTERFACE_DBUS, "NameOwnerChanged"))
-		polkit_tracker_dbus_func (polkit->priv->tracker, message);
-
-	/* pass ConsoleKit signals to PolKitTracker */
-	if (interface != NULL && g_str_has_prefix (interface, "org.freedesktop.ConsoleKit"))
-		polkit_tracker_dbus_func (polkit->priv->tracker, message);
-
-	/* other filters might want to process this message too */
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-}
-
-/**
- * dkp_polkit_get_caller:
- **/
-PolKitCaller *
-dkp_polkit_get_caller (DkpPolkit *polkit, DBusGMethodInvocation *context)
+PolkitSubject *
+dkp_polkit_get_subject (DkpPolkit *polkit, DBusGMethodInvocation *context)
 {
 	const gchar *sender;
-	GError *error;
-	DBusError dbus_error;
-	PolKitCaller *caller;
+	PolkitSubject *subject;
 
 	sender = dbus_g_method_get_sender (context);
-	dbus_error_init (&dbus_error);
-	caller = polkit_tracker_get_caller_from_dbus_name (polkit->priv->tracker, sender, &dbus_error);
-	if (caller == NULL) {
-		error = g_error_new (DKP_DAEMON_ERROR,
-				     DKP_DAEMON_ERROR_GENERAL,
-				     "Error getting information about caller: %s: %s",
-				     dbus_error.name, dbus_error.message);
-		dbus_error_free (&dbus_error);
-		dbus_g_method_return_error (context, error);
-		g_error_free (error);
-		return NULL;
-	}
+	subject = polkit_system_bus_name_new (sender);
 
-	return caller;
+	return subject;
 }
 
 /**
  * dkp_polkit_check_auth:
  **/
 gboolean
-dkp_polkit_check_auth (DkpPolkit *polkit, PolKitCaller *caller, const gchar *action_id, DBusGMethodInvocation *context)
+dkp_polkit_check_auth (DkpPolkit *polkit, PolkitSubject *subject, const gchar *action_id, DBusGMethodInvocation *context)
 {
 	gboolean ret = FALSE;
 	GError *error;
-	DBusError dbus_error;
-	PolKitAction *action;
-	PolKitResult result;
+	GError *error_local;
+	PolkitAuthorizationResult *result;
 
-	action = polkit_action_new ();
-	polkit_action_set_action_id (action, action_id);
-	result = polkit_context_is_caller_authorized (polkit->priv->context, action, caller, TRUE, NULL);
-	if (result == POLKIT_RESULT_YES) {
+	/* check auth */
+	result = polkit_authority_check_authorization_sync (polkit->priv->authority, subject, action_id, NULL, POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION, NULL, &error_local);
+	if (result == NULL) {
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "failed to check authorisation: %s", error_local->message);
+		dbus_g_method_return_error (context, error);
+		g_error_free (error_local);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* okay? */
+	if (polkit_authorization_result_get_is_authorized (result)) {
 		ret = TRUE;
 	} else {
-		dbus_error_init (&dbus_error);
-		polkit_dbus_error_generate (action, result, &dbus_error);
-		error = NULL;
-		dbus_set_g_error (&error, &dbus_error);
+		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "not authorized");
 		dbus_g_method_return_error (context, error);
 		g_error_free (error);
-		dbus_error_free (&dbus_error);
 	}
-	polkit_action_unref (action);
+out:
+	if (result != NULL)
+		g_object_unref (result);
+	return ret;
+}
+
+/**
+ * dkp_polkit_get_uid:
+ **/
+gboolean
+dkp_polkit_get_uid (DkpPolkit *polkit, PolkitSubject *subject, uid_t *uid)
+{
+	DBusConnection *connection;
+	const gchar *name;
+
+	if (!POLKIT_IS_SYSTEM_BUS_NAME (subject)) {
+		egg_debug ("not system bus name");
+		return FALSE;
+	}
+
+	connection = dbus_g_connection_get_connection (polkit->priv->connection);
+	name = polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject));
+	*uid = dbus_bus_get_unix_user (connection, name, NULL);
+	return TRUE;
+}
+
+/**
+ * dkp_polkit_get_pid:
+ **/
+gboolean
+dkp_polkit_get_pid (DkpPolkit *polkit, PolkitSubject *subject, pid_t *pid)
+{
+	gboolean ret = FALSE;
+	GError *error = NULL;
+	const gchar *name;
+	DBusGProxy *proxy = NULL;
+
+	/* bus name? */
+	if (!POLKIT_IS_SYSTEM_BUS_NAME (subject)) {
+		egg_debug ("not system bus name");
+		goto out;
+	}
+
+	name = polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject));
+	proxy = dbus_g_proxy_new_for_name_owner (polkit->priv->connection,
+						 "org.freedesktop.DBus",
+						 "/org/freedesktop/DBus/Bus",
+						 "org.freedesktop.DBus", &error);
+	if (proxy == NULL) {
+		egg_warning ("DBUS error: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* get pid from DBus (quite slow) */
+	ret = dbus_g_proxy_call (proxy, "GetConnectionUnixProcessID", &error,
+				 G_TYPE_STRING, name,
+				 G_TYPE_INVALID,
+				 G_TYPE_UINT, pid,
+				 G_TYPE_INVALID);
+	if (!ret) {
+		egg_warning ("failed to get pid: %s", error->message);
+		g_error_free (error);
+		goto out;
+        }
+out:
+	if (proxy != NULL)
+		g_object_unref (proxy);
 	return ret;
 }
 
@@ -184,9 +173,7 @@ dkp_polkit_finalize (GObject *object)
 
 	if (polkit->priv->connection != NULL)
 		dbus_g_connection_unref (polkit->priv->connection);
-	if (polkit->priv->tracker != NULL)
-		polkit_tracker_unref (polkit->priv->tracker);
-	polkit_context_unref (polkit->priv->context);
+	g_object_unref (polkit->priv->authority);
 
 	G_OBJECT_CLASS (dkp_polkit_parent_class)->finalize (object);
 }
@@ -212,14 +199,10 @@ dkp_polkit_class_init (DkpPolkitClass *klass)
 static void
 dkp_polkit_init (DkpPolkit *polkit)
 {
-
-	DBusConnection *connection;
-	DBusError dbus_error;
 	GError *error = NULL;
 
 	polkit->priv = DKP_POLKIT_GET_PRIVATE (polkit);
 
-	error = NULL;
 	polkit->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (polkit->priv->connection == NULL) {
 		if (error != NULL) {
@@ -228,57 +211,7 @@ dkp_polkit_init (DkpPolkit *polkit)
 		}
 		goto out;
 	}
-	connection = dbus_g_connection_get_connection (polkit->priv->connection);
-
-	polkit->priv->context = polkit_context_new ();
-	polkit_context_set_io_watch_functions (polkit->priv->context, pk_polkit_io_add_watch, pk_polkit_io_remove_watch);
-	if (!polkit_context_init (polkit->priv->context, NULL)) {
-		g_critical ("cannot initialize libpolkit");
-		goto out;
-	}
-
-	polkit->priv->tracker = polkit_tracker_new ();
-	polkit_tracker_set_system_bus_connection (polkit->priv->tracker, connection);
-	polkit_tracker_init (polkit->priv->tracker);
-
-	/* TODO FIXME: I'm pretty sure dbus-glib blows in a way that
-	 * we can't say we're interested in all signals from all
-	 * members on all interfaces for a given service... So we do
-	 * this..
-	 */
-
-	dbus_error_init (&dbus_error);
-
-	/* need to listen to NameOwnerChanged */
-	dbus_bus_add_match (connection,
-			    "type='signal'"
-			    ",interface='"DBUS_INTERFACE_DBUS"'"
-			    ",sender='"DBUS_SERVICE_DBUS"'"
-			    ",member='NameOwnerChanged'",
-			    &dbus_error);
-
-	if (dbus_error_is_set (&dbus_error)) {
-		egg_warning ("Cannot add match rule: %s: %s", dbus_error.name, dbus_error.message);
-		dbus_error_free (&dbus_error);
-		goto out;
-	}
-
-	/* need to listen to ConsoleKit signals */
-	dbus_bus_add_match (connection,
-			    "type='signal',sender='org.freedesktop.ConsoleKit'",
-			    &dbus_error);
-
-	if (dbus_error_is_set (&dbus_error)) {
-		egg_warning ("Cannot add match rule: %s: %s", dbus_error.name, dbus_error.message);
-		dbus_error_free (&dbus_error);
-		goto out;
-	}
-
-	if (!dbus_connection_add_filter (connection, dkp_polkit_dbus_filter, polkit, NULL)) {
-		egg_warning ("Cannot add D-Bus filter: %s: %s", dbus_error.name, dbus_error.message);
-		goto out;
-	}
-
+	polkit->priv->authority = polkit_authority_get ();
 out:
 	return;
 }

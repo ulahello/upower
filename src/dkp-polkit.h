@@ -23,7 +23,7 @@
 #define __DKP_POLKIT_H
 
 #include <glib-object.h>
-#include <polkit-dbus/polkit-dbus.h>
+#include <polkit/polkit.h>
 
 G_BEGIN_DECLS
 
@@ -49,12 +49,18 @@ typedef struct
 
 GType		 dkp_polkit_get_type		(void);
 DkpPolkit	*dkp_polkit_new			(void);
-PolKitCaller	*dkp_polkit_get_caller		(DkpPolkit		*polkit,
+PolkitSubject	*dkp_polkit_get_subject		(DkpPolkit		*polkit,
 						 DBusGMethodInvocation	*context);
 gboolean	 dkp_polkit_check_auth		(DkpPolkit		*polkit,
-						 PolKitCaller		*pk_caller,
+						 PolkitSubject		*subject,
 						 const gchar		*action_id,
 						 DBusGMethodInvocation	*context);
+gboolean         dkp_polkit_get_uid             (DkpPolkit              *polkit,
+                                                 PolkitSubject          *subject,
+                                                 uid_t                  *uid);
+gboolean         dkp_polkit_get_pid             (DkpPolkit              *polkit,
+                                                 PolkitSubject          *subject,
+                                                 pid_t                  *pid);
 
 G_END_DECLS
 

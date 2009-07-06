@@ -22,7 +22,7 @@
 #define __DKP_DAEMON_H__
 
 #include <glib-object.h>
-#include <polkit-dbus/polkit-dbus.h>
+#include <polkit/polkit.h>
 #include <dbus/dbus-glib.h>
 
 G_BEGIN_DECLS
