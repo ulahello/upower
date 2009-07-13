@@ -111,7 +111,7 @@ dkp_device_state_to_text (DkpDeviceState state_enum)
 		state = "fully-charged";
 		break;
 	case DKP_DEVICE_STATE_PENDING_CHARGE:
-		state = "pending-charged";
+		state = "pending-charge";
 		break;
 	case DKP_DEVICE_STATE_PENDING_DISCHARGE:
 		state = "pending-discharge";
