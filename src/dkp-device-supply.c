@@ -335,6 +335,7 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	const gchar *recall_url = NULL;
 	DkpDaemon *daemon;
 	gboolean on_battery;
+	guint count;
 
 	d = dkp_device_get_d (device);
 	if (d == NULL) {
@@ -467,12 +468,6 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		state = DKP_DEVICE_STATE_UNKNOWN;
 	}
 
-	/* if empty, and BIOS does not know what to do */
-	if (state == DKP_DEVICE_STATE_UNKNOWN && energy < 0.01) {
-		egg_warning ("Setting %s state empty as unknown and very low", native_path);
-		state = DKP_DEVICE_STATE_EMPTY;
-	}
-
 	/* reset unknown counter */
 	if (state != DKP_DEVICE_STATE_UNKNOWN) {
 		egg_debug ("resetting unknown timeout after %i retries", supply->priv->unknown_retries);
@@ -538,21 +533,32 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 
 		/* get global battery status */
 		daemon = dkp_device_get_daemon (device);
-		g_object_get (daemon,
-			      "on-battery", &on_battery,
-			      NULL);
-		g_object_unref (daemon);
 
-		/* try to find a suitable icon depending on AC state */
-		if (on_battery) {
-			state = DKP_DEVICE_STATE_PENDING_DISCHARGE;
-		} else {
-			state = DKP_DEVICE_STATE_PENDING_CHARGE;
+		/* only guess wen we have more than one battery devices */
+		count = dkp_daemon_get_number_devices_of_type (daemon, DKP_DEVICE_TYPE_BATTERY);
+		if (count > 1) {
+			g_object_get (daemon,
+				      "on-battery", &on_battery,
+				      NULL);
+
+			/* try to find a suitable icon depending on AC state */
+			if (on_battery) {
+				state = DKP_DEVICE_STATE_PENDING_DISCHARGE;
+			} else {
+				state = DKP_DEVICE_STATE_PENDING_CHARGE;
+			}
+
+			/* print what we did */
+			egg_debug ("guessing battery state '%s' using global on-battery:%i",
+				   dkp_device_state_to_text (state), on_battery);
 		}
+		g_object_unref (daemon);
+	}
 
-		/* print what we did */
-		egg_warning ("guessing battery state '%s' using global on-battery:%i",
-			     dkp_device_state_to_text (state), on_battery);
+	/* if empty, and BIOS does not know what to do */
+	if (state == DKP_DEVICE_STATE_UNKNOWN && energy < 0.01) {
+		egg_warning ("Setting %s state empty as unknown and very low", native_path);
+		state = DKP_DEVICE_STATE_EMPTY;
 	}
 
 	/* calculate a quick and dirty time remaining value */
