@@ -25,6 +25,8 @@
 #include <polkit/polkit.h>
 #include <dbus/dbus-glib.h>
 
+#include "dkp-enum.h"
+
 G_BEGIN_DECLS
 
 #define DKP_TYPE_DAEMON		(dkp_daemon_get_type ())
@@ -63,6 +65,12 @@ GType dkp_daemon_error_get_type (void);
 GQuark		 dkp_daemon_error_quark		(void);
 GType		 dkp_daemon_get_type		(void);
 DkpDaemon	*dkp_daemon_new			(void);
+
+/* private */
+guint		 dkp_daemon_get_number_devices_of_type (DkpDaemon	*daemon,
+						 DkpDeviceType		 type);
+
+/* exported */
 gboolean	 dkp_daemon_enumerate_devices	(DkpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
 gboolean	 dkp_daemon_get_on_battery	(DkpDaemon		*daemon,

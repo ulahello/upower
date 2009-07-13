@@ -413,6 +413,31 @@ dkp_daemon_get_on_battery_local (DkpDaemon *daemon)
 }
 
 /**
+ * dkp_daemon_get_number_devices_of_type:
+ **/
+guint
+dkp_daemon_get_number_devices_of_type (DkpDaemon *daemon, DkpDeviceType type)
+{
+	guint i;
+	DkpDevice *device;
+	const GPtrArray *array;
+	DkpDeviceType type_tmp;
+	guint count = 0;
+
+	/* ask each device */
+	array = dkp_device_list_get_array (daemon->priv->power_devices);
+	for (i=0; i<array->len; i++) {
+		device = (DkpDevice *) g_ptr_array_index (array, i);
+		g_object_get (device,
+			      "type", &type_tmp,
+			      NULL);
+		if (type == type_tmp)
+			count++;
+	}
+	return count;
+}
+
+/**
  * dkp_daemon_get_low_battery_local:
  *
  * As soon as _all_ batteries are low, this is true
