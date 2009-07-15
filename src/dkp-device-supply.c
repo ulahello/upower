@@ -386,10 +386,10 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		serial_number = dkp_device_supply_get_string (native_path, "serial_number");
 
 		/* are we possibly recalled by the vendor? */
-		recall_notice = devkit_device_has_property (d, "DKP_RECALL_NOTICE");
+		recall_notice = g_udev_device_has_property (d, "DKP_RECALL_NOTICE");
 		if (recall_notice) {
-			recall_vendor = devkit_device_get_property (d, "DKP_RECALL_VENDOR");
-			recall_url = devkit_device_get_property (d, "DKP_RECALL_URL");
+			recall_vendor = g_udev_device_get_property (d, "DKP_RECALL_VENDOR");
+			recall_url = g_udev_device_get_property (d, "DKP_RECALL_URL");
 		}
 
 		g_object_set (device,
