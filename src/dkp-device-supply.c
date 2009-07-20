@@ -41,7 +41,7 @@
 #define DKP_DEVICE_SUPPLY_REFRESH_TIMEOUT	30	/* seconds */
 #define DKP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT	2	/* seconds */
 #define DKP_DEVICE_SUPPLY_UNKNOWN_RETRIES	30
-#define DKP_DEVICE_SUPPLY_CHARGED_THRESHOLD	95.0f	/* % */
+#define DKP_DEVICE_SUPPLY_CHARGED_THRESHOLD	90.0f	/* % */
 
 struct DkpDeviceSupplyPrivate
 {
@@ -335,7 +335,7 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	const gchar *recall_url = NULL;
 	DkpDaemon *daemon;
 	gboolean on_battery;
-	guint count;
+	guint battery_count;
 
 	d = dkp_device_get_d (device);
 	if (d == NULL) {
@@ -533,25 +533,27 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 
 		/* get global battery status */
 		daemon = dkp_device_get_daemon (device);
+		g_object_get (daemon,
+			      "on-battery", &on_battery,
+			      NULL);
 
-		/* only guess wen we have more than one battery devices */
-		count = dkp_daemon_get_number_devices_of_type (daemon, DKP_DEVICE_TYPE_BATTERY);
-		if (count > 1) {
-			g_object_get (daemon,
-				      "on-battery", &on_battery,
-				      NULL);
+		/* only guess when we have more than one battery devices */
+		battery_count = dkp_daemon_get_number_devices_of_type (daemon, DKP_DEVICE_TYPE_BATTERY);
 
-			/* try to find a suitable icon depending on AC state */
-			if (on_battery) {
-				state = DKP_DEVICE_STATE_PENDING_DISCHARGE;
-			} else {
-				state = DKP_DEVICE_STATE_PENDING_CHARGE;
-			}
+		/* try to find a suitable icon depending on AC state */
+		if (on_battery && battery_count > 1)
+			state = DKP_DEVICE_STATE_PENDING_DISCHARGE;
+		else if (battery_count > 1)
+			state = DKP_DEVICE_STATE_PENDING_CHARGE;
+		else if (on_battery)
+			state = DKP_DEVICE_STATE_DISCHARGING;
+		else
+			state = DKP_DEVICE_STATE_FULLY_CHARGED;
 
-			/* print what we did */
-			egg_debug ("guessing battery state '%s' using global on-battery:%i",
-				   dkp_device_state_to_text (state), on_battery);
-		}
+		/* print what we did */
+		egg_debug ("guessing battery state '%s' using global on-battery:%i",
+			   dkp_device_state_to_text (state), on_battery);
+
 		g_object_unref (daemon);
 	}
 
