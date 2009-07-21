@@ -85,6 +85,8 @@ struct DkpDaemonPrivate
 	GUdevClient		*gudev_client;
 	gboolean		 lid_is_closed;
 	gboolean		 lid_is_present;
+	gboolean		 can_suspend;
+	gboolean		 can_hibernate;
 };
 
 static void	dkp_daemon_class_init		(DkpDaemonClass *klass);
@@ -200,13 +202,11 @@ dkp_daemon_get_property (GObject         *object,
 		break;
 
 	case PROP_CAN_SUSPEND:
-		/* TODO: for now assume we can always suspend */
-		g_value_set_boolean (value, TRUE);
+		g_value_set_boolean (value, daemon->priv->can_suspend);
 		break;
 
 	case PROP_CAN_HIBERNATE:
-		/* TODO for now assume we can always hibernate */
-		g_value_set_boolean (value, TRUE);
+		g_value_set_boolean (value, daemon->priv->can_hibernate);
 		break;
 
 	case PROP_ON_BATTERY:
@@ -303,7 +303,7 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 							       G_PARAM_READABLE));
 
 	g_object_class_install_property (object_class,
-					 PROP_CAN_SUSPEND,
+					 PROP_CAN_HIBERNATE,
 					 g_param_spec_boolean ("can-hibernate",
 							       "Can Hibernate",
 							       "Whether the system can hibernate",
@@ -340,6 +340,33 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 }
 
 /**
+ * dkp_daemon_check_state:
+ **/
+static gboolean
+dkp_daemon_check_state (DkpDaemon *daemon)
+{
+	gchar *contents = NULL;
+	GError *error = NULL;
+	gboolean ret;
+	const gchar *filename = "/sys/power/state";
+
+	/* see what kernel can do */
+	ret = g_file_get_contents (filename, &contents, NULL, &error);
+	if (!ret) {
+		egg_warning ("failed to open %s: %s", filename, error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* does the kernel advertise this */
+	daemon->priv->can_suspend = (g_strstr_len (contents, -1, "mem") != NULL);
+	daemon->priv->can_hibernate = (g_strstr_len (contents, -1, "disk") != NULL);
+out:
+	g_free (contents);
+	return ret;
+}
+
+/**
  * dkp_daemon_init:
  **/
 static void
@@ -349,6 +376,11 @@ dkp_daemon_init (DkpDaemon *daemon)
 	daemon->priv->polkit = dkp_polkit_new ();
 	daemon->priv->lid_is_present = FALSE;
 	daemon->priv->lid_is_closed = FALSE;
+	daemon->priv->can_suspend = FALSE;
+	daemon->priv->can_hibernate = FALSE;
+
+	/* check if we have support */
+	dkp_daemon_check_state (daemon);
 }
 
 /**
