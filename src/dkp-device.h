@@ -91,6 +91,7 @@ gboolean	 dkp_device_get_low_battery	(DkpDevice	*device,
 gboolean	 dkp_device_get_online		(DkpDevice	*device,
 						 gboolean	*online);
 void		 dkp_device_emit_changed	(DkpDevice	*device);
+gboolean	 dkp_device_refresh_internal	(DkpDevice	*device);
 
 /* exported methods */
 gboolean	 dkp_device_refresh		(DkpDevice		*device,

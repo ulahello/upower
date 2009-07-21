@@ -102,7 +102,10 @@ G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
 #define DKP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_DAEMON, DkpDaemonPrivate))
 
 /* if using more memory compared to usable swap, disable hibernate */
-#define DKP_DAEMON_SWAP_WATERLINE 	80.0f /* % */
+#define DKP_DAEMON_SWAP_WATERLINE 			80.0f /* % */
+
+/* refresh all the devices after this much time when on-battery has changed */
+#define DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY	3 /* seconds */
 
 /**
  * dkp_daemon_set_lid_is_closed:
@@ -617,6 +620,43 @@ out:
 }
 
 /**
+ * dkp_daemon_refresh_battery_devices:
+ **/
+static gboolean
+dkp_daemon_refresh_battery_devices (DkpDaemon *daemon)
+{
+	guint i;
+	const GPtrArray *array;
+	DkpDevice *device;
+	DkpDeviceType type;
+
+	/* refresh all devices in array */
+	array = dkp_device_list_get_array (daemon->priv->power_devices);
+	for (i=0; i<array->len; i++) {
+		device = (DkpDevice *) g_ptr_array_index (array, i);
+		/* only refresh battery devices */
+		g_object_get (device,
+			      "type", &type,
+			      NULL);
+		if (type == DKP_DEVICE_TYPE_BATTERY)
+			dkp_device_refresh_internal (device);
+	}
+
+	return TRUE;
+}
+
+/**
+ * dkp_daemon_refresh_battery_devices_cb:
+ **/
+static gboolean
+dkp_daemon_refresh_battery_devices_cb (DkpDaemon *daemon)
+{
+	egg_debug ("doing the delayed refresh");
+	dkp_daemon_refresh_battery_devices (daemon);
+	return FALSE;
+}
+
+/**
  * dkp_daemon_device_changed:
  **/
 static void
@@ -643,6 +683,13 @@ gpk_daemon_device_changed (DkpDaemon *daemon, GUdevDevice *d, gboolean synthesiz
 		daemon->priv->on_battery = ret;
 		egg_debug ("now on_battery = %s", ret ? "yes" : "no");
 		g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
+
+		/* refresh all the devices now */
+		dkp_daemon_refresh_battery_devices (daemon);
+
+		/* refresh again in a little while */
+		g_timeout_add_seconds (DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
+				       (GSourceFunc) dkp_daemon_refresh_battery_devices_cb, daemon);
 
 		/* set pm-utils power policy */
 		dkp_daemon_set_pmutils_powersave (daemon, daemon->priv->on_battery);
