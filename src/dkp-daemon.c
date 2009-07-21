@@ -24,6 +24,7 @@
 #endif
 
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib.h>
 #include <glib/gi18n-lib.h>
@@ -99,6 +100,9 @@ static gboolean	dkp_daemon_get_on_ac_local 	(DkpDaemon	*daemon);
 G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
 
 #define DKP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_DAEMON, DkpDaemonPrivate))
+
+/* if using more memory compared to usable swap, disable hibernate */
+#define DKP_DAEMON_SWAP_WATERLINE 	80.0f /* % */
 
 /**
  * dkp_daemon_set_lid_is_closed:
@@ -367,11 +371,63 @@ out:
 }
 
 /**
+ * dkp_daemon_check_swap:
+ **/
+static gfloat
+dkp_daemon_check_swap (DkpDaemon *daemon)
+{
+	gchar *contents = NULL;
+	gchar **lines = NULL;
+	GError *error = NULL;
+	gchar **tokens;
+	gboolean ret;
+	guint active = 0;
+	guint swap_free = 0;
+	guint len;
+	guint i;
+	gfloat percentage = 0.0f;
+	const gchar *filename = "/proc/meminfo";
+
+	/* get memory data */
+	ret = g_file_get_contents (filename, &contents, NULL, &error);
+	if (!ret) {
+		egg_warning ("failed to open %s: %s", filename, error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* process each line */
+	lines = g_strsplit (contents, "\n", -1);
+	for (i=1; lines[i] != NULL; i++) {
+		tokens = g_strsplit_set (lines[i], ": ", -1);
+		len = g_strv_length (tokens);
+		if (len > 3) {
+			if (g_strcmp0 (tokens[0], "SwapFree") == 0)
+				swap_free = atoi (tokens[len-2]);
+			else if (g_strcmp0 (tokens[0], "Active") == 0)
+				active = atoi (tokens[len-2]);
+		}
+		g_strfreev (tokens);
+	}
+
+	/* work out how close to the line we are */
+	if (swap_free > 0 && active > 0)
+		percentage = (active * 100) / swap_free;
+	egg_debug ("total swap available %i kb, active memory %i kb (%.1f%%)", swap_free, active, percentage);
+out:
+	g_free (contents);
+	g_strfreev (lines);
+	return percentage;
+}
+
+/**
  * dkp_daemon_init:
  **/
 static void
 dkp_daemon_init (DkpDaemon *daemon)
 {
+	gfloat waterline;
+
 	daemon->priv = DKP_DAEMON_GET_PRIVATE (daemon);
 	daemon->priv->polkit = dkp_polkit_new ();
 	daemon->priv->lid_is_present = FALSE;
@@ -381,6 +437,15 @@ dkp_daemon_init (DkpDaemon *daemon)
 
 	/* check if we have support */
 	dkp_daemon_check_state (daemon);
+
+	/* do we have enough swap? */
+	if (daemon->priv->can_hibernate) {
+		waterline = dkp_daemon_check_swap (daemon);
+		if (waterline > DKP_DAEMON_SWAP_WATERLINE) {
+			egg_debug ("not enough swap to enable hibernate");
+			daemon->priv->can_hibernate = FALSE;
+		}
+	}
 }
 
 /**
