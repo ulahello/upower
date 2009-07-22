@@ -107,6 +107,8 @@ G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
 /* refresh all the devices after this much time when on-battery has changed */
 #define DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY	3 /* seconds */
 
+static gboolean gpk_daemon_device_add (DkpDaemon *daemon, GUdevDevice *d, gboolean emit_event);
+
 /**
  * dkp_daemon_set_lid_is_closed:
  **/
