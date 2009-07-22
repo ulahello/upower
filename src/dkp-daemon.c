@@ -664,6 +664,7 @@ gpk_daemon_device_changed (DkpDaemon *daemon, GUdevDevice *d, gboolean synthesiz
 {
 	GObject *object;
 	DkpDevice *device;
+	DkpDeviceType type;
 	gboolean ret;
 
 	/* first, change the device and add it if it doesn't exist */
@@ -672,6 +673,18 @@ gpk_daemon_device_changed (DkpDaemon *daemon, GUdevDevice *d, gboolean synthesiz
 		device = DKP_DEVICE (object);
 		egg_debug ("changed %s", dkp_device_get_object_path (device));
 		dkp_device_changed (device, d, synthesized);
+
+		/* refresh battery devices when AC state changes */
+		g_object_get (device,
+			      "type", &type,
+			      NULL);
+		if (type == DKP_DEVICE_TYPE_LINE_POWER) {
+			/* refresh now, and again in a little while */
+			dkp_daemon_refresh_battery_devices (daemon);
+			g_timeout_add_seconds (DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
+					       (GSourceFunc) dkp_daemon_refresh_battery_devices_cb, daemon);
+		}
+
 	} else {
 		egg_debug ("treating change event as add on %s", g_udev_device_get_sysfs_path (d));
 		dkp_daemon_device_add (daemon, d, TRUE);
@@ -683,13 +696,6 @@ gpk_daemon_device_changed (DkpDaemon *daemon, GUdevDevice *d, gboolean synthesiz
 		daemon->priv->on_battery = ret;
 		egg_debug ("now on_battery = %s", ret ? "yes" : "no");
 		g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
-
-		/* refresh all the devices now */
-		dkp_daemon_refresh_battery_devices (daemon);
-
-		/* refresh again in a little while */
-		g_timeout_add_seconds (DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
-				       (GSourceFunc) dkp_daemon_refresh_battery_devices_cb, daemon);
 
 		/* set pm-utils power policy */
 		dkp_daemon_set_pmutils_powersave (daemon, daemon->priv->on_battery);
