@@ -86,8 +86,9 @@ struct DkpDaemonPrivate
 	GUdevClient		*gudev_client;
 	gboolean		 lid_is_closed;
 	gboolean		 lid_is_present;
-	gboolean		 can_suspend;
-	gboolean		 can_hibernate;
+	gboolean		 kernel_can_suspend;
+	gboolean		 kernel_can_hibernate;
+	gboolean		 kernel_has_swap_space;
 };
 
 static void	dkp_daemon_class_init		(DkpDaemonClass *klass);
@@ -212,11 +213,11 @@ dkp_daemon_get_property (GObject         *object,
 		break;
 
 	case PROP_CAN_SUSPEND:
-		g_value_set_boolean (value, daemon->priv->can_suspend);
+		g_value_set_boolean (value, daemon->priv->kernel_can_suspend);
 		break;
 
 	case PROP_CAN_HIBERNATE:
-		g_value_set_boolean (value, daemon->priv->can_hibernate);
+		g_value_set_boolean (value, (daemon->priv->kernel_can_hibernate && daemon->priv->kernel_has_swap_space));
 		break;
 
 	case PROP_ON_BATTERY:
@@ -369,8 +370,8 @@ dkp_daemon_check_state (DkpDaemon *daemon)
 	}
 
 	/* does the kernel advertise this */
-	daemon->priv->can_suspend = (g_strstr_len (contents, -1, "mem") != NULL);
-	daemon->priv->can_hibernate = (g_strstr_len (contents, -1, "disk") != NULL);
+	daemon->priv->kernel_can_suspend = (g_strstr_len (contents, -1, "mem") != NULL);
+	daemon->priv->kernel_can_hibernate = (g_strstr_len (contents, -1, "disk") != NULL);
 out:
 	g_free (contents);
 	return ret;
@@ -438,19 +439,20 @@ dkp_daemon_init (DkpDaemon *daemon)
 	daemon->priv->polkit = dkp_polkit_new ();
 	daemon->priv->lid_is_present = FALSE;
 	daemon->priv->lid_is_closed = FALSE;
-	daemon->priv->can_suspend = FALSE;
-	daemon->priv->can_hibernate = FALSE;
+	daemon->priv->kernel_can_suspend = FALSE;
+	daemon->priv->kernel_can_hibernate = FALSE;
+	daemon->priv->kernel_has_swap_space = FALSE;
 
 	/* check if we have support */
 	dkp_daemon_check_state (daemon);
 
 	/* do we have enough swap? */
-	if (daemon->priv->can_hibernate) {
+	if (daemon->priv->kernel_can_hibernate) {
 		waterline = dkp_daemon_check_swap (daemon);
-		if (waterline > DKP_DAEMON_SWAP_WATERLINE) {
+		if (waterline < DKP_DAEMON_SWAP_WATERLINE)
+			daemon->priv->kernel_has_swap_space = TRUE;
+		else
 			egg_debug ("not enough swap to enable hibernate");
-			daemon->priv->can_hibernate = FALSE;
-		}
 	}
 }
 
@@ -923,9 +925,19 @@ dkp_daemon_suspend (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	gboolean ret;
 	GError *error;
 	GError *error_local = NULL;
-	PolkitSubject *subject;
+	PolkitSubject *subject = NULL;
 	gchar *stdout = NULL;
 	gchar *stderr = NULL;
+
+	/* no kernel support */
+	if (!daemon->priv->kernel_can_suspend) {
+		error = g_error_new (DKP_DAEMON_ERROR,
+				     DKP_DAEMON_ERROR_GENERAL,
+				     "No kernel support");
+		g_error_free (error_local);
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
 
 	subject = dkp_polkit_get_subject (daemon->priv->polkit, context);
 	if (subject == NULL)
@@ -961,9 +973,29 @@ dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	gboolean ret;
 	GError *error;
 	GError *error_local = NULL;
-	PolkitSubject *subject;
+	PolkitSubject *subject = NULL;
 	gchar *stdout = NULL;
 	gchar *stderr = NULL;
+
+	/* no kernel support */
+	if (!daemon->priv->kernel_can_hibernate) {
+		error = g_error_new (DKP_DAEMON_ERROR,
+				     DKP_DAEMON_ERROR_GENERAL,
+				     "No kernel support");
+		g_error_free (error_local);
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
+	/* enough swap? */
+	if (!daemon->priv->kernel_has_swap_space) {
+		error = g_error_new (DKP_DAEMON_ERROR,
+				     DKP_DAEMON_ERROR_GENERAL,
+				     "Not enough swap space");
+		g_error_free (error_local);
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
 
 	subject = dkp_polkit_get_subject (daemon->priv->polkit, context);
 	if (subject == NULL)
