@@ -1,3 +1,25 @@
+Version 010
+~~~~~~~~~~~
+Released: 2009-07-22
+
+Note:
+ - The DBus interface of DeviceKit-power may be subject to change in future
+   versions of this daemon.
+ - This project now depends on GUdev and PolicyKit1
+
+New Features:
+ - Port to GUdev (Richard Hughes)
+ - Port to PolicyKit1 (Richard Hughes)
+
+Bugfixes:
+ - Add a notify flag to set_lid_is_closed to fix the initial state (Loïc Minier)
+ - Correct a description string from one of the new enums (Richard Hughes)
+ - Only guess the battery status if we have > 1 battery in the system (Richard Hughes)
+ - Use the global battery state as a metric for single battery machines (Richard Hughes)
+ - Query the kernel to decide if we have hibernate and suspend support (Richard Hughes)
+ - If we don't have enough swap available, don't advertise hibernate. Fixes rh#513015 (Richard Hughes)
+ - Force a refresh all battery devices when the ac-adaptor changes. Fixes rh#512995 (Richard Hughes)
+
 Version 009
 ~~~~~~~~~~~
 Released: 2009-07-06
