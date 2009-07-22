@@ -107,7 +107,8 @@ G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
 /* refresh all the devices after this much time when on-battery has changed */
 #define DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY	3 /* seconds */
 
-static gboolean gpk_daemon_device_add (DkpDaemon *daemon, GUdevDevice *d, gboolean emit_event);
+static gboolean dkp_daemon_device_add (DkpDaemon *daemon, GUdevDevice *d, gboolean emit_event);
+static void dkp_daemon_device_remove (DkpDaemon *daemon, GUdevDevice *d);
 
 /**
  * dkp_daemon_set_lid_is_closed:
@@ -483,9 +484,6 @@ dkp_daemon_finalize (GObject *object)
 	G_OBJECT_CLASS (dkp_daemon_parent_class)->finalize (object);
 }
 
-static gboolean gpk_daemon_device_add (DkpDaemon *daemon, GUdevDevice *d, gboolean emit_event);
-static void gpk_daemon_device_remove (DkpDaemon *daemon, GUdevDevice *d);
-
 /**
  * dkp_daemon_get_on_battery_local:
  *
@@ -662,7 +660,7 @@ dkp_daemon_refresh_battery_devices_cb (DkpDaemon *daemon)
  * dkp_daemon_device_changed:
  **/
 static void
-gpk_daemon_device_changed (DkpDaemon *daemon, GUdevDevice *d, gboolean synthesized)
+dkp_daemon_device_changed (DkpDaemon *daemon, GUdevDevice *d, gboolean synthesized)
 {
 	GObject *object;
 	DkpDevice *device;
@@ -724,7 +722,7 @@ dkp_daemon_device_went_away (gpointer user_data, GObject *device)
  * dkp_daemon_device_get:
  **/
 static DkpDevice *
-gpk_daemon_device_get (DkpDaemon *daemon, GUdevDevice *d)
+dkp_daemon_device_get (DkpDaemon *daemon, GUdevDevice *d)
 {
 	const gchar *subsys;
 	const gchar *native_path;
@@ -807,7 +805,7 @@ out:
  * dkp_daemon_device_add:
  **/
 static gboolean
-gpk_daemon_device_add (DkpDaemon *daemon, GUdevDevice *d, gboolean emit_event)
+dkp_daemon_device_add (DkpDaemon *daemon, GUdevDevice *d, gboolean emit_event)
 {
 	GObject *object;
 	DkpDevice *device;
@@ -847,7 +845,7 @@ out:
  * dkp_daemon_device_remove:
  **/
 static void
-gpk_daemon_device_remove (DkpDaemon *daemon, GUdevDevice *d)
+dkp_daemon_device_remove (DkpDaemon *daemon, GUdevDevice *d)
 {
 	GObject *object;
 	DkpDevice *device;
@@ -866,23 +864,23 @@ gpk_daemon_device_remove (DkpDaemon *daemon, GUdevDevice *d)
 }
 
 /**
- * gpk_daemon_uevent_signal_handler_cb:
+ * dkp_daemon_uevent_signal_handler_cb:
  **/
 static void
-gpk_daemon_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
+dkp_daemon_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 				     GUdevDevice *device, gpointer user_data)
 {
 	DkpDaemon *daemon = DKP_DAEMON (user_data);
 
 	if (g_strcmp0 (action, "add") == 0) {
 		egg_debug ("add %s", g_udev_device_get_sysfs_path (device));
-		gpk_daemon_device_add (daemon, device, TRUE);
+		dkp_daemon_device_add (daemon, device, TRUE);
 	} else if (g_strcmp0 (action, "remove") == 0) {
 		egg_debug ("remove %s", g_udev_device_get_sysfs_path (device));
-		gpk_daemon_device_remove (daemon, device);
+		dkp_daemon_device_remove (daemon, device);
 	} else if (g_strcmp0 (action, "change") == 0) {
 		egg_debug ("change %s", g_udev_device_get_sysfs_path (device));
-		gpk_daemon_device_changed (daemon, device, FALSE);
+		dkp_daemon_device_changed (daemon, device, FALSE);
 	} else {
 		egg_warning ("unhandled action '%s' on %s", action, g_udev_device_get_sysfs_path (device));
 	}
@@ -1035,7 +1033,7 @@ dkp_daemon_register_power_daemon (DkpDaemon *daemon)
 
 	daemon->priv->gudev_client = g_udev_client_new (subsystems);
 	g_signal_connect (daemon->priv->gudev_client, "uevent",
-			  G_CALLBACK (gpk_daemon_uevent_signal_handler_cb), daemon);
+			  G_CALLBACK (dkp_daemon_uevent_signal_handler_cb), daemon);
 
 	return TRUE;
 error:
@@ -1069,7 +1067,7 @@ dkp_daemon_new (void)
 		devices = g_udev_client_query_by_subsystem (daemon->priv->gudev_client, subsystems[i]);
 		for (l = devices; l != NULL; l = l->next) {
 			device = l->data;
-			gpk_daemon_device_add (daemon, device, FALSE);
+			dkp_daemon_device_add (daemon, device, FALSE);
 		}
 		g_list_foreach (devices, (GFunc) g_object_unref, NULL);
 		g_list_free (devices);
