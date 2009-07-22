@@ -1,8 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59c)
-AC_INIT(DeviceKit-power, 010, http://lists.freedesktop.org/mailman/listinfo/devkit-devel)
-AM_INIT_AUTOMAKE(DeviceKit-power, 010)
+AC_INIT(DeviceKit-power, 011, http://lists.freedesktop.org/mailman/listinfo/devkit-devel)
+AM_INIT_AUTOMAKE(DeviceKit-power, 011)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 
