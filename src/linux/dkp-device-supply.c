@@ -68,18 +68,15 @@ static gboolean
 dkp_device_supply_refresh_line_power (DkpDeviceSupply *supply)
 {
 	DkpDevice *device = DKP_DEVICE (supply);
-	GUdevDevice *d;
+	GUdevDevice *native;
 	const gchar *native_path;
-
-	d = dkp_device_get_native (device);
-	if (d == NULL)
-		egg_error ("could not get device");
 
 	/* force true */
 	g_object_set (device, "power-supply", TRUE, NULL);
 
 	/* get new AC value */
-	native_path = g_udev_device_get_sysfs_path (d);
+	native = G_UDEV_DEVICE (dkp_device_get_native (device));
+	native_path = g_udev_device_get_sysfs_path (native);
 	g_object_set (device, "online", sysfs_get_int (native_path, "online"), NULL);
 
 	return TRUE;
@@ -316,7 +313,7 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	DkpDeviceState state;
 	DkpDevice *device = DKP_DEVICE (supply);
 	const gchar *native_path;
-	GUdevDevice *d;
+	GUdevDevice *native;
 	gboolean is_present;
 	gdouble energy;
 	gdouble energy_full;
@@ -337,14 +334,8 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	gboolean on_battery;
 	guint battery_count;
 
-	d = dkp_device_get_native (device);
-	if (d == NULL) {
-		egg_warning ("could not get device");
-		ret = FALSE;
-		goto out;
-	}
-
-	native_path = g_udev_device_get_sysfs_path (d);
+	native = G_UDEV_DEVICE (dkp_device_get_native (device));
+	native_path = g_udev_device_get_sysfs_path (native);
 
 	/* have we just been removed? */
 	is_present = sysfs_get_bool (native_path, "present");
@@ -386,10 +377,10 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		serial_number = dkp_device_supply_get_string (native_path, "serial_number");
 
 		/* are we possibly recalled by the vendor? */
-		recall_notice = g_udev_device_has_property (d, "DKP_RECALL_NOTICE");
+		recall_notice = g_udev_device_has_property (native, "DKP_RECALL_NOTICE");
 		if (recall_notice) {
-			recall_vendor = g_udev_device_get_property (d, "DKP_RECALL_VENDOR");
-			recall_url = g_udev_device_get_property (d, "DKP_RECALL_URL");
+			recall_vendor = g_udev_device_get_property (native, "DKP_RECALL_VENDOR");
+			recall_url = g_udev_device_get_property (native, "DKP_RECALL_URL");
 		}
 
 		g_object_set (device,
@@ -532,7 +523,7 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	if (state == DKP_DEVICE_STATE_UNKNOWN) {
 
 		/* get global battery status */
-		daemon = dkp_device_get_nativeaemon (device);
+		daemon = dkp_device_get_daemon (device);
 		g_object_get (daemon,
 			      "on-battery", &on_battery,
 			      NULL);
@@ -634,17 +625,14 @@ dkp_device_supply_coldplug (DkpDevice *device)
 {
 	DkpDeviceSupply *supply = DKP_DEVICE_SUPPLY (device);
 	gboolean ret;
-	GUdevDevice *d;
+	GUdevDevice *native;
 	const gchar *native_path;
 
 	dkp_device_supply_reset_values (supply);
 
 	/* detect what kind of device we are */
-	d = dkp_device_get_native (device);
-	if (d == NULL)
-		egg_error ("could not get device");
-
-	native_path = g_udev_device_get_sysfs_path (d);
+	native = G_UDEV_DEVICE (dkp_device_get_native (device));
+	native_path = g_udev_device_get_sysfs_path (native);
 	if (native_path == NULL)
 		egg_error ("could not get native path");
 

@@ -170,7 +170,7 @@ AC_ARG_WITH([backend],
 			   [Default backend to use linux, dummy (dummy)]))
 # default to a sane option
 if test x$with_backend = x; then
-	if test -e /usr/include/libudev.h ; then
+	if test -e /usr/include/gudev-1.0/gudev/gudev.h ; then
 		with_backend=linux
 	else
 		with_backend=dummy
@@ -189,6 +189,10 @@ if test x$with_backend = xlinux; then
 	AC_CHECK_HEADERS(usb.h, , [AC_MSG_ERROR([Can't find usb.h. Please install libusb.])])
 	AC_CHECK_LIB([usb], [usb_find_devices], [], [AC_MSG_ERROR([Can't use libusb.])])
 fi
+
+# export to Makefile.am
+AM_CONDITIONAL(BACKEND_TYPE_DUMMY, [test x$with_backend = xdummy])
+AM_CONDITIONAL(BACKEND_TYPE_LINUX, [test x$with_backend = xlinux])
 
 if test "x$GCC" = "xyes"; then
   LDFLAGS="-Wl,--as-needed $LDFLAGS"

@@ -7,6 +7,7 @@ INCLUDES = \
 	-DEGG_LOGGING="\"DKP_LOGGING\""				\
 	-DEGG_CONSOLE="\"DKP_CONSOLE\""				\
 	-DDKP_COMPILATION					\
+	-DG_UDEV_API_IS_SUBJECT_TO_CHANGE			\
 	-I$(top_srcdir)/devkit-power-gobject			\
 	$(GIO_CFLAGS)						\
 	$(DBUS_GLIB_CFLAGS)					\

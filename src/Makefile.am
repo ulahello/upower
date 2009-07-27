@@ -1,5 +1,13 @@
 ## Process this file with automake to produce Makefile.in
 
+if BACKEND_TYPE_DUMMY
+SUBDIRS = dummy
+endif
+
+if BACKEND_TYPE_LINUX
+SUBDIRS = linux
+endif
+
 INCLUDES = \
 	-I$(top_builddir)/src -I$(top_srcdir)/src		\
 	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\"		\
@@ -19,7 +27,6 @@ INCLUDES = \
 	-DEGG_CONSOLE="\"DKP_CONSOLE\""				\
 	-I$(top_srcdir)/devkit-power-gobject			\
 	-I$(top_srcdir)						\
-	-I$(top_srcdir)/src/dummy -I$(top_builddir)/src/dummy	\
 	$(GIO_CFLAGS)						\
 	$(DBUS_GLIB_CFLAGS)					\
 	$(GUDEV_CFLAGS)						\
@@ -84,13 +91,22 @@ devkit_power_daemon_CPPFLAGS =					\
 
 devkit_power_daemon_LDADD =					\
 	-lm							\
-	dummy/libdkpshared.a					\
 	$(USB_LIBS)						\
 	$(GIO_LIBS)						\
 	$(DBUS_GLIB_LIBS)					\
 	$(POLKIT_LIBS)						\
-	$(DEVKIT_POWER_LIBS)					\
-	$(GUDEV_LIBS)
+	$(GUDEV_LIBS)						\
+	$(DEVKIT_POWER_LIBS)
+
+if BACKEND_TYPE_DUMMY
+devkit_power_daemon_LDADD += 					\
+	dummy/libdkpshared.a
+endif
+
+if BACKEND_TYPE_LINUX
+devkit_power_daemon_LDADD += 					\
+	linux/libdkpshared.a
+endif
 
 servicedir       = $(datadir)/dbus-1/system-services
 service_in_files = org.freedesktop.DeviceKit.Power.service.in

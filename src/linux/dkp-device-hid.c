@@ -308,24 +308,20 @@ static gboolean
 dkp_device_hid_coldplug (DkpDevice *device)
 {
 	DkpDeviceHid *hid = DKP_DEVICE_HID (device);
-	GUdevDevice *d;
+	GUdevDevice *native;
 	gboolean ret = FALSE;
 	const gchar *device_file;
 	const gchar *type;
 	const gchar *vendor;
 
 	/* detect what kind of device we are */
-	d = dkp_device_get_native (device);
-	if (d == NULL)
-		egg_error ("could not get device");
-
-	/* get the type */
-	type = g_udev_device_get_property (d, "DKP_BATTERY_TYPE");
+	native = G_UDEV_DEVICE (dkp_device_get_native (device));
+	type = g_udev_device_get_property (native, "DKP_BATTERY_TYPE");
 	if (type == NULL || g_strcmp0 (type, "ups") != 0)
 		goto out;
 
 	/* get the device file */
-	device_file = g_udev_device_get_device_file (d);
+	device_file = g_udev_device_get_device_file (native);
 	if (device_file == NULL) {
 		egg_debug ("could not get device file for HID device");
 		goto out;
@@ -347,9 +343,9 @@ dkp_device_hid_coldplug (DkpDevice *device)
 	}
 
 	/* prefer DKP names */
-	vendor = g_udev_device_get_property (d, "DKP_VENDOR");
+	vendor = g_udev_device_get_property (native, "DKP_VENDOR");
 	if (vendor == NULL)
-		vendor = g_udev_device_get_property (d, "ID_VENDOR");
+		vendor = g_udev_device_get_property (native, "ID_VENDOR");
 
 	/* hardcode some values */
 	g_object_set (device,

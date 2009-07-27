@@ -133,20 +133,16 @@ static gboolean
 dkp_device_csr_coldplug (DkpDevice *device)
 {
 	DkpDeviceCsr *csr = DKP_DEVICE_CSR (device);
-	GUdevDevice *d;
+	GUdevDevice *native;
 	gboolean ret = FALSE;
 	const gchar *type;
 	const gchar *native_path;
 	const gchar *vendor;
 	const gchar *product;
 
-	/* detect what kind of device we are */
-	d = dkp_device_get_native (device);
-	if (d == NULL)
-		egg_error ("could not get device");
-
 	/* get the type */
-	type = g_udev_device_get_property (d, "DKP_BATTERY_TYPE");
+	native = G_UDEV_DEVICE (dkp_device_get_native (device));
+	type = g_udev_device_get_property (native, "DKP_BATTERY_TYPE");
 	if (type == NULL)
 		goto out;
 
@@ -161,7 +157,7 @@ dkp_device_csr_coldplug (DkpDevice *device)
 	}
 
 	/* get what USB device we are */
-	native_path = g_udev_device_get_sysfs_path (d);
+	native_path = g_udev_device_get_sysfs_path (native);
 	csr->priv->bus_num = sysfs_get_int (native_path, "busnum");
 	csr->priv->dev_num = sysfs_get_int (native_path, "devnum");
 
@@ -179,18 +175,18 @@ dkp_device_csr_coldplug (DkpDevice *device)
 	}
 
 	/* get optional quirk parameters */
-	ret = g_udev_device_has_property (d, "DKP_CSR_DUAL");
+	ret = g_udev_device_has_property (native, "DKP_CSR_DUAL");
 	if (ret)
-		csr->priv->is_dual = g_udev_device_get_property_as_boolean (d, "DKP_CSR_DUAL");
+		csr->priv->is_dual = g_udev_device_get_property_as_boolean (native, "DKP_CSR_DUAL");
 	egg_debug ("is_dual=%i", csr->priv->is_dual);
 
 	/* prefer DKP names */
-	vendor = g_udev_device_get_property (d, "DKP_VENDOR");
+	vendor = g_udev_device_get_property (native, "DKP_VENDOR");
 	if (vendor == NULL)
-		vendor = g_udev_device_get_property (d, "ID_VENDOR");
-	product = g_udev_device_get_property (d, "DKP_PRODUCT");
+		vendor = g_udev_device_get_property (native, "ID_VENDOR");
+	product = g_udev_device_get_property (native, "DKP_PRODUCT");
 	if (product == NULL)
-		product = g_udev_device_get_property (d, "ID_PRODUCT");
+		product = g_udev_device_get_property (native, "ID_PRODUCT");
 
 	/* hardcode some values */
 	g_object_set (device,
