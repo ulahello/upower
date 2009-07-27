@@ -71,7 +71,7 @@ dkp_device_supply_refresh_line_power (DkpDeviceSupply *supply)
 	GUdevDevice *d;
 	const gchar *native_path;
 
-	d = dkp_device_get_d (device);
+	d = dkp_device_get_native (device);
 	if (d == NULL)
 		egg_error ("could not get device");
 
@@ -337,7 +337,7 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	gboolean on_battery;
 	guint battery_count;
 
-	d = dkp_device_get_d (device);
+	d = dkp_device_get_native (device);
 	if (d == NULL) {
 		egg_warning ("could not get device");
 		ret = FALSE;
@@ -532,7 +532,7 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	if (state == DKP_DEVICE_STATE_UNKNOWN) {
 
 		/* get global battery status */
-		daemon = dkp_device_get_daemon (device);
+		daemon = dkp_device_get_nativeaemon (device);
 		g_object_get (daemon,
 			      "on-battery", &on_battery,
 			      NULL);
@@ -640,7 +640,7 @@ dkp_device_supply_coldplug (DkpDevice *device)
 	dkp_device_supply_reset_values (supply);
 
 	/* detect what kind of device we are */
-	d = dkp_device_get_d (device);
+	d = dkp_device_get_native (device);
 	if (d == NULL)
 		egg_error ("could not get device");
 

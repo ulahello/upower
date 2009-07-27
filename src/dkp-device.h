@@ -23,7 +23,6 @@
 #define __DKP_DEVICE_H__
 
 #include <glib-object.h>
-#include <gudev/gudev.h>
 #include <polkit/polkit.h>
 #include <dbus/dbus-glib.h>
 
@@ -74,15 +73,16 @@ typedef enum
 GQuark		 dkp_device_error_quark		(void);
 GType		 dkp_device_error_get_type	(void);
 GType		 dkp_device_get_type		(void);
+DkpDevice	*dkp_device_new			(void);
 gboolean	 dkp_device_coldplug		(DkpDevice	*device,
 						 DkpDaemon	*daemon,
-						 GUdevDevice	*d);
+						 GObject	*native);
 DkpDaemon	*dkp_device_get_daemon		(DkpDevice	*device);
 gboolean	 dkp_device_changed	 	(DkpDevice	*device,
-						 GUdevDevice	*d,
+						 GObject	*native,
 						 gboolean	 synthesized);
 void		 dkp_device_removed	 	(DkpDevice	*device);
-GUdevDevice	*dkp_device_get_d		(DkpDevice	*device);
+GObject		*dkp_device_get_native		(DkpDevice	*device);
 const gchar	*dkp_device_get_object_path	(DkpDevice	*device);
 gboolean	 dkp_device_get_on_battery	(DkpDevice	*device,
 						 gboolean	*on_battery);

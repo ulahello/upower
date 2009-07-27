@@ -19,6 +19,7 @@ INCLUDES = \
 	-DEGG_CONSOLE="\"DKP_CONSOLE\""				\
 	-I$(top_srcdir)/devkit-power-gobject			\
 	-I$(top_srcdir)						\
+	-I$(top_srcdir)/src/dummy -I$(top_builddir)/src/dummy	\
 	$(GIO_CFLAGS)						\
 	$(DBUS_GLIB_CFLAGS)					\
 	$(GUDEV_CFLAGS)						\
@@ -69,15 +70,9 @@ devkit_power_daemon_SOURCES =					\
 	dkp-daemon.h			dkp-daemon.c		\
 	dkp-device.h			dkp-device.c		\
 	dkp-device-list.h		dkp-device-list.c	\
-	dkp-device-supply.h		dkp-device-supply.c	\
-	dkp-device-csr.h		dkp-device-csr.c	\
-	dkp-device-wup.h		dkp-device-wup.c	\
-	dkp-device-hid.h		dkp-device-hid.c	\
-	dkp-input.h			dkp-input.c		\
 	dkp-qos.h			dkp-qos.c		\
 	dkp-wakeups.h			dkp-wakeups.c		\
 	dkp-history.h			dkp-history.c		\
-	sysfs-utils.h			sysfs-utils.c		\
 	dkp-main.c						\
 	$(BUILT_SOURCES)
 
@@ -89,6 +84,7 @@ devkit_power_daemon_CPPFLAGS =					\
 
 devkit_power_daemon_LDADD =					\
 	-lm							\
+	dummy/libdkpshared.a					\
 	$(USB_LIBS)						\
 	$(GIO_LIBS)						\
 	$(DBUS_GLIB_LIBS)					\

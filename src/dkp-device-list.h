@@ -25,8 +25,6 @@
 #include <glib-object.h>
 #include <dkp-enum.h>
 
-#include "dkp-device.h"
-
 G_BEGIN_DECLS
 
 #define DKP_TYPE_DEVICE_LIST		(dkp_device_list_get_type ())
@@ -54,12 +52,12 @@ typedef struct
 GType		 dkp_device_list_get_type		(void);
 DkpDeviceList	*dkp_device_list_new			(void);
 GObject		*dkp_device_list_lookup			(DkpDeviceList		*list,
-							 GUdevDevice		*device);
+							 GObject		*native);
 gboolean	 dkp_device_list_insert			(DkpDeviceList		*list,
-							 GUdevDevice		*device,
-							 GObject		*object);
+							 GObject		*native,
+							 GObject		*device);
 gboolean	 dkp_device_list_remove			(DkpDeviceList		*list,
-							 GObject		*object);
+							 GObject		*device);
 const GPtrArray	*dkp_device_list_get_array		(DkpDeviceList		*list);
 
 G_END_DECLS

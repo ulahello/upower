@@ -31,12 +31,10 @@
 #include <glib-object.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
-#include <gudev/gudev.h>
 
-#include "sysfs-utils.h"
 #include "egg-debug.h"
 
-#include "dkp-device-supply.h"
+#include "dkp-native.h"
 #include "dkp-device.h"
 #include "dkp-history.h"
 #include "dkp-history-obj.h"
@@ -51,7 +49,7 @@ struct DkpDevicePrivate
 	DBusGProxy		*system_bus_proxy;
 	DkpDaemon		*daemon;
 	DkpHistory		*history;
-	GUdevDevice		*d;
+	GObject			*native;
 	gboolean		 has_ever_refresh;
 
 	/* properties */
@@ -278,10 +276,10 @@ dkp_device_set_property (GObject *object, guint prop_id, const GValue *value, GP
 	DkpDevice *device = DKP_DEVICE (object);
 
 	switch (prop_id) {
-//	case PROP_NATIVE_PATH:
-//		g_free (device->priv->native_path);
-//		device->priv->native_path = g_strdup (g_value_get_string (value));
-//		break;
+	case PROP_NATIVE_PATH:
+		g_free (device->priv->native_path);
+		device->priv->native_path = g_strdup (g_value_get_string (value));
+		break;
 	case PROP_VENDOR:
 		g_free (device->priv->vendor);
 		device->priv->vendor = g_strdup (g_value_get_string (value));
@@ -518,7 +516,7 @@ dkp_device_get_daemon (DkpDevice *device)
  * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 gboolean
-dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, GUdevDevice *d)
+dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, GObject *native)
 {
 	gboolean ret;
 	const gchar *native_path;
@@ -528,17 +526,19 @@ dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, GUdevDevice *d)
 	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 
 	/* save */
-	device->priv->d = g_object_ref (d);
+	device->priv->native = g_object_ref (native);
 	device->priv->daemon = g_object_ref (daemon);
 
-	native_path = g_udev_device_get_sysfs_path (d);
+	native_path = dkp_native_get_native_path (native);
 	device->priv->native_path = g_strdup (native_path);
 
 	/* coldplug source */
-	ret = klass->coldplug (device);
-	if (!ret) {
-		egg_debug ("failed to coldplug %p", device);
-		goto out;
+	if (klass->coldplug != NULL) {
+		ret = klass->coldplug (device);
+		if (!ret) {
+			egg_debug ("failed to coldplug %p", device);
+			goto out;
+		}
 	}
 
 	/* only put on the bus if we succeeded */
@@ -705,8 +705,12 @@ out:
 gboolean
 dkp_device_refresh_internal (DkpDevice *device)
 {
-	gboolean ret;
+	gboolean ret = FALSE;
 	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+
+	/* not implemented */
+	if (klass->refresh == NULL)
+		goto out;
 
 	/* do the refresh */
 	ret = klass->refresh (device);
@@ -747,14 +751,14 @@ dkp_device_refresh (DkpDevice *device, DBusGMethodInvocation *context)
  * dkp_device_changed:
  **/
 gboolean
-dkp_device_changed (DkpDevice *device, GUdevDevice *d, gboolean synthesized)
+dkp_device_changed (DkpDevice *device, GObject *native, gboolean emit_signal)
 {
 	gboolean ret;
 
 	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 
-	g_object_unref (device->priv->d);
-	device->priv->d = g_object_ref (d);
+	g_object_unref (device->priv->native);
+	device->priv->native = g_object_ref (native);
 
 	ret = dkp_device_refresh_internal (device);
 
@@ -778,11 +782,11 @@ dkp_device_get_object_path (DkpDevice *device)
 	return device->priv->object_path;
 }
 
-GUdevDevice *
-dkp_device_get_d (DkpDevice *device)
+GObject *
+dkp_device_get_native (DkpDevice *device)
 {
 	g_return_val_if_fail (DKP_IS_DEVICE (device), NULL);
-	return device->priv->d;
+	return device->priv->native;
 }
 
 /**
@@ -881,7 +885,7 @@ dkp_device_init (DkpDevice *device)
 	device->priv->system_bus_connection = NULL;
 	device->priv->system_bus_proxy = NULL;
 	device->priv->daemon = NULL;
-	device->priv->d = NULL;
+	device->priv->native = NULL;
 	device->priv->has_ever_refresh = FALSE;
 	device->priv->history = dkp_history_new ();
 
@@ -905,7 +909,7 @@ dkp_device_finalize (GObject *object)
 
 	device = DKP_DEVICE (object);
 	g_return_if_fail (device->priv != NULL);
-	g_object_unref (device->priv->d);
+	g_object_unref (device->priv->native);
 	g_object_unref (device->priv->daemon);
 	g_object_unref (device->priv->history);
 	g_free (device->priv->object_path);
@@ -1183,5 +1187,16 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      G_PARAM_READWRITE));
 
 	dbus_g_error_domain_register (DKP_DEVICE_ERROR, NULL, DKP_DEVICE_TYPE_ERROR);
+}
+
+/**
+ * dkp_device_new:
+ **/
+DkpDevice *
+dkp_device_new (void)
+{
+	DkpDevice *device;
+	device = DKP_DEVICE (g_object_new (DKP_TYPE_DEVICE, NULL));
+	return device;
 }
 

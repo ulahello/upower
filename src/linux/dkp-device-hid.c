@@ -315,7 +315,7 @@ dkp_device_hid_coldplug (DkpDevice *device)
 	const gchar *vendor;
 
 	/* detect what kind of device we are */
-	d = dkp_device_get_d (device);
+	d = dkp_device_get_native (device);
 	if (d == NULL)
 		egg_error ("could not get device");
 

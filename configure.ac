@@ -117,6 +117,7 @@ if test "x$GCC" = "xyes"; then
   *) CFLAGS="$CFLAGS -Wno-strict-aliasing" ;;
   esac
 
+
   if test "x$enable_ansi" = "xyes"; then
     case " $CFLAGS " in
     *[\ \	]-ansi[\ \	]*) ;;
@@ -141,10 +142,6 @@ if test "x$GCC" = "xyes"; then
   changequote([,])dnl
 fi
 
-PKG_CHECK_MODULES(GUDEV, [gudev-1.0 >= 001])
-AC_SUBST(GUDEV_CFLAGS)
-AC_SUBST(GUDEV_LIBS)
-
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.6.0])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
@@ -165,9 +162,33 @@ PKG_CHECK_MODULES(GIO, [gio-2.0 >= 2.16.1])
 AC_SUBST(GIO_CFLAGS)
 AC_SUBST(GIO_LIBS)
 
-dnl Check libusb
-AC_CHECK_HEADERS(usb.h, , [AC_MSG_ERROR([Can't find usb.h. Please install libusb.])])
-AC_CHECK_LIB([usb], [usb_find_devices], [], [AC_MSG_ERROR([Can't use libusb.])])
+dnl ---------------------------------------------------------------------------
+dnl - Compile time default choice of backend
+dnl ---------------------------------------------------------------------------
+AC_ARG_WITH([backend],
+	    AS_HELP_STRING([--with-backend=<option>],
+			   [Default backend to use linux, dummy (dummy)]))
+# default to a sane option
+if test x$with_backend = x; then
+	if test -e /usr/include/libudev.h ; then
+		with_backend=linux
+	else
+		with_backend=dummy
+	fi
+fi
+AC_DEFINE_UNQUOTED(BACKEND, "$with_backend", [backend])
+AC_SUBST(BACKEND, "$with_backend")
+
+# only need GUdev on linux
+if test x$with_backend = xlinux; then
+	PKG_CHECK_MODULES(GUDEV, [gudev-1.0 >= 001])
+	AC_SUBST(GUDEV_CFLAGS)
+	AC_SUBST(GUDEV_LIBS)
+
+	dnl Check libusb also
+	AC_CHECK_HEADERS(usb.h, , [AC_MSG_ERROR([Can't find usb.h. Please install libusb.])])
+	AC_CHECK_LIB([usb], [usb_find_devices], [], [AC_MSG_ERROR([Can't use libusb.])])
+fi
 
 if test "x$GCC" = "xyes"; then
   LDFLAGS="-Wl,--as-needed $LDFLAGS"
@@ -183,6 +204,8 @@ AC_OUTPUT([
 Makefile
 devkit-power-gobject.pc
 src/Makefile
+src/dummy/Makefile
+src/linux/Makefile
 tools/Makefile
 doc/Makefile
 doc/version.xml
@@ -215,6 +238,7 @@ echo "
         cppflags:                   ${CPPFLAGS}
         xsltproc:                   ${XSLTPROC}
 
+        Backend:                    ${with_backend}
         Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building api docs:          ${enable_gtk_doc}
         Building man pages:         ${enable_man_pages}

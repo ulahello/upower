@@ -308,7 +308,7 @@ dkp_device_wup_coldplug (DkpDevice *device)
 	const gchar *product;
 
 	/* detect what kind of device we are */
-	d = dkp_device_get_d (device);
+	d = dkp_device_get_native (device);
 	if (d == NULL)
 		egg_error ("could not get device");
 
