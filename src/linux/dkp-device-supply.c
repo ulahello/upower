@@ -50,6 +50,7 @@ struct DkpDeviceSupplyPrivate
 	gdouble			 energy_old;
 	GTimeVal		 energy_old_timespec;
 	guint			 unknown_retries;
+	gboolean		 enable_poll;
 };
 
 static void	dkp_device_supply_class_init	(DkpDeviceSupplyClass	*klass);
@@ -459,6 +460,10 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		state = DKP_DEVICE_STATE_UNKNOWN;
 	}
 
+	/* only disable the polling if the kernel tells us we're fully charged,
+	   not if we've guessed the state to be fully charged */
+	supply->priv->enable_poll = (state != DKP_DEVICE_STATE_FULLY_CHARGED);
+
 	/* reset unknown counter */
 	if (state != DKP_DEVICE_STATE_UNKNOWN) {
 		egg_debug ("resetting unknown timeout after %i retries", supply->priv->unknown_retries);
@@ -660,8 +665,8 @@ dkp_device_supply_setup_poll (DkpDevice *device)
 
 	g_object_get (device, "state", &state, NULL);
 
-	/* if it's fully charged, don't poll at all */
-	if (state == DKP_DEVICE_STATE_FULLY_CHARGED)
+	/* don't setup the poll only if we're sure */
+	if (!supply->priv->enable_poll)
 		goto out;
 
 	/* if it's unknown, poll faster than we would normally */
@@ -731,6 +736,7 @@ dkp_device_supply_init (DkpDeviceSupply *supply)
 	supply->priv = DKP_DEVICE_SUPPLY_GET_PRIVATE (supply);
 	supply->priv->unknown_retries = 0;
 	supply->priv->poll_timer_id = 0;
+	supply->priv->enable_poll = TRUE;
 }
 
 /**
