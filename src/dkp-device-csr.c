@@ -28,6 +28,7 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <glib/gprintf.h>
 #include <glib/gi18n-lib.h>
 #include <glib-object.h>
 #include <gudev/gudev.h>
@@ -101,13 +102,13 @@ dkp_device_csr_find_device (DkpDeviceCsr *csr)
 
 	for (curr_bus = usb_busses; curr_bus != NULL; curr_bus = curr_bus->next) {
 		/* egg_debug ("Checking bus: [%s]", curr_bus->dirname); */
-		if (g_strcasecmp (dir_name, curr_bus->dirname))
+		if (g_ascii_strcasecmp (dir_name, curr_bus->dirname))
 			continue;
 
 		for (curr_device = curr_bus->devices; curr_device != NULL;
 		     curr_device = curr_device->next) {
 			/* egg_debug ("Checking port: [%s]", curr_device->filename); */
-			if (g_strcasecmp (filename, curr_device->filename))
+			if (g_ascii_strcasecmp (filename, curr_device->filename))
 				continue;
 			egg_debug ("Matched device: [%s][%s][%04X:%04X]", curr_bus->dirname,
 				curr_device->filename,

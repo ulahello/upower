@@ -28,6 +28,7 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <glib/gprintf.h>
 #include <glib/gi18n-lib.h>
 #include <glib-object.h>
 #include <gudev/gudev.h>
@@ -259,19 +260,19 @@ dkp_device_supply_convert_device_technology (const gchar *type)
 	if (type == NULL)
 		return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
 	/* every case combination of Li-Ion is commonly used.. */
-	if (strcasecmp (type, "li-ion") == 0 ||
-	    strcasecmp (type, "lion") == 0)
+	if (g_ascii_strcasecmp (type, "li-ion") == 0 ||
+	    g_ascii_strcasecmp (type, "lion") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LITHIUM_ION;
-	if (strcasecmp (type, "pb") == 0 ||
-	    strcasecmp (type, "pbac") == 0)
+	if (g_ascii_strcasecmp (type, "pb") == 0 ||
+	    g_ascii_strcasecmp (type, "pbac") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LEAD_ACID;
-	if (strcasecmp (type, "lip") == 0 ||
-	    strcasecmp (type, "lipo") == 0 ||
-	    strcasecmp (type, "li-poly") == 0)
+	if (g_ascii_strcasecmp (type, "lip") == 0 ||
+	    g_ascii_strcasecmp (type, "lipo") == 0 ||
+	    g_ascii_strcasecmp (type, "li-poly") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LITHIUM_POLYMER;
-	if (strcasecmp (type, "nimh") == 0)
+	if (g_ascii_strcasecmp (type, "nimh") == 0)
 		return DKP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE;
-	if (strcasecmp (type, "lifo") == 0)
+	if (g_ascii_strcasecmp (type, "lifo") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LITHIUM_IRON_PHOSPHATE;
 	return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
 }
@@ -454,15 +455,15 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	}
 
 	status = g_strstrip (sysfs_get_string (native_path, "status"));
-	if (strcasecmp (status, "charging") == 0)
+	if (g_ascii_strcasecmp (status, "charging") == 0)
 		state = DKP_DEVICE_STATE_CHARGING;
-	else if (strcasecmp (status, "discharging") == 0)
+	else if (g_ascii_strcasecmp (status, "discharging") == 0)
 		state = DKP_DEVICE_STATE_DISCHARGING;
-	else if (strcasecmp (status, "full") == 0)
+	else if (g_ascii_strcasecmp (status, "full") == 0)
 		state = DKP_DEVICE_STATE_FULLY_CHARGED;
-	else if (strcasecmp (status, "empty") == 0)
+	else if (g_ascii_strcasecmp (status, "empty") == 0)
 		state = DKP_DEVICE_STATE_EMPTY;
-	else if (strcasecmp (status, "unknown") == 0)
+	else if (g_ascii_strcasecmp (status, "unknown") == 0)
 		state = DKP_DEVICE_STATE_UNKNOWN;
 	else {
 		egg_warning ("unknown status string: %s", status);

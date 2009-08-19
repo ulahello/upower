@@ -30,6 +30,7 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <glib/gprintf.h>
 #include <glib/gi18n-lib.h>
 #include <glib-object.h>
 #include <gudev/gudev.h>
@@ -173,8 +174,8 @@ dkp_device_hid_convert_device_technology (const gchar *type)
 {
 	if (type == NULL)
 		return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
-	if (strcasecmp (type, "pb") == 0 ||
-	    strcasecmp (type, "pbac") == 0)
+	if (g_ascii_strcasecmp (type, "pb") == 0 ||
+	    g_ascii_strcasecmp (type, "pbac") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LEAD_ACID;
 	return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
 }
