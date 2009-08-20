@@ -91,8 +91,6 @@ struct DkpDaemonPrivate
 	gboolean		 kernel_has_swap_space;
 };
 
-static void	dkp_daemon_class_init		(DkpDaemonClass *klass);
-static void	dkp_daemon_init			(DkpDaemon	*seat);
 static void	dkp_daemon_finalize		(GObject	*object);
 static gboolean	dkp_daemon_get_on_battery_local	(DkpDaemon	*daemon);
 static gboolean	dkp_daemon_get_low_battery_local (DkpDaemon	*daemon);

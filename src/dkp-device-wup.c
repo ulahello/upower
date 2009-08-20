@@ -74,8 +74,6 @@ struct DkpDeviceWupPrivate
 	int			 fd;
 };
 
-static void	dkp_device_wup_class_init	(DkpDeviceWupClass	*klass);
-
 G_DEFINE_TYPE (DkpDeviceWup, dkp_device_wup, DKP_TYPE_DEVICE)
 #define DKP_DEVICE_WUP_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_WUP, DkpDeviceWupPrivate))
 
@@ -397,7 +395,7 @@ static gboolean
 dkp_device_wup_refresh (DkpDevice *device)
 {
 	gboolean ret = FALSE;
-	GTimeVal time;
+	GTimeVal timeval;
 	gchar *data = NULL;
 	DkpDeviceWup *wup = DKP_DEVICE_WUP (device);
 
@@ -416,8 +414,8 @@ dkp_device_wup_refresh (DkpDevice *device)
 	}
 
 	/* reset time */
-	g_get_current_time (&time);
-	g_object_set (device, "update-time", (guint64) time.tv_sec, NULL);
+	g_get_current_time (&timeval);
+	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
 
 out:
 	g_free (data);

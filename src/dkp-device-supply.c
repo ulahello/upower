@@ -54,8 +54,6 @@ struct DkpDeviceSupplyPrivate
 	gboolean		 enable_poll;
 };
 
-static void	dkp_device_supply_class_init	(DkpDeviceSupplyClass	*klass);
-
 G_DEFINE_TYPE (DkpDeviceSupply, dkp_device_supply, DKP_TYPE_DEVICE)
 #define DKP_DEVICE_SUPPLY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_SUPPLY, DkpDeviceSupplyPrivate))
 
@@ -217,7 +215,7 @@ dkp_device_supply_get_online (DkpDevice *device, gboolean *online)
 static void
 dkp_device_supply_calculate_rate (DkpDeviceSupply *supply)
 {
-	guint time;
+	guint time_s;
 	gdouble energy;
 	gdouble energy_rate;
 	GTimeVal now;
@@ -236,9 +234,9 @@ dkp_device_supply_calculate_rate (DkpDeviceSupply *supply)
 
 	/* get the time difference */
 	g_get_current_time (&now);
-	time = now.tv_sec - supply->priv->energy_old_timespec.tv_sec;
+	time_s = now.tv_sec - supply->priv->energy_old_timespec.tv_sec;
 
-	if (time == 0)
+	if (time_s == 0)
 		return;
 
 	/* get the difference in charge */
@@ -247,7 +245,7 @@ dkp_device_supply_calculate_rate (DkpDeviceSupply *supply)
 		return;
 
 	/* probably okay */
-	energy_rate = energy * 3600 / time;
+	energy_rate = energy * 3600 / time_s;
 	g_object_set (device, "energy-rate", energy_rate, NULL);
 }
 
@@ -710,7 +708,7 @@ static gboolean
 dkp_device_supply_refresh (DkpDevice *device)
 {
 	gboolean ret;
-	GTimeVal time;
+	GTimeVal timeval;
 	DkpDeviceSupply *supply = DKP_DEVICE_SUPPLY (device);
 	DkpDeviceType type;
 
@@ -719,8 +717,8 @@ dkp_device_supply_refresh (DkpDevice *device)
 		supply->priv->poll_timer_id = 0;
 	}
 
-	g_get_current_time (&time);
-	g_object_set (device, "update-time", (guint64) time.tv_sec, NULL);
+	g_get_current_time (&timeval);
+	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
 	g_object_get (device, "type", &type, NULL);
 	switch (type) {
 	case DKP_DEVICE_TYPE_LINE_POWER:

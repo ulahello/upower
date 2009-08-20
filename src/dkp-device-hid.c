@@ -91,8 +91,6 @@ struct DkpDeviceHidPrivate
 	int			 fd;
 };
 
-static void	dkp_device_hid_class_init	(DkpDeviceHidClass	*klass);
-
 G_DEFINE_TYPE (DkpDeviceHid, dkp_device_hid, DKP_TYPE_DEVICE)
 #define DKP_DEVICE_HID_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_HID, DkpDeviceHidPrivate))
 
@@ -386,15 +384,15 @@ dkp_device_hid_refresh (DkpDevice *device)
 {
 	gboolean set = FALSE;
 	gboolean ret = FALSE;
-	GTimeVal time;
+	GTimeVal timeval;
 	guint i;
 	struct hiddev_event ev[64];
 	int rd;
 	DkpDeviceHid *hid = DKP_DEVICE_HID (device);
 
 	/* reset time */
-	g_get_current_time (&time);
-	g_object_set (device, "update-time", (guint64) time.tv_sec, NULL);
+	g_get_current_time (&timeval);
+	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
 
 	/* read any data */
 	rd = read (hid->priv->fd, ev, sizeof (ev));

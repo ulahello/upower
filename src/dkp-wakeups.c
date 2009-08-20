@@ -35,8 +35,6 @@
 #include "dkp-wakeups-glue.h"
 #include "dkp-wakeups-obj.h"
 
-static void     dkp_wakeups_class_init (DkpWakeupsClass *klass);
-static void     dkp_wakeups_init       (DkpWakeups      *wakeups);
 static void     dkp_wakeups_finalize   (GObject		*object);
 static gboolean	dkp_wakeups_timerstats_enable (DkpWakeups *wakeups);
 

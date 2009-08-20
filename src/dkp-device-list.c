@@ -29,8 +29,6 @@
 
 #include "dkp-device-list.h"
 
-static void	dkp_device_list_class_init	(DkpDeviceListClass	*klass);
-static void	dkp_device_list_init		(DkpDeviceList		*list);
 static void	dkp_device_list_finalize	(GObject		*object);
 
 #define DKP_DEVICE_LIST_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_DEVICE_LIST, DkpDeviceListPrivate))

@@ -41,8 +41,6 @@
 #include "dkp-qos-obj.h"
 #include "dkp-qos-glue.h"
 
-static void     dkp_qos_class_init (DkpQosClass *klass);
-static void     dkp_qos_init       (DkpQos      *qos);
 static void     dkp_qos_finalize   (GObject	*object);
 
 #define DKP_QOS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_QOS, DkpQosPrivate))
@@ -566,11 +564,11 @@ dkp_qos_init (DkpQos *qos)
 	/* TODO: need to load persistent values */
 
 	/* setup lowest */
-	for (i=0; i<DKP_QOS_TYPE_UNKNOWN; i++)
+	for (i=0; i<DKP_QOS_TYPE_LAST; i++)
 		qos->priv->last[i] = dkp_qos_get_lowest (qos, i);
 
 	/* setup minimum */
-	for (i=0; i<DKP_QOS_TYPE_UNKNOWN; i++)
+	for (i=0; i<DKP_QOS_TYPE_LAST; i++)
 		qos->priv->minimum[i] = -1;
 
 	qos->priv->fd[DKP_QOS_TYPE_CPU_DMA] = open ("/dev/cpu_dma_latency", O_WRONLY);
@@ -615,7 +613,7 @@ dkp_qos_finalize (GObject *object)
 	qos->priv = DKP_QOS_GET_PRIVATE (qos);
 
 	/* close files */
-	for (i=0; i<DKP_QOS_TYPE_UNKNOWN; i++) {
+	for (i=0; i<DKP_QOS_TYPE_LAST; i++) {
 		if (qos->priv->fd[i] > 0)
 			close (qos->priv->fd[i]);
 	}
