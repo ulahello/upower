@@ -535,6 +535,7 @@ dkp_daemon_startup (DkpDaemon *daemon)
 	}
 
 	/* stop signals and callbacks */
+	egg_debug ("daemon now coldplug");
 	g_object_freeze_notify (G_OBJECT(daemon));
 	daemon->priv->during_coldplug = TRUE;
 
@@ -557,6 +558,7 @@ dkp_daemon_startup (DkpDaemon *daemon)
 	/* start signals and callbacks */
 	g_object_thaw_notify (G_OBJECT(daemon));
 	daemon->priv->during_coldplug = FALSE;
+	egg_debug ("daemon now not coldplug");
 
 	/* set pm-utils power policy */
 	dkp_daemon_set_pmutils_powersave (daemon, daemon->priv->on_battery);

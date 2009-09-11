@@ -51,6 +51,7 @@ struct DkpDevicePrivate
 	DkpHistory		*history;
 	GObject			*native;
 	gboolean		 has_ever_refresh;
+	gboolean		 during_coldplug;
 
 	/* properties */
 	guint64			 update_time;
@@ -542,6 +543,11 @@ dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, GObject *native)
 	native_path = dkp_native_get_native_path (native);
 	device->priv->native_path = g_strdup (native_path);
 
+	/* stop signals and callbacks */
+	egg_debug ("device now coldplug");
+	g_object_freeze_notify (G_OBJECT(device));
+	device->priv->during_coldplug = TRUE;
+
 	/* coldplug source */
 	if (klass->coldplug != NULL) {
 		ret = klass->coldplug (device);
@@ -576,6 +582,10 @@ dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, GObject *native)
 	g_free (id);
 
 out:
+	/* start signals and callbacks */
+	g_object_thaw_notify (G_OBJECT(device));
+	device->priv->during_coldplug = FALSE;
+	egg_debug ("device now not coldplug");
 	return ret;
 }
 
@@ -835,6 +845,10 @@ dkp_device_perhaps_changed_cb (GObject *object, GParamSpec *pspec, DkpDevice *de
 {
 	g_return_if_fail (DKP_IS_DEVICE (device));
 
+	/* don't proxy during coldplug */
+	if (device->priv->during_coldplug)
+		return;
+
 	/* save new history */
 	dkp_history_set_state (device->priv->history, device->priv->state);
 	dkp_history_set_charge_data (device->priv->history, device->priv->percentage);
@@ -869,6 +883,7 @@ dkp_device_init (DkpDevice *device)
 	device->priv->daemon = NULL;
 	device->priv->native = NULL;
 	device->priv->has_ever_refresh = FALSE;
+	device->priv->during_coldplug = FALSE;
 	device->priv->history = dkp_history_new ();
 
 	device->priv->system_bus_connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
