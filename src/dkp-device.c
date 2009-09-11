@@ -711,8 +711,7 @@ dkp_device_get_history (DkpDevice *device, const gchar *type_string, guint times
 	dbus_g_method_return (context, complex);
 out:
 	if (array != NULL) {
-		g_ptr_array_foreach (array, (GFunc) dkp_history_obj_free, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 	}
 	return TRUE;
 }

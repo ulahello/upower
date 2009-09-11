@@ -354,7 +354,7 @@ dkp_daemon_enumerate_devices (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	DkpDevice *device;
 
 	/* build a pointer array of the object paths */
-	object_paths = g_ptr_array_new ();
+	object_paths = g_ptr_array_new_with_free_func (g_free);
 	array = dkp_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
 		device = (DkpDevice *) g_ptr_array_index (array, i);
@@ -366,8 +366,7 @@ dkp_daemon_enumerate_devices (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	dbus_g_method_return (context, object_paths);
 
 	/* free */
-	g_ptr_array_foreach (object_paths, (GFunc) g_free, NULL);
-	g_ptr_array_free (object_paths, TRUE);
+	g_ptr_array_unref (object_paths);
 	return TRUE;
 }
 

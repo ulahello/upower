@@ -479,7 +479,7 @@ dkp_qos_get_latency_requests (DkpQos *qos, GPtrArray **requests, GError **error)
 
 //	dbus_g_method_return (context, requests);
 //	g_ptr_array_foreach (*requests, (GFunc) g_value_array_free, NULL);
-//	g_ptr_array_free (*requests, TRUE);
+//	g_ptr_array_unref (*requests);
 
 	return TRUE;
 }

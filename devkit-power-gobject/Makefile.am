@@ -55,6 +55,10 @@ libdevkit_power_gobject_la_LDFLAGS =				\
 	-no-undefined						\
 	-export-symbols-regex '^dkp_.*'
 
+libdevkit_power_gobject_la_CFLAGS =				\
+	$(WARNINGFLAGS_C)					\
+	$(NULL)
+
 EXTRA_DIST =							\
 	dkp-version.h.in
 

@@ -336,8 +336,7 @@ dkp_device_print_history (const DkpDevice *device, const gchar *type)
 		obj = (const DkpHistoryObj *) g_ptr_array_index (array, i);
 		g_print ("    %i\t%.3f\t%s\n", obj->time, obj->value, dkp_device_state_to_text (obj->state));
 	}
-	g_ptr_array_foreach (array, (GFunc) dkp_history_obj_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 	ret = TRUE;
 out:
 	return ret;
@@ -506,7 +505,7 @@ out:
 /**
  * dkp_device_get_history:
  *
- * Returns an array of %DkpHistoryObj's
+ * Returns an array of %DkpHistoryObj's, free with g_ptr_array_unref()
  **/
 GPtrArray *
 dkp_device_get_history (const DkpDevice *device, const gchar *type, guint timespec, guint resolution, GError **error)
@@ -555,7 +554,7 @@ dkp_device_get_history (const DkpDevice *device, const gchar *type, guint timesp
 	}
 
 	/* convert */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_history_obj_free);
 
 	for (i=0; i<gvalue_ptr_array->len; i++) {
 		gva = (GValueArray *) g_ptr_array_index (gvalue_ptr_array, i);

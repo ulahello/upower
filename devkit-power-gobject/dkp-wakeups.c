@@ -163,7 +163,7 @@ dkp_wakeups_get_data (DkpWakeups *wakeups, GError **error)
 	}
 out:
 	if (gvalue_ptr_array != NULL)
-		g_ptr_array_free (gvalue_ptr_array, TRUE);
+		g_ptr_array_unref (gvalue_ptr_array);
 	return array;
 }
 

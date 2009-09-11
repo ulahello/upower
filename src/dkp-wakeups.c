@@ -233,7 +233,7 @@ dkp_wakeups_get_data (DkpWakeups *wakeups, GPtrArray **data, GError **error)
 
 //	dbus_g_method_return (context, data);
 //	g_ptr_array_foreach (*data, (GFunc) g_value_array_free, NULL);
-//	g_ptr_array_free (*data, TRUE);
+//	g_ptr_array_unref (*data);
 
 	return TRUE;
 }
@@ -267,7 +267,7 @@ dkp_strsplit_complete_set (const gchar *string, const gchar *delimiters, guint m
 	GPtrArray *array;
 
 	/* find sections not delimited by space */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func (g_free);
 	for (i=0; string[i] != '\0'; i++) {
 		ret = dkp_is_in (string[i], delimiters);
 		if (ret) {
@@ -366,8 +366,7 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 	/* find out how many processors we have */
 	sections = dkp_strsplit_complete_set (lines[0], " ", 0);
 	cpus = sections->len;
-	g_ptr_array_foreach (sections, (GFunc) g_free, NULL);
-	g_ptr_array_free (sections, TRUE);
+	g_ptr_array_unref (sections);
 
 	/* get the data from " 9:      29730        365   IO-APIC-fasteoi   acpi" */
 	for (i=1; lines[i] != NULL; i++) {
@@ -440,8 +439,7 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 			obj->value = (interrupts - obj->old) / (gfloat) DKP_WAKEUPS_POLL_INTERVAL_KERNEL;
 		obj->old = interrupts;
 skip:
-		g_ptr_array_foreach (sections, (GFunc) g_free, NULL);
-		g_ptr_array_free (sections, TRUE);
+		g_ptr_array_unref (sections);
 	}
 
 	/* tell GUI we've changed */
@@ -557,8 +555,7 @@ dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
 		/* we report this in minutes, not seconds */
 		obj->value = (gfloat) interrupts / interval;
 skip:
-		g_ptr_array_foreach (sections, (GFunc) g_free, NULL);
-		g_ptr_array_free (sections, TRUE);
+		g_ptr_array_unref (sections);
 
 	}
 
@@ -720,7 +717,7 @@ dkp_wakeups_init (DkpWakeups *wakeups)
 	GError *error = NULL;
 
 	wakeups->priv = DKP_WAKEUPS_GET_PRIVATE (wakeups);
-	wakeups->priv->data = g_ptr_array_new ();
+	wakeups->priv->data = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_wakeups_obj_free);
 	wakeups->priv->total_old = 0;
 	wakeups->priv->total_ave = 0;
 	wakeups->priv->poll_userspace_id = 0;
@@ -762,8 +759,7 @@ dkp_wakeups_finalize (GObject *object)
 	/* stop timerstats */
 	dkp_wakeups_timerstats_disable (wakeups);
 
-	g_ptr_array_foreach (wakeups->priv->data, (GFunc) dkp_wakeups_obj_free, NULL);
-	g_ptr_array_free (wakeups->priv->data, TRUE);
+	g_ptr_array_unref (wakeups->priv->data);
 
 	G_OBJECT_CLASS (dkp_wakeups_parent_class)->finalize (object);
 }

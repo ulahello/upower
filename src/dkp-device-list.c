@@ -182,7 +182,7 @@ dkp_device_list_finalize (GObject *object)
 
 	list = DKP_DEVICE_LIST (object);
 
-	g_ptr_array_free (list->priv->array, TRUE);
+	g_ptr_array_unref (list->priv->array);
 	g_hash_table_unref (list->priv->map_native_path_to_device);
 
 	G_OBJECT_CLASS (dkp_device_list_parent_class)->finalize (object);
