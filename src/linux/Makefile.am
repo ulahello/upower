@@ -15,8 +15,11 @@ INCLUDES = \
 	$(POLKIT_CFLAGS)					\
 	$(GLIB_CFLAGS)
 
-noinst_LIBRARIES = libdkpshared.a
-libdkpshared_a_SOURCES =					\
+if BACKEND_TYPE_LINUX
+noinst_LTLIBRARIES = libdkpshared.la
+endif
+
+libdkpshared_la_SOURCES =					\
 	dkp-device-supply.c					\
 	dkp-device-supply.h					\
 	dkp-device-csr.c					\

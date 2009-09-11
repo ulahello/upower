@@ -1,12 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-if BACKEND_TYPE_DUMMY
-SUBDIRS = dummy
-endif
-
-if BACKEND_TYPE_LINUX
-SUBDIRS = linux
-endif
+SUBDIRS = dummy linux
 
 INCLUDES = \
 	-I$(top_builddir)/src -I$(top_srcdir)/src		\
@@ -94,18 +88,18 @@ devkit_power_daemon_LDADD =					\
 	$(USB_LIBS)						\
 	$(GIO_LIBS)						\
 	$(DBUS_GLIB_LIBS)					\
-	$(POLKIT_LIBS)						\
-	$(GUDEV_LIBS)						\
-	$(DEVKIT_POWER_LIBS)
+	$(POLKIT_LIBS)
 
 if BACKEND_TYPE_DUMMY
 devkit_power_daemon_LDADD += 					\
-	dummy/libdkpshared.a
+	dummy/libdkpshared.la
 endif
 
 if BACKEND_TYPE_LINUX
 devkit_power_daemon_LDADD += 					\
-	linux/libdkpshared.a
+	linux/libdkpshared.la					\
+	$(GUDEV_LIBS)						\
+	$(DEVKIT_POWER_LIBS)
 endif
 
 devkit_power_daemon_CFLAGS =					\
