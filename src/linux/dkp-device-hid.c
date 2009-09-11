@@ -137,8 +137,8 @@ dkp_device_hid_poll (DkpDeviceHid *hid)
 
 	egg_debug ("Polling: %s", dkp_device_get_object_path (device));
 	ret = dkp_device_hid_refresh (device);
-	if (ret)
-		dkp_device_emit_changed (device);
+
+	/* always continue polling */
 	return TRUE;
 }
 

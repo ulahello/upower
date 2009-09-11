@@ -620,7 +620,8 @@ dkp_qos_finalize (GObject *object)
 	g_ptr_array_foreach (qos->priv->data, (GFunc) dkp_qos_free_data_obj, NULL);
 	g_ptr_array_free (qos->priv->data, TRUE);
 	g_object_unref (qos->priv->proxy);
-	g_object_unref (qos->priv->polkit);
+//FIXME: causes bt
+//	g_object_unref (qos->priv->polkit);
 
 	G_OBJECT_CLASS (dkp_qos_parent_class)->finalize (object);
 }

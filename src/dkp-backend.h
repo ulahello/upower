@@ -52,12 +52,10 @@ typedef struct
 	GObjectClass	 parent_class;
 	void		(* device_added)	(DkpBackend	*backend,
 						 GObject	*native,
-						 DkpDevice	*device,
-						 gboolean	 emit_signal);
+						 DkpDevice	*device);
 	void		(* device_changed)	(DkpBackend	*backend,
 						 GObject	*native,
-						 DkpDevice	*device,
-						 gboolean	 emit_signal);
+						 DkpDevice	*device);
 	void		(* device_removed)	(DkpBackend	*backend,
 						 GObject	*native,
 						 DkpDevice	*device);

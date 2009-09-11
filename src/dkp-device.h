@@ -78,10 +78,6 @@ gboolean	 dkp_device_coldplug		(DkpDevice	*device,
 						 DkpDaemon	*daemon,
 						 GObject	*native);
 DkpDaemon	*dkp_device_get_daemon		(DkpDevice	*device);
-gboolean	 dkp_device_changed	 	(DkpDevice	*device,
-						 GObject	*native,
-						 gboolean	 synthesized);
-void		 dkp_device_removed	 	(DkpDevice	*device);
 GObject		*dkp_device_get_native		(DkpDevice	*device);
 const gchar	*dkp_device_get_object_path	(DkpDevice	*device);
 gboolean	 dkp_device_get_on_battery	(DkpDevice	*device,
@@ -90,7 +86,6 @@ gboolean	 dkp_device_get_low_battery	(DkpDevice	*device,
 						 gboolean	*low_battery);
 gboolean	 dkp_device_get_online		(DkpDevice	*device,
 						 gboolean	*online);
-void		 dkp_device_emit_changed	(DkpDevice	*device);
 gboolean	 dkp_device_refresh_internal	(DkpDevice	*device);
 
 /* exported methods */

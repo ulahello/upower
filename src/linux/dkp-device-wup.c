@@ -90,8 +90,8 @@ dkp_device_wup_poll_cb (DkpDeviceWup *wup)
 
 	egg_debug ("Polling: %s", dkp_device_get_object_path (device));
 	ret = dkp_device_wup_refresh (device);
-	if (ret)
-		dkp_device_emit_changed (device);
+
+	/* always continue polling */
 	return TRUE;
 }
 

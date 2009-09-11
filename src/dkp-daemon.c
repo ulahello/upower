@@ -58,14 +58,14 @@ enum
 
 enum
 {
-	DEVICE_ADDED_SIGNAL,
-	DEVICE_REMOVED_SIGNAL,
-	DEVICE_CHANGED_SIGNAL,
-	CHANGED_SIGNAL,
-	LAST_SIGNAL,
+	SIGNAL_DEVICE_ADDED,
+	SIGNAL_DEVICE_REMOVED,
+	SIGNAL_DEVICE_CHANGED,
+	SIGNAL_CHANGED,
+	SIGNAL_LAST,
 };
 
-static guint signals[LAST_SIGNAL] = { 0 };
+static guint signals[SIGNAL_LAST] = { 0 };
 
 struct DkpDaemonPrivate
 {
@@ -75,17 +75,18 @@ struct DkpDaemonPrivate
 	DkpBackend		*backend;
 	DkpDeviceList		*power_devices;
 	gboolean		 on_battery;
-	gboolean		 low_battery;
+	gboolean		 on_low_battery;
 	gboolean		 lid_is_closed;
 	gboolean		 lid_is_present;
 	gboolean		 kernel_can_suspend;
 	gboolean		 kernel_can_hibernate;
 	gboolean		 kernel_has_swap_space;
+	gboolean		 during_coldplug;
 };
 
 static void	dkp_daemon_finalize		(GObject	*object);
 static gboolean	dkp_daemon_get_on_battery_local	(DkpDaemon	*daemon);
-static gboolean	dkp_daemon_get_low_battery_local (DkpDaemon	*daemon);
+static gboolean	dkp_daemon_get_on_low_battery_local (DkpDaemon	*daemon);
 static gboolean	dkp_daemon_get_on_ac_local 	(DkpDaemon	*daemon);
 
 G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
@@ -99,42 +100,10 @@ G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
 #define DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY	3 /* seconds */
 
 /**
- * dkp_daemon_set_lid_is_closed:
- **/
-gboolean
-dkp_daemon_set_lid_is_closed (DkpDaemon *daemon, gboolean lid_is_closed, gboolean notify)
-{
-	gboolean ret = FALSE;
-
-	g_return_val_if_fail (DKP_IS_DAEMON (daemon), FALSE);
-
-	egg_debug ("lid_is_closed=%i", lid_is_closed);
-	if (daemon->priv->lid_is_closed == lid_is_closed) {
-		egg_debug ("ignoring duplicate");
-		goto out;
-	}
-
-	/* save */
-	if (!notify) {
-		/* Do not emit an event on startup. Otherwise, e. g.
-		 * gnome-power-manager would pick up a "lid is closed" change
-		 * event when dk-p gets D-BUS activated, and thus would
-		 * immediately suspend the machine on startup. FD#22574 */
-		egg_debug ("not emitting lid change event for daemon startup");
-	} else {
-		g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
-	}
-	daemon->priv->lid_is_closed = lid_is_closed;
-	ret = TRUE;
-out:
-	return ret;
-}
-
-/**
- * dkp_daemon_check_state:
+ * dkp_daemon_check_sleep_states:
  **/
 static gboolean
-dkp_daemon_check_state (DkpDaemon *daemon)
+dkp_daemon_check_sleep_states (DkpDaemon *daemon)
 {
 	gchar *contents = NULL;
 	GError *error = NULL;
@@ -261,17 +230,17 @@ dkp_daemon_get_number_devices_of_type (DkpDaemon *daemon, DkpDeviceType type)
 }
 
 /**
- * dkp_daemon_get_low_battery_local:
+ * dkp_daemon_get_on_low_battery_local:
  *
  * As soon as _all_ batteries are low, this is true
  **/
 static gboolean
-dkp_daemon_get_low_battery_local (DkpDaemon *daemon)
+dkp_daemon_get_on_low_battery_local (DkpDaemon *daemon)
 {
 	guint i;
 	gboolean ret;
 	gboolean result = TRUE;
-	gboolean low_battery;
+	gboolean on_low_battery;
 	DkpDevice *device;
 	const GPtrArray *array;
 
@@ -279,8 +248,8 @@ dkp_daemon_get_low_battery_local (DkpDaemon *daemon)
 	array = dkp_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
 		device = (DkpDevice *) g_ptr_array_index (array, i);
-		ret = dkp_device_get_low_battery (device, &low_battery);
-		if (ret && !low_battery) {
+		ret = dkp_device_get_low_battery (device, &on_low_battery);
+		if (ret && !on_low_battery) {
 			result = FALSE;
 			break;
 		}
@@ -549,6 +518,8 @@ gboolean
 dkp_daemon_startup (DkpDaemon *daemon)
 {
 	gboolean ret;
+	gboolean on_battery;
+	gboolean on_low_battery;
 
 	/* register on bus */
 	ret = dkp_daemon_register_power_daemon (daemon);
@@ -556,6 +527,10 @@ dkp_daemon_startup (DkpDaemon *daemon)
 		egg_warning ("failed to register");
 		goto out;
 	}
+
+	/* stop signals and callbacks */
+	g_object_freeze_notify (G_OBJECT(daemon));
+	daemon->priv->during_coldplug = TRUE;
 
 	/* coldplug backend backend */
 	ret = dkp_backend_coldplug (daemon->priv->backend, daemon);
@@ -565,9 +540,17 @@ dkp_daemon_startup (DkpDaemon *daemon)
 	}
 
 	/* get battery state */
-	daemon->priv->on_battery = (dkp_daemon_get_on_battery_local (daemon) &&
-				    !dkp_daemon_get_on_ac_local (daemon));
-	daemon->priv->low_battery = dkp_daemon_get_low_battery_local (daemon);
+	on_battery = (dkp_daemon_get_on_battery_local (daemon) &&
+		      !dkp_daemon_get_on_ac_local (daemon));
+	on_low_battery = dkp_daemon_get_on_low_battery_local (daemon);
+	g_object_set (daemon,
+		      "on-battery", on_battery,
+		      "on-low-battery", on_low_battery,
+		      NULL);
+
+	/* start signals and callbacks */
+	g_object_thaw_notify (G_OBJECT(daemon));
+	daemon->priv->during_coldplug = FALSE;
 
 	/* set pm-utils power policy */
 	dkp_daemon_set_pmutils_powersave (daemon, daemon->priv->on_battery);
@@ -587,16 +570,6 @@ dkp_daemon_refresh_battery_devices_cb (DkpDaemon *daemon)
 }
 
 /**
- * dkp_daemon_device_went_away_cb:
- **/
-static void
-dkp_daemon_device_went_away_cb (gpointer user_data, GObject *device)
-{
-	DkpDaemon *daemon = DKP_DAEMON (user_data);
-	dkp_device_list_remove (daemon->priv->power_devices, device);
-}
-
-/**
  * dkp_daemon_get_device_list:
  **/
 DkpDeviceList *
@@ -609,7 +582,7 @@ dkp_daemon_get_device_list (DkpDaemon *daemon)
  * dkp_daemon_device_added_cb:
  **/
 static void
-dkp_daemon_device_added_cb (DkpBackend *backend, GObject *native, DkpDevice *device, gboolean emit_signal, DkpDaemon *daemon)
+dkp_daemon_device_added_cb (DkpBackend *backend, GObject *native, DkpDevice *device, DkpDaemon *daemon)
 {
 	const gchar *object_path;
 
@@ -617,24 +590,22 @@ dkp_daemon_device_added_cb (DkpBackend *backend, GObject *native, DkpDevice *dev
 	g_return_if_fail (native != NULL);
 	g_return_if_fail (device != NULL);
 
-	object_path = dkp_device_get_object_path (device);
-	egg_debug ("added: native:%p, device:%s (%i)", native, object_path, emit_signal);
-
-	/* only take a weak ref; the device will stay on the bus until
-	 * it's unreffed. So if we ref it, it'll never go away */
-	g_object_weak_ref (G_OBJECT (device), dkp_daemon_device_went_away_cb, daemon);
+	/* add to device list */
 	dkp_device_list_insert (daemon->priv->power_devices, native, G_OBJECT (device));
 
 	/* emit */
-	if (emit_signal)
-		g_signal_emit (daemon, signals[DEVICE_ADDED_SIGNAL], 0, object_path);
+	if (!daemon->priv->during_coldplug) {
+		object_path = dkp_device_get_object_path (device);
+		egg_debug ("emitting added: %s (during coldplug %i)", object_path, daemon->priv->during_coldplug);
+		g_signal_emit (daemon, signals[SIGNAL_DEVICE_ADDED], 0, object_path);
+	}
 }
 
 /**
  * dkp_daemon_device_changed_cb:
  **/
 static void
-dkp_daemon_device_changed_cb (DkpBackend *backend, GObject *native, DkpDevice *device, gboolean emit_signal, DkpDaemon *daemon)
+dkp_daemon_device_changed_cb (DkpBackend *backend, GObject *native, DkpDevice *device, DkpDaemon *daemon)
 {
 	const gchar *object_path;
 	DkpDeviceType type;
@@ -643,11 +614,6 @@ dkp_daemon_device_changed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 	g_return_if_fail (DKP_IS_DAEMON (daemon));
 	g_return_if_fail (native != NULL);
 	g_return_if_fail (device != NULL);
-
-	object_path = dkp_device_get_object_path (device);
-	egg_debug ("changed: native:%p, device:%s (%i)", native, object_path, emit_signal);
-
-	dkp_device_changed (device, native, emit_signal);
 
 	/* refresh battery devices when AC state changes */
 	g_object_get (device,
@@ -660,21 +626,24 @@ dkp_daemon_device_changed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 				       (GSourceFunc) dkp_daemon_refresh_battery_devices_cb, daemon);
 	}
 
-	/* second, check if the on_battery and low_battery state has changed */
+	/* second, check if the on_battery and on_low_battery state has changed */
 	ret = (dkp_daemon_get_on_battery_local (daemon) && !dkp_daemon_get_on_ac_local (daemon));
 	if (ret != daemon->priv->on_battery) {
-		daemon->priv->on_battery = ret;
-		egg_debug ("now on_battery = %s", ret ? "yes" : "no");
-		g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
+		g_object_set (daemon, "on-battery", ret, NULL);
 
 		/* set pm-utils power policy */
-		dkp_daemon_set_pmutils_powersave (daemon, daemon->priv->on_battery);
+		dkp_daemon_set_pmutils_powersave (daemon, ret);
 	}
-	ret = dkp_daemon_get_low_battery_local (daemon);
-	if (ret != daemon->priv->low_battery) {
-		daemon->priv->low_battery = ret;
-		egg_debug ("now low_battery = %s", ret ? "yes" : "no");
-		g_signal_emit (daemon, signals[CHANGED_SIGNAL], 0);
+	ret = dkp_daemon_get_on_low_battery_local (daemon);
+	if (ret != daemon->priv->on_low_battery) {
+		g_object_set (daemon, "on-low-battery", ret, NULL);
+	}
+
+	/* emit */
+	if (!daemon->priv->during_coldplug) {
+		object_path = dkp_device_get_object_path (device);
+		egg_debug ("emitting device-changed: %s", object_path);
+		g_signal_emit (daemon, signals[SIGNAL_DEVICE_CHANGED], 0, object_path);
 	}
 }
 
@@ -690,12 +659,28 @@ dkp_daemon_device_removed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 	g_return_if_fail (native != NULL);
 	g_return_if_fail (device != NULL);
 
-	object_path = dkp_device_get_object_path (device);
-	egg_debug ("removed: native:%p, device:%s", native, object_path);
+	/* remove from list */
+	dkp_device_list_remove (daemon->priv->power_devices, G_OBJECT(device));
 
-	dkp_device_removed (device);
-	g_signal_emit (daemon, signals[DEVICE_REMOVED_SIGNAL], 0, object_path);
-	g_object_unref (device);
+	/* emit */
+	if (!daemon->priv->during_coldplug) {
+		object_path = dkp_device_get_object_path (device);
+		egg_debug ("emitting device-removed: %s", object_path);
+		g_signal_emit (daemon, signals[SIGNAL_DEVICE_REMOVED], 0, object_path);
+	}
+}
+
+/**
+ * dkp_daemon_properties_changed_cb:
+ **/
+static void
+dkp_daemon_properties_changed_cb (GObject *object, GParamSpec *pspec, DkpDaemon *daemon)
+{
+	/* emit */
+	if (!daemon->priv->during_coldplug) {
+		egg_debug ("emitting changed");
+		g_signal_emit (daemon, signals[SIGNAL_CHANGED], 0);
+	}
 }
 
 /**
@@ -715,7 +700,8 @@ dkp_daemon_init (DkpDaemon *daemon)
 	daemon->priv->kernel_has_swap_space = FALSE;
 	daemon->priv->power_devices = dkp_device_list_new ();
 	daemon->priv->on_battery = FALSE;
-	daemon->priv->low_battery = FALSE;
+	daemon->priv->on_low_battery = FALSE;
+	daemon->priv->during_coldplug = FALSE;
 
 	daemon->priv->backend = dkp_backend_new ();
 	g_signal_connect (daemon->priv->backend, "device-added",
@@ -725,8 +711,18 @@ dkp_daemon_init (DkpDaemon *daemon)
 	g_signal_connect (daemon->priv->backend, "device-removed",
 			  G_CALLBACK (dkp_daemon_device_removed_cb), daemon);
 
+	/* watch when these properties change */
+	g_signal_connect (daemon, "notify::lid-is-present",
+			  G_CALLBACK (dkp_daemon_properties_changed_cb), daemon);
+	g_signal_connect (daemon, "notify::lid-is-closed",
+			  G_CALLBACK (dkp_daemon_properties_changed_cb), daemon);
+	g_signal_connect (daemon, "notify::on-battery",
+			  G_CALLBACK (dkp_daemon_properties_changed_cb), daemon);
+	g_signal_connect (daemon, "notify::on-low-battery",
+			  G_CALLBACK (dkp_daemon_properties_changed_cb), daemon);
+
 	/* check if we have support */
-	dkp_daemon_check_state (daemon);
+	dkp_daemon_check_sleep_states (daemon);
 
 	/* do we have enough swap? */
 	if (daemon->priv->kernel_can_hibernate) {
@@ -773,59 +769,35 @@ dkp_daemon_error_get_type (void)
 }
 
 /**
- * dkp_daemon_constructor:
- **/
-static GObject *
-dkp_daemon_constructor (GType type, guint n_construct_properties, GObjectConstructParam *construct_properties)
-{
-	DkpDaemon *daemon;
-	DkpDaemonClass *klass;
-
-	klass = DKP_DAEMON_CLASS (g_type_class_peek (DKP_TYPE_DAEMON));
-	daemon = DKP_DAEMON (G_OBJECT_CLASS (dkp_daemon_parent_class)->constructor (type, n_construct_properties, construct_properties));
-	return G_OBJECT (daemon);
-}
-
-/**
  * dkp_daemon_get_property:
  **/
 static void
 dkp_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
 {
 	DkpDaemon *daemon;
-
 	daemon = DKP_DAEMON (object);
-
 	switch (prop_id) {
-
 	case PROP_DAEMON_VERSION:
 		g_value_set_string (value, PACKAGE_VERSION);
 		break;
-
 	case PROP_CAN_SUSPEND:
 		g_value_set_boolean (value, daemon->priv->kernel_can_suspend);
 		break;
-
 	case PROP_CAN_HIBERNATE:
 		g_value_set_boolean (value, (daemon->priv->kernel_can_hibernate && daemon->priv->kernel_has_swap_space));
 		break;
-
 	case PROP_ON_BATTERY:
 		g_value_set_boolean (value, daemon->priv->on_battery);
 		break;
-
 	case PROP_ON_LOW_BATTERY:
-		g_value_set_boolean (value, daemon->priv->on_battery && daemon->priv->low_battery);
+		g_value_set_boolean (value, daemon->priv->on_battery && daemon->priv->on_low_battery);
 		break;
-
 	case PROP_LID_IS_CLOSED:
 		g_value_set_boolean (value, daemon->priv->lid_is_closed);
 		break;
-
 	case PROP_LID_IS_PRESENT:
 		g_value_set_boolean (value, daemon->priv->lid_is_present);
 		break;
-
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -839,15 +811,22 @@ static void
 dkp_daemon_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
 {
 	DkpDaemon *daemon = DKP_DAEMON (object);
-
 	switch (prop_id) {
-
 	case PROP_LID_IS_CLOSED:
 		daemon->priv->lid_is_closed = g_value_get_boolean (value);
+		egg_debug ("now lid_is_closed = %s", daemon->priv->lid_is_closed ? "yes" : "no");
 		break;
-
 	case PROP_LID_IS_PRESENT:
 		daemon->priv->lid_is_present = g_value_get_boolean (value);
+		egg_debug ("now lid_is_present = %s", daemon->priv->lid_is_present ? "yes" : "no");
+		break;
+	case PROP_ON_BATTERY:
+		daemon->priv->on_battery = g_value_get_boolean (value);
+		egg_debug ("now on_battery = %s", daemon->priv->on_battery ? "yes" : "no");
+		break;
+	case PROP_ON_LOW_BATTERY:
+		daemon->priv->on_low_battery = g_value_get_boolean (value);
+		egg_debug ("now on_low_battery = %s", daemon->priv->on_low_battery ? "yes" : "no");
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -862,15 +841,13 @@ static void
 dkp_daemon_class_init (DkpDaemonClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-	object_class->constructor = dkp_daemon_constructor;
 	object_class->finalize = dkp_daemon_finalize;
 	object_class->get_property = dkp_daemon_get_property;
 	object_class->set_property = dkp_daemon_set_property;
 
 	g_type_class_add_private (klass, sizeof (DkpDaemonPrivate));
 
-	signals[DEVICE_ADDED_SIGNAL] =
+	signals[SIGNAL_DEVICE_ADDED] =
 		g_signal_new ("device-added",
 			      G_OBJECT_CLASS_TYPE (klass),
 			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
@@ -878,7 +855,7 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 
-	signals[DEVICE_REMOVED_SIGNAL] =
+	signals[SIGNAL_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_OBJECT_CLASS_TYPE (klass),
 			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
@@ -886,7 +863,7 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 
-	signals[DEVICE_CHANGED_SIGNAL] =
+	signals[SIGNAL_DEVICE_CHANGED] =
 		g_signal_new ("device-changed",
 			      G_OBJECT_CLASS_TYPE (klass),
 			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
@@ -894,7 +871,7 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 
-	signals[CHANGED_SIGNAL] =
+	signals[SIGNAL_CHANGED] =
 		g_signal_new ("changed",
 			      G_OBJECT_CLASS_TYPE (klass),
 			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
@@ -941,7 +918,7 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 							       "On Battery",
 							       "Whether the system is running on battery",
 							       FALSE,
-							       G_PARAM_READABLE));
+							       G_PARAM_READWRITE));
 
 	g_object_class_install_property (object_class,
 					 PROP_ON_LOW_BATTERY,
@@ -949,7 +926,7 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 							       "On Low Battery",
 							       "Whether the system is running on battery and if the battery is critically low",
 							       FALSE,
-							       G_PARAM_READABLE));
+							       G_PARAM_READWRITE));
 
 	g_object_class_install_property (object_class,
 					 PROP_LID_IS_CLOSED,
@@ -983,8 +960,7 @@ dkp_daemon_finalize (GObject *object)
 		g_object_unref (daemon->priv->proxy);
 	if (daemon->priv->connection != NULL)
 		dbus_g_connection_unref (daemon->priv->connection);
-	if (daemon->priv->power_devices != NULL)
-		g_object_unref (daemon->priv->power_devices);
+	g_object_unref (daemon->priv->power_devices);
 	g_object_unref (daemon->priv->polkit);
 	g_object_unref (daemon->priv->backend);
 

@@ -71,9 +71,6 @@ DkpDaemon	*dkp_daemon_new			(void);
 guint		 dkp_daemon_get_number_devices_of_type (DkpDaemon	*daemon,
 						 DkpDeviceType		 type);
 DkpDeviceList	*dkp_daemon_get_device_list	(DkpDaemon		*daemon);
-gboolean	 dkp_daemon_set_lid_is_closed	(DkpDaemon		*daemon,
-						 gboolean		 lid_is_closed,
-						 gboolean		 notify);
 gboolean	 dkp_daemon_startup		(DkpDaemon		*daemon);
 
 /* exported */

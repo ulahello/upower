@@ -101,6 +101,17 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
 
     <!-- ************************************************************ -->
 
+    <signal name="Changed">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Emitted when one or more properties on the object changes.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </signal>
+    <!-- ************************************************************ -->
+
     <method name="Suspend">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
       <doc:doc>
@@ -126,6 +137,7 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
         </doc:description>
       </doc:doc>
     </method>
+
 
     <!-- ************************************************************ -->
 
@@ -180,16 +192,6 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
         </doc:description>
       </doc:doc>
     </property>
-
-    <signal name="Changed">
-      <doc:doc>
-        <doc:description>
-          <doc:para>
-            Emitted when one or more properties on the object changes.
-          </doc:para>
-        </doc:description>
-      </doc:doc>
-    </signal>
 
   </interface>
 

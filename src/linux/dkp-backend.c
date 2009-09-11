@@ -66,40 +66,14 @@ static guint signals [SIGNAL_LAST] = { 0 };
 
 G_DEFINE_TYPE (DkpBackend, dkp_backend, G_TYPE_OBJECT)
 
-static gboolean dkp_backend_device_add (DkpBackend *backend, GUdevDevice *native, gboolean emit_signal);
+static gboolean dkp_backend_device_add (DkpBackend *backend, GUdevDevice *native);
 static void dkp_backend_device_remove (DkpBackend *backend, GUdevDevice *native);
 
 /**
- * dkp_backend_device_changed:
- **/
-static void
-dkp_backend_device_changed (DkpBackend *backend, GUdevDevice *native, gboolean emit_signal)
-{
-	GObject *object;
-	DkpDevice *device;
-
-	/* first, change the device and add it if it doesn't exist */
-	object = dkp_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
-	if (object == NULL) {
-		egg_debug ("treating change event as add on %s", g_udev_device_get_sysfs_path (native));
-		dkp_backend_device_add (backend, native, TRUE);
-		goto out;
-	}
-
-	device = DKP_DEVICE (object);
-	egg_debug ("changed %s", dkp_device_get_object_path (device));
-
-	/* emit */
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_CHANGED], 0, native, device, emit_signal);
-out:
-	return;
-}
-
-/**
- * dkp_backend_device_get:
+ * dkp_backend_device_new:
  **/
 static DkpDevice *
-dkp_backend_device_get (DkpBackend *backend, GUdevDevice *native)
+dkp_backend_device_new (DkpBackend *backend, GUdevDevice *native)
 {
 	const gchar *subsys;
 	const gchar *native_path;
@@ -129,7 +103,7 @@ dkp_backend_device_get (DkpBackend *backend, GUdevDevice *native)
 			goto out;
 		g_object_unref (device);
 
-		/* no valid TTY object ;-( */
+		/* no valid TTY object */
 		device = NULL;
 
 	} else if (g_strcmp0 (subsys, "usb") == 0) {
@@ -148,7 +122,7 @@ dkp_backend_device_get (DkpBackend *backend, GUdevDevice *native)
 			goto out;
 		g_object_unref (device);
 
-		/* no valid USB object ;-( */
+		/* no valid USB object */
 		device = NULL;
 
 	} else if (g_strcmp0 (subsys, "input") == 0) {
@@ -181,10 +155,43 @@ out:
 }
 
 /**
+ * dkp_backend_device_changed:
+ **/
+static void
+dkp_backend_device_changed (DkpBackend *backend, GUdevDevice *native)
+{
+	GObject *object;
+	DkpDevice *device;
+	gboolean ret;
+
+	/* first, check the device and add it if it doesn't exist */
+	object = dkp_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
+	if (object == NULL) {
+		egg_warning ("treating change event as add on %s", g_udev_device_get_sysfs_path (native));
+		dkp_backend_device_add (backend, native);
+		goto out;
+	}
+
+	/* need to refresh device */
+	device = DKP_DEVICE (object);
+	ret = dkp_device_refresh_internal (device);
+	if (!ret) {
+		egg_debug ("no changes on %s", dkp_device_get_object_path (device));
+		goto out;
+	}
+
+	/* emit */
+	egg_debug ("emitting changed %s", dkp_device_get_object_path (device));
+	g_signal_emit (backend, signals[SIGNAL_DEVICE_CHANGED], 0, native, device);
+out:
+	return;
+}
+
+/**
  * dkp_backend_device_add:
  **/
 static gboolean
-dkp_backend_device_add (DkpBackend *backend, GUdevDevice *native, gboolean emit_signal)
+dkp_backend_device_add (DkpBackend *backend, GUdevDevice *native)
 {
 	GObject *object;
 	DkpDevice *device;
@@ -195,21 +202,21 @@ dkp_backend_device_add (DkpBackend *backend, GUdevDevice *native, gboolean emit_
 	if (object != NULL) {
 		device = DKP_DEVICE (object);
 		/* we already have the device; treat as change event */
-		egg_debug ("treating add event as change event on %s", dkp_device_get_object_path (device));
-		dkp_backend_device_changed (backend, native, FALSE);
+		egg_warning ("treating add event as change event on %s", dkp_device_get_object_path (device));
+		dkp_backend_device_changed (backend, native);
 		goto out;
 	}
 
 	/* get the right sort of device */
-	device = dkp_backend_device_get (backend, native);
+	device = dkp_backend_device_new (backend, native);
 	if (device == NULL) {
-		egg_debug ("not adding device %s", g_udev_device_get_sysfs_path (native));
 		ret = FALSE;
 		goto out;
 	}
 
 	/* emit */
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, native, device, emit_signal);
+	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, native, device);
+	g_object_unref (device);
 out:
 	return ret;
 }
@@ -226,11 +233,15 @@ dkp_backend_device_remove (DkpBackend *backend, GUdevDevice *native)
 	/* does device exist in db? */
 	object = dkp_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 	if (object == NULL) {
-		egg_debug ("ignoring remove event on %s", g_udev_device_get_sysfs_path (native));
+		egg_warning ("ignoring remove event on %s", g_udev_device_get_sysfs_path (native));
 	} else {
 		device = DKP_DEVICE (object);
 		/* emit */
+		egg_debug ("emitting device-removed: %s", g_udev_device_get_sysfs_path (native));
 		g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, native, device);
+
+		/* destroy */
+		g_object_unref (device);
 	}
 }
 
@@ -244,14 +255,14 @@ dkp_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 	DkpBackend *backend = DKP_BACKEND (user_data);
 
 	if (g_strcmp0 (action, "add") == 0) {
-		egg_debug ("add %s", g_udev_device_get_sysfs_path (device));
-		dkp_backend_device_add (backend, device, TRUE);
+		egg_debug ("SYSFS add %s", g_udev_device_get_sysfs_path (device));
+		dkp_backend_device_add (backend, device);
 	} else if (g_strcmp0 (action, "remove") == 0) {
-		egg_debug ("remove %s", g_udev_device_get_sysfs_path (device));
+		egg_debug ("SYSFS remove %s", g_udev_device_get_sysfs_path (device));
 		dkp_backend_device_remove (backend, device);
 	} else if (g_strcmp0 (action, "change") == 0) {
-		egg_debug ("change %s", g_udev_device_get_sysfs_path (device));
-		dkp_backend_device_changed (backend, device, FALSE);
+		egg_debug ("SYSFS change %s", g_udev_device_get_sysfs_path (device));
+		dkp_backend_device_changed (backend, device);
 	} else {
 		egg_warning ("unhandled action '%s' on %s", action, g_udev_device_get_sysfs_path (device));
 	}
@@ -288,7 +299,7 @@ dkp_backend_coldplug (DkpBackend *backend, DkpDaemon *daemon)
 		devices = g_udev_client_query_by_subsystem (backend->priv->gudev_client, subsystems[i]);
 		for (l = devices; l != NULL; l = l->next) {
 			native = l->data;
-			dkp_backend_device_add (backend, native, FALSE);
+			dkp_backend_device_add (backend, native);
 		}
 		g_list_foreach (devices, (GFunc) g_object_unref, NULL);
 		g_list_free (devices);
@@ -311,14 +322,14 @@ dkp_backend_class_init (DkpBackendClass *klass)
 		g_signal_new ("device-added",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (DkpBackendClass, device_added),
-			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER_BOOLEAN,
-			      G_TYPE_NONE, 3, G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_BOOLEAN);
+			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER,
+			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 	signals [SIGNAL_DEVICE_CHANGED] =
 		g_signal_new ("device-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (DkpBackendClass, device_changed),
-			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER_BOOLEAN,
-			      G_TYPE_NONE, 3, G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_BOOLEAN);
+			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER,
+			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 	signals [SIGNAL_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,

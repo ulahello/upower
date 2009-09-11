@@ -66,7 +66,7 @@ static gboolean
 dkp_backend_changed_time_cb (DkpBackend *backend)
 {
 	/* emit */
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_CHANGED], 0, backend->priv->native, backend->priv->device, TRUE);
+	g_signal_emit (backend, signals[SIGNAL_DEVICE_CHANGED], 0, backend->priv->native, backend->priv->device);
 	return TRUE;
 }
 
@@ -86,7 +86,7 @@ dkp_backend_add_cb (DkpBackend *backend)
 	}
 
 	/* emit */
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, backend->priv->native, backend->priv->device, TRUE);
+	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, backend->priv->native, backend->priv->device);
 
 	/* setup poll */
 	g_timeout_add_seconds (2, (GSourceFunc) dkp_backend_changed_time_cb, backend);
@@ -130,14 +130,14 @@ dkp_backend_class_init (DkpBackendClass *klass)
 		g_signal_new ("device-added",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (DkpBackendClass, device_added),
-			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER_BOOLEAN,
-			      G_TYPE_NONE, 3, G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_BOOLEAN);
+			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER,
+			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 	signals [SIGNAL_DEVICE_CHANGED] =
 		g_signal_new ("device-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (DkpBackendClass, device_changed),
-			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER_BOOLEAN,
-			      G_TYPE_NONE, 3, G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_BOOLEAN);
+			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER,
+			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 	signals [SIGNAL_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,

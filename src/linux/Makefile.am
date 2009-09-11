@@ -36,6 +36,9 @@ libdkpshared_la_SOURCES =					\
 	sysfs-utils.h						\
 	$(BUILT_SOURCES)
 
+libdkpshared_la_CFLAGS =					\
+	$(WARNINGFLAGS_C)
+
 clean-local :
 	rm -f *~
 

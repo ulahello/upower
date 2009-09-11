@@ -614,8 +614,8 @@ dkp_device_supply_poll_battery (DkpDeviceSupply *supply)
 	egg_debug ("No updates on supply %s for %i seconds; forcing update", dkp_device_get_object_path (device), DKP_DEVICE_SUPPLY_REFRESH_TIMEOUT);
 	supply->priv->poll_timer_id = 0;
 	ret = dkp_device_supply_refresh (device);
-	if (ret)
-		dkp_device_emit_changed (device);
+
+	/* never repeat */
 	return FALSE;
 }
 
