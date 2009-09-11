@@ -67,13 +67,22 @@ dbusif_DATA =							\
 devkit_power_daemon_SOURCES =					\
 	egg-debug.c						\
 	egg-debug.h						\
-	dkp-polkit.h			dkp-polkit.c		\
-	dkp-daemon.h			dkp-daemon.c		\
-	dkp-device.h			dkp-device.c		\
-	dkp-device-list.h		dkp-device-list.c	\
-	dkp-qos.h			dkp-qos.c		\
-	dkp-wakeups.h			dkp-wakeups.c		\
-	dkp-history.h			dkp-history.c		\
+	dkp-polkit.h						\
+	dkp-polkit.c						\
+	dkp-daemon.h						\
+	dkp-daemon.c						\
+	dkp-device.h						\
+	dkp-device.c						\
+	dkp-device-list.h					\
+	dkp-device-list.c					\
+	dkp-qos.h						\
+	dkp-qos.c						\
+	dkp-wakeups.h						\
+	dkp-wakeups.c						\
+	dkp-history.h						\
+	dkp-history.c						\
+	dkp-backend.h						\
+	dkp-native.h						\
 	dkp-main.c						\
 	$(BUILT_SOURCES)
 
