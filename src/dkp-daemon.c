@@ -189,7 +189,7 @@ dkp_daemon_get_on_battery_local (DkpDaemon *daemon)
 	gboolean result = FALSE;
 	gboolean on_battery;
 	DkpDevice *device;
-	const GPtrArray *array;
+	GPtrArray *array;
 
 	/* ask each device */
 	array = dkp_device_list_get_array (daemon->priv->power_devices);
@@ -201,6 +201,7 @@ dkp_daemon_get_on_battery_local (DkpDaemon *daemon)
 			break;
 		}
 	}
+	g_ptr_array_unref (array);
 	return result;
 }
 
@@ -212,7 +213,7 @@ dkp_daemon_get_number_devices_of_type (DkpDaemon *daemon, DkpDeviceType type)
 {
 	guint i;
 	DkpDevice *device;
-	const GPtrArray *array;
+	GPtrArray *array;
 	DkpDeviceType type_tmp;
 	guint count = 0;
 
@@ -226,6 +227,7 @@ dkp_daemon_get_number_devices_of_type (DkpDaemon *daemon, DkpDeviceType type)
 		if (type == type_tmp)
 			count++;
 	}
+	g_ptr_array_unref (array);
 	return count;
 }
 
@@ -242,7 +244,7 @@ dkp_daemon_get_on_low_battery_local (DkpDaemon *daemon)
 	gboolean result = TRUE;
 	gboolean on_low_battery;
 	DkpDevice *device;
-	const GPtrArray *array;
+	GPtrArray *array;
 
 	/* ask each device */
 	array = dkp_device_list_get_array (daemon->priv->power_devices);
@@ -254,6 +256,7 @@ dkp_daemon_get_on_low_battery_local (DkpDaemon *daemon)
 			break;
 		}
 	}
+	g_ptr_array_unref (array);
 	return result;
 }
 
@@ -270,7 +273,7 @@ dkp_daemon_get_on_ac_local (DkpDaemon *daemon)
 	gboolean result = FALSE;
 	gboolean online;
 	DkpDevice *device;
-	const GPtrArray *array;
+	GPtrArray *array;
 
 	/* ask each device */
 	array = dkp_device_list_get_array (daemon->priv->power_devices);
@@ -282,6 +285,7 @@ dkp_daemon_get_on_ac_local (DkpDaemon *daemon)
 			break;
 		}
 	}
+	g_ptr_array_unref (array);
 	return result;
 }
 
@@ -318,7 +322,7 @@ static gboolean
 dkp_daemon_refresh_battery_devices (DkpDaemon *daemon)
 {
 	guint i;
-	const GPtrArray *array;
+	GPtrArray *array;
 	DkpDevice *device;
 	DkpDeviceType type;
 
@@ -333,6 +337,7 @@ dkp_daemon_refresh_battery_devices (DkpDaemon *daemon)
 		if (type == DKP_DEVICE_TYPE_BATTERY)
 			dkp_device_refresh_internal (device);
 	}
+	g_ptr_array_unref (array);
 
 	return TRUE;
 }
@@ -344,7 +349,7 @@ gboolean
 dkp_daemon_enumerate_devices (DkpDaemon *daemon, DBusGMethodInvocation *context)
 {
 	guint i;
-	const GPtrArray *array;
+	GPtrArray *array;
 	GPtrArray *object_paths;
 	DkpDevice *device;
 
@@ -355,6 +360,7 @@ dkp_daemon_enumerate_devices (DkpDaemon *daemon, DBusGMethodInvocation *context)
 		device = (DkpDevice *) g_ptr_array_index (array, i);
 		g_ptr_array_add (object_paths, g_strdup (dkp_device_get_object_path (device)));
 	}
+	g_ptr_array_unref (array);
 
 	/* return it on the bus */
 	dbus_g_method_return (context, object_paths);
@@ -587,8 +593,8 @@ dkp_daemon_device_added_cb (DkpBackend *backend, GObject *native, DkpDevice *dev
 	const gchar *object_path;
 
 	g_return_if_fail (DKP_IS_DAEMON (daemon));
-	g_return_if_fail (native != NULL);
-	g_return_if_fail (device != NULL);
+	g_return_if_fail (DKP_IS_DEVICE (device));
+	g_return_if_fail (G_IS_OBJECT (native));
 
 	/* add to device list */
 	dkp_device_list_insert (daemon->priv->power_devices, native, G_OBJECT (device));
@@ -612,8 +618,8 @@ dkp_daemon_device_changed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 	gboolean ret;
 
 	g_return_if_fail (DKP_IS_DAEMON (daemon));
-	g_return_if_fail (native != NULL);
-	g_return_if_fail (device != NULL);
+	g_return_if_fail (DKP_IS_DEVICE (device));
+	g_return_if_fail (G_IS_OBJECT (native));
 
 	/* refresh battery devices when AC state changes */
 	g_object_get (device,
@@ -656,8 +662,8 @@ dkp_daemon_device_removed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 	const gchar *object_path;
 
 	g_return_if_fail (DKP_IS_DAEMON (daemon));
-	g_return_if_fail (native != NULL);
-	g_return_if_fail (device != NULL);
+	g_return_if_fail (DKP_IS_DEVICE (device));
+	g_return_if_fail (G_IS_OBJECT (native));
 
 	/* remove from list */
 	dkp_device_list_remove (daemon->priv->power_devices, G_OBJECT(device));
@@ -668,6 +674,9 @@ dkp_daemon_device_removed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 		egg_debug ("emitting device-removed: %s", object_path);
 		g_signal_emit (daemon, signals[SIGNAL_DEVICE_REMOVED], 0, object_path);
 	}
+
+	/* finalise the object */
+	g_object_unref (device);
 }
 
 /**
@@ -676,6 +685,8 @@ dkp_daemon_device_removed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 static void
 dkp_daemon_properties_changed_cb (GObject *object, GParamSpec *pspec, DkpDaemon *daemon)
 {
+	g_return_if_fail (DKP_IS_DAEMON (daemon));
+
 	/* emit */
 	if (!daemon->priv->during_coldplug) {
 		egg_debug ("emitting changed");

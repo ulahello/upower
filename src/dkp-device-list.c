@@ -47,6 +47,8 @@ G_DEFINE_TYPE (DkpDeviceList, dkp_device_list, G_TYPE_OBJECT)
  *
  * Convert a native %GObject into a %DkpDevice -- we use the native path
  * to look these up as it's the only thing they share.
+ *
+ * Return value: the object, or %NULL if not found. Free with g_object_unref()
  **/
 GObject *
 dkp_device_list_lookup (DkpDeviceList *list, GObject *native)
@@ -58,8 +60,12 @@ dkp_device_list_lookup (DkpDeviceList *list, GObject *native)
 
 	/* does device exist in db? */
 	native_path = dkp_native_get_native_path (native);
+	if (native_path == NULL)
+		return NULL;
 	device = g_hash_table_lookup (list->priv->map_native_path_to_device, native_path);
-	return device;
+	if (device == NULL)
+		return NULL;
+	return g_object_ref (device);
 }
 
 /**
@@ -79,7 +85,7 @@ dkp_device_list_insert (DkpDeviceList *list, GObject *native, GObject *device)
 
 	native_path = dkp_native_get_native_path (native);
 	g_hash_table_insert (list->priv->map_native_path_to_device,
-			     g_strdup (native_path), device);
+			     g_strdup (native_path), g_object_ref (device));
 	g_ptr_array_add (list->priv->array, g_object_ref (device));
 	egg_debug ("added %s", native_path);
 	return TRUE;
@@ -111,7 +117,6 @@ dkp_device_list_remove (DkpDeviceList *list, GObject *device)
 	g_hash_table_foreach_remove (list->priv->map_native_path_to_device,
 				     dkp_device_list_remove_cb, device);
 	g_ptr_array_remove (list->priv->array, device);
-	g_object_unref (device);
 	return TRUE;
 }
 
@@ -119,12 +124,14 @@ dkp_device_list_remove (DkpDeviceList *list, GObject *device)
  * dkp_device_list_get_array:
  *
  * This is quick to iterate when we don't have GObject's to resolve
+ *
+ * Return value: the array, free with g_ptr_array_unref()
  **/
-const GPtrArray	*
+GPtrArray	*
 dkp_device_list_get_array (DkpDeviceList *list)
 {
 	g_return_val_if_fail (DKP_IS_DEVICE_LIST (list), NULL);
-	return list->priv->array;
+	return g_ptr_array_ref (list->priv->array);
 }
 
 /**
@@ -147,8 +154,8 @@ static void
 dkp_device_list_init (DkpDeviceList *list)
 {
 	list->priv = DKP_DEVICE_LIST_GET_PRIVATE (list);
-	list->priv->array = g_ptr_array_new ();
-	list->priv->map_native_path_to_device = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+	list->priv->array = g_ptr_array_new_with_free_func (g_object_unref);
+	list->priv->map_native_path_to_device = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
 }
 
 /**
@@ -164,7 +171,6 @@ dkp_device_list_finalize (GObject *object)
 
 	list = DKP_DEVICE_LIST (object);
 
-	g_ptr_array_foreach (list->priv->array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (list->priv->array, TRUE);
 	g_hash_table_unref (list->priv->map_native_path_to_device);
 

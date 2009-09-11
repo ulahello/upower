@@ -58,7 +58,7 @@ gboolean	 dkp_device_list_insert			(DkpDeviceList		*list,
 							 GObject		*device);
 gboolean	 dkp_device_list_remove			(DkpDeviceList		*list,
 							 GObject		*device);
-const GPtrArray	*dkp_device_list_get_array		(DkpDeviceList		*list);
+GPtrArray	*dkp_device_list_get_array		(DkpDeviceList		*list);
 
 G_END_DECLS
 

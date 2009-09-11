@@ -184,7 +184,8 @@ dkp_backend_device_changed (DkpBackend *backend, GUdevDevice *native)
 	egg_debug ("emitting changed %s", dkp_device_get_object_path (device));
 	g_signal_emit (backend, signals[SIGNAL_DEVICE_CHANGED], 0, native, device);
 out:
-	return;
+	if (object != NULL)
+		g_object_unref (object);
 }
 
 /**
@@ -218,6 +219,8 @@ dkp_backend_device_add (DkpBackend *backend, GUdevDevice *native)
 	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, native, device);
 	g_object_unref (device);
 out:
+	if (object != NULL)
+		g_object_unref (object);
 	return ret;
 }
 
@@ -234,15 +237,17 @@ dkp_backend_device_remove (DkpBackend *backend, GUdevDevice *native)
 	object = dkp_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 	if (object == NULL) {
 		egg_warning ("ignoring remove event on %s", g_udev_device_get_sysfs_path (native));
-	} else {
-		device = DKP_DEVICE (object);
-		/* emit */
-		egg_debug ("emitting device-removed: %s", g_udev_device_get_sysfs_path (native));
-		g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, native, device);
-
-		/* destroy */
-		g_object_unref (device);
+		goto out;
 	}
+
+	device = DKP_DEVICE (object);
+	/* emit */
+	egg_debug ("emitting device-removed: %s", g_udev_device_get_sysfs_path (native));
+	g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, native, device);
+
+out:
+	if (object != NULL)
+		g_object_unref (object);
 }
 
 /**
