@@ -74,6 +74,8 @@ GQuark		 dkp_device_error_quark		(void);
 GType		 dkp_device_error_get_type	(void);
 GType		 dkp_device_get_type		(void);
 DkpDevice	*dkp_device_new			(void);
+void		 dkp_device_test		(gpointer	 user_data);
+
 gboolean	 dkp_device_coldplug		(DkpDevice	*device,
 						 DkpDaemon	*daemon,
 						 GObject	*native);

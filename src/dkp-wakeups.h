@@ -51,6 +51,8 @@ typedef struct
 } DkpWakeupsClass;
 
 DkpWakeups	*dkp_wakeups_new			(void);
+void		 dkp_wakeups_test			(gpointer	 user_data);
+
 GType		 dkp_wakeups_get_type			(void);
 gboolean	 dkp_wakeups_get_total			(DkpWakeups	*wakeups,
 							 guint		*value,

@@ -84,6 +84,10 @@ dkp_device_list_insert (DkpDeviceList *list, GObject *native, GObject *device)
 	g_return_val_if_fail (device != NULL, FALSE);
 
 	native_path = dkp_native_get_native_path (native);
+	if (native_path == NULL) {
+		egg_warning ("failed to get native path");
+		return FALSE;
+	}
 	g_hash_table_insert (list->priv->map_native_path_to_device,
 			     g_strdup (native_path), g_object_ref (device));
 	g_ptr_array_add (list->priv->array, g_object_ref (device));
@@ -189,4 +193,56 @@ dkp_device_list_new (void)
 	list = g_object_new (DKP_TYPE_DEVICE_LIST, NULL);
 	return DKP_DEVICE_LIST (list);
 }
+
+
+/***************************************************************************
+ ***                          MAKE CHECK TESTS                           ***
+ ***************************************************************************/
+#ifdef EGG_TEST
+#include "egg-test.h"
+
+void
+dkp_device_list_test (gpointer user_data)
+{
+	EggTest *test = (EggTest *) user_data;
+	DkpDeviceList *list;
+	GObject *native;
+	GObject *device;
+	GObject *found;
+	gboolean ret;
+
+	if (!egg_test_start (test, "DkpDeviceList"))
+		return;
+
+	/************************************************************/
+	egg_test_title (test, "get instance");
+	list = dkp_device_list_new ();
+	egg_test_assert (test, list != NULL);
+
+	/************************************************************/
+	egg_test_title (test, "add device");
+	native = g_object_new (G_TYPE_OBJECT, NULL);
+	device = g_object_new (G_TYPE_OBJECT, NULL);
+	ret = dkp_device_list_insert (list, native, device);
+	egg_test_assert (test, ret);
+
+	/************************************************************/
+	egg_test_title (test, "find device");
+	found = dkp_device_list_lookup (list, native);
+	egg_test_assert (test, (found != NULL));
+	g_object_unref (found);
+
+	/************************************************************/
+	egg_test_title (test, "remove device");
+	ret = dkp_device_list_remove (list, device);
+	egg_test_assert (test, ret);
+
+	/* unref */
+	g_object_unref (native);
+	g_object_unref (device);
+	g_object_unref (list);
+
+	egg_test_end (test);
+}
+#endif
 

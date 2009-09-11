@@ -232,3 +232,30 @@ dkp_polkit_new (void)
 	return DKP_POLKIT (dkp_polkit_object);
 }
 
+/***************************************************************************
+ ***                          MAKE CHECK TESTS                           ***
+ ***************************************************************************/
+#ifdef EGG_TEST
+#include "egg-test.h"
+
+void
+dkp_polkit_test (gpointer user_data)
+{
+	EggTest *test = (EggTest *) user_data;
+	DkpPolkit *polkit;
+
+	if (!egg_test_start (test, "DkpPolkit"))
+		return;
+
+	/************************************************************/
+	egg_test_title (test, "get instance");
+	polkit = dkp_polkit_new ();
+	egg_test_assert (test, polkit != NULL);
+
+	/* unref */
+	g_object_unref (polkit);
+
+	egg_test_end (test);
+}
+#endif
+

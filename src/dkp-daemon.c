@@ -989,3 +989,30 @@ dkp_daemon_new (void)
 	return daemon;
 }
 
+/***************************************************************************
+ ***                          MAKE CHECK TESTS                           ***
+ ***************************************************************************/
+#ifdef EGG_TEST
+#include "egg-test.h"
+
+void
+dkp_daemon_test (gpointer user_data)
+{
+	EggTest *test = (EggTest *) user_data;
+	DkpDaemon *daemon;
+
+	if (!egg_test_start (test, "DkpDaemon"))
+		return;
+
+	/************************************************************/
+	egg_test_title (test, "get instance");
+	daemon = dkp_daemon_new ();
+	egg_test_assert (test, daemon != NULL);
+
+	/* unref */
+	g_object_unref (daemon);
+
+	egg_test_end (test);
+}
+#endif
+

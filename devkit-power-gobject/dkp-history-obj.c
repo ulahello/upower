@@ -102,13 +102,12 @@ dkp_history_obj_clear (DkpHistoryObj *obj)
 /**
  * dkp_history_obj_free:
  **/
-gboolean
+void
 dkp_history_obj_free (DkpHistoryObj *obj)
 {
 	if (obj == NULL)
-		return FALSE;
+		return;
 	g_free (obj);
-	return TRUE;
 }
 
 /**

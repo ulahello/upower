@@ -66,6 +66,7 @@ GType dkp_daemon_error_get_type (void);
 GQuark		 dkp_daemon_error_quark		(void);
 GType		 dkp_daemon_get_type		(void);
 DkpDaemon	*dkp_daemon_new			(void);
+void		 dkp_daemon_test		(gpointer	 user_data);
 
 /* private */
 guint		 dkp_daemon_get_number_devices_of_type (DkpDaemon	*daemon,

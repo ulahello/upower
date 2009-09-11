@@ -636,10 +636,8 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvo
 
 	dbus_g_method_return (context, complex);
 out:
-	if (array != NULL) {
-		g_ptr_array_foreach (array, (GFunc) dkp_stats_obj_free, NULL);
-		g_ptr_array_free (array, TRUE);
-	}
+	if (array != NULL)
+		g_ptr_array_unref (array);
 	return TRUE;
 }
 
@@ -894,8 +892,10 @@ dkp_device_finalize (GObject *object)
 
 	device = DKP_DEVICE (object);
 	g_return_if_fail (device->priv != NULL);
-	g_object_unref (device->priv->native);
-	g_object_unref (device->priv->daemon);
+	if (device->priv->native != NULL)
+		g_object_unref (device->priv->native);
+	if (device->priv->daemon != NULL)
+		g_object_unref (device->priv->daemon);
 	g_object_unref (device->priv->history);
 	g_free (device->priv->object_path);
 	g_free (device->priv->vendor);
@@ -1184,4 +1184,31 @@ dkp_device_new (void)
 	device = DKP_DEVICE (g_object_new (DKP_TYPE_DEVICE, NULL));
 	return device;
 }
+
+/***************************************************************************
+ ***                          MAKE CHECK TESTS                           ***
+ ***************************************************************************/
+#ifdef EGG_TEST
+#include "egg-test.h"
+
+void
+dkp_device_test (gpointer user_data)
+{
+	EggTest *test = (EggTest *) user_data;
+	DkpDevice *device;
+
+	if (!egg_test_start (test, "DkpDevice"))
+		return;
+
+	/************************************************************/
+	egg_test_title (test, "get instance");
+	device = dkp_device_new ();
+	egg_test_assert (test, device != NULL);
+
+	/* unref */
+	g_object_unref (device);
+
+	egg_test_end (test);
+}
+#endif
 

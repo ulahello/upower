@@ -63,6 +63,8 @@ typedef struct
 
 GType		 dkp_backend_get_type			(void);
 DkpBackend	*dkp_backend_new			(void);
+void		 dkp_backend_test			(gpointer	 user_data);
+
 gboolean	 dkp_backend_coldplug			(DkpBackend	*backend,
 							 DkpDaemon	*daemon);
 

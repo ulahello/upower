@@ -60,6 +60,8 @@ typedef enum {
 
 GType		 dkp_history_get_type			(void);
 DkpHistory	*dkp_history_new			(void);
+void		 dkp_history_test			(gpointer	 user_data);
+
 GPtrArray	*dkp_history_get_data			(DkpHistory		*history,
 							 DkpHistoryType		 type,
 							 guint			 timespan,

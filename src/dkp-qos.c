@@ -59,9 +59,9 @@ static void     dkp_qos_finalize   (GObject	*object);
 struct DkpQosPrivate
 {
 	GPtrArray		*data;
-	gint			 fd[DKP_QOS_TYPE_UNKNOWN];
-	gint			 last[DKP_QOS_TYPE_UNKNOWN];
-	gint			 minimum[DKP_QOS_TYPE_UNKNOWN];
+	gint			 fd[DKP_QOS_TYPE_LAST];
+	gint			 last[DKP_QOS_TYPE_LAST];
+	gint			 minimum[DKP_QOS_TYPE_LAST];
 	DkpPolkit		*polkit;
 	DBusGConnection		*connection;
 	DBusGProxy		*proxy;
@@ -392,8 +392,6 @@ dkp_qos_cancel_request (DkpQos *qos, guint cookie, DBusGMethodInvocation *contex
 
 	/* TODO: if persistent remove from datadase */
 
-	dkp_qos_free_data_obj (obj);
-
 	g_signal_emit (qos, signals [REQUESTS_CHANGED], 0);
 out:
 	if (subject != NULL)
@@ -505,7 +503,6 @@ dkp_qos_remove_dbus (DkpQos *qos, const gchar *sender)
 			egg_debug ("Auto-revoked idle qos on %s", sender);
 			g_ptr_array_remove (qos->priv->data, obj);
 			dkp_qos_latency_perhaps_changed (qos, obj->type);
-			dkp_qos_free_data_obj (obj);
 		}
 	}
 }
@@ -559,8 +556,7 @@ dkp_qos_init (DkpQos *qos)
 
 	qos->priv = DKP_QOS_GET_PRIVATE (qos);
 	qos->priv->polkit = dkp_polkit_new ();
-	qos->priv->data = g_ptr_array_new ();
-
+	qos->priv->data = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_qos_free_data_obj);
 	/* TODO: need to load persistent values */
 
 	/* setup lowest */
@@ -617,11 +613,10 @@ dkp_qos_finalize (GObject *object)
 		if (qos->priv->fd[i] > 0)
 			close (qos->priv->fd[i]);
 	}
-	g_ptr_array_foreach (qos->priv->data, (GFunc) dkp_qos_free_data_obj, NULL);
-	g_ptr_array_free (qos->priv->data, TRUE);
+	g_ptr_array_unref (qos->priv->data);
 	g_object_unref (qos->priv->proxy);
-//FIXME: causes bt
-//	g_object_unref (qos->priv->polkit);
+
+	g_object_unref (qos->priv->polkit);
 
 	G_OBJECT_CLASS (dkp_qos_parent_class)->finalize (object);
 }
@@ -636,4 +631,31 @@ dkp_qos_new (void)
 	qos = g_object_new (DKP_TYPE_QOS, NULL);
 	return DKP_QOS (qos);
 }
+
+/***************************************************************************
+ ***                          MAKE CHECK TESTS                           ***
+ ***************************************************************************/
+#ifdef EGG_TEST
+#include "egg-test.h"
+
+void
+dkp_qos_test (gpointer user_data)
+{
+	EggTest *test = (EggTest *) user_data;
+	DkpQos *qos;
+
+	if (!egg_test_start (test, "DkpQos"))
+		return;
+
+	/************************************************************/
+	egg_test_title (test, "get instance");
+	qos = dkp_qos_new ();
+	egg_test_assert (test, qos != NULL);
+
+	/* unref */
+	g_object_unref (qos);
+
+	egg_test_end (test);
+}
+#endif
 

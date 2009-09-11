@@ -49,6 +49,8 @@ typedef struct
 
 GType		 dkp_polkit_get_type		(void);
 DkpPolkit	*dkp_polkit_new			(void);
+void		 dkp_polkit_test		(gpointer		 user_data);
+
 PolkitSubject	*dkp_polkit_get_subject		(DkpPolkit		*polkit,
 						 DBusGMethodInvocation	*context);
 gboolean	 dkp_polkit_check_auth		(DkpPolkit		*polkit,

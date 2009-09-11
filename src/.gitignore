@@ -1,5 +1,6 @@
 .deps
 devkit-power-daemon
+dkp-self-test
 *.o
 *-glue.h
 *-marshal.c

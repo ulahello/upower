@@ -177,6 +177,16 @@ fi
 AM_CONDITIONAL(BACKEND_TYPE_DUMMY, [test x$with_backend = xdummy])
 AM_CONDITIONAL(BACKEND_TYPE_LINUX, [test x$with_backend = xlinux])
 
+dnl ---------------------------------------------------------------------------
+dnl - Build self tests
+dnl ---------------------------------------------------------------------------
+AC_ARG_ENABLE(tests, AS_HELP_STRING([--enable-tests],[enable unit test code]),
+	      enable_tests=$enableval,enable_tests=yes)
+AM_CONDITIONAL(EGG_BUILD_TESTS, test x$enable_tests = xyes)
+if test x$enable_tests = xyes; then
+	AC_DEFINE(EGG_BUILD_TESTS,1,[Build test code])
+fi
+
 if test "x$GCC" = "xyes"; then
   LDFLAGS="-Wl,--as-needed $LDFLAGS"
 fi

@@ -121,7 +121,7 @@ dkp_history_array_limit_resolution (GPtrArray *array, guint max_num)
 	guint step = 1;
 	gfloat preset;
 
-	new = g_ptr_array_new ();
+	new = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_history_obj_free);
 	egg_debug ("length of array (before) %i", array->len);
 
 	/* check length */
@@ -250,8 +250,7 @@ dkp_history_get_data (DkpHistory *history, DkpHistoryType type, guint timespan, 
 
 	/* only add a certain number of points */
 	array_resolution = dkp_history_array_limit_resolution (array, resolution);
-	g_ptr_array_foreach (array, (GFunc) dkp_history_obj_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	return array_resolution;
 }
@@ -814,10 +813,10 @@ dkp_history_init (DkpHistory *history)
 	history->priv->rate_last = 0;
 	history->priv->percentage_last = 0;
 	history->priv->state = DKP_DEVICE_STATE_UNKNOWN;
-	history->priv->data_rate = g_ptr_array_new ();
-	history->priv->data_charge = g_ptr_array_new ();
-	history->priv->data_time_full = g_ptr_array_new ();
-	history->priv->data_time_empty = g_ptr_array_new ();
+	history->priv->data_rate = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_history_obj_free);
+	history->priv->data_charge = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_history_obj_free);
+	history->priv->data_time_full = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_history_obj_free);
+	history->priv->data_time_empty = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_history_obj_free);
 	history->priv->save_id = 0;
 }
 
@@ -840,14 +839,10 @@ dkp_history_finalize (GObject *object)
 	if (history->priv->id != NULL)
 		dkp_history_save_data (history);
 
-	g_ptr_array_foreach (history->priv->data_rate, (GFunc) dkp_history_obj_free, NULL);
-	g_ptr_array_free (history->priv->data_rate, TRUE);
-	g_ptr_array_foreach (history->priv->data_charge, (GFunc) dkp_history_obj_free, NULL);
-	g_ptr_array_free (history->priv->data_charge, TRUE);
-	g_ptr_array_foreach (history->priv->data_time_full, (GFunc) dkp_history_obj_free, NULL);
-	g_ptr_array_free (history->priv->data_time_full, TRUE);
-	g_ptr_array_foreach (history->priv->data_time_empty, (GFunc) dkp_history_obj_free, NULL);
-	g_ptr_array_free (history->priv->data_time_empty, TRUE);
+	g_ptr_array_unref (history->priv->data_rate);
+	g_ptr_array_unref (history->priv->data_charge);
+	g_ptr_array_unref (history->priv->data_time_full);
+	g_ptr_array_unref (history->priv->data_time_empty);
 
 	g_free (history->priv->id);
 
@@ -868,4 +863,31 @@ dkp_history_new (void)
 	history = g_object_new (DKP_TYPE_HISTORY, NULL);
 	return DKP_HISTORY (history);
 }
+
+/***************************************************************************
+ ***                          MAKE CHECK TESTS                           ***
+ ***************************************************************************/
+#ifdef EGG_TEST
+#include "egg-test.h"
+
+void
+dkp_history_test (gpointer user_data)
+{
+	EggTest *test = (EggTest *) user_data;
+	DkpHistory *history;
+
+	if (!egg_test_start (test, "DkpHistory"))
+		return;
+
+	/************************************************************/
+	egg_test_title (test, "get instance");
+	history = dkp_history_new ();
+	egg_test_assert (test, history != NULL);
+
+	/* unref */
+	g_object_unref (history);
+
+	egg_test_end (test);
+}
+#endif
 

@@ -39,7 +39,7 @@ typedef struct
 
 DkpHistoryObj	*dkp_history_obj_new		(void);
 gboolean	 dkp_history_obj_clear		(DkpHistoryObj		*obj);
-gboolean	 dkp_history_obj_free		(DkpHistoryObj		*obj);
+void		 dkp_history_obj_free		(DkpHistoryObj		*obj);
 DkpHistoryObj	*dkp_history_obj_copy		(const DkpHistoryObj	*cobj);
 gboolean	 dkp_history_obj_print		(const DkpHistoryObj	*obj);
 DkpHistoryObj	*dkp_history_obj_create		(gdouble		 value,

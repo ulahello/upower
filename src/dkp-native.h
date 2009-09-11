@@ -26,6 +26,7 @@
 G_BEGIN_DECLS
 
 const gchar	*dkp_native_get_native_path	(GObject	*object);
+void		 dkp_native_test		(gpointer	 user_data);
 
 G_END_DECLS
 

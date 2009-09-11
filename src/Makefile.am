@@ -115,6 +115,48 @@ devkit_power_daemon_CFLAGS =					\
 	$(WARNINGFLAGS_C)					\
 	$(NULL)
 
+if EGG_BUILD_TESTS
+check_PROGRAMS =						\
+	dkp-self-test
+
+dkp_self_test_SOURCES =						\
+	egg-test.h						\
+	egg-test.c						\
+	egg-debug.c						\
+	egg-debug.h						\
+	dkp-self-test.c						\
+	dkp-polkit.h						\
+	dkp-polkit.c						\
+	dkp-daemon.h						\
+	dkp-daemon.c						\
+	dkp-device.h						\
+	dkp-device.c						\
+	dkp-device-list.h					\
+	dkp-device-list.c					\
+	dkp-qos.h						\
+	dkp-qos.c						\
+	dkp-wakeups.h						\
+	dkp-wakeups.c						\
+	dkp-history.h						\
+	dkp-history.c						\
+	dkp-backend.h						\
+	dkp-native.h						\
+	$(BUILT_SOURCES)
+
+dkp_self_test_LDADD =						\
+	-lm							\
+	dummy/libdkpshared.la					\
+	$(GLIB_LIBS)						\
+	$(GIO_CFLAGS)						\
+	$(SELFTEST_LIBS)					\
+	$(DEVKIT_POWER_LIBS)					\
+	$(POLKIT_LIBS)
+
+dkp_self_test_CFLAGS = -DEGG_TEST $(AM_CFLAGS) $(WARNINGFLAGS_C)
+
+TESTS = dkp-self-test
+endif
+
 servicedir       = $(datadir)/dbus-1/system-services
 service_in_files = org.freedesktop.DeviceKit.Power.service.in
 service_DATA     = $(service_in_files:.service.in=.service)

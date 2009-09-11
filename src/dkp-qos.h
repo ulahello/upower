@@ -53,6 +53,8 @@ typedef struct
 
 DkpQos		*dkp_qos_new				(void);
 GType		 dkp_qos_get_type			(void);
+void		 dkp_qos_test				(gpointer	 user_data);
+
 void		 dkp_qos_request_latency		(DkpQos		*qos,
 							 const gchar	*type,
 							 gint		 value,

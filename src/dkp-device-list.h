@@ -51,6 +51,8 @@ typedef struct
 
 GType		 dkp_device_list_get_type		(void);
 DkpDeviceList	*dkp_device_list_new			(void);
+void		 dkp_device_list_test			(gpointer		 user_data);
+
 GObject		*dkp_device_list_lookup			(DkpDeviceList		*list,
 							 GObject		*native);
 gboolean	 dkp_device_list_insert			(DkpDeviceList		*list,

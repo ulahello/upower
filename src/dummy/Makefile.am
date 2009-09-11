@@ -7,14 +7,13 @@ INCLUDES = \
 	-DEGG_LOGGING="\"DKP_LOGGING\""				\
 	-DEGG_CONSOLE="\"DKP_CONSOLE\""				\
 	-DDKP_COMPILATION					\
+	-DEGG_TEST						\
 	-I$(top_srcdir)/devkit-power-gobject			\
 	$(DBUS_GLIB_CFLAGS)					\
 	$(POLKIT_CFLAGS)					\
 	$(GLIB_CFLAGS)
 
-if BACKEND_TYPE_DUMMY
 noinst_LTLIBRARIES = libdkpshared.la
-endif
 
 libdkpshared_la_SOURCES =					\
 	dkp-backend.c						\
