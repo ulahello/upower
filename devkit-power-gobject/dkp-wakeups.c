@@ -97,8 +97,8 @@ dkp_wakeups_get_data (DkpWakeups *wakeups, GError **error)
 	GPtrArray *array = NULL;
 	gboolean ret;
 
-	g_return_val_if_fail (DKP_IS_WAKEUPS (wakeups), FALSE);
-	g_return_val_if_fail (wakeups->priv->proxy != NULL, FALSE);
+	g_return_val_if_fail (DKP_IS_WAKEUPS (wakeups), NULL);
+	g_return_val_if_fail (wakeups->priv->proxy != NULL, NULL);
 
 	g_type_gvalue_array = dbus_g_type_get_collection ("GPtrArray",
 					dbus_g_type_get_struct("GValueArray",
