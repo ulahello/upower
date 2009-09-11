@@ -917,7 +917,7 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 							       "Is a laptop",
 							       "If this computer is probably a laptop",
 							       FALSE,
-							       G_PARAM_READABLE));
+							       G_PARAM_READWRITE));
 
 	g_object_class_install_property (object_class,
 					 PROP_CAN_SUSPEND,
@@ -957,7 +957,7 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 							       "Laptop lid is closed",
 							       "If the laptop lid is closed",
 							       FALSE,
-							       G_PARAM_READABLE));
+							       G_PARAM_READWRITE));
 
 	dbus_g_object_type_install_info (DKP_TYPE_DAEMON, &dbus_glib_dkp_daemon_object_info);
 

@@ -278,9 +278,13 @@ dkp_backend_coldplug (DkpBackend *backend, DkpDaemon *daemon)
 
 	backend->priv->daemon = g_object_ref (daemon);
 	backend->priv->device_list = dkp_daemon_get_device_list (daemon);
+	backend->priv->gudev_client = g_udev_client_new (subsystems);
+	g_signal_connect (backend->priv->gudev_client, "uevent",
+			  G_CALLBACK (dkp_backend_uevent_signal_handler_cb), backend);
 
 	/* add all subsystems */
 	for (i=0; subsystems[i] != NULL; i++) {
+		egg_debug ("registering subsystem : %s", subsystems[i]);
 		devices = g_udev_client_query_by_subsystem (backend->priv->gudev_client, subsystems[i]);
 		for (l = devices; l != NULL; l = l->next) {
 			native = l->data;
@@ -289,13 +293,6 @@ dkp_backend_coldplug (DkpBackend *backend, DkpDaemon *daemon)
 		g_list_foreach (devices, (GFunc) g_object_unref, NULL);
 		g_list_free (devices);
 	}
-
-	/* connect to the DeviceKit backend */
-	for (i=0; subsystems[i] != NULL; i++)
-		egg_debug ("registering subsystem : %s", subsystems[i]);
-	backend->priv->gudev_client = g_udev_client_new (subsystems);
-	g_signal_connect (backend->priv->gudev_client, "uevent",
-			  G_CALLBACK (dkp_backend_uevent_signal_handler_cb), backend);
 
 	return TRUE;
 }
