@@ -73,11 +73,10 @@ static gboolean		 dkp_device_csr_refresh	 	(DkpDevice *device);
 static gboolean
 dkp_device_csr_poll_cb (DkpDeviceCsr *csr)
 {
-	gboolean ret;
 	DkpDevice *device = DKP_DEVICE (csr);
 
 	egg_debug ("Polling: %s", dkp_device_get_object_path (device));
-	ret = dkp_device_csr_refresh (device);
+	dkp_device_csr_refresh (device);
 
 	/* always continue polling */
 	return TRUE;

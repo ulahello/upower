@@ -132,11 +132,10 @@ out:
 static gboolean
 dkp_device_hid_poll (DkpDeviceHid *hid)
 {
-	gboolean ret;
 	DkpDevice *device = DKP_DEVICE (hid);
 
 	egg_debug ("Polling: %s", dkp_device_get_object_path (device));
-	ret = dkp_device_hid_refresh (device);
+	dkp_device_hid_refresh (device);
 
 	/* always continue polling */
 	return TRUE;

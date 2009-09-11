@@ -483,9 +483,8 @@ out:
 static gboolean
 dkp_daemon_register_power_daemon (DkpDaemon *daemon)
 {
-	DBusConnection *connection;
-	DBusError dbus_error;
 	GError *error = NULL;
+	gboolean ret = FALSE;
 
 	daemon->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (daemon->priv->connection == NULL) {
@@ -493,28 +492,24 @@ dkp_daemon_register_power_daemon (DkpDaemon *daemon)
 			g_critical ("error getting system bus: %s", error->message);
 			g_error_free (error);
 		}
-		goto error;
+		goto out;
 	}
-	connection = dbus_g_connection_get_connection (daemon->priv->connection);
 
+	/* connect to DBUS */
+	daemon->priv->proxy = dbus_g_proxy_new_for_name (daemon->priv->connection,
+							 DBUS_SERVICE_DBUS,
+							 DBUS_PATH_DBUS,
+							 DBUS_INTERFACE_DBUS);
+
+	/* register GObject */
 	dbus_g_connection_register_g_object (daemon->priv->connection,
 					     "/org/freedesktop/DeviceKit/Power",
 					     G_OBJECT (daemon));
 
-	daemon->priv->proxy = dbus_g_proxy_new_for_name (daemon->priv->connection,
-						      DBUS_SERVICE_DBUS,
-						      DBUS_PATH_DBUS,
-						      DBUS_INTERFACE_DBUS);
-	dbus_error_init (&dbus_error);
-	if (dbus_error_is_set (&dbus_error)) {
-		egg_warning ("Cannot add match rule: %s: %s", dbus_error.name, dbus_error.message);
-		dbus_error_free (&dbus_error);
-		goto error;
-	}
-
-	return TRUE;
-error:
-	return FALSE;
+	/* success */
+	ret = TRUE;
+out:
+	return ret;
 }
 
 /**

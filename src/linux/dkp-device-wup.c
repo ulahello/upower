@@ -85,11 +85,10 @@ static gboolean		 dkp_device_wup_refresh	 	(DkpDevice *device);
 static gboolean
 dkp_device_wup_poll_cb (DkpDeviceWup *wup)
 {
-	gboolean ret;
 	DkpDevice *device = DKP_DEVICE (wup);
 
 	egg_debug ("Polling: %s", dkp_device_get_object_path (device));
-	ret = dkp_device_wup_refresh (device);
+	dkp_device_wup_refresh (device);
 
 	/* always continue polling */
 	return TRUE;
@@ -335,10 +334,14 @@ dkp_device_wup_coldplug (DkpDevice *device)
 
 	/* attempt to clear */
 	ret = dkp_device_wup_write_command (wup, "#R,W,0;");
+	if (!ret)
+		egg_debug ("failed to clear, nonfatal");
 
 	/* setup logging interval */
 	data = g_strdup_printf ("#L,W,3,E,1,%i;", DKP_DEVICE_WUP_REFRESH_TIMEOUT);
 	ret = dkp_device_wup_write_command (wup, data);
+	if (!ret)
+		egg_debug ("failed to setup logging interval, nonfatal");
 	g_free (data);
 
 	/* dummy read */
@@ -373,7 +376,7 @@ dkp_device_wup_coldplug (DkpDevice *device)
 
 	/* coldplug */
 	egg_debug ("coldplug");
-	ret = dkp_device_wup_refresh (device);
+	dkp_device_wup_refresh (device);
 
 	/* hardcode true, as we'll retry later if busy */
 	ret = TRUE;

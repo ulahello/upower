@@ -193,7 +193,7 @@ out:
 int
 main (int argc, char **argv)
 {
-	gint retval = 1;
+	gint retval = EXIT_FAILURE;
 	guint i;
 	GOptionContext *context;
 	gboolean verbose = FALSE;
@@ -245,9 +245,14 @@ main (int argc, char **argv)
 		goto out;
 	}
 
+	/* wakeups */
 	if (opt_wakeups) {
 		dkp_tool_show_wakeups ();
-	} else if (opt_enumerate || opt_dump) {
+		retval = EXIT_SUCCESS;
+		goto out;
+	}
+
+	if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
 		devices = dkp_client_enumerate_devices (client, &error);
 		if (devices == NULL) {
@@ -270,10 +275,18 @@ main (int argc, char **argv)
 			g_print ("Daemon:\n");
 			dkp_client_print (client);
 		}
-	} else if (opt_monitor || opt_monitor_detail) {
+		retval = EXIT_SUCCESS;
+		goto out;
+	}
+
+	if (opt_monitor || opt_monitor_detail) {
 		if (!dkp_tool_do_monitor (client))
 			goto out;
-	} else if (opt_show_info != NULL) {
+		retval = EXIT_SUCCESS;
+		goto out;
+	}
+
+	if (opt_show_info != NULL) {
 		device = dkp_device_new ();
 		ret = dkp_device_set_object_path (device, opt_show_info, &error);
 		if (!ret) {
@@ -281,12 +294,11 @@ main (int argc, char **argv)
 			g_error_free (error);
 		} else {
 			dkp_device_print (device);
-			retval = 0;
 		}
 		g_object_unref (device);
+		retval = EXIT_SUCCESS;
+		goto out;
 	}
-
-	retval = 0;
 out:
 	g_object_unref (client);
 	return retval;

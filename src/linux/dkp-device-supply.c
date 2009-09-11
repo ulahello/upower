@@ -608,12 +608,11 @@ out:
 static gboolean
 dkp_device_supply_poll_battery (DkpDeviceSupply *supply)
 {
-	gboolean ret;
 	DkpDevice *device = DKP_DEVICE (supply);
 
 	egg_debug ("No updates on supply %s for %i seconds; forcing update", dkp_device_get_object_path (device), DKP_DEVICE_SUPPLY_REFRESH_TIMEOUT);
 	supply->priv->poll_timer_id = 0;
-	ret = dkp_device_supply_refresh (device);
+	dkp_device_supply_refresh (device);
 
 	/* never repeat */
 	return FALSE;
