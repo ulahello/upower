@@ -108,6 +108,10 @@ devkit_power_daemon_LDADD += 					\
 	linux/libdkpshared.a
 endif
 
+devkit_power_daemon_CFLAGS =					\
+	$(WARNINGFLAGS_C)					\
+	$(NULL)
+
 servicedir       = $(datadir)/dbus-1/system-services
 service_in_files = org.freedesktop.DeviceKit.Power.service.in
 service_DATA     = $(service_in_files:.service.in=.service)

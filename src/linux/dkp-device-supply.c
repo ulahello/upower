@@ -28,6 +28,7 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <glib/gprintf.h>
 #include <glib/gi18n-lib.h>
 #include <glib-object.h>
 #include <gudev/gudev.h>
@@ -52,8 +53,6 @@ struct DkpDeviceSupplyPrivate
 	guint			 unknown_retries;
 	gboolean		 enable_poll;
 };
-
-static void	dkp_device_supply_class_init	(DkpDeviceSupplyClass	*klass);
 
 G_DEFINE_TYPE (DkpDeviceSupply, dkp_device_supply, DKP_TYPE_DEVICE)
 #define DKP_DEVICE_SUPPLY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_SUPPLY, DkpDeviceSupplyPrivate))
@@ -213,7 +212,7 @@ dkp_device_supply_get_online (DkpDevice *device, gboolean *online)
 static void
 dkp_device_supply_calculate_rate (DkpDeviceSupply *supply)
 {
-	guint time;
+	guint time_s;
 	gdouble energy;
 	gdouble energy_rate;
 	GTimeVal now;
@@ -232,9 +231,9 @@ dkp_device_supply_calculate_rate (DkpDeviceSupply *supply)
 
 	/* get the time difference */
 	g_get_current_time (&now);
-	time = now.tv_sec - supply->priv->energy_old_timespec.tv_sec;
+	time_s = now.tv_sec - supply->priv->energy_old_timespec.tv_sec;
 
-	if (time == 0)
+	if (time_s == 0)
 		return;
 
 	/* get the difference in charge */
@@ -243,7 +242,7 @@ dkp_device_supply_calculate_rate (DkpDeviceSupply *supply)
 		return;
 
 	/* probably okay */
-	energy_rate = energy * 3600 / time;
+	energy_rate = energy * 3600 / time_s;
 	g_object_set (device, "energy-rate", energy_rate, NULL);
 }
 
@@ -256,19 +255,19 @@ dkp_device_supply_convert_device_technology (const gchar *type)
 	if (type == NULL)
 		return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
 	/* every case combination of Li-Ion is commonly used.. */
-	if (strcasecmp (type, "li-ion") == 0 ||
-	    strcasecmp (type, "lion") == 0)
+	if (g_ascii_strcasecmp (type, "li-ion") == 0 ||
+	    g_ascii_strcasecmp (type, "lion") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LITHIUM_ION;
-	if (strcasecmp (type, "pb") == 0 ||
-	    strcasecmp (type, "pbac") == 0)
+	if (g_ascii_strcasecmp (type, "pb") == 0 ||
+	    g_ascii_strcasecmp (type, "pbac") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LEAD_ACID;
-	if (strcasecmp (type, "lip") == 0 ||
-	    strcasecmp (type, "lipo") == 0 ||
-	    strcasecmp (type, "li-poly") == 0)
+	if (g_ascii_strcasecmp (type, "lip") == 0 ||
+	    g_ascii_strcasecmp (type, "lipo") == 0 ||
+	    g_ascii_strcasecmp (type, "li-poly") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LITHIUM_POLYMER;
-	if (strcasecmp (type, "nimh") == 0)
+	if (g_ascii_strcasecmp (type, "nimh") == 0)
 		return DKP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE;
-	if (strcasecmp (type, "lifo") == 0)
+	if (g_ascii_strcasecmp (type, "lifo") == 0)
 		return DKP_DEVICE_TECHNOLOGY_LITHIUM_IRON_PHOSPHATE;
 	return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
 }
@@ -445,15 +444,15 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	}
 
 	status = g_strstrip (sysfs_get_string (native_path, "status"));
-	if (strcasecmp (status, "charging") == 0)
+	if (g_ascii_strcasecmp (status, "charging") == 0)
 		state = DKP_DEVICE_STATE_CHARGING;
-	else if (strcasecmp (status, "discharging") == 0)
+	else if (g_ascii_strcasecmp (status, "discharging") == 0)
 		state = DKP_DEVICE_STATE_DISCHARGING;
-	else if (strcasecmp (status, "full") == 0)
+	else if (g_ascii_strcasecmp (status, "full") == 0)
 		state = DKP_DEVICE_STATE_FULLY_CHARGED;
-	else if (strcasecmp (status, "empty") == 0)
+	else if (g_ascii_strcasecmp (status, "empty") == 0)
 		state = DKP_DEVICE_STATE_EMPTY;
-	else if (strcasecmp (status, "unknown") == 0)
+	else if (g_ascii_strcasecmp (status, "unknown") == 0)
 		state = DKP_DEVICE_STATE_UNKNOWN;
 	else {
 		egg_warning ("unknown status string: %s", status);
@@ -697,7 +696,7 @@ static gboolean
 dkp_device_supply_refresh (DkpDevice *device)
 {
 	gboolean ret;
-	GTimeVal time;
+	GTimeVal timeval;
 	DkpDeviceSupply *supply = DKP_DEVICE_SUPPLY (device);
 	DkpDeviceType type;
 
@@ -706,8 +705,8 @@ dkp_device_supply_refresh (DkpDevice *device)
 		supply->priv->poll_timer_id = 0;
 	}
 
-	g_get_current_time (&time);
-	g_object_set (device, "update-time", (guint64) time.tv_sec, NULL);
+	g_get_current_time (&timeval);
+	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
 	g_object_get (device, "type", &type, NULL);
 	switch (type) {
 	case DKP_DEVICE_TYPE_LINE_POWER:

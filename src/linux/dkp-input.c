@@ -56,8 +56,6 @@ struct DkpInputPrivate
 	DkpDaemon		*daemon;
 };
 
-static void	dkp_input_class_init	(DkpInputClass	*klass);
-
 G_DEFINE_TYPE (DkpInput, dkp_input, G_TYPE_OBJECT)
 #define DKP_INPUT_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_INPUT, DkpInputPrivate))
 

@@ -82,8 +82,6 @@ struct DkpDevicePrivate
 	gchar			*recall_url;
 };
 
-static void     dkp_device_class_init		(DkpDeviceClass *klass);
-static void     dkp_device_init			(DkpDevice *device);
 static gboolean	dkp_device_register_device	(DkpDevice *device);
 
 enum
