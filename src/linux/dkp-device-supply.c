@@ -518,7 +518,7 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	/* some batteries stop charging much before 100% */
 	if (state == DKP_DEVICE_STATE_UNKNOWN &&
 	    percentage > DKP_DEVICE_SUPPLY_CHARGED_THRESHOLD) {
-		egg_warning ("fixing up unknown %f", percentage);
+		egg_debug ("fixing up unknown %f", percentage);
 		state = DKP_DEVICE_STATE_FULLY_CHARGED;
 	}
 
@@ -628,7 +628,7 @@ static gboolean
 dkp_device_supply_coldplug (DkpDevice *device)
 {
 	DkpDeviceSupply *supply = DKP_DEVICE_SUPPLY (device);
-	gboolean ret;
+	gboolean ret = FALSE;
 	GUdevDevice *native;
 	const gchar *native_path;
 
@@ -637,8 +637,10 @@ dkp_device_supply_coldplug (DkpDevice *device)
 	/* detect what kind of device we are */
 	native = G_UDEV_DEVICE (dkp_device_get_native (device));
 	native_path = g_udev_device_get_sysfs_path (native);
-	if (native_path == NULL)
-		egg_error ("could not get native path");
+	if (native_path == NULL) {
+		egg_warning ("could not get native path for %p", device);
+		goto out;
+	}
 
 	if (sysfs_file_exists (native_path, "online")) {
 		g_object_set (device, "type", DKP_DEVICE_TYPE_LINE_POWER, NULL);
@@ -649,7 +651,7 @@ dkp_device_supply_coldplug (DkpDevice *device)
 
 	/* coldplug values */
 	ret = dkp_device_supply_refresh (device);
-
+out:
 	return ret;
 }
 

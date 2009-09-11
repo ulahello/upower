@@ -438,7 +438,7 @@ dkp_qos_set_minimum_latency (DkpQos *qos, const gchar *type_text, gint value, DB
 		return;
 	}
 
-	egg_warning ("setting %s minimum to %i", type_text, value);
+	egg_debug ("setting %s minimum to %i", type_text, value);
 	qos->priv->minimum[type] = value;
 
 	/* may have changed */

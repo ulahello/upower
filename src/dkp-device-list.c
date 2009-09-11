@@ -121,6 +121,13 @@ dkp_device_list_remove (DkpDeviceList *list, GObject *device)
 	g_hash_table_foreach_remove (list->priv->map_native_path_to_device,
 				     dkp_device_list_remove_cb, device);
 	g_ptr_array_remove (list->priv->array, device);
+
+	/* we're removed the last instance? */
+	if (!G_IS_OBJECT (device)) {
+		egg_warning ("INTERNAL STATE CORRUPT: we've removed the last instance of %p", device);
+		return FALSE;
+	}
+
 	return TRUE;
 }
 

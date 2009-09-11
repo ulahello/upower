@@ -603,6 +603,12 @@ dkp_daemon_device_added_cb (DkpBackend *backend, GObject *native, DkpDevice *dev
 	if (!daemon->priv->during_coldplug) {
 		object_path = dkp_device_get_object_path (device);
 		egg_debug ("emitting added: %s (during coldplug %i)", object_path, daemon->priv->during_coldplug);
+
+		/* don't crash the session */
+		if (object_path == NULL) {
+			egg_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
+			return;
+		}
 		g_signal_emit (daemon, signals[SIGNAL_DEVICE_ADDED], 0, object_path);
 	}
 }
@@ -649,6 +655,12 @@ dkp_daemon_device_changed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 	if (!daemon->priv->during_coldplug) {
 		object_path = dkp_device_get_object_path (device);
 		egg_debug ("emitting device-changed: %s", object_path);
+
+		/* don't crash the session */
+		if (object_path == NULL) {
+			egg_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
+			return;
+		}
 		g_signal_emit (daemon, signals[SIGNAL_DEVICE_CHANGED], 0, object_path);
 	}
 }
@@ -672,6 +684,12 @@ dkp_daemon_device_removed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 	if (!daemon->priv->during_coldplug) {
 		object_path = dkp_device_get_object_path (device);
 		egg_debug ("emitting device-removed: %s", object_path);
+
+		/* don't crash the session */
+		if (object_path == NULL) {
+			egg_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
+			return;
+		}
 		g_signal_emit (daemon, signals[SIGNAL_DEVICE_REMOVED], 0, object_path);
 	}
 

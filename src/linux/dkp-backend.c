@@ -217,7 +217,6 @@ dkp_backend_device_add (DkpBackend *backend, GUdevDevice *native)
 
 	/* emit */
 	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, native, device);
-	g_object_unref (device);
 out:
 	if (object != NULL)
 		g_object_unref (object);
@@ -236,7 +235,7 @@ dkp_backend_device_remove (DkpBackend *backend, GUdevDevice *native)
 	/* does device exist in db? */
 	object = dkp_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 	if (object == NULL) {
-		egg_warning ("ignoring remove event on %s", g_udev_device_get_sysfs_path (native));
+		egg_debug ("ignoring remove event on %s", g_udev_device_get_sysfs_path (native));
 		goto out;
 	}
 
