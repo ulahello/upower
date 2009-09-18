@@ -210,7 +210,7 @@ main (int argc, char **argv)
 	DkpDevice *device;
 
 	const GOptionEntry entries[] = {
-		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, _("Show extra debugging information"), NULL },
+		{ "verbose", '\0', 0, G_OPTION_ARG_NONE, &verbose, _("Show extra debugging information"), NULL },
 		{ "enumerate", 'e', 0, G_OPTION_ARG_NONE, &opt_enumerate, _("Enumerate objects paths for devices"), NULL },
 		{ "dump", 'd', 0, G_OPTION_ARG_NONE, &opt_dump, _("Dump all parameters for all objects"), NULL },
 		{ "wakeups", 'w', 0, G_OPTION_ARG_NONE, &opt_wakeups, _("Get the wakeup data"), NULL },

@@ -195,9 +195,9 @@ dkp_wakeups_ensure_properties (DkpWakeups *wakeups)
 		goto out;
 	}
 
-	value = g_hash_table_lookup (props, "has-capability");
+	value = g_hash_table_lookup (props, "HasCapability");
 	if (value == NULL) {
-		g_warning ("No 'has-capability' property");
+		g_warning ("No 'HasCapability' property");
 		goto out;
 	}
 	wakeups->priv->has_capability = g_value_get_boolean (value);

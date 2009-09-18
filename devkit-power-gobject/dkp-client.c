@@ -253,52 +253,51 @@ dkp_client_ensure_properties (DkpClient *client)
 		goto out;
 	}
 
-
-	value = g_hash_table_lookup (props, "daemon-version");
+	value = g_hash_table_lookup (props, "DaemonVersion");
 	if (value == NULL) {
-		g_warning ("No 'daemon-version' property");
+		g_warning ("No 'DaemonVersion' property");
 		goto out;
 	}
 	client->priv->daemon_version = g_strdup (g_value_get_string (value));
 
-	value = g_hash_table_lookup (props, "can-suspend");
+	value = g_hash_table_lookup (props, "CanSuspend");
 	if (value == NULL) {
-		g_warning ("No 'can-suspend' property");
+		g_warning ("No 'CanSuspend' property");
 		goto out;
 	}
 	client->priv->can_suspend = g_value_get_boolean (value);
 
-	value = g_hash_table_lookup (props, "can-hibernate");
+	value = g_hash_table_lookup (props, "CanHibernate");
 	if (value == NULL) {
-		g_warning ("No 'can-hibernate' property");
+		g_warning ("No 'CanHibernate' property");
 		goto out;
 	}
 	client->priv->can_hibernate = g_value_get_boolean (value);
 
-	value = g_hash_table_lookup (props, "lid-is-closed");
+	value = g_hash_table_lookup (props, "LidIsClosed");
 	if (value == NULL) {
-		g_warning ("No 'lid-is-closed' property");
+		g_warning ("No 'LidIsClosed' property");
 		goto out;
 	}
 	client->priv->lid_is_closed = g_value_get_boolean (value);
 
-	value = g_hash_table_lookup (props, "on-battery");
+	value = g_hash_table_lookup (props, "OnBattery");
 	if (value == NULL) {
-		g_warning ("No 'on-battery' property");
+		g_warning ("No 'OnBattery' property");
 		goto out;
 	}
 	client->priv->on_battery = g_value_get_boolean (value);
 
-	value = g_hash_table_lookup (props, "on-low-battery");
+	value = g_hash_table_lookup (props, "OnLowBattery");
 	if (value == NULL) {
-		g_warning ("No 'on-low-battery' property");
+		g_warning ("No 'OnLowBattery' property");
 		goto out;
 	}
 	client->priv->on_low_battery = g_value_get_boolean (value);
 
-	value = g_hash_table_lookup (props, "lid-is-present");
+	value = g_hash_table_lookup (props, "LidIsPresent");
 	if (value == NULL) {
-		g_warning ("No 'lid-is-present' property");
+		g_warning ("No 'LidIsPresent' property");
 		goto out;
 	}
 	client->priv->lid_is_present = g_value_get_boolean (value);
@@ -523,8 +522,6 @@ dkp_client_class_init (DkpClientClass *klass)
 
 	object_class->get_property = dkp_client_get_property;
 	object_class->finalize = dkp_client_finalize;
-
-
 
 	g_object_class_install_property (object_class,
 					 PROP_DAEMON_VERSION,

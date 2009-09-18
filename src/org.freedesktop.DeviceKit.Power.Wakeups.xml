@@ -16,7 +16,7 @@
       </doc:description>
     </doc:doc>
 
-    <property name="has-capability" type="b" access="read">
+    <property name="HasCapability" type="b" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>

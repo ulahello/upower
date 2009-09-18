@@ -141,39 +141,39 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
 
     <!-- ************************************************************ -->
 
-    <property name="daemon-version" type="s" access="read">
+    <property name="DaemonVersion" type="s" access="read">
       <doc:doc><doc:description><doc:para>
             Version of the running daemon, e.g. <doc:tt>002</doc:tt>.
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="can-suspend" type="b" access="read">
+    <property name="CanSuspend" type="b" access="read">
       <doc:doc><doc:description><doc:para>
             Whether the system is able to suspend.
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="can-hibernate" type="b" access="read">
+    <property name="CanHibernate" type="b" access="read">
       <doc:doc><doc:description><doc:para>
             Whether the system is able to hibernate.
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="on-battery" type="b" access="read">
+    <property name="OnBattery" type="b" access="read">
       <doc:doc><doc:description><doc:para>
             Indicates whether the system is running on battery power.
             This property is provided for convenience.
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="on-low-battery" type="b" access="read">
+    <property name="OnLowBattery" type="b" access="read">
       <doc:doc><doc:description><doc:para>
             Indicates whether the system is running on battery power and if the battery is critically low.
             This property is provided for convenience.
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="lid-is-closed" type="b" access="read">
+    <property name="LidIsClosed" type="b" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -183,7 +183,7 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="lid-is-present" type="b" access="read">
+    <property name="LidIsPresent" type="b" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>

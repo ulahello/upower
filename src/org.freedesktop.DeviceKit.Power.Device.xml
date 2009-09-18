@@ -257,7 +257,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
     </method>
 
     <!-- ************************************************************ -->
-    <property name="native-path" type="s" access="read">
+    <property name="NativePath" type="s" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -271,7 +271,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="vendor" type="s" access="read">
+    <property name="Vendor" type="s" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -281,7 +281,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="model" type="s" access="read">
+    <property name="Model" type="s" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -291,7 +291,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="serial" type="s" access="read">
+    <property name="Serial" type="s" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -301,7 +301,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="update-time" type="t" access="read">
+    <property name="UpdateTime" type="t" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -312,7 +312,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="type" type="u" access="read">
+    <property name="Type" type="u" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -351,7 +351,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="power-supply" type="b" access="read">
+    <property name="PowerSupply" type="b" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -363,7 +363,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="has-history" type="b" access="read">
+    <property name="HasHistory" type="b" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -373,7 +373,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="has-statistics" type="b" access="read">
+    <property name="HasStatistics" type="b" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -383,20 +383,20 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="online" type="b" access="read">
+    <property name="Online" type="b" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
             Whether power is currently being provided through line power.
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "line-power".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="energy" type="d" access="read">
+    <property name="Energy" type="d" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -404,14 +404,14 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             the power source.
           </doc:para><doc:para>
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "battery".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="energy-empty" type="d" access="read">
+    <property name="EnergyEmpty" type="d" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -419,14 +419,14 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             it's considered to be empty.
           </doc:para><doc:para>
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "battery".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="energy-full" type="d" access="read">
+    <property name="EnergyFull" type="d" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -434,14 +434,14 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             it's considered full.
           </doc:para><doc:para>
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "battery".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="energy-full-design" type="d" access="read">
+    <property name="EnergyFullDesign" type="d" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -449,14 +449,14 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             designed to hold when it's considered full.
           </doc:para><doc:para>
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "battery".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="energy-rate" type="d" access="read">
+    <property name="EnergyRate" type="d" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -465,14 +465,14 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             negative it's being charged.
           </doc:para><doc:para>
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "battery".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="voltage" type="d" access="read">
+    <property name="Voltage" type="d" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -482,7 +482,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="time-to-empty" type="x" access="read">
+    <property name="TimeToEmpty" type="x" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -490,14 +490,14 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             Is set to 0 if unknown.
           </doc:para><doc:para>
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "battery".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="time-to-full" type="x" access="read">
+    <property name="TimeToFull" type="x" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -505,36 +505,36 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             Is set to 0 if unknown.
           </doc:para><doc:para>
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "battery".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="percentage" type="d" access="read">
+    <property name="Percentage" type="d" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
             The amount of energy left in the power source expressed as
             a percentage between 0 and 100. Typically this is the same as
-            (<doc:ref type="property" to="Source:energy">energy</doc:ref> -
-            <doc:ref type="property" to="Source:energy-empty">energy-empty</doc:ref>) /
-            (<doc:ref type="property" to="Source:energy-full">energy-full</doc:ref> -
-            <doc:ref type="property" to="Source:energy-empty">energy-empty</doc:ref>).
+            (<doc:ref type="property" to="Source:Energy">energy</doc:ref> -
+            <doc:ref type="property" to="Source:EnergyEmpty">energy-empty</doc:ref>) /
+            (<doc:ref type="property" to="Source:EnergyFull">energy-full</doc:ref> -
+            <doc:ref type="property" to="Source:EnergyEmpty">energy-empty</doc:ref>).
             However, some primitive power sources are capable of only
             reporting percentages and in this case the energy-*
             properties will be unset while this property is set.
           </doc:para><doc:para>
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "battery".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="is-present" type="b" access="read">
+    <property name="IsPresent" type="b" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -543,14 +543,14 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             expensive UPS and most laptop batteries.
           </doc:para><doc:para>
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "battery".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="state" type="u" access="read">
+    <property name="State" type="u" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -581,28 +581,28 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
           </doc:list>
           <doc:para>
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "battery".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="is-rechargeable" type="b" access="read">
+    <property name="IsRechargeable" type="b" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
             If the power source is rechargeable.
           </doc:para><doc:para>
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "battery".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="capacity" type="d" access="read">
+    <property name="Capacity" type="d" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -610,20 +610,20 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             The capacity of the battery will reduce with age.
             A capacity value less than 75% is usually a sign that you should renew your battery.
             Typically this value is the same as
-            (<doc:ref type="property" to="Source:full-design">full-design</doc:ref> /
-            <doc:ref type="property" to="Source:full">full</doc:ref>) * 100.
+            (<doc:ref type="property" to="Source:FullDesign">full-design</doc:ref> /
+            <doc:ref type="property" to="Source:Full">full</doc:ref>) * 100.
             However, some primitive power sources are not capable reporting capacity
             and in this case the capacity property will be unset.
           </doc:para><doc:para>
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "battery".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="technology" type="u" access="read">
+    <property name="Technology" type="u" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -654,14 +654,14 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
           </doc:list>
           <doc:para>
             This property is only valid if the property
-            <doc:ref type="property" to="Source:type">type</doc:ref>
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
             has the value "battery".
           </doc:para>
         </doc:description>
       </doc:doc>
     </property>
 
-    <property name="recall-notice" type="b" access="read">
+    <property name="RecallNotice" type="b" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -674,7 +674,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="recall-vendor" type="s" access="read">
+    <property name="RecallVendor" type="s" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
@@ -687,7 +687,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="recall-url" type="s" access="read">
+    <property name="RecallUrl" type="s" access="read">
       <doc:doc>
         <doc:description>
           <doc:para>
