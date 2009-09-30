@@ -147,62 +147,69 @@ out:
 static void
 dkp_device_collect_props_cb (const char *key, const GValue *value, DkpDevice *device)
 {
-	if (g_strcmp0 (key, "NativePath") == 0)
+	if (g_strcmp0 (key, "NativePath") == 0) {
+		g_free (device->priv->native_path);
 		device->priv->native_path = g_strdup (g_value_get_string (value));
-	else if (g_strcmp0 (key, "Vendor") == 0)
+	} else if (g_strcmp0 (key, "Vendor") == 0) {
+		g_free (device->priv->vendor);
 		device->priv->vendor = g_strdup (g_value_get_string (value));
-	else if (g_strcmp0 (key, "Model") == 0)
+	} else if (g_strcmp0 (key, "Model") == 0) {
+		g_free (device->priv->model);
 		device->priv->model = g_strdup (g_value_get_string (value));
-	else if (g_strcmp0 (key, "Serial") == 0)
+	} else if (g_strcmp0 (key, "Serial") == 0) {
+		g_free (device->priv->serial);
 		device->priv->serial = g_strdup (g_value_get_string (value));
-	else if (g_strcmp0 (key, "UpdateTime") == 0)
+	} else if (g_strcmp0 (key, "UpdateTime") == 0) {
 		device->priv->update_time = g_value_get_uint64 (value);
-	else if (g_strcmp0 (key, "Type") == 0)
+	} else if (g_strcmp0 (key, "Type") == 0) {
 		device->priv->type = g_value_get_uint (value);
-	else if (g_strcmp0 (key, "Online") == 0)
+	} else if (g_strcmp0 (key, "Online") == 0) {
 		device->priv->online = g_value_get_boolean (value);
-	else if (g_strcmp0 (key, "HasHistory") == 0)
+	} else if (g_strcmp0 (key, "HasHistory") == 0) {
 		device->priv->has_history = g_value_get_boolean (value);
-	else if (g_strcmp0 (key, "HasStatistics") == 0)
+	} else if (g_strcmp0 (key, "HasStatistics") == 0) {
 		device->priv->has_statistics = g_value_get_boolean (value);
-	else if (g_strcmp0 (key, "Energy") == 0)
+	} else if (g_strcmp0 (key, "Energy") == 0) {
 		device->priv->energy = g_value_get_double (value);
-	else if (g_strcmp0 (key, "EnergyEmpty") == 0)
+	} else if (g_strcmp0 (key, "EnergyEmpty") == 0) {
 		device->priv->energy_empty = g_value_get_double (value);
-	else if (g_strcmp0 (key, "EnergyFull") == 0)
+	} else if (g_strcmp0 (key, "EnergyFull") == 0) {
 		device->priv->energy_full = g_value_get_double (value);
-	else if (g_strcmp0 (key, "EnergyFullDesign") == 0)
+	} else if (g_strcmp0 (key, "EnergyFullDesign") == 0) {
 		device->priv->energy_full_design = g_value_get_double (value);
-	else if (g_strcmp0 (key, "EnergyRate") == 0)
+	} else if (g_strcmp0 (key, "EnergyRate") == 0) {
 		device->priv->energy_rate = g_value_get_double (value);
-	else if (g_strcmp0 (key, "Voltage") == 0)
+	} else if (g_strcmp0 (key, "Voltage") == 0) {
 		device->priv->voltage = g_value_get_double (value);
-	else if (g_strcmp0 (key, "TimeToFull") == 0)
+	} else if (g_strcmp0 (key, "TimeToFull") == 0) {
 		device->priv->time_to_full = g_value_get_int64 (value);
-	else if (g_strcmp0 (key, "TimeToEmpty") == 0)
+	} else if (g_strcmp0 (key, "TimeToEmpty") == 0) {
 		device->priv->time_to_empty = g_value_get_int64 (value);
-	else if (g_strcmp0 (key, "Percentage") == 0)
+	} else if (g_strcmp0 (key, "Percentage") == 0) {
 		device->priv->percentage = g_value_get_double (value);
-	else if (g_strcmp0 (key, "Technology") == 0)
+	} else if (g_strcmp0 (key, "Technology") == 0) {
 		device->priv->technology = g_value_get_uint (value);
-	else if (g_strcmp0 (key, "IsPresent") == 0)
+	} else if (g_strcmp0 (key, "IsPresent") == 0) {
 		device->priv->is_present = g_value_get_boolean (value);
-	else if (g_strcmp0 (key, "IsRechargeable") == 0)
+	} else if (g_strcmp0 (key, "IsRechargeable") == 0) {
 		device->priv->is_rechargeable = g_value_get_boolean (value);
-	else if (g_strcmp0 (key, "PowerSupply") == 0)
+	} else if (g_strcmp0 (key, "PowerSupply") == 0) {
 		device->priv->power_supply = g_value_get_boolean (value);
-	else if (g_strcmp0 (key, "Capacity") == 0)
+	} else if (g_strcmp0 (key, "Capacity") == 0) {
 		device->priv->capacity = g_value_get_double (value);
-	else if (g_strcmp0 (key, "State") == 0)
+	} else if (g_strcmp0 (key, "State") == 0) {
 		device->priv->state = g_value_get_uint (value);
-	else if (g_strcmp0 (key, "RecallNotice") == 0)
+	} else if (g_strcmp0 (key, "RecallNotice") == 0) {
 		device->priv->recall_notice = g_value_get_boolean (value);
-	else if (g_strcmp0 (key, "RecallVendor") == 0)
+	} else if (g_strcmp0 (key, "RecallVendor") == 0) {
+		g_free (device->priv->recall_vendor);
 		device->priv->recall_vendor = g_strdup (g_value_get_string (value));
-	else if (g_strcmp0 (key, "RecallUrl") == 0)
+	} else if (g_strcmp0 (key, "RecallUrl") == 0) {
+		g_free (device->priv->recall_url);
 		device->priv->recall_url = g_strdup (g_value_get_string (value));
-	else
+	} else {
 		g_warning ("unhandled property '%s'", key);
+	}
 }
 
 /**
