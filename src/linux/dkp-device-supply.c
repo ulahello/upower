@@ -630,6 +630,8 @@ dkp_device_supply_coldplug (DkpDevice *device)
 	gboolean ret = FALSE;
 	GUdevDevice *native;
 	const gchar *native_path;
+	gchar *device_type = NULL;
+	DkpDeviceType type = DKP_DEVICE_TYPE_UNKNOWN;
 
 	dkp_device_supply_reset_values (supply);
 
@@ -641,16 +643,35 @@ dkp_device_supply_coldplug (DkpDevice *device)
 		goto out;
 	}
 
-	if (sysfs_file_exists (native_path, "online")) {
-		g_object_set (device, "type", DKP_DEVICE_TYPE_LINE_POWER, NULL);
-	} else {
-		/* this is correct, UPS and CSR are not in the kernel */
-		g_object_set (device, "type", DKP_DEVICE_TYPE_BATTERY, NULL);
+	/* try to detect using the device type */
+	device_type = dkp_device_supply_get_string (native_path, "type");
+	if (device_type != NULL) {
+		if (g_ascii_strcasecmp (device_type, "mains") == 0) {
+			type = DKP_DEVICE_TYPE_LINE_POWER;
+		} else if (g_ascii_strcasecmp (device_type, "battery") == 0) {
+			type = DKP_DEVICE_TYPE_BATTERY;
+		} else {
+			egg_warning ("did not recognise type %s, please report", device_type);
+		}
 	}
+
+	/* if reading the device type did not work, use the previous method */
+	if (type == DKP_DEVICE_TYPE_UNKNOWN) {
+		if (sysfs_file_exists (native_path, "online")) {
+			type = DKP_DEVICE_TYPE_LINE_POWER;
+		} else {
+			/* this is a good guess as UPS and CSR are not in the kernel */
+			type = DKP_DEVICE_TYPE_BATTERY;
+		}
+	}
+
+	/* set the value */
+	g_object_set (device, "type", type, NULL);
 
 	/* coldplug values */
 	ret = dkp_device_supply_refresh (device);
 out:
+	g_free (device_type);
 	return ret;
 }
 
