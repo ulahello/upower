@@ -298,6 +298,49 @@ out:
 }
 
 /**
+ * dkp_device_supply_get_design_voltage:
+ **/
+static gdouble
+dkp_device_supply_get_design_voltage (const gchar *native_path)
+{
+	gdouble voltage;
+
+	/* design maximum */
+	voltage = sysfs_get_double (native_path, "voltage_max_design") / 1000000.0;
+	if (voltage > 1.00f) {
+		egg_debug ("using max design voltage");
+		goto out;
+	}
+
+	/* design minimum */
+	voltage = sysfs_get_double (native_path, "voltage_min_design") / 1000000.0;
+	if (voltage > 1.00f) {
+		egg_debug ("using min design voltage");
+		goto out;
+	}
+
+	/* current voltage */
+	voltage = sysfs_get_double (native_path, "voltage_present") / 1000000.0;
+	if (voltage > 1.00f) {
+		egg_debug ("using present voltage");
+		goto out;
+	}
+
+	/* current voltage, alternate form */
+	voltage = sysfs_get_double (native_path, "voltage_now") / 1000000.0;
+	if (voltage > 1.00f) {
+		egg_debug ("using present voltage (alternate)");
+		goto out;
+	}
+
+	/* completely guess, to avoid getting zero values */
+	egg_warning ("no voltage values, using 10V as approximation");
+	voltage = 10.0f;
+out:
+	return voltage;
+}
+
+/**
  * dkp_device_supply_refresh_battery:
  *
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
@@ -351,14 +394,7 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		energy = sysfs_get_double (native_path, "energy_avg") / 1000000.0;
 
 	/* used to convert A to W later */
-	voltage_design = sysfs_get_double (native_path, "voltage_max_design") / 1000000.0;
-	if (voltage_design < 1.00) {
-		voltage_design = sysfs_get_double (native_path, "voltage_min_design") / 1000000.0;
-		if (voltage_design < 1.00) {
-			egg_debug ("using present voltage as design voltage");
-			voltage_design = sysfs_get_double (native_path, "voltage_present") / 1000000.0;
-		}
-	}
+	voltage_design = dkp_device_supply_get_design_voltage (native_path);
 
 	/* initial values */
 	if (!supply->priv->has_coldplug_values) {
