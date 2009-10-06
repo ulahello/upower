@@ -19,10 +19,9 @@ AC_SUBST(VERSION)
 # increment;
 # CURRENT	If the API or ABI interface has changed (reset REVISION to 0)
 # REVISION	If the API and ABI remains the same, but bugs are fixed.
-# AGE		If libpackagekit can be linked into executables which can be
-# 		built with previous versions of this library. Don't use.
+# AGE		Don't use.
 LT_CURRENT=1
-LT_REVISION=0
+LT_REVISION=1
 LT_AGE=0
 AC_SUBST(LT_CURRENT)
 AC_SUBST(LT_REVISION)

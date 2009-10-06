@@ -1,3 +1,34 @@
+Version 011
+~~~~~~~~~~~
+Released: 2009-10-06
+
+Note:
+ - The DBus interface of DeviceKit-power may be subject to change in future
+   versions of this daemon.
+ - The DBus interface has changed to use FirstLetterCaps property names
+   so Qt projects can use the DBus interface without resorting to ugly hacks.
+
+New Features:
+ - Return meaningful errors if the user tries to suspend or hibernate without
+   kernel support or swap set up (Richard Hughes)
+ - Use the sysfs file 'type' to work out the battery type before using a
+   fallback (Enrico Zini, Richard Hughes)
+
+Bugfixes:
+ - Update list of HID UPS devices (Arnaud Quette)
+ - Add backend code to make DeviceKit-power compile without GUdev for non-Linux
+   platforms (Richard Hughes)
+ - Only disable the polling if the kernel tells us we're fully charged, not if
+   we guessed it (Richard Hughes)
+ - Make the remove logic much cleaner to try to fix bugs where removing the
+   mouse kills the session (Richard Hughes)
+ - Fix up some small memory leaks (Richard Hughes)
+ - Freeze and thaw the device during initial coldplug (Richard Hughes)
+ - Fix up a few potential problems spotted by clang (Richard Hughes)
+ - Fix a tiny memory leak when we collect the properties from the interface
+   multiple times (Richard Hughes)
+ - Use voltage_now as a fallback to the design voltage (Enrico Zini, Richard Hughes)
+
 Version 010
 ~~~~~~~~~~~
 Released: 2009-07-22
