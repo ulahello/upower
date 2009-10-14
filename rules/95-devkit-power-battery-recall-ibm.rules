@@ -16,6 +16,9 @@ ATTR{type}!="Battery", GOTO="dkp_battery_recall_ibm_end"
 # only match correct manufacturer
 ATTR{manufacturer}!="SONY", GOTO="dkp_battery_recall_ibm_end"
 
+# only recalled on some particular models
+ATTR{[dmi/id]product_version}!="*R60*|*T60*|*Z60m*|*Z61e*|*Z61m*|*Z61p*", GOTO="dkp_battery_recall_ibm_end"
+
 ATTR{model_name}=="92P1072", ENV{DKP_RECALL_NOTICE}="1"
 ATTR{model_name}=="92P1073", ENV{DKP_RECALL_NOTICE}="1"
 ATTR{model_name}=="92P1088", ENV{DKP_RECALL_NOTICE}="1"
