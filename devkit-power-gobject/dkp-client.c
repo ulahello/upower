@@ -265,42 +265,66 @@ dkp_client_ensure_properties (DkpClient *client)
 		g_warning ("No 'CanSuspend' property");
 		goto out;
 	}
-	client->priv->can_suspend = g_value_get_boolean (value);
+	ret = g_value_get_boolean (value);
+	if (ret != client->priv->can_suspend) {
+		client->priv->can_suspend = ret;
+		g_object_notify (G_OBJECT(client), "can-suspend");
+	}
 
 	value = g_hash_table_lookup (props, "CanHibernate");
 	if (value == NULL) {
 		g_warning ("No 'CanHibernate' property");
 		goto out;
 	}
-	client->priv->can_hibernate = g_value_get_boolean (value);
+	ret = g_value_get_boolean (value);
+	if (ret != client->priv->can_hibernate) {
+		client->priv->can_hibernate = ret;
+		g_object_notify (G_OBJECT(client), "can-hibernate");
+	}
 
 	value = g_hash_table_lookup (props, "LidIsClosed");
 	if (value == NULL) {
 		g_warning ("No 'LidIsClosed' property");
 		goto out;
 	}
-	client->priv->lid_is_closed = g_value_get_boolean (value);
+	ret = g_value_get_boolean (value);
+	if (ret != client->priv->lid_is_closed) {
+		client->priv->lid_is_closed = ret;
+		g_object_notify (G_OBJECT(client), "lid-is-closed");
+	}
 
 	value = g_hash_table_lookup (props, "OnBattery");
 	if (value == NULL) {
 		g_warning ("No 'OnBattery' property");
 		goto out;
 	}
-	client->priv->on_battery = g_value_get_boolean (value);
+	ret = g_value_get_boolean (value);
+	if (ret != client->priv->on_battery) {
+		client->priv->on_battery = ret;
+		g_object_notify (G_OBJECT(client), "on-battery");
+	}
 
 	value = g_hash_table_lookup (props, "OnLowBattery");
 	if (value == NULL) {
 		g_warning ("No 'OnLowBattery' property");
 		goto out;
 	}
-	client->priv->on_low_battery = g_value_get_boolean (value);
+	ret = g_value_get_boolean (value);
+	if (ret != client->priv->on_low_battery) {
+		client->priv->on_low_battery = ret;
+		g_object_notify (G_OBJECT(client), "on-low-battery");
+	}
 
 	value = g_hash_table_lookup (props, "LidIsPresent");
 	if (value == NULL) {
 		g_warning ("No 'LidIsPresent' property");
 		goto out;
 	}
-	client->priv->lid_is_present = g_value_get_boolean (value);
+	ret = g_value_get_boolean (value);
+	if (ret != client->priv->lid_is_present) {
+		client->priv->lid_is_present = ret;
+		g_object_notify (G_OBJECT(client), "lid-is-present");
+	}
 
 	/* cached */
 	client->priv->have_properties = TRUE;
