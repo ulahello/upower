@@ -227,9 +227,6 @@ dkp_device_csr_refresh (DkpDevice *device)
 	gdouble percentage;
 	guint written;
 
-	g_get_current_time (&timeval);
-	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
-
 	/* For dual receivers C502, C504 and C505, the mouse is the
 	 * second device and uses an addr of 1 in the value and index
 	 * fields' high byte */
@@ -270,6 +267,9 @@ dkp_device_csr_refresh (DkpDevice *device)
 		egg_debug ("percentage=%f", percentage);
 	}
 
+	/* reset time */
+	g_get_current_time (&timeval);
+	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
 out:
 	if (handle != NULL)
 		usb_close (handle);

@@ -763,8 +763,6 @@ dkp_device_supply_refresh (DkpDevice *device)
 		supply->priv->poll_timer_id = 0;
 	}
 
-	g_get_current_time (&timeval);
-	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
 	g_object_get (device, "type", &type, NULL);
 	switch (type) {
 	case DKP_DEVICE_TYPE_LINE_POWER:
@@ -781,6 +779,13 @@ dkp_device_supply_refresh (DkpDevice *device)
 		g_assert_not_reached ();
 		break;
 	}
+
+	/* reset time if we got new data */
+	if (ret) {
+		g_get_current_time (&timeval);
+		g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
+	}
+
 	return ret;
 }
 

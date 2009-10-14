@@ -385,10 +385,6 @@ dkp_device_hid_refresh (DkpDevice *device)
 	int rd;
 	DkpDeviceHid *hid = DKP_DEVICE_HID (device);
 
-	/* reset time */
-	g_get_current_time (&timeval);
-	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
-
 	/* read any data */
 	rd = read (hid->priv->fd, ev, sizeof (ev));
 
@@ -416,6 +412,10 @@ dkp_device_hid_refresh (DkpDevice *device)
 
 	/* fix up device states */
 	dkp_device_hid_fixup_state (device);
+
+	/* reset time */
+	g_get_current_time (&timeval);
+	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
 out:
 	return ret;
 }
