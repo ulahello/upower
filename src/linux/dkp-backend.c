@@ -57,7 +57,6 @@ struct DkpBackendPrivate
 
 enum {
 	SIGNAL_DEVICE_ADDED,
-	SIGNAL_DEVICE_CHANGED,
 	SIGNAL_DEVICE_REMOVED,
 	SIGNAL_LAST
 };
@@ -179,10 +178,6 @@ dkp_backend_device_changed (DkpBackend *backend, GUdevDevice *native)
 		egg_debug ("no changes on %s", dkp_device_get_object_path (device));
 		goto out;
 	}
-
-	/* emit */
-	egg_debug ("emitting changed %s", dkp_device_get_object_path (device));
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_CHANGED], 0, native, device);
 out:
 	if (object != NULL)
 		g_object_unref (object);
@@ -326,12 +321,6 @@ dkp_backend_class_init (DkpBackendClass *klass)
 		g_signal_new ("device-added",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (DkpBackendClass, device_added),
-			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER,
-			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
-	signals [SIGNAL_DEVICE_CHANGED] =
-		g_signal_new ("device-changed",
-			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (DkpBackendClass, device_changed),
 			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER,
 			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 	signals [SIGNAL_DEVICE_REMOVED] =

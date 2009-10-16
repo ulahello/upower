@@ -50,7 +50,6 @@ struct DkpBackendPrivate
 
 enum {
 	SIGNAL_DEVICE_ADDED,
-	SIGNAL_DEVICE_CHANGED,
 	SIGNAL_DEVICE_REMOVED,
 	SIGNAL_LAST
 };
@@ -65,8 +64,15 @@ G_DEFINE_TYPE (DkpBackend, dkp_backend, G_TYPE_OBJECT)
 static gboolean
 dkp_backend_changed_time_cb (DkpBackend *backend)
 {
-	/* emit */
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_CHANGED], 0, backend->priv->native, backend->priv->device);
+	DkpDevice *device;
+	GTimeVal timeval;
+
+	//FIXME!
+	device = NULL;
+
+	/* reset time */
+	g_get_current_time (&timeval);
+	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
 	return TRUE;
 }
 
@@ -130,12 +136,6 @@ dkp_backend_class_init (DkpBackendClass *klass)
 		g_signal_new ("device-added",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (DkpBackendClass, device_added),
-			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER,
-			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
-	signals [SIGNAL_DEVICE_CHANGED] =
-		g_signal_new ("device-changed",
-			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (DkpBackendClass, device_changed),
 			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER,
 			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 	signals [SIGNAL_DEVICE_REMOVED] =
