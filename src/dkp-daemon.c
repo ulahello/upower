@@ -83,6 +83,8 @@ struct DkpDaemonPrivate
 	gboolean		 hibernate_has_swap_space;
 	gboolean		 hibernate_has_encrypted_swap;
 	gboolean		 during_coldplug;
+	guint			 battery_poll_id;
+	guint			 battery_poll_count;
 };
 
 static void	dkp_daemon_finalize		(GObject	*object);
@@ -98,7 +100,8 @@ G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
 #define DKP_DAEMON_SWAP_WATERLINE 			80.0f /* % */
 
 /* refresh all the devices after this much time when on-battery has changed */
-#define DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY	3 /* seconds */
+#define DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY	1 /* seconds */
+#define DKP_DAEMON_POLL_BATTERY_NUMBER_TIMES		5
 
 /**
  * dkp_daemon_check_sleep_states:
@@ -679,23 +682,47 @@ out:
 }
 
 /**
- * dkp_daemon_refresh_battery_devices_cb:
- **/
-static gboolean
-dkp_daemon_refresh_battery_devices_cb (DkpDaemon *daemon)
-{
-	egg_debug ("doing the delayed refresh");
-	dkp_daemon_refresh_battery_devices (daemon);
-	return FALSE;
-}
-
-/**
  * dkp_daemon_get_device_list:
  **/
 DkpDeviceList *
 dkp_daemon_get_device_list (DkpDaemon *daemon)
 {
 	return g_object_ref (daemon->priv->power_devices);
+}
+
+/**
+ * dkp_daemon_refresh_battery_devices_cb:
+ **/
+static gboolean
+dkp_daemon_refresh_battery_devices_cb (DkpDaemon *daemon)
+{
+	/* no more left to do? */
+	if (daemon->priv->battery_poll_count-- == 0) {
+		daemon->priv->battery_poll_id = 0;
+		return FALSE;
+	}
+
+	egg_debug ("doing the delayed refresh (%i)", daemon->priv->battery_poll_count);
+	dkp_daemon_refresh_battery_devices (daemon);
+
+	/* keep going until none left to do */
+	return TRUE;
+}
+
+/**
+ * dkp_daemon_poll_battery_devices_for_a_little_bit:
+ **/
+static void
+dkp_daemon_poll_battery_devices_for_a_little_bit (DkpDaemon *daemon)
+{
+	daemon->priv->battery_poll_count = DKP_DAEMON_POLL_BATTERY_NUMBER_TIMES;
+
+	/* already polling */
+	if (daemon->priv->battery_poll_id != 0)
+		return;
+	daemon->priv->battery_poll_id =
+		g_timeout_add_seconds (DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
+				       (GSourceFunc) dkp_daemon_refresh_battery_devices_cb, daemon);
 }
 
 /**
@@ -718,8 +745,7 @@ dkp_daemon_device_changed_cb (DkpDevice *device, DkpDaemon *daemon)
 	if (type == DKP_DEVICE_TYPE_LINE_POWER) {
 		/* refresh now, and again in a little while */
 		dkp_daemon_refresh_battery_devices (daemon);
-		g_timeout_add_seconds (DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
-				       (GSourceFunc) dkp_daemon_refresh_battery_devices_cb, daemon);
+		dkp_daemon_poll_battery_devices_for_a_little_bit (daemon);
 	}
 
 	/* second, check if the on_battery and on_low_battery state has changed */
@@ -773,10 +799,8 @@ dkp_daemon_device_added_cb (DkpBackend *backend, GObject *native, DkpDevice *dev
 	g_object_get (device,
 		      "type", &type,
 		      NULL);
-	if (type == DKP_DEVICE_TYPE_BATTERY) {
-		g_timeout_add_seconds (DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
-				       (GSourceFunc) dkp_daemon_refresh_battery_devices_cb, daemon);
-	}
+	if (type == DKP_DEVICE_TYPE_BATTERY)
+		dkp_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */
 	if (!daemon->priv->during_coldplug) {
@@ -812,10 +836,8 @@ dkp_daemon_device_removed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 	g_object_get (device,
 		      "type", &type,
 		      NULL);
-	if (type == DKP_DEVICE_TYPE_BATTERY) {
-		g_timeout_add_seconds (DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
-				       (GSourceFunc) dkp_daemon_refresh_battery_devices_cb, daemon);
-	}
+	if (type == DKP_DEVICE_TYPE_BATTERY)
+		dkp_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */
 	if (!daemon->priv->during_coldplug) {
@@ -869,6 +891,8 @@ dkp_daemon_init (DkpDaemon *daemon)
 	daemon->priv->on_battery = FALSE;
 	daemon->priv->on_low_battery = FALSE;
 	daemon->priv->during_coldplug = FALSE;
+	daemon->priv->battery_poll_id = 0;
+	daemon->priv->battery_poll_count = 0;
 
 	daemon->priv->backend = dkp_backend_new ();
 	g_signal_connect (daemon->priv->backend, "device-added",
@@ -1126,6 +1150,9 @@ dkp_daemon_finalize (GObject *object)
 	daemon = DKP_DAEMON (object);
 
 	g_return_if_fail (daemon->priv != NULL);
+
+	if (daemon->priv->battery_poll_id != 0)
+		g_source_remove (daemon->priv->battery_poll_id);
 
 	if (daemon->priv->proxy != NULL)
 		g_object_unref (daemon->priv->proxy);
