@@ -699,39 +699,10 @@ dkp_daemon_get_device_list (DkpDaemon *daemon)
 }
 
 /**
- * dkp_daemon_device_added_cb:
- **/
-static void
-dkp_daemon_device_added_cb (DkpBackend *backend, GObject *native, DkpDevice *device, DkpDaemon *daemon)
-{
-	const gchar *object_path;
-
-	g_return_if_fail (DKP_IS_DAEMON (daemon));
-	g_return_if_fail (DKP_IS_DEVICE (device));
-	g_return_if_fail (G_IS_OBJECT (native));
-
-	/* add to device list */
-	dkp_device_list_insert (daemon->priv->power_devices, native, G_OBJECT (device));
-
-	/* emit */
-	if (!daemon->priv->during_coldplug) {
-		object_path = dkp_device_get_object_path (device);
-		egg_debug ("emitting added: %s (during coldplug %i)", object_path, daemon->priv->during_coldplug);
-
-		/* don't crash the session */
-		if (object_path == NULL) {
-			egg_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
-			return;
-		}
-		g_signal_emit (daemon, signals[SIGNAL_DEVICE_ADDED], 0, object_path);
-	}
-}
-
-/**
  * dkp_daemon_device_changed_cb:
  **/
 static void
-dkp_daemon_device_changed_cb (DkpBackend *backend, GObject *native, DkpDevice *device, DkpDaemon *daemon)
+dkp_daemon_device_changed_cb (DkpDevice *device, DkpDaemon *daemon)
 {
 	const gchar *object_path;
 	DkpDeviceType type;
@@ -739,7 +710,6 @@ dkp_daemon_device_changed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 
 	g_return_if_fail (DKP_IS_DAEMON (daemon));
 	g_return_if_fail (DKP_IS_DEVICE (device));
-	g_return_if_fail (G_IS_OBJECT (native));
 
 	/* refresh battery devices when AC state changes */
 	g_object_get (device,
@@ -772,10 +742,53 @@ dkp_daemon_device_changed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 
 		/* don't crash the session */
 		if (object_path == NULL) {
-			egg_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
+			egg_warning ("INTERNAL STATE CORRUPT: not sending NULL, device:%p", device);
 			return;
 		}
 		g_signal_emit (daemon, signals[SIGNAL_DEVICE_CHANGED], 0, object_path);
+	}
+}
+
+/**
+ * dkp_daemon_device_added_cb:
+ **/
+static void
+dkp_daemon_device_added_cb (DkpBackend *backend, GObject *native, DkpDevice *device, DkpDaemon *daemon)
+{
+	DkpDeviceType type;
+	const gchar *object_path;
+
+	g_return_if_fail (DKP_IS_DAEMON (daemon));
+	g_return_if_fail (DKP_IS_DEVICE (device));
+	g_return_if_fail (G_IS_OBJECT (native));
+
+	/* add to device list */
+	dkp_device_list_insert (daemon->priv->power_devices, native, G_OBJECT (device));
+
+	/* connect, so we get changes */
+	g_signal_connect (device, "changed",
+			  G_CALLBACK (dkp_daemon_device_changed_cb), daemon);
+
+	/* refresh after a short delay */
+	g_object_get (device,
+		      "type", &type,
+		      NULL);
+	if (type == DKP_DEVICE_TYPE_BATTERY) {
+		g_timeout_add_seconds (DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
+				       (GSourceFunc) dkp_daemon_refresh_battery_devices_cb, daemon);
+	}
+
+	/* emit */
+	if (!daemon->priv->during_coldplug) {
+		object_path = dkp_device_get_object_path (device);
+		egg_debug ("emitting added: %s (during coldplug %i)", object_path, daemon->priv->during_coldplug);
+
+		/* don't crash the session */
+		if (object_path == NULL) {
+			egg_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
+			return;
+		}
+		g_signal_emit (daemon, signals[SIGNAL_DEVICE_ADDED], 0, object_path);
 	}
 }
 
@@ -785,6 +798,7 @@ dkp_daemon_device_changed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 static void
 dkp_daemon_device_removed_cb (DkpBackend *backend, GObject *native, DkpDevice *device, DkpDaemon *daemon)
 {
+	DkpDeviceType type;
 	const gchar *object_path;
 
 	g_return_if_fail (DKP_IS_DAEMON (daemon));
@@ -793,6 +807,15 @@ dkp_daemon_device_removed_cb (DkpBackend *backend, GObject *native, DkpDevice *d
 
 	/* remove from list */
 	dkp_device_list_remove (daemon->priv->power_devices, G_OBJECT(device));
+
+	/* refresh after a short delay */
+	g_object_get (device,
+		      "type", &type,
+		      NULL);
+	if (type == DKP_DEVICE_TYPE_BATTERY) {
+		g_timeout_add_seconds (DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
+				       (GSourceFunc) dkp_daemon_refresh_battery_devices_cb, daemon);
+	}
 
 	/* emit */
 	if (!daemon->priv->during_coldplug) {
@@ -850,8 +873,6 @@ dkp_daemon_init (DkpDaemon *daemon)
 	daemon->priv->backend = dkp_backend_new ();
 	g_signal_connect (daemon->priv->backend, "device-added",
 			  G_CALLBACK (dkp_daemon_device_added_cb), daemon);
-	g_signal_connect (daemon->priv->backend, "device-changed",
-			  G_CALLBACK (dkp_daemon_device_changed_cb), daemon);
 	g_signal_connect (daemon->priv->backend, "device-removed",
 			  G_CALLBACK (dkp_daemon_device_removed_cb), daemon);
 
