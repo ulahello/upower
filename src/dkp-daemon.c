@@ -80,7 +80,8 @@ struct DkpDaemonPrivate
 	gboolean		 lid_is_present;
 	gboolean		 kernel_can_suspend;
 	gboolean		 kernel_can_hibernate;
-	gboolean		 kernel_has_swap_space;
+	gboolean		 hibernate_has_swap_space;
+	gboolean		 hibernate_has_encrypted_swap;
 	gboolean		 during_coldplug;
 };
 
@@ -127,10 +128,117 @@ out:
 }
 
 /**
- * dkp_daemon_check_swap:
+ * dkp_daemon_check_encrypted_swap:
+ *
+ * user@local:~$ cat /proc/swaps
+ * Filename                                Type            Size    Used    Priority
+ * /dev/mapper/cryptswap1                  partition       4803392 35872   -1
+ *
+ * user@local:~$ cat /etc/crypttab
+ * # <target name> <source device>         <key file>      <options>
+ * cryptswap1 /dev/sda5 /dev/urandom swap,cipher=aes-cbc-essiv:sha256
+ *
+ * Loop over the swap partitions in /proc/swaps, looking for matches in /etc/crypttab
+ **/
+static gboolean
+dkp_daemon_check_encrypted_swap (DkpDaemon *daemon)
+{
+	gchar *contents_swaps = NULL;
+	gchar *contents_crypttab = NULL;
+	gchar **lines_swaps = NULL;
+	gchar **lines_crypttab = NULL;
+	GError *error = NULL;
+	gboolean ret;
+	gboolean encrypted_swap = FALSE;
+	const gchar *filename_swaps = "/proc/swaps";
+	const gchar *filename_crypttab = "/etc/crypttab";
+	GPtrArray *devices = NULL;
+	gchar *device;
+	guint i, j;
+
+	/* get swaps data */
+	ret = g_file_get_contents (filename_swaps, &contents_swaps, NULL, &error);
+	if (!ret) {
+		egg_warning ("failed to open %s: %s", filename_swaps, error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* get crypttab data */
+	ret = g_file_get_contents (filename_crypttab, &contents_crypttab, NULL, &error);
+	if (!ret) {
+		egg_warning ("failed to open %s: %s", filename_crypttab, error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* split both into lines */
+	lines_swaps = g_strsplit (contents_swaps, "\n", -1);
+	lines_crypttab = g_strsplit (contents_crypttab, "\n", -1);
+
+	/* get valid swap devices */
+	devices = g_ptr_array_new_with_free_func (g_free);
+	for (i=0; lines_swaps[i] != NULL; i++) {
+
+		/* is a device? */
+		if (lines_swaps[i][0] != '/')
+			continue;
+
+		/* only look at first parameter */
+		g_strdelimit (lines_swaps[i], "\t ", '\0');
+
+		/* add base device to list */
+		device = g_path_get_basename (lines_swaps[i]);
+		egg_debug ("adding swap device: %s", device);
+		g_ptr_array_add (devices, device);
+	}
+
+	/* no swap devices? */
+	if (devices->len == 0) {
+		egg_debug ("no swap devices");
+		goto out;
+	}
+
+	/* find matches in crypttab */
+	for (i=0; lines_crypttab[i] != NULL; i++) {
+
+		/* ignore invalid lines */
+		if (lines_crypttab[i][0] == '#' ||
+		    lines_crypttab[i][0] == '\n' ||
+		    lines_crypttab[i][0] == '\t' ||
+		    lines_crypttab[i][0] == '\0')
+			continue;
+
+		/* only look at first parameter */
+		g_strdelimit (lines_crypttab[i], "\t ", '\0');
+
+		/* is a swap device? */
+		for (j=0; j<devices->len; j++) {
+			device = g_ptr_array_index (devices, j);
+			if (g_strcmp0 (device, lines_crypttab[i]) == 0) {
+				egg_debug ("swap device %s is encrypted (so cannot hibernate)", device);
+				encrypted_swap = TRUE;
+				goto out;
+			}
+			egg_debug ("swap device %s is not encrypted (allows hibernate)", device);
+		}
+	}
+
+out:
+	if (devices != NULL)
+		g_ptr_array_unref (devices);
+	g_free (contents_swaps);
+	g_free (contents_crypttab);
+	g_strfreev (lines_swaps);
+	g_strfreev (lines_crypttab);
+	return encrypted_swap;
+}
+
+/**
+ * dkp_daemon_check_swap_space:
  **/
 static gfloat
-dkp_daemon_check_swap (DkpDaemon *daemon)
+dkp_daemon_check_swap_space (DkpDaemon *daemon)
 {
 	gchar *contents = NULL;
 	gchar **lines = NULL;
@@ -442,10 +550,20 @@ dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	}
 
 	/* enough swap? */
-	if (!daemon->priv->kernel_has_swap_space) {
+	if (!daemon->priv->hibernate_has_swap_space) {
 		error = g_error_new (DKP_DAEMON_ERROR,
 				     DKP_DAEMON_ERROR_GENERAL,
 				     "Not enough swap space");
+		g_error_free (error_local);
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
+	/* encrypted swap? */
+	if (!daemon->priv->hibernate_has_encrypted_swap) {
+		error = g_error_new (DKP_DAEMON_ERROR,
+				     DKP_DAEMON_ERROR_GENERAL,
+				     "Swap space is encrypted");
 		g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
 		goto out;
@@ -722,7 +840,8 @@ dkp_daemon_init (DkpDaemon *daemon)
 	daemon->priv->lid_is_closed = FALSE;
 	daemon->priv->kernel_can_suspend = FALSE;
 	daemon->priv->kernel_can_hibernate = FALSE;
-	daemon->priv->kernel_has_swap_space = FALSE;
+	daemon->priv->hibernate_has_swap_space = FALSE;
+	daemon->priv->hibernate_has_encrypted_swap = FALSE;
 	daemon->priv->power_devices = dkp_device_list_new ();
 	daemon->priv->on_battery = FALSE;
 	daemon->priv->on_low_battery = FALSE;
@@ -751,12 +870,16 @@ dkp_daemon_init (DkpDaemon *daemon)
 
 	/* do we have enough swap? */
 	if (daemon->priv->kernel_can_hibernate) {
-		waterline = dkp_daemon_check_swap (daemon);
+		waterline = dkp_daemon_check_swap_space (daemon);
 		if (waterline < DKP_DAEMON_SWAP_WATERLINE)
-			daemon->priv->kernel_has_swap_space = TRUE;
+			daemon->priv->hibernate_has_swap_space = TRUE;
 		else
 			egg_debug ("not enough swap to enable hibernate");
 	}
+
+	/* is the swap usable? */
+	if (daemon->priv->kernel_can_hibernate)
+		daemon->priv->hibernate_has_encrypted_swap = dkp_daemon_check_encrypted_swap (daemon);
 }
 
 /**
@@ -809,7 +932,9 @@ dkp_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 		g_value_set_boolean (value, daemon->priv->kernel_can_suspend);
 		break;
 	case PROP_CAN_HIBERNATE:
-		g_value_set_boolean (value, (daemon->priv->kernel_can_hibernate && daemon->priv->kernel_has_swap_space));
+		g_value_set_boolean (value, (daemon->priv->kernel_can_hibernate &&
+					     daemon->priv->hibernate_has_swap_space &&
+					     !daemon->priv->hibernate_has_encrypted_swap));
 		break;
 	case PROP_ON_BATTERY:
 		g_value_set_boolean (value, daemon->priv->on_battery);
