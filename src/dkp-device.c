@@ -718,6 +718,10 @@ out:
 
 /**
  * dkp_device_refresh_internal:
+ *
+ * NOTE: if you're calling this function you have to ensure you're doing the
+ * the changed signals on the right interfaces, although by monitoring
+ * notify::update-time this should be mostly done.
  **/
 gboolean
 dkp_device_refresh_internal (DkpDevice *device)
