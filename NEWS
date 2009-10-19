@@ -1,3 +1,20 @@
+Version 012
+~~~~~~~~~~~
+Released: 2009-10-19
+
+Note:
+ - The DBus interface of DeviceKit-power may be subject to change in future
+   versions of this daemon.
+
+New Features:
+ - Detect encrypted swap and prevent hibernate in this case. Fixes fd#23196 (Richard Hughes)
+ - Add g_object_notify() calls for properties on DkpClient (Richard Hughes)
+
+Bugfixes:
+ - Ensure we only reset the update-time property when we have done the refresh, not before (Richard Hughes)
+ - Don't emit changed events from the DkpBackend layer, instead push then through DkpDevice (Richard Hughes)
+ - When we do a delayed refresh, actually do 5 x 1 second apart rather than 1 x 3 seconds (Richard Hughes)
+
 Version 011
 ~~~~~~~~~~~
 Released: 2009-10-06
