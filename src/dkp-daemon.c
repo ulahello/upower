@@ -563,7 +563,7 @@ dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 	}
 
 	/* encrypted swap? */
-	if (!daemon->priv->hibernate_has_encrypted_swap) {
+	if (daemon->priv->hibernate_has_encrypted_swap) {
 		error = g_error_new (DKP_DAEMON_ERROR,
 				     DKP_DAEMON_ERROR_GENERAL,
 				     "Swap space is encrypted");
