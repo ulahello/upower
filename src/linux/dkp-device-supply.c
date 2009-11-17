@@ -341,6 +341,35 @@ out:
 }
 
 /**
+ * dkp_device_supply_make_safe_string:
+ **/
+static void
+dkp_device_supply_make_safe_string (gchar *text)
+{
+	guint i;
+	guint idx = 0;
+
+	/* no point checking */
+	if (text == NULL)
+		return;
+
+	/* shunt up only safe chars */
+	for (i=0; text[i] != '\0'; i++) {
+		if (g_ascii_isprint (text[i])) {
+			/* only copy if the address is going to change */
+			if (idx != i)
+				text[idx] = text[i];
+			idx++;
+		} else {
+			egg_debug ("invalid char '%c'", text[i]);
+		}
+	}
+
+	/* ensure null terminated */
+	text[idx] = '\0';
+}
+
+/**
  * dkp_device_supply_refresh_battery:
  *
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
@@ -411,6 +440,11 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		manufacturer = dkp_device_supply_get_string (native_path, "manufacturer");
 		model_name = dkp_device_supply_get_string (native_path, "model_name");
 		serial_number = dkp_device_supply_get_string (native_path, "serial_number");
+
+		/* some vendors fill this with binary garbage */
+		dkp_device_supply_make_safe_string (manufacturer);
+		dkp_device_supply_make_safe_string (model_name);
+		dkp_device_supply_make_safe_string (serial_number);
 
 		/* are we possibly recalled by the vendor? */
 		recall_notice = g_udev_device_has_property (native, "DKP_RECALL_NOTICE");
