@@ -572,14 +572,26 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		battery_count = dkp_daemon_get_number_devices_of_type (daemon, DKP_DEVICE_TYPE_BATTERY);
 
 		/* try to find a suitable icon depending on AC state */
-		if (on_battery && battery_count > 1)
-			state = DKP_DEVICE_STATE_PENDING_DISCHARGE;
-		else if (battery_count > 1)
-			state = DKP_DEVICE_STATE_PENDING_CHARGE;
-		else if (on_battery)
-			state = DKP_DEVICE_STATE_DISCHARGING;
-		else
-			state = DKP_DEVICE_STATE_FULLY_CHARGED;
+		if (battery_count > 1) {
+			if (on_battery && percentage < 1.0f) {
+				/* battery is low */
+				state = DKP_DEVICE_STATE_EMPTY;
+			} else if (on_battery) {
+				/* battery is waiting */
+				state = DKP_DEVICE_STATE_PENDING_DISCHARGE;
+			} else {
+				/* battery is waiting */
+				state = DKP_DEVICE_STATE_PENDING_CHARGE;
+			}
+		} else {
+			if (on_battery) {
+				/* battery is assumed discharging */
+				state = DKP_DEVICE_STATE_DISCHARGING;
+			} else {
+				/* battery is waiting */
+				state = DKP_DEVICE_STATE_FULLY_CHARGED;
+			}
+		}
 
 		/* print what we did */
 		egg_debug ("guessing battery state '%s' using global on-battery:%i",
