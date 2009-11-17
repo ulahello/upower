@@ -16,12 +16,12 @@ ATTR{type}!="Battery", GOTO="dkp_battery_recall_toshiba_end"
 # only match correct manufacturer
 ATTR{manufacturer}!="TOSHIBA", GOTO="dkp_battery_recall_toshiba_end"
 
-ATTR{model_name}=="PA3465U, ENV{DKP_RECALL_NOTICE}="1"
-ATTR{model_name}=="PA3399U, ENV{DKP_RECALL_NOTICE}="1"
-ATTR{model_name}=="PA3400U, ENV{DKP_RECALL_NOTICE}="1"
-ATTR{model_name}=="PA3465U, ENV{DKP_RECALL_NOTICE}="1"
-ATTR{model_name}=="PA3399U, ENV{DKP_RECALL_NOTICE}="1"
-ATTR{model_name}=="PA3400U, ENV{DKP_RECALL_NOTICE}="1"
+ATTR{model_name}=="PA3465U", ENV{DKP_RECALL_NOTICE}="1"
+ATTR{model_name}=="PA3399U", ENV{DKP_RECALL_NOTICE}="1"
+ATTR{model_name}=="PA3400U", ENV{DKP_RECALL_NOTICE}="1"
+ATTR{model_name}=="PA3465U", ENV{DKP_RECALL_NOTICE}="1"
+ATTR{model_name}=="PA3399U", ENV{DKP_RECALL_NOTICE}="1"
+ATTR{model_name}=="PA3400U", ENV{DKP_RECALL_NOTICE}="1"
 
 ENV{DKP_RECALL_NOTICE}=="1", ENV{DKP_RECALL_VENDOR}="Toshiba", ENV{DKP_RECALL_URL}="http://bxinfo.toshiba.com/"
 
