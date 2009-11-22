@@ -143,6 +143,8 @@ dkp_device_supply_get_on_battery (DkpDevice *device, gboolean *on_battery)
 
 	if (type != DKP_DEVICE_TYPE_BATTERY)
 		return FALSE;
+	if (state == DKP_DEVICE_STATE_UNKNOWN)
+		return FALSE;
 	if (!is_present)
 		return FALSE;
 
