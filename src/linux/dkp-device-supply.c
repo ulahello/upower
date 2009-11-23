@@ -222,10 +222,10 @@ dkp_device_supply_calculate_rate (DkpDeviceSupply *supply)
 
 	g_object_get (device, "energy", &energy, NULL);
 
-	if (energy < 0)
+	if (energy < 0.1f)
 		return;
 
-	if (supply->priv->energy_old < 0)
+	if (supply->priv->energy_old < 0.1f)
 		return;
 
 	if (supply->priv->energy_old == energy)
@@ -240,7 +240,7 @@ dkp_device_supply_calculate_rate (DkpDeviceSupply *supply)
 
 	/* get the difference in charge */
 	energy = supply->priv->energy_old - energy;
-	if (energy < 0.1)
+	if (energy < 0.1f)
 		return;
 
 	/* probably okay */
@@ -641,6 +641,10 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		egg_warning ("Setting %s state empty as unknown and very low", native_path);
 		state = DKP_DEVICE_STATE_EMPTY;
 	}
+
+	/* some batteries give out massive rate values when nearly empty */
+	if (energy < 0.1f)
+		energy_rate = 0.0f;
 
 	/* calculate a quick and dirty time remaining value */
 	time_to_empty = 0;
