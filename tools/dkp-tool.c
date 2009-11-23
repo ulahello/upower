@@ -230,7 +230,6 @@ main (int argc, char **argv)
 	gint retval = EXIT_FAILURE;
 	guint i;
 	GOptionContext *context;
-	gboolean verbose = FALSE;
 	gboolean opt_dump = FALSE;
 	gboolean opt_wakeups = FALSE;
 	gboolean opt_enumerate = FALSE;
@@ -244,7 +243,6 @@ main (int argc, char **argv)
 	DkpDevice *device;
 
 	const GOptionEntry entries[] = {
-		{ "verbose", '\0', 0, G_OPTION_ARG_NONE, &verbose, _("Show extra debugging information"), NULL },
 		{ "enumerate", 'e', 0, G_OPTION_ARG_NONE, &opt_enumerate, _("Enumerate objects paths for devices"), NULL },
 		{ "dump", 'd', 0, G_OPTION_ARG_NONE, &opt_dump, _("Dump all parameters for all objects"), NULL },
 		{ "wakeups", 'w', 0, G_OPTION_ARG_NONE, &opt_wakeups, _("Get the wakeup data"), NULL },
@@ -259,9 +257,9 @@ main (int argc, char **argv)
 
 	context = g_option_context_new ("DeviceKit-power tool");
 	g_option_context_add_main_entries (context, entries, NULL);
+	g_option_context_add_group (context, egg_debug_get_option_group ());
 	g_option_context_parse (context, &argc, &argv, NULL);
 	g_option_context_free (context);
-	egg_debug_init (verbose);
 
 	loop = g_main_loop_new (NULL, FALSE);
 	client = dkp_client_new ();

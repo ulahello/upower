@@ -42,7 +42,7 @@ main (int argc, char **argv)
 
 	g_type_init ();
 	test = egg_test_init ();
-	egg_debug_init (TRUE);
+	egg_debug_init (&argc, &argv);
 
 	/* tests go here */
 	dkp_backend_test (test);

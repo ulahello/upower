@@ -5,4 +5,5 @@ policy/org.freedesktop.devicekit.power.policy.in
 policy/org.freedesktop.devicekit.power.qos.policy.in
 src/dkp-main.c
 tools/dkp-tool.c
+src/egg-debug.c
 

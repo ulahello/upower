@@ -117,23 +117,15 @@ main (gint argc, gchar **argv)
 	GOptionContext *context;
 	DBusGProxy *bus_proxy;
 	DBusGConnection *bus;
-	gboolean verbose = FALSE;
 	gboolean ret;
 	gint retval = 1;
-
-	const GOptionEntry entries[] = {
-		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
-		  _("Show extra debugging information"), NULL },
-		{ NULL }
-	};
 
 	g_type_init ();
 
 	context = g_option_context_new ("DeviceKit Power Daemon");
-	g_option_context_add_main_entries (context, entries, NULL);
+	g_option_context_add_group (context, egg_debug_get_option_group ());
 	g_option_context_parse (context, &argc, &argv, NULL);
 	g_option_context_free (context);
-	egg_debug_init (verbose);
 
 	/* get bus connection */
 	bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
