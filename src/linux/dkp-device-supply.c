@@ -161,7 +161,7 @@ dkp_device_supply_get_low_battery (DkpDevice *device, gboolean *low_battery)
 	gboolean ret;
 	gboolean on_battery;
 	DkpDeviceSupply *supply = DKP_DEVICE_SUPPLY (device);
-	guint percentage;
+	gdouble percentage;
 
 	g_return_val_if_fail (DKP_IS_SUPPLY (supply), FALSE);
 	g_return_val_if_fail (low_battery != NULL, FALSE);
@@ -178,7 +178,7 @@ dkp_device_supply_get_low_battery (DkpDevice *device, gboolean *low_battery)
 	}
 
 	g_object_get (device, "percentage", &percentage, NULL);
-	*low_battery = (percentage < 10);
+	*low_battery = (percentage < 10.0f);
 	return TRUE;
 }
 
