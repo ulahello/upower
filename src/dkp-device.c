@@ -85,8 +85,7 @@ struct DkpDevicePrivate
 
 static gboolean	dkp_device_register_device	(DkpDevice *device);
 
-enum
-{
+enum {
 	PROP_0,
 	PROP_NATIVE_PATH,
 	PROP_VENDOR,
@@ -118,8 +117,7 @@ enum
 	PROP_LAST
 };
 
-enum
-{
+enum {
 	SIGNAL_CHANGED,
 	SIGNAL_LAST,
 };
@@ -532,7 +530,7 @@ dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, GObject *native)
 	gboolean ret;
 	const gchar *native_path;
 	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
-	gchar *id;
+	gchar *id = NULL;
 
 	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
 
@@ -579,13 +577,13 @@ dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, GObject *native)
 	id = dkp_device_get_id (device);
 	if (id != NULL)
 		dkp_history_set_id (device->priv->history, id);
-	g_free (id);
 
 out:
 	/* start signals and callbacks */
 	g_object_thaw_notify (G_OBJECT(device));
 	device->priv->during_coldplug = FALSE;
 	egg_debug ("device now not coldplug");
+	g_free (id);
 	return ret;
 }
 

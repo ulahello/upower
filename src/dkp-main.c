@@ -105,24 +105,49 @@ dkp_main_sigint_handler (gint sig)
 }
 
 /**
+ * dkp_main_timed_exit_cb:
+ *
+ * Exits the main loop, which is helpful for valgrinding.
+ **/
+static gboolean
+dkp_main_timed_exit_cb (GMainLoop *loop)
+{
+	g_main_loop_quit (loop);
+	return FALSE;
+}
+
+/**
  * main:
  **/
 gint
 main (gint argc, gchar **argv)
 {
 	GError *error = NULL;
-	DkpDaemon *daemon;
-	DkpQos *qos;
-	DkpWakeups *wakeups;
+	DkpDaemon *daemon = NULL;
+	DkpQos *qos = NULL;
+	DkpWakeups *wakeups = NULL;
 	GOptionContext *context;
 	DBusGProxy *bus_proxy;
 	DBusGConnection *bus;
 	gboolean ret;
 	gint retval = 1;
+	gboolean timed_exit = FALSE;
+	gboolean immediate_exit = FALSE;
+
+	const GOptionEntry options[] = {
+		{ "timed-exit", '\0', 0, G_OPTION_ARG_NONE, &timed_exit,
+		  /* TRANSLATORS: exit after we've started up, used for user profiling */
+		  _("Exit after a small delay"), NULL },
+		{ "immediate-exit", '\0', 0, G_OPTION_ARG_NONE, &immediate_exit,
+		  /* TRANSLATORS: exit straight away, used for automatic profiling */
+		  _("Exit after the engine has loaded"), NULL },
+		{ NULL}
+	};
 
 	g_type_init ();
 
 	context = g_option_context_new ("DeviceKit Power Daemon");
+	g_option_context_add_main_entries (context, options, NULL);
 	g_option_context_add_group (context, egg_debug_get_option_group ());
 	g_option_context_parse (context, &argc, &argv, NULL);
 	g_option_context_free (context);
@@ -158,21 +183,33 @@ main (gint argc, gchar **argv)
 	qos = dkp_qos_new ();
 	wakeups = dkp_wakeups_new ();
 	daemon = dkp_daemon_new ();
+	loop = g_main_loop_new (NULL, FALSE);
 	ret = dkp_daemon_startup (daemon);
 	if (!ret) {
 		egg_warning ("Could not startup; bailing out");
 		goto out;
 	}
 
-	loop = g_main_loop_new (NULL, FALSE);
-	g_main_loop_run (loop);
+	/* only timeout and close the mainloop if we have specified it on the command line */
+	if (timed_exit)
+		g_timeout_add_seconds (30, (GSourceFunc) dkp_main_timed_exit_cb, loop);
 
-	g_object_unref (qos);
-	g_object_unref (wakeups);
-	g_object_unref (daemon);
-	g_main_loop_unref (loop);
+	/* immediatly exit */
+	if (immediate_exit)
+		g_timeout_add (50, (GSourceFunc) dkp_main_timed_exit_cb, loop);
+
+	/* wait for input or timeout */
+	g_main_loop_run (loop);
 	retval = 0;
 out:
+	if (qos != NULL)
+		g_object_unref (qos);
+	if (wakeups != NULL)
+		g_object_unref (wakeups);
+	if (daemon != NULL)
+		g_object_unref (daemon);
+	if (loop != NULL)
+		g_main_loop_unref (loop);
 	return retval;
 }
 

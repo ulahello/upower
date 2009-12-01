@@ -380,7 +380,7 @@ static gboolean
 dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 {
 	gchar *status = NULL;
-	gchar *technology_native;
+	gchar *technology_native = NULL;
 	gboolean ret = TRUE;
 	gdouble voltage_design;
 	DkpDeviceState old_state;
@@ -398,9 +398,9 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	gdouble voltage;
 	guint64 time_to_empty;
 	guint64 time_to_full;
-	gchar *manufacturer;
-	gchar *model_name;
-	gchar *serial_number;
+	gchar *manufacturer = NULL;
+	gchar *model_name = NULL;
+	gchar *serial_number = NULL;
 	gboolean recall_notice;
 	const gchar *recall_vendor = NULL;
 	const gchar *recall_url = NULL;
@@ -436,7 +436,6 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		/* the ACPI spec is bad at defining battery type constants */
 		technology_native = dkp_device_supply_get_string (native_path, "technology");
 		g_object_set (device, "technology", dkp_device_supply_convert_device_technology (technology_native), NULL);
-		g_free (technology_native);
 
 		/* get values which may be blank */
 		manufacturer = dkp_device_supply_get_string (native_path, "manufacturer");
@@ -466,10 +465,6 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 			      "recall-vendor", recall_vendor,
 			      "recall-url", recall_url,
 			      NULL);
-
-		g_free (manufacturer);
-		g_free (model_name);
-		g_free (serial_number);
 
 		/* these don't change at runtime */
 		energy_full = sysfs_get_double (native_path, "energy_full") / 1000000.0;
@@ -686,6 +681,10 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 		      NULL);
 
 out:
+	g_free (technology_native);
+	g_free (manufacturer);
+	g_free (model_name);
+	g_free (serial_number);
 	g_free (status);
 	return ret;
 }
