@@ -295,6 +295,12 @@ dkp_history_get_profile_data (DkpHistory *history, gboolean charging)
 
 		/* round to the nearest int */
 		bin = rint (obj->value);
+
+		/* ensure bin is in range */
+		if (bin >= data->len)
+			bin = data->len - 1;
+
+		/* different */
 		if (oldbin != bin) {
 			oldbin = bin;
 			if (obj_old != NULL) {
