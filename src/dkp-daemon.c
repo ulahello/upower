@@ -250,6 +250,7 @@ dkp_daemon_check_swap_space (DkpDaemon *daemon)
 	gboolean ret;
 	guint active = 0;
 	guint swap_free = 0;
+	guint swap_total = 0;
 	guint len;
 	guint i;
 	gfloat percentage = 0.0f;
@@ -271,10 +272,19 @@ dkp_daemon_check_swap_space (DkpDaemon *daemon)
 		if (len > 3) {
 			if (g_strcmp0 (tokens[0], "SwapFree") == 0)
 				swap_free = atoi (tokens[len-2]);
+			if (g_strcmp0 (tokens[0], "SwapTotal") == 0)
+				swap_total = atoi (tokens[len-2]);
 			else if (g_strcmp0 (tokens[0], "Active") == 0)
 				active = atoi (tokens[len-2]);
 		}
 		g_strfreev (tokens);
+	}
+
+	/* first check if we even have swap, if not consider all swap space used */
+	if (swap_total == 0) {
+		egg_debug ("no swap space found");
+		percentage = 100.0f;
+		goto out;
 	}
 
 	/* work out how close to the line we are */
