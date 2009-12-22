@@ -129,6 +129,8 @@ dkp_client_enumerate_devices_private (DkpClient *client, GError **error)
 	GPtrArray *devices = NULL;
 	GType g_type_array;
 
+	if (!client->priv->proxy)
+		return NULL;
 	g_type_array = dbus_g_type_get_collection ("GPtrArray", DBUS_TYPE_G_OBJECT_PATH);
 	ret = dbus_g_proxy_call (client->priv->proxy, "EnumerateDevices", &error_local,
 				 G_TYPE_INVALID,
@@ -239,6 +241,8 @@ dkp_client_ensure_properties (DkpClient *client)
 	props = NULL;
 
 	if (client->priv->have_properties)
+		goto out;
+	if (!client->priv->prop_proxy)
 		goto out;
 
 	error = NULL;
@@ -711,7 +715,8 @@ dkp_client_finalize (GObject *object)
 
 	g_hash_table_destroy (client->priv->hash);
 
-	dbus_g_connection_unref (client->priv->bus);
+	if (client->priv->bus)
+		dbus_g_connection_unref (client->priv->bus);
 
 	if (client->priv->proxy != NULL)
 		g_object_unref (client->priv->proxy);
