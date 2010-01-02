@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = dummy linux
+SUBDIRS = dummy freebsd linux
 
 INCLUDES = \
 	-I$(top_builddir)/src -I$(top_srcdir)/src		\
@@ -102,6 +102,12 @@ devkit_power_daemon_LDADD =					\
 if BACKEND_TYPE_DUMMY
 devkit_power_daemon_LDADD += 					\
 	dummy/libdkpshared.la
+endif
+
+if BACKEND_TYPE_FREEBSD
+devkit_power_daemon_LDADD +=					\
+	freebsd/libdkpshared.la					\
+	$(DEVKIT_POWER_LIBS)
 endif
 
 if BACKEND_TYPE_LINUX
