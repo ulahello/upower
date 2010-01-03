@@ -54,10 +54,10 @@ static void	dkp_backend_init	(DkpBackend		*backend);
 static void	dkp_backend_finalize	(GObject		*object);
 
 static gboolean	dkp_backend_refresh_devices (gpointer user_data);
-static gboolean	dkp_backend_acpi_devd_notify (DkpBackend *backend, const char *system, const char *subsystem, const char *type, const char *data);
+static gboolean	dkp_backend_acpi_devd_notify (DkpBackend *backend, const gchar *system, const gchar *subsystem, const gchar *type, const gchar *data);
 static gboolean	dkp_backend_create_new_device (DkpBackend *backend, DkpAcpiNative *native);
 static void	dkp_backend_lid_coldplug (DkpBackend *backend);
-static gboolean	dkp_backend_supports_sleep_state (const char *state);
+static gboolean	dkp_backend_supports_sleep_state (const gchar *state);
 
 #define DKP_BACKEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_BACKEND, DkpBackendPrivate))
 
@@ -79,7 +79,7 @@ static guint signals [SIGNAL_LAST] = { 0 };
 
 G_DEFINE_TYPE (DkpBackend, dkp_backend, G_TYPE_OBJECT)
 
-static const char *handlers[] = {
+static const gchar *handlers[] = {
 	"battery",
 };
 
@@ -115,7 +115,7 @@ dkp_backend_refresh_devices (gpointer user_data)
  * dkp_backend_acpi_devd_notify:
  **/
 static gboolean
-dkp_backend_acpi_devd_notify (DkpBackend *backend, const char *system, const char *subsystem, const char *type, const char *data)
+dkp_backend_acpi_devd_notify (DkpBackend *backend, const gchar *system, const gchar *subsystem, const gchar *type, const gchar *data)
 {
 	GObject *object = NULL;
 	DkpAcpiNative *native = NULL;
@@ -127,7 +127,7 @@ dkp_backend_acpi_devd_notify (DkpBackend *backend, const char *system, const cha
 		native = dkp_acpi_native_new ("hw.acpi.acline");
 		object = dkp_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 	} else if (!strcmp (subsystem, "CMBAT")) {
-		char *ptr;
+		gchar *ptr;
 		int unit;
 
 		ptr = strstr (type, ".BAT");
@@ -197,15 +197,15 @@ dkp_backend_create_new_device (DkpBackend *backend, DkpAcpiNative *native)
 		g_object_unref (device);
 	else {
 		if (!strncmp (dkp_acpi_native_get_path (native), "dev.", strlen ("dev."))) {
-			const char *path;
+			const gchar *path;
 
 			path = dkp_acpi_native_get_path (native);
 			if (dkp_has_sysctl ("%s.%%location", path)) {
-				char *location;
+				gchar *location;
 
 				location = dkp_get_string_sysctl (NULL, "%s.%%location", path);
 				if (location != NULL && strstr (location, "handle=") != NULL) {
-					char *handle;
+					gchar *handle;
 
 					handle = strstr (location, "handle=");
 					handle += strlen ("handle=");
@@ -227,7 +227,7 @@ dkp_backend_create_new_device (DkpBackend *backend, DkpAcpiNative *native)
 static void
 dkp_backend_lid_coldplug (DkpBackend *backend)
 {
-	char *lid_state;
+	gchar *lid_state;
 
 	lid_state = dkp_get_string_sysctl (NULL, "hw.acpi.lid_switch_state");
 	if (lid_state && strcmp (lid_state, "NONE")) {
@@ -235,7 +235,6 @@ dkp_backend_lid_coldplug (DkpBackend *backend)
 	}
 	g_free (lid_state);
 }
-
 
 /**
  * dkp_backend_coldplug:
@@ -357,7 +356,7 @@ dkp_backend_get_used_swap (DkpBackend *backend)
 {
 	gfloat percent;
 	kvm_t *kd;
-	char errbuf[_POSIX2_LINE_MAX];
+	gchar errbuf[_POSIX2_LINE_MAX];
 	int nswdev;
 	struct kvm_swap kvmsw[16];
 
@@ -390,9 +389,9 @@ out:
  * dkp_backend_supports_sleep_state:
  **/
 static gboolean
-dkp_backend_supports_sleep_state (const char *state)
+dkp_backend_supports_sleep_state (const gchar *state)
 {
-	char *sleep_states;
+	gchar *sleep_states;
 	gboolean ret = FALSE;
 
 	sleep_states = dkp_get_string_sysctl (NULL, "hw.acpi.supported_sleep_state");

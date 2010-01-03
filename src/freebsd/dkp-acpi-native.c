@@ -33,9 +33,9 @@ struct _DkpAcpiNativeClass {
 };
 
 struct _DkpAcpiNativePrivate {
-	char* _driver;
-	gint _unit;
-	char* _path;
+	gchar	*_driver;
+	gint	 _unit;
+	gchar	*_path;
 };
 
 
@@ -228,7 +228,4 @@ static void dkp_acpi_native_get_property (GObject * object, guint property_id, G
 		break;
 	}
 }
-
-
-
 

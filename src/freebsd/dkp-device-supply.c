@@ -50,7 +50,7 @@
 G_DEFINE_TYPE (DkpDeviceSupply, dkp_device_supply, DKP_TYPE_DEVICE)
 
 static gboolean		 dkp_device_supply_refresh	 	(DkpDevice *device);
-static DkpDeviceTechnology	dkp_device_supply_convert_device_technology (const char *type);
+static DkpDeviceTechnology	dkp_device_supply_convert_device_technology (const gchar *type);
 static gboolean		dkp_device_supply_acline_coldplug	(DkpDevice *device);
 static gboolean		dkp_device_supply_battery_coldplug	(DkpDevice *device, DkpAcpiNative *native);
 static gboolean		dkp_device_supply_acline_set_properties	(DkpDevice *device);
@@ -65,7 +65,7 @@ static gboolean		dkp_device_supply_get_online		(DkpDevice *device, gboolean *onl
  * This is taken from linux/dkp-device-supply.c.
  **/
 static DkpDeviceTechnology
-dkp_device_supply_convert_device_technology (const char *type)
+dkp_device_supply_convert_device_technology (const gchar *type)
 {
 	if (type == NULL)
 		return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
@@ -152,19 +152,18 @@ dkp_device_supply_battery_coldplug (DkpDevice *device, DkpAcpiNative *native)
 	return ret;
 }
 
-
 /**
  * dkp_device_supply_battery_set_properties:
  **/
 static gboolean
 dkp_device_supply_battery_set_properties (DkpDevice *device, DkpAcpiNative *native)
 {
-	int fd;
+	gint fd;
 	gdouble volt, dvolt, rate, lastfull, cap, dcap, lcap, capacity;
 	gboolean is_present;
 	gboolean ret = FALSE;
 	guint64 time_to_empty, time_to_full;
-	char *vendor, *model, *serial;
+	gchar *vendor, *model, *serial;
 	DkpDeviceTechnology technology;
 	DkpDeviceState state;
 	union acpi_battery_ioctl_arg battif, battst, battinfo;
@@ -334,7 +333,6 @@ dkp_device_supply_acline_set_properties (DkpDevice *device)
 	if (dkp_get_int_sysctl (&acstate, NULL, "hw.acpi.acline")) {
 		g_object_set (device, "online", acstate ? TRUE : FALSE, NULL);
 		return TRUE;
-
 	}
 
 	return FALSE;

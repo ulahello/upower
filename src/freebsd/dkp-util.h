@@ -1,5 +1,4 @@
 /***************************************************************************
- * CVSID: $Id$
  *
  * dkp-util.h : utilities
  *
@@ -36,15 +35,15 @@
        (var);				\
        (var) = (var)->next)
 
-gboolean dkp_has_sysctl (const char *format, ...) G_GNUC_PRINTF(1, 2);
+gboolean dkp_has_sysctl (const gchar *format, ...) G_GNUC_PRINTF(1, 2);
 gboolean dkp_get_int_sysctl (int *value,
-			    GError **err,
-			    const char *format,
-			    ...) G_GNUC_PRINTF(3, 4);
-char *dkp_get_string_sysctl (GError **err,
-			    const char *format,
-			    ...) G_GNUC_PRINTF(2, 3);
+			     GError **err,
+			     const gchar *format,
+			     ...) G_GNUC_PRINTF(3, 4);
+gchar *dkp_get_string_sysctl (GError **err,
+			      const gchar *format,
+			      ...) G_GNUC_PRINTF(2, 3);
 
-char *dkp_make_safe_string (const char *text);
+gchar *dkp_make_safe_string (const gchar *text);
 
 #endif /* _DKP_UTIL_H */

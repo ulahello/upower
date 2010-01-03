@@ -1,5 +1,4 @@
 /***************************************************************************
- * CVSID: $Id$
  *
  * dkp-backend-acpi.h : define some backend objects
  *

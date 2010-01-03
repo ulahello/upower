@@ -1,5 +1,4 @@
 /***************************************************************************
- * CVSID: $Id$
  *
  * dkp-util.c : utilities
  *
@@ -35,77 +34,77 @@
 #include "dkp-util.h"
 
 gboolean
-dkp_has_sysctl (const char *format, ...)
+dkp_has_sysctl (const gchar *format, ...)
 {
-        va_list args;
-        char *name;
-        size_t value_len;
-        gboolean status;
+	va_list args;
+	gchar *name;
+	size_t value_len;
+	gboolean status;
 
-        g_return_val_if_fail(format != NULL, FALSE);
+	g_return_val_if_fail (format != NULL, FALSE);
 
-        va_start(args, format);
-        name = g_strdup_vprintf(format, args);
-        va_end(args);
+	va_start (args, format);
+	name = g_strdup_vprintf (format, args);
+	va_end (args);
 
-        status = sysctlbyname(name, NULL, &value_len, NULL, 0) == 0;
+	status = sysctlbyname (name, NULL, &value_len, NULL, 0) == 0;
 
-        g_free(name);
-        return status;
+	g_free (name);
+	return status;
 }
 
 gboolean
-dkp_get_int_sysctl (int *value, GError **err, const char *format, ...)
+dkp_get_int_sysctl (int *value, GError **err, const gchar *format, ...)
 {
-        va_list args;
-        char *name;
-        size_t value_len = sizeof(int);
-        gboolean status;
+	va_list args;
+	gchar *name;
+	size_t value_len = sizeof(int);
+	gboolean status;
 
-        g_return_val_if_fail(value != NULL, FALSE);
-        g_return_val_if_fail(format != NULL, FALSE);
+	g_return_val_if_fail (value != NULL, FALSE);
+	g_return_val_if_fail (format != NULL, FALSE);
 
-        va_start(args, format);
-        name = g_strdup_vprintf(format, args);
-        va_end(args);
+	va_start (args, format);
+	name = g_strdup_vprintf (format, args);
+	va_end (args);
 
-        status = sysctlbyname(name, value, &value_len, NULL, 0) == 0;
-        if (! status)
-                g_set_error(err, 0, 0, "%s", g_strerror(errno));
+	status = sysctlbyname (name, value, &value_len, NULL, 0) == 0;
+	if (!status)
+		g_set_error(err, 0, 0, "%s", g_strerror (errno));
 
-        g_free(name);
-        return status;
+	g_free (name);
+	return status;
 }
 
-char *
-dkp_get_string_sysctl (GError **err, const char *format, ...)
+gchar *
+dkp_get_string_sysctl (GError **err, const gchar *format, ...)
 {
-        va_list args;
-        char *name;
-        size_t value_len;
-        char *str = NULL;
+	va_list args;
+	gchar *name;
+	size_t value_len;
+	gchar *str = NULL;
 
-        g_return_val_if_fail(format != NULL, FALSE);
+	g_return_val_if_fail(format != NULL, FALSE);
 
-        va_start(args, format);
-        name = g_strdup_vprintf(format, args);
-        va_end(args);
+	va_start (args, format);
+	name = g_strdup_vprintf (format, args);
+	va_end (args);
 
-        if (sysctlbyname(name, NULL, &value_len, NULL, 0) == 0) {
-                str = g_new(char, value_len + 1);
-                if (sysctlbyname(name, str, &value_len, NULL, 0) == 0)
-                        str[value_len] = 0;
-                else {
-                        g_free(str);
-                        str = NULL;
-                }
-        }
+	if (sysctlbyname (name, NULL, &value_len, NULL, 0) == 0) {
+		str = g_new (char, value_len + 1);
+		if (sysctlbyname (name, str, &value_len, NULL, 0) == 0)
+			str[value_len] = 0;
+		else {
+			g_free (str);
+			str = NULL;
+		}
+	}
 
-        if (! str)
-                g_set_error(err, 0, 0, "%s", g_strerror(errno));
+	if (!str)
+		g_set_error (err, 0, 0, "%s", g_strerror(errno));
 
-        g_free(name);
-        return str;
+	g_free(name);
+	return str;
 }
 
 /**
@@ -113,33 +112,33 @@ dkp_get_string_sysctl (GError **err, const char *format, ...)
  *
  * This is adapted from linux/dkp-device-supply.c.
  **/
-char *
-dkp_make_safe_string (const char *text)
+gchar *
+dkp_make_safe_string (const gchar *text)
 {
-        guint i;
-        guint idx = 0;
-        char *ret;
+	guint i;
+	guint idx = 0;
+	gchar *ret;
 
-        /* no point in checking */
-        if (text == NULL)
-                return NULL;
+	/* no point in checking */
+	if (text == NULL)
+		return NULL;
 
-        ret = g_strdup (text);
+	ret = g_strdup (text);
 
-        /* shunt up only safe chars */
-        for (i = 0; ret[i] != '\0'; i++) {
-                if (g_ascii_isprint (ret[i])) {
-                        /* only copy if the address is going to change */
-                        if (idx != i)
-                                ret[idx] = ret[i];
-                        idx++;
-                } else {
-                        egg_debug ("invalid char '%c'", ret[i]);
-                }
-        }
+	/* shunt up only safe chars */
+	for (i = 0; ret[i] != '\0'; i++) {
+		if (g_ascii_isprint (ret[i])) {
+			/* only copy if the address is going to change */
+			if (idx != i)
+				ret[idx] = ret[i];
+			idx++;
+		} else {
+			egg_debug ("invalid char '%c'", ret[i]);
+		}
+	}
 
-        /* ensure null terminated */
-        ret[idx] = '\0';
+	/* ensure null terminated */
+	ret[idx] = '\0';
 
-        return ret;
+	return ret;
 }
