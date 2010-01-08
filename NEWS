@@ -1,3 +1,16 @@
+Version 014
+~~~~~~~~~~~
+Released: 2010-01-08
+
+New Features:
+ - Import the FreeBSD backend (Joe Marcus Clarke)
+
+Bugfixes:
+ - Check if swap exists before determining how much is free (Debbie Beliveau)
+ - Comment out some problematic compiler warnings (Joe Marcus Clarke)
+ - Prevent segfault if connection to system dbus fails (Martin Koegler)
+ - Fix segfault in the history code. Fixes fd#25632 (Richard Hughes)
+
 Version 013
 ~~~~~~~~~~~
 Released: 2009-12-07

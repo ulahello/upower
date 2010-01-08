@@ -4,6 +4,13 @@ DeviceKit-power Release Notes
 
 git shortlog DeviceKit-power-013.. | grep -i -v trivial | grep -v Merge > NEWS.new
 
+Version 0xx
+~~~~~~~~~~~
+Released: 2010-xx-xx
+
+New Features:
+Bugfixes:
+
 2. Commit changes in DeviceKit-power git:
 
 git commit -a -m "Released DeviceKit-power 014"
