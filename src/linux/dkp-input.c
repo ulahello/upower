@@ -183,7 +183,12 @@ dkp_input_coldplug (DkpInput *input, DkpDaemon *daemon, GUdevDevice *d)
 	path = g_build_filename (native_path, "../capabilities/sw", NULL);
 	if (!g_file_test (path, G_FILE_TEST_EXISTS)) {
 		egg_debug ("not a switch [%s]", path);
-		goto out;
+		g_free (path);
+		path = g_build_filename (native_path, "capabilities/sw", NULL);
+		if (!g_file_test (path, G_FILE_TEST_EXISTS)) {
+			egg_debug ("not a switch [%s]", path);
+			goto out;
+		}
 	}
 
 	/* get caps */
