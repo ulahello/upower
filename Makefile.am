@@ -1,5 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
+ACLOCAL_AMFLAGS = -I m4
+
 SUBDIRS = devkit-power-gobject src doc tools policy po $(UDEV_RULES)
 
 DIST_SUBDIRS = devkit-power-gobject src doc tools policy po rules
@@ -32,7 +34,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = devkit-power-gobject.pc
 
 # xsltproc barfs on 'make distcheck'; disable for now
-DISTCHECK_CONFIGURE_FLAGS=--disable-man-pages --disable-gtk-doc
+DISTCHECK_CONFIGURE_FLAGS=--disable-man-pages --disable-gtk-doc --enable-introspection
 
 clean-local :
 	rm -f *~

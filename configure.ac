@@ -1,10 +1,13 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.59c)
+AC_PREREQ(2.62)
 AC_INIT(DeviceKit-power, 015, http://lists.freedesktop.org/mailman/listinfo/devkit-devel)
 AM_INIT_AUTOMAKE(DeviceKit-power, 015)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
+AC_CONFIG_MACRO_DIR([m4])
+
+GOBJECT_INTROSPECTION_CHECK([0.6.7])
 
 # enable nice build output on automake1.11
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
@@ -53,7 +56,7 @@ AC_PATH_PROG([XSLTPROC], [xsltproc])
 fi
 AM_CONDITIONAL(MAN_PAGES_ENABLED, test x$enable_man_pages = xyes)
 
-GTK_DOC_CHECK([1.3])
+GTK_DOC_CHECK([1.9])
 
 # udev rules go in /lib, not /usr/lib
 if test "$prefix" = "/usr" -o "$prefix" = "/usr/local" ; then
