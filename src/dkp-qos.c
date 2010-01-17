@@ -412,7 +412,7 @@ dkp_qos_get_latency (DkpQos *qos, const gchar *type_text, gint *value, GError **
 	/* get correct data */
 	type = dkp_qos_type_from_text (type_text);
 	if (type == DKP_QOS_TYPE_UNKNOWN) {
-		*error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
+		g_set_error (error, DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		return FALSE;
 	}
 

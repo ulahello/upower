@@ -72,8 +72,7 @@ dkp_wakeups_get_total (DkpWakeups *wakeups, GError **error)
 				 G_TYPE_INVALID);
 	if (!ret) {
 		g_warning ("Couldn't get total: %s", error_local->message);
-		if (error != NULL)
-			*error = g_error_new (1, 0, "%s", error_local->message);
+		g_set_error (error, 1, 0, "%s", error_local->message);
 		g_error_free (error_local);
 	}
 	return total;
@@ -116,8 +115,7 @@ dkp_wakeups_get_data (DkpWakeups *wakeups, GError **error)
 				 G_TYPE_INVALID);
 	if (!ret) {
 		g_warning ("GetData on failed: %s", error_local->message);
-		if (error != NULL)
-			*error = g_error_new (1, 0, "%s", error_local->message);
+		g_set_error (error, 1, 0, "%s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
