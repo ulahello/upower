@@ -126,9 +126,9 @@ static guint signals[SIGNAL_LAST] = { 0 };
 
 G_DEFINE_TYPE (UpDevice, up_device, G_TYPE_OBJECT)
 #define UP_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE, UpDevicePrivate))
-#define DKP_DBUS_STRUCT_UINT_DOUBLE_UINT (dbus_g_type_get_struct ("GValueArray", \
+#define UP_DBUS_STRUCT_UINT_DOUBLE_UINT (dbus_g_type_get_struct ("GValueArray", \
 	G_TYPE_UINT, G_TYPE_DOUBLE, G_TYPE_UINT, G_TYPE_INVALID))
-#define DKP_DBUS_STRUCT_DOUBLE_DOUBLE (dbus_g_type_get_struct ("GValueArray", \
+#define UP_DBUS_STRUCT_DOUBLE_DOUBLE (dbus_g_type_get_struct ("GValueArray", \
 	G_TYPE_DOUBLE, G_TYPE_DOUBLE, G_TYPE_INVALID))
 
 /**
@@ -635,8 +635,8 @@ up_device_get_statistics (UpDevice *device, const gchar *type, DBusGMethodInvoca
 	for (i=0; i<array->len; i++) {
 		obj = (const UpStatsObj *) g_ptr_array_index (array, i);
 		value = g_new0 (GValue, 1);
-		g_value_init (value, DKP_DBUS_STRUCT_DOUBLE_DOUBLE);
-		g_value_take_boxed (value, dbus_g_type_specialized_construct (DKP_DBUS_STRUCT_DOUBLE_DOUBLE));
+		g_value_init (value, UP_DBUS_STRUCT_DOUBLE_DOUBLE);
+		g_value_take_boxed (value, dbus_g_type_specialized_construct (UP_DBUS_STRUCT_DOUBLE_DOUBLE));
 		dbus_g_type_struct_set (value, 0, obj->value, 1, obj->accuracy, -1);
 		g_ptr_array_add (complex, g_value_get_boxed (value));
 		g_free (value);
@@ -699,8 +699,8 @@ up_device_get_history (UpDevice *device, const gchar *type_string, guint timespa
 	for (i=0; i<array->len; i++) {
 		obj = (const UpHistoryObj *) g_ptr_array_index (array, i);
 		value = g_new0 (GValue, 1);
-		g_value_init (value, DKP_DBUS_STRUCT_UINT_DOUBLE_UINT);
-		g_value_take_boxed (value, dbus_g_type_specialized_construct (DKP_DBUS_STRUCT_UINT_DOUBLE_UINT));
+		g_value_init (value, UP_DBUS_STRUCT_UINT_DOUBLE_UINT);
+		g_value_take_boxed (value, dbus_g_type_specialized_construct (UP_DBUS_STRUCT_UINT_DOUBLE_UINT));
 		dbus_g_type_struct_set (value, 0, obj->time, 1, obj->value, 2, obj->state, -1);
 		g_ptr_array_add (complex, g_value_get_boxed (value));
 		g_free (value);

@@ -46,10 +46,10 @@
 static GMainLoop *loop = NULL;
 
 /**
- * dkp_main_acquire_name_on_proxy:
+ * up_main_acquire_name_on_proxy:
  **/
 static gboolean
-dkp_main_acquire_name_on_proxy (DBusGProxy *bus_proxy, const gchar *name)
+up_main_acquire_name_on_proxy (DBusGProxy *bus_proxy, const gchar *name)
 {
 	GError *error = NULL;
 	guint result;
@@ -90,10 +90,10 @@ out:
 }
 
 /**
- * dkp_main_sigint_handler:
+ * up_main_sigint_handler:
  **/
 static void
-dkp_main_sigint_handler (gint sig)
+up_main_sigint_handler (gint sig)
 {
 	egg_debug ("Handling SIGINT");
 
@@ -105,12 +105,12 @@ dkp_main_sigint_handler (gint sig)
 }
 
 /**
- * dkp_main_timed_exit_cb:
+ * up_main_timed_exit_cb:
  *
  * Exits the main loop, which is helpful for valgrinding.
  **/
 static gboolean
-dkp_main_timed_exit_cb (GMainLoop *loop)
+up_main_timed_exit_cb (GMainLoop *loop)
 {
 	g_main_loop_quit (loop);
 	return FALSE;
@@ -169,14 +169,14 @@ main (gint argc, gchar **argv)
 	}
 
 	/* aquire name */
-	ret = dkp_main_acquire_name_on_proxy (bus_proxy, DEVKIT_POWER_SERVICE_NAME);
+	ret = up_main_acquire_name_on_proxy (bus_proxy, DEVKIT_POWER_SERVICE_NAME);
 	if (!ret) {
 		egg_warning ("Could not acquire name; bailing out");
 		goto out;
 	}
 
 	/* do stuff on ctrl-c */
-	signal (SIGINT, dkp_main_sigint_handler);
+	signal (SIGINT, up_main_sigint_handler);
 
 	egg_debug ("Starting devkit-power-daemon version %s", PACKAGE_VERSION);
 
@@ -192,11 +192,11 @@ main (gint argc, gchar **argv)
 
 	/* only timeout and close the mainloop if we have specified it on the command line */
 	if (timed_exit)
-		g_timeout_add_seconds (30, (GSourceFunc) dkp_main_timed_exit_cb, loop);
+		g_timeout_add_seconds (30, (GSourceFunc) up_main_timed_exit_cb, loop);
 
 	/* immediatly exit */
 	if (immediate_exit)
-		g_timeout_add (50, (GSourceFunc) dkp_main_timed_exit_cb, loop);
+		g_timeout_add (50, (GSourceFunc) up_main_timed_exit_cb, loop);
 
 	/* wait for input or timeout */
 	g_main_loop_run (loop);

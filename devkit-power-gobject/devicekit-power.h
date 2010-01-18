@@ -26,7 +26,7 @@
 #ifndef __DEVICEKIT_POWER_H__
 #define __DEVICEKIT_POWER_H__
 
-#define __DEVICEKIT_POWER_H_INSIDE__
+#define __UPOWER_H_INSIDE__
 
 #include <devkit-power-gobject/dkp-version.h>
 #include <devkit-power-gobject/dkp-client.h>
@@ -38,7 +38,7 @@
 #include <devkit-power-gobject/dkp-wakeups.h>
 #include <devkit-power-gobject/dkp-wakeups-obj.h>
 
-#undef __DEVICEKIT_POWER_H_INSIDE__
+#undef __UPOWER_H_INSIDE__
 
 #endif /* __DEVICEKIT_POWER_H__ */
 

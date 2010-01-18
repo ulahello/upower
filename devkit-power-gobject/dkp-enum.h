@@ -19,7 +19,7 @@
  *
  */
 
-#if !defined (__DEVICEKIT_POWER_H_INSIDE__) && !defined (DKP_COMPILATION)
+#if !defined (__UPOWER_H_INSIDE__) && !defined (UP_COMPILATION)
 #error "Only <devicekit-power.h> can be included directly."
 #endif
 

@@ -19,7 +19,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#if !defined (__DEVICEKIT_POWER_H_INSIDE__) && !defined (DKP_COMPILATION)
+#if !defined (__UPOWER_H_INSIDE__) && !defined (UP_COMPILATION)
 #error "Only <devicekit-power.h> can be included directly."
 #endif
 

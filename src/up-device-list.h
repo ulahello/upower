@@ -23,7 +23,8 @@
 #define __UP_DEVICE_LIST_H
 
 #include <glib-object.h>
-#include <dkp-enum.h>
+
+#include "up-enum.h"
 
 G_BEGIN_DECLS
 

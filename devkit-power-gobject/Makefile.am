@@ -3,7 +3,7 @@ INCLUDES = \
 	$(DBUS_GLIB_CFLAGS)					\
 	-I$(top_srcdir)						\
 	-I$(top_srcdir)/devkit-power-gobject			\
-	-DDKP_COMPILATION					\
+	-DUP_COMPILATION					\
 	-DG_LOG_DOMAIN=\"devkit-power-gobject\"			\
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\"			\
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
