@@ -530,7 +530,7 @@ dkp_qos_class_init (DkpQosClass *klass)
 		g_signal_new ("latency-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (DkpQosClass, latency_changed),
-			      NULL, NULL, dkp_marshal_VOID__STRING_INT,
+			      NULL, NULL, up_marshal_VOID__STRING_INT,
 			      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	signals [REQUESTS_CHANGED] =
 		g_signal_new ("requests-changed",
