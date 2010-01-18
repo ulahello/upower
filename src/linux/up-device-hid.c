@@ -314,7 +314,7 @@ up_device_hid_coldplug (UpDevice *device)
 
 	/* detect what kind of device we are */
 	native = G_UDEV_DEVICE (up_device_get_native (device));
-	type = g_udev_device_get_property (native, "DKP_BATTERY_TYPE");
+	type = g_udev_device_get_property (native, "UPOWER_BATTERY_TYPE");
 	if (type == NULL || g_strcmp0 (type, "ups") != 0)
 		goto out;
 
@@ -340,8 +340,8 @@ up_device_hid_coldplug (UpDevice *device)
 		goto out;
 	}
 
-	/* prefer DKP names */
-	vendor = g_udev_device_get_property (native, "DKP_VENDOR");
+	/* prefer UPOWER names */
+	vendor = g_udev_device_get_property (native, "UPOWER_VENDOR");
 	if (vendor == NULL)
 		vendor = g_udev_device_get_property (native, "ID_VENDOR");
 

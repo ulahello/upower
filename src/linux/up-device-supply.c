@@ -448,10 +448,10 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 		up_device_supply_make_safe_string (serial_number);
 
 		/* are we possibly recalled by the vendor? */
-		recall_notice = g_udev_device_has_property (native, "DKP_RECALL_NOTICE");
+		recall_notice = g_udev_device_has_property (native, "UPOWER_RECALL_NOTICE");
 		if (recall_notice) {
-			recall_vendor = g_udev_device_get_property (native, "DKP_RECALL_VENDOR");
-			recall_url = g_udev_device_get_property (native, "DKP_RECALL_URL");
+			recall_vendor = g_udev_device_get_property (native, "UPOWER_RECALL_VENDOR");
+			recall_url = g_udev_device_get_property (native, "UPOWER_RECALL_URL");
 		}
 
 		g_object_set (device,

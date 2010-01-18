@@ -140,7 +140,7 @@ up_device_csr_coldplug (UpDevice *device)
 
 	/* get the type */
 	native = G_UDEV_DEVICE (up_device_get_native (device));
-	type = g_udev_device_get_property (native, "DKP_BATTERY_TYPE");
+	type = g_udev_device_get_property (native, "UPOWER_BATTERY_TYPE");
 	if (type == NULL)
 		goto out;
 
@@ -173,16 +173,16 @@ up_device_csr_coldplug (UpDevice *device)
 	}
 
 	/* get optional quirk parameters */
-	ret = g_udev_device_has_property (native, "DKP_CSR_DUAL");
+	ret = g_udev_device_has_property (native, "UPOWER_CSR_DUAL");
 	if (ret)
-		csr->priv->is_dual = g_udev_device_get_property_as_boolean (native, "DKP_CSR_DUAL");
+		csr->priv->is_dual = g_udev_device_get_property_as_boolean (native, "UPOWER_CSR_DUAL");
 	egg_debug ("is_dual=%i", csr->priv->is_dual);
 
-	/* prefer DKP names */
-	vendor = g_udev_device_get_property (native, "DKP_VENDOR");
+	/* prefer UPOWER names */
+	vendor = g_udev_device_get_property (native, "UPOWER_VENDOR");
 	if (vendor == NULL)
 		vendor = g_udev_device_get_property (native, "ID_VENDOR");
-	product = g_udev_device_get_property (native, "DKP_PRODUCT");
+	product = g_udev_device_get_property (native, "UPOWER_PRODUCT");
 	if (product == NULL)
 		product = g_udev_device_get_property (native, "ID_PRODUCT");
 
