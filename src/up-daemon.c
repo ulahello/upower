@@ -518,7 +518,7 @@ up_daemon_suspend (UpDaemon *daemon, DBusGMethodInvocation *context)
 	if (subject == NULL)
 		goto out;
 
-	if (!up_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.devicekit.power.suspend", context))
+	if (!up_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.upower.suspend", context))
 		goto out;
 
 	ret = g_spawn_command_line_sync ("/usr/sbin/pm-suspend", &stdout, &stderr, NULL, &error_local);
@@ -586,7 +586,7 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 	if (subject == NULL)
 		goto out;
 
-	if (!up_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.devicekit.power.hibernate", context))
+	if (!up_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.upower.hibernate", context))
 		goto out;
 
 	ret = g_spawn_command_line_sync ("/usr/sbin/pm-hibernate", &stdout, &stderr, NULL, &error_local);

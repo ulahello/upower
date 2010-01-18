@@ -19,7 +19,7 @@ file are instantly applied.
   <vendor_url>http://hal.freedesktop.org/docs/DeviceKit-power/</vendor_url>
   <icon_name>system-suspend</icon_name>
 
-  <action id="org.freedesktop.devicekit.power.suspend">
+  <action id="org.freedesktop.upower.suspend">
     <_description>Suspend the system</_description>
     <_message>Authentication is required to suspend the system</_message>
     <defaults>
@@ -28,7 +28,7 @@ file are instantly applied.
     </defaults>
   </action>
 
-  <action id="org.freedesktop.devicekit.power.hibernate">
+  <action id="org.freedesktop.upower.hibernate">
     <_description>Hibernate the system</_description>
     <_message>Authentication is required to hibernate the system</_message>
     <defaults>

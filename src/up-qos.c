@@ -277,9 +277,9 @@ up_qos_request_latency (UpQos *qos, const gchar *type_text, gint value, gboolean
 
 	/* check auth */
 	if (persistent)
-		auth = "org.freedesktop.devicekit.power.qos.request-latency-persistent";
+		auth = "org.freedesktop.upower.qos.request-latency-persistent";
 	else
-		auth = "org.freedesktop.devicekit.power.qos.request-latency";
+		auth = "org.freedesktop.upower.qos.request-latency";
 	if (!up_polkit_check_auth (qos->priv->polkit, subject, auth, context))
 		goto out;
 
@@ -380,7 +380,7 @@ up_qos_cancel_request (UpQos *qos, guint cookie, DBusGMethodInvocation *context)
 		subject = up_polkit_get_subject (qos->priv->polkit, context);
 		if (subject == NULL)
 			goto out;
-		if (!up_polkit_check_auth (qos->priv->polkit, subject, "org.freedesktop.devicekit.power.qos.cancel-request", context))
+		if (!up_polkit_check_auth (qos->priv->polkit, subject, "org.freedesktop.upower.qos.cancel-request", context))
 			goto out;
 	}
 

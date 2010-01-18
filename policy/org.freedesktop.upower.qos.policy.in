@@ -19,7 +19,7 @@ file are instantly applied.
   <vendor_url>http://hal.freedesktop.org/docs/DeviceKit-power/</vendor_url>
   <icon_name>system-suspend</icon_name>
 
-  <action id="org.freedesktop.devicekit.power.qos.request-latency">
+  <action id="org.freedesktop.upower.qos.request-latency">
     <_description>Set the required latency of an application</_description>
     <_message>Authentication is required to set the required latency of an application</_message>
     <defaults>
@@ -28,7 +28,7 @@ file are instantly applied.
     </defaults>
   </action>
 
-  <action id="org.freedesktop.devicekit.power.qos.request-latency-persistent">
+  <action id="org.freedesktop.upower.qos.request-latency-persistent">
     <_description>Set a persistent latency setting</_description>
     <_message>Authentication is required to set a persistent latency setting</_message>
     <defaults>
@@ -37,7 +37,7 @@ file are instantly applied.
     </defaults>
   </action>
 
-  <action id="org.freedesktop.devicekit.power.qos.set-minimum-latency">
+  <action id="org.freedesktop.upower.qos.set-minimum-latency">
     <_description>Set administrator settings for latency control</_description>
     <_message>Authentication is required to set administrator settings for latency control</_message>
     <defaults>
@@ -46,7 +46,7 @@ file are instantly applied.
     </defaults>
   </action>
 
-  <action id="org.freedesktop.devicekit.power.qos.cancel-request">
+  <action id="org.freedesktop.upower.qos.cancel-request">
     <_description>Cancel a latency request</_description>
     <_message>Authentication is required to cancel a latency request</_message>
     <defaults>
