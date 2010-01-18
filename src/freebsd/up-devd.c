@@ -44,7 +44,7 @@
 #define DKP_DEVD_EVENT_NOMATCH		'?'
 
 static DkpDevdHandler *handlers[] = {
-	&dkp_backend_acpi_devd_handler,
+	&up_backend_acpi_devd_handler,
 };
 
 static gboolean dkp_devd_inited = FALSE;
@@ -118,7 +118,7 @@ end:
 }
 
 static void
-dkp_devd_process_notify_event (DkpBackend *backend,
+dkp_devd_process_notify_event (UpBackend *backend,
 			       const gchar *system,
 			       const gchar *subsystem,
 			       const gchar *type,
@@ -142,11 +142,11 @@ dkp_devd_process_notify_event (DkpBackend *backend,
 static void
 dkp_devd_process_event (const gchar *event, gpointer user_data)
 {
-	DkpBackend *backend;
+	UpBackend *backend;
 
 	g_return_if_fail(event != NULL);
 
-	backend = DKP_BACKEND(user_data);
+	backend = UP_BACKEND(user_data);
 
 	egg_debug("received devd event: '%s'", event);
 
@@ -198,7 +198,7 @@ dkp_devd_event_cb (GIOChannel *source, GIOCondition condition,
 		dkp_devd_process_event(event, user_data);
 		g_free(event);
 	} else if (status == G_IO_STATUS_AGAIN) {
-		dkp_devd_init (DKP_BACKEND(user_data));
+		dkp_devd_init (UP_BACKEND(user_data));
 		if (dkp_devd_inited) {
 			int fd;
 
@@ -214,7 +214,7 @@ dkp_devd_event_cb (GIOChannel *source, GIOCondition condition,
 }
 
 void
-dkp_devd_init (DkpBackend *backend)
+dkp_devd_init (UpBackend *backend)
 {
 	int event_fd;
 	struct sockaddr_un addr;

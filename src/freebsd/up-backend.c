@@ -45,23 +45,23 @@
 #include "up-marshal.h"
 #include "up-device.h"
 
-#define DKP_BACKEND_REFRESH_TIMEOUT	30	/* seconds */
-#define DKP_BACKEND_SUSPEND_COMMAND	"/usr/sbin/zzz"
-#define DKP_BACKEND_HIBERNATE_COMMAND	"/usr/sbin/acpiconf -s 4"
+#define UP_BACKEND_REFRESH_TIMEOUT	30	/* seconds */
+#define UP_BACKEND_SUSPEND_COMMAND	"/usr/sbin/zzz"
+#define UP_BACKEND_HIBERNATE_COMMAND	"/usr/sbin/acpiconf -s 4"
 
-static void	dkp_backend_class_init	(DkpBackendClass	*klass);
-static void	dkp_backend_init	(DkpBackend		*backend);
-static void	dkp_backend_finalize	(GObject		*object);
+static void	up_backend_class_init	(UpBackendClass	*klass);
+static void	up_backend_init	(UpBackend		*backend);
+static void	up_backend_finalize	(GObject		*object);
 
-static gboolean	dkp_backend_refresh_devices (gpointer user_data);
-static gboolean	dkp_backend_acpi_devd_notify (DkpBackend *backend, const gchar *system, const gchar *subsystem, const gchar *type, const gchar *data);
-static gboolean	dkp_backend_create_new_device (DkpBackend *backend, DkpAcpiNative *native);
-static void	dkp_backend_lid_coldplug (DkpBackend *backend);
-static gboolean	dkp_backend_supports_sleep_state (const gchar *state);
+static gboolean	up_backend_refresh_devices (gpointer user_data);
+static gboolean	up_backend_acpi_devd_notify (UpBackend *backend, const gchar *system, const gchar *subsystem, const gchar *type, const gchar *data);
+static gboolean	up_backend_create_new_device (UpBackend *backend, DkpAcpiNative *native);
+static void	up_backend_lid_coldplug (UpBackend *backend);
+static gboolean	up_backend_supports_sleep_state (const gchar *state);
 
-#define DKP_BACKEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_BACKEND, DkpBackendPrivate))
+#define UP_BACKEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_BACKEND, UpBackendPrivate))
 
-struct DkpBackendPrivate
+struct UpBackendPrivate
 {
 	DkpDaemon		*daemon;
 	DkpDeviceList		*device_list;
@@ -77,28 +77,28 @@ enum {
 
 static guint signals [SIGNAL_LAST] = { 0 };
 
-G_DEFINE_TYPE (DkpBackend, dkp_backend, G_TYPE_OBJECT)
+G_DEFINE_TYPE (UpBackend, up_backend, G_TYPE_OBJECT)
 
 static const gchar *handlers[] = {
 	"battery",
 };
 
-DkpDevdHandler dkp_backend_acpi_devd_handler = {
-	.notify = dkp_backend_acpi_devd_notify
+DkpDevdHandler up_backend_acpi_devd_handler = {
+	.notify = up_backend_acpi_devd_notify
 };
 
 /**
- * dkp_backend_refresh_devices:
+ * up_backend_refresh_devices:
  **/
 static gboolean
-dkp_backend_refresh_devices (gpointer user_data)
+up_backend_refresh_devices (gpointer user_data)
 {
-	DkpBackend *backend;
+	UpBackend *backend;
 	GPtrArray *array;
 	DkpDevice *device;
 	guint i;
 
-	backend = DKP_BACKEND (user_data);
+	backend = UP_BACKEND (user_data);
 	array = dkp_device_list_get_array (backend->priv->device_list);
 
 	for (i = 0; i < array->len; i++) {
@@ -112,10 +112,10 @@ dkp_backend_refresh_devices (gpointer user_data)
 }
 
 /**
- * dkp_backend_acpi_devd_notify:
+ * up_backend_acpi_devd_notify:
  **/
 static gboolean
-dkp_backend_acpi_devd_notify (DkpBackend *backend, const gchar *system, const gchar *subsystem, const gchar *type, const gchar *data)
+up_backend_acpi_devd_notify (UpBackend *backend, const gchar *system, const gchar *subsystem, const gchar *type, const gchar *data)
 {
 	GObject *object = NULL;
 	DkpAcpiNative *native = NULL;
@@ -152,7 +152,7 @@ dkp_backend_acpi_devd_notify (DkpBackend *backend, const gchar *system, const gc
 			      "lid-is-present", &is_present, NULL);
 		if (!is_present) {
 			egg_warning ("received lid event without a configured lid; cold-plugging one");
-			dkp_backend_lid_coldplug (backend);
+			up_backend_lid_coldplug (backend);
 			/* FALLTHROUGH */
 		}
 
@@ -167,7 +167,7 @@ dkp_backend_acpi_devd_notify (DkpBackend *backend, const gchar *system, const gc
 
 	if (object == NULL) {
 		egg_warning ("did not find existing %s device; cold-plugging a new one", subsystem);
-		dkp_backend_create_new_device (backend, native);
+		up_backend_create_new_device (backend, native);
 		goto out;
 	}
 
@@ -183,10 +183,10 @@ out:
 }
 
 /**
- * dkp_backend_create_new_device:
+ * up_backend_create_new_device:
  **/
 static gboolean
-dkp_backend_create_new_device (DkpBackend *backend, DkpAcpiNative *native)
+up_backend_create_new_device (UpBackend *backend, DkpAcpiNative *native)
 {
 	DkpDevice *device;
 	gboolean ret;
@@ -222,10 +222,10 @@ dkp_backend_create_new_device (DkpBackend *backend, DkpAcpiNative *native)
 }
 
 /**
- * dkp_backend_lid_coldplug:
+ * up_backend_lid_coldplug:
  **/
 static void
-dkp_backend_lid_coldplug (DkpBackend *backend)
+up_backend_lid_coldplug (UpBackend *backend)
 {
 	gchar *lid_state;
 
@@ -237,8 +237,8 @@ dkp_backend_lid_coldplug (DkpBackend *backend)
 }
 
 /**
- * dkp_backend_coldplug:
- * @backend: The %DkpBackend class instance
+ * up_backend_coldplug:
+ * @backend: The %UpBackend class instance
  * @daemon: The %DkpDaemon controlling instance
  *
  * Finds all the devices already plugged in, and emits device-add signals for
@@ -247,7 +247,7 @@ dkp_backend_lid_coldplug (DkpBackend *backend)
  * Return value: %TRUE for success
  **/
 gboolean
-dkp_backend_coldplug (DkpBackend *backend, DkpDaemon *daemon)
+up_backend_coldplug (UpBackend *backend, DkpDaemon *daemon)
 {
 	DkpAcpiNative *acnative;
 	int i;
@@ -270,7 +270,7 @@ dkp_backend_coldplug (DkpBackend *backend, DkpDaemon *daemon)
 				egg_warning ("treating add event as change event on %s", dkp_device_get_object_path (device));
 				dkp_device_refresh_internal (device);
 			} else {
-				dkp_backend_create_new_device (backend, native);
+				up_backend_create_new_device (backend, native);
 			}
 
 			if (object != NULL) {
@@ -282,77 +282,77 @@ dkp_backend_coldplug (DkpBackend *backend, DkpDaemon *daemon)
 		}
 	}
 
-	dkp_backend_lid_coldplug (backend);
+	up_backend_lid_coldplug (backend);
 
 	acnative = dkp_acpi_native_new ("hw.acpi.acline");
-	dkp_backend_create_new_device (backend, acnative);
+	up_backend_create_new_device (backend, acnative);
 	g_object_unref (acnative);
 
 	dkp_devd_init (backend);
 
 	backend->priv->poll_timer_id =
-		g_timeout_add_seconds (DKP_BACKEND_REFRESH_TIMEOUT,
-			       (GSourceFunc) dkp_backend_refresh_devices,
+		g_timeout_add_seconds (UP_BACKEND_REFRESH_TIMEOUT,
+			       (GSourceFunc) up_backend_refresh_devices,
 			       backend);
 
 	return TRUE;
 }
 
 /**
- * dkp_backend_get_powersave_command:
+ * up_backend_get_powersave_command:
  **/
 gchar *
-dkp_backend_get_powersave_command (DkpBackend *backend, gboolean powersave)
+up_backend_get_powersave_command (UpBackend *backend, gboolean powersave)
 {
 	/* XXX: Do we want to use powerd here? */
 	return NULL;
 }
 
 /**
- * dkp_backend_get_suspend_command:
+ * up_backend_get_suspend_command:
  **/
 gchar *
-dkp_backend_get_suspend_command (DkpBackend *backend)
+up_backend_get_suspend_command (UpBackend *backend)
 {
-	return g_strdup (DKP_BACKEND_SUSPEND_COMMAND);
+	return g_strdup (UP_BACKEND_SUSPEND_COMMAND);
 }
 
 /**
- * dkp_backend_get_hibernate_command:
+ * up_backend_get_hibernate_command:
  **/
 gchar *
-dkp_backend_get_hibernate_command (DkpBackend *backend)
+up_backend_get_hibernate_command (UpBackend *backend)
 {
-	return g_strdup (DKP_BACKEND_HIBERNATE_COMMAND);
+	return g_strdup (UP_BACKEND_HIBERNATE_COMMAND);
 }
 
 /**
- * dkp_backend_can_suspend:
+ * up_backend_can_suspend:
  **/
 gboolean
-dkp_backend_can_suspend (DkpBackend *backend)
+up_backend_can_suspend (UpBackend *backend)
 {
-	return dkp_backend_supports_sleep_state ("S3");
+	return up_backend_supports_sleep_state ("S3");
 }
 
 /**
- * dkp_backend_can_hibernate:
+ * up_backend_can_hibernate:
  **/
 gboolean
-dkp_backend_can_hibernate (DkpBackend *backend)
+up_backend_can_hibernate (UpBackend *backend)
 {
-	return dkp_backend_supports_sleep_state ("S4");
+	return up_backend_supports_sleep_state ("S4");
 }
 
 gboolean
-dkp_backend_has_encrypted_swap (DkpBackend *backend)
+up_backend_has_encrypted_swap (UpBackend *backend)
 {
 	/* XXX: Add support for GELI? */
 	return FALSE;
 }
 
 gfloat
-dkp_backend_get_used_swap (DkpBackend *backend)
+up_backend_get_used_swap (UpBackend *backend)
 {
 	gfloat percent;
 	kvm_t *kd;
@@ -386,10 +386,10 @@ out:
 }
 
 /**
- * dkp_backend_supports_sleep_state:
+ * up_backend_supports_sleep_state:
  **/
 static gboolean
-dkp_backend_supports_sleep_state (const gchar *state)
+up_backend_supports_sleep_state (const gchar *state)
 {
 	gchar *sleep_states;
 	gboolean ret = FALSE;
@@ -406,38 +406,38 @@ dkp_backend_supports_sleep_state (const gchar *state)
 }
 
 /**
- * dkp_backend_class_init:
- * @klass: The DkpBackendClass
+ * up_backend_class_init:
+ * @klass: The UpBackendClass
  **/
 static void
-dkp_backend_class_init (DkpBackendClass *klass)
+up_backend_class_init (UpBackendClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	object_class->finalize = dkp_backend_finalize;
+	object_class->finalize = up_backend_finalize;
 
 	signals [SIGNAL_DEVICE_ADDED] =
 		g_signal_new ("device-added",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (DkpBackendClass, device_added),
+			      G_STRUCT_OFFSET (UpBackendClass, device_added),
 			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER,
 			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 	signals [SIGNAL_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (DkpBackendClass, device_removed),
+			      G_STRUCT_OFFSET (UpBackendClass, device_removed),
 			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER,
 			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 
-	g_type_class_add_private (klass, sizeof (DkpBackendPrivate));
+	g_type_class_add_private (klass, sizeof (UpBackendPrivate));
 }
 
 /**
- * dkp_backend_init:
+ * up_backend_init:
  **/
 static void
-dkp_backend_init (DkpBackend *backend)
+up_backend_init (UpBackend *backend)
 {
-	backend->priv = DKP_BACKEND_GET_PRIVATE (backend);
+	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
 	backend->priv->daemon = NULL;
 	backend->priv->device_list = NULL;
 	backend->priv->handle_map = g_hash_table_new_full (g_str_hash, g_str_equal, (GDestroyNotify) g_free, (GDestroyNotify) g_object_unref);
@@ -445,16 +445,16 @@ dkp_backend_init (DkpBackend *backend)
 }
 
 /**
- * dkp_backend_finalize:
+ * up_backend_finalize:
  **/
 static void
-dkp_backend_finalize (GObject *object)
+up_backend_finalize (GObject *object)
 {
-	DkpBackend *backend;
+	UpBackend *backend;
 
-	g_return_if_fail (DKP_IS_BACKEND (object));
+	g_return_if_fail (UP_IS_BACKEND (object));
 
-	backend = DKP_BACKEND (object);
+	backend = UP_BACKEND (object);
 
 	if (backend->priv->daemon != NULL)
 		g_object_unref (backend->priv->daemon);
@@ -465,20 +465,20 @@ dkp_backend_finalize (GObject *object)
 	if (backend->priv->poll_timer_id > 0)
 		g_source_remove (backend->priv->poll_timer_id);
 
-	G_OBJECT_CLASS (dkp_backend_parent_class)->finalize (object);
+	G_OBJECT_CLASS (up_backend_parent_class)->finalize (object);
 }
 
 /**
- * dkp_backend_new:
+ * up_backend_new:
  *
- * Return value: a new %DkpBackend object.
+ * Return value: a new %UpBackend object.
  **/
-DkpBackend *
-dkp_backend_new (void)
+UpBackend *
+up_backend_new (void)
 {
-	DkpBackend *backend;
-	backend = g_object_new (DKP_TYPE_BACKEND, NULL);
-	return DKP_BACKEND (backend);
+	UpBackend *backend;
+	backend = g_object_new (UP_TYPE_BACKEND, NULL);
+	return UP_BACKEND (backend);
 }
 
 /***************************************************************************
@@ -488,17 +488,17 @@ dkp_backend_new (void)
 #include "egg-test.h"
 
 void
-dkp_backend_test (gpointer user_data)
+up_backend_test (gpointer user_data)
 {
 	EggTest *test = (EggTest *) user_data;
-	DkpBackend *backend;
+	UpBackend *backend;
 
-	if (!egg_test_start (test, "DkpBackend"))
+	if (!egg_test_start (test, "UpBackend"))
 		return;
 
 	/************************************************************/
 	egg_test_title (test, "get instance");
-	backend = dkp_backend_new ();
+	backend = up_backend_new ();
 	egg_test_assert (test, backend != NULL);
 
 	/* unref */

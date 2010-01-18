@@ -33,13 +33,13 @@ typedef struct
 {
   /* return TRUE to consume the event and stop processing */
 
-  gboolean (*notify)	(DkpBackend *backend,
+  gboolean (*notify)	(UpBackend *backend,
 		  	 const char *system,
 			 const char *subsystem,
 			 const char *type,
 			 const char *data);	/* may be NULL */
 } DkpDevdHandler;
 
-void	dkp_devd_init (DkpBackend *backend);
+void	dkp_devd_init (UpBackend *backend);
 
 #endif /* _DKP_DEVD_H */

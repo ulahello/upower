@@ -20,13 +20,13 @@
  *
  **************************************************************************/
 
-#ifndef _DKP_BACKEND_ACPI_H
-#define _DKP_BACKEND_ACPI_H
+#ifndef _UP_BACKEND_ACPI_H
+#define _UP_BACKEND_ACPI_H
 
 #include "config.h"
 
 #include "up-devd.h"
 
-extern DkpDevdHandler dkp_backend_acpi_devd_handler;
+extern DkpDevdHandler up_backend_acpi_devd_handler;
 
-#endif /* _DKP_BACKEND_ACPI_H */
+#endif /* _UP_BACKEND_ACPI_H */

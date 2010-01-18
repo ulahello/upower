@@ -72,7 +72,7 @@ struct DkpDaemonPrivate
 	DBusGConnection		*connection;
 	DBusGProxy		*proxy;
 	DkpPolkit		*polkit;
-	DkpBackend		*backend;
+	UpBackend		*backend;
 	DkpDeviceList		*power_devices;
 	gboolean		 on_battery;
 	gboolean		 on_low_battery;
@@ -665,7 +665,7 @@ dkp_daemon_startup (DkpDaemon *daemon)
 	daemon->priv->during_coldplug = TRUE;
 
 	/* coldplug backend backend */
-	ret = dkp_backend_coldplug (daemon->priv->backend, daemon);
+	ret = up_backend_coldplug (daemon->priv->backend, daemon);
 	if (!ret) {
 		egg_warning ("failed to coldplug backend");
 		goto out;
@@ -789,7 +789,7 @@ dkp_daemon_device_changed_cb (DkpDevice *device, DkpDaemon *daemon)
  * dkp_daemon_device_added_cb:
  **/
 static void
-dkp_daemon_device_added_cb (DkpBackend *backend, GObject *native, DkpDevice *device, DkpDaemon *daemon)
+dkp_daemon_device_added_cb (UpBackend *backend, GObject *native, DkpDevice *device, DkpDaemon *daemon)
 {
 	DkpDeviceType type;
 	const gchar *object_path;
@@ -830,7 +830,7 @@ dkp_daemon_device_added_cb (DkpBackend *backend, GObject *native, DkpDevice *dev
  * dkp_daemon_device_removed_cb:
  **/
 static void
-dkp_daemon_device_removed_cb (DkpBackend *backend, GObject *native, DkpDevice *device, DkpDaemon *daemon)
+dkp_daemon_device_removed_cb (UpBackend *backend, GObject *native, DkpDevice *device, DkpDaemon *daemon)
 {
 	DkpDeviceType type;
 	const gchar *object_path;
@@ -904,7 +904,7 @@ dkp_daemon_init (DkpDaemon *daemon)
 	daemon->priv->battery_poll_id = 0;
 	daemon->priv->battery_poll_count = 0;
 
-	daemon->priv->backend = dkp_backend_new ();
+	daemon->priv->backend = up_backend_new ();
 	g_signal_connect (daemon->priv->backend, "device-added",
 			  G_CALLBACK (dkp_daemon_device_added_cb), daemon);
 	g_signal_connect (daemon->priv->backend, "device-removed",

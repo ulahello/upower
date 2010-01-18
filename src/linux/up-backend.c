@@ -41,13 +41,13 @@
 #include "up-device-hid.h"
 #include "up-input.h"
 
-static void	dkp_backend_class_init	(DkpBackendClass	*klass);
-static void	dkp_backend_init	(DkpBackend		*backend);
-static void	dkp_backend_finalize	(GObject		*object);
+static void	up_backend_class_init	(UpBackendClass	*klass);
+static void	up_backend_init	(UpBackend		*backend);
+static void	up_backend_finalize	(GObject		*object);
 
-#define DKP_BACKEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_BACKEND, DkpBackendPrivate))
+#define UP_BACKEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_BACKEND, UpBackendPrivate))
 
-struct DkpBackendPrivate
+struct UpBackendPrivate
 {
 	DkpDaemon		*daemon;
 	DkpDeviceList		*device_list;
@@ -63,16 +63,16 @@ enum {
 
 static guint signals [SIGNAL_LAST] = { 0 };
 
-G_DEFINE_TYPE (DkpBackend, dkp_backend, G_TYPE_OBJECT)
+G_DEFINE_TYPE (UpBackend, up_backend, G_TYPE_OBJECT)
 
-static gboolean dkp_backend_device_add (DkpBackend *backend, GUdevDevice *native);
-static void dkp_backend_device_remove (DkpBackend *backend, GUdevDevice *native);
+static gboolean up_backend_device_add (UpBackend *backend, GUdevDevice *native);
+static void up_backend_device_remove (UpBackend *backend, GUdevDevice *native);
 
 /**
- * dkp_backend_device_new:
+ * up_backend_device_new:
  **/
 static DkpDevice *
-dkp_backend_device_new (DkpBackend *backend, GUdevDevice *native)
+up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 {
 	const gchar *subsys;
 	const gchar *native_path;
@@ -154,10 +154,10 @@ out:
 }
 
 /**
- * dkp_backend_device_changed:
+ * up_backend_device_changed:
  **/
 static void
-dkp_backend_device_changed (DkpBackend *backend, GUdevDevice *native)
+up_backend_device_changed (UpBackend *backend, GUdevDevice *native)
 {
 	GObject *object;
 	DkpDevice *device;
@@ -167,7 +167,7 @@ dkp_backend_device_changed (DkpBackend *backend, GUdevDevice *native)
 	object = dkp_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 	if (object == NULL) {
 		egg_warning ("treating change event as add on %s", g_udev_device_get_sysfs_path (native));
-		dkp_backend_device_add (backend, native);
+		up_backend_device_add (backend, native);
 		goto out;
 	}
 
@@ -184,10 +184,10 @@ out:
 }
 
 /**
- * dkp_backend_device_add:
+ * up_backend_device_add:
  **/
 static gboolean
-dkp_backend_device_add (DkpBackend *backend, GUdevDevice *native)
+up_backend_device_add (UpBackend *backend, GUdevDevice *native)
 {
 	GObject *object;
 	DkpDevice *device;
@@ -199,12 +199,12 @@ dkp_backend_device_add (DkpBackend *backend, GUdevDevice *native)
 		device = DKP_DEVICE (object);
 		/* we already have the device; treat as change event */
 		egg_warning ("treating add event as change event on %s", dkp_device_get_object_path (device));
-		dkp_backend_device_changed (backend, native);
+		up_backend_device_changed (backend, native);
 		goto out;
 	}
 
 	/* get the right sort of device */
-	device = dkp_backend_device_new (backend, native);
+	device = up_backend_device_new (backend, native);
 	if (device == NULL) {
 		ret = FALSE;
 		goto out;
@@ -219,10 +219,10 @@ out:
 }
 
 /**
- * dkp_backend_device_remove:
+ * up_backend_device_remove:
  **/
 static void
-dkp_backend_device_remove (DkpBackend *backend, GUdevDevice *native)
+up_backend_device_remove (UpBackend *backend, GUdevDevice *native)
 {
 	GObject *object;
 	DkpDevice *device;
@@ -245,31 +245,31 @@ out:
 }
 
 /**
- * dkp_backend_uevent_signal_handler_cb:
+ * up_backend_uevent_signal_handler_cb:
  **/
 static void
-dkp_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
+up_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 				      GUdevDevice *device, gpointer user_data)
 {
-	DkpBackend *backend = DKP_BACKEND (user_data);
+	UpBackend *backend = UP_BACKEND (user_data);
 
 	if (g_strcmp0 (action, "add") == 0) {
 		egg_debug ("SYSFS add %s", g_udev_device_get_sysfs_path (device));
-		dkp_backend_device_add (backend, device);
+		up_backend_device_add (backend, device);
 	} else if (g_strcmp0 (action, "remove") == 0) {
 		egg_debug ("SYSFS remove %s", g_udev_device_get_sysfs_path (device));
-		dkp_backend_device_remove (backend, device);
+		up_backend_device_remove (backend, device);
 	} else if (g_strcmp0 (action, "change") == 0) {
 		egg_debug ("SYSFS change %s", g_udev_device_get_sysfs_path (device));
-		dkp_backend_device_changed (backend, device);
+		up_backend_device_changed (backend, device);
 	} else {
 		egg_warning ("unhandled action '%s' on %s", action, g_udev_device_get_sysfs_path (device));
 	}
 }
 
 /**
- * dkp_backend_coldplug:
- * @backend: The %DkpBackend class instance
+ * up_backend_coldplug:
+ * @backend: The %UpBackend class instance
  * @daemon: The %DkpDaemon controlling instance
  *
  * Finds all the devices already plugged in, and emits device-add signals for
@@ -278,7 +278,7 @@ dkp_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
  * Return value: %TRUE for success
  **/
 gboolean
-dkp_backend_coldplug (DkpBackend *backend, DkpDaemon *daemon)
+up_backend_coldplug (UpBackend *backend, DkpDaemon *daemon)
 {
 	GUdevDevice *native;
 	GList *devices;
@@ -290,7 +290,7 @@ dkp_backend_coldplug (DkpBackend *backend, DkpDaemon *daemon)
 	backend->priv->device_list = dkp_daemon_get_device_list (daemon);
 	backend->priv->gudev_client = g_udev_client_new (subsystems);
 	g_signal_connect (backend->priv->gudev_client, "uevent",
-			  G_CALLBACK (dkp_backend_uevent_signal_handler_cb), backend);
+			  G_CALLBACK (up_backend_uevent_signal_handler_cb), backend);
 
 	/* add all subsystems */
 	for (i=0; subsystems[i] != NULL; i++) {
@@ -298,7 +298,7 @@ dkp_backend_coldplug (DkpBackend *backend, DkpDaemon *daemon)
 		devices = g_udev_client_query_by_subsystem (backend->priv->gudev_client, subsystems[i]);
 		for (l = devices; l != NULL; l = l->next) {
 			native = l->data;
-			dkp_backend_device_add (backend, native);
+			up_backend_device_add (backend, native);
 		}
 		g_list_foreach (devices, (GFunc) g_object_unref, NULL);
 		g_list_free (devices);
@@ -308,54 +308,54 @@ dkp_backend_coldplug (DkpBackend *backend, DkpDaemon *daemon)
 }
 
 /**
- * dkp_backend_class_init:
- * @klass: The DkpBackendClass
+ * up_backend_class_init:
+ * @klass: The UpBackendClass
  **/
 static void
-dkp_backend_class_init (DkpBackendClass *klass)
+up_backend_class_init (UpBackendClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	object_class->finalize = dkp_backend_finalize;
+	object_class->finalize = up_backend_finalize;
 
 	signals [SIGNAL_DEVICE_ADDED] =
 		g_signal_new ("device-added",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (DkpBackendClass, device_added),
+			      G_STRUCT_OFFSET (UpBackendClass, device_added),
 			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER,
 			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 	signals [SIGNAL_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (DkpBackendClass, device_removed),
+			      G_STRUCT_OFFSET (UpBackendClass, device_removed),
 			      NULL, NULL, dkp_marshal_VOID__POINTER_POINTER,
 			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 
-	g_type_class_add_private (klass, sizeof (DkpBackendPrivate));
+	g_type_class_add_private (klass, sizeof (UpBackendPrivate));
 }
 
 /**
- * dkp_backend_init:
+ * up_backend_init:
  **/
 static void
-dkp_backend_init (DkpBackend *backend)
+up_backend_init (UpBackend *backend)
 {
-	backend->priv = DKP_BACKEND_GET_PRIVATE (backend);
+	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
 	backend->priv->daemon = NULL;
 	backend->priv->device_list = NULL;
 	backend->priv->managed_devices = dkp_device_list_new ();
 }
 
 /**
- * dkp_backend_finalize:
+ * up_backend_finalize:
  **/
 static void
-dkp_backend_finalize (GObject *object)
+up_backend_finalize (GObject *object)
 {
-	DkpBackend *backend;
+	UpBackend *backend;
 
-	g_return_if_fail (DKP_IS_BACKEND (object));
+	g_return_if_fail (UP_IS_BACKEND (object));
 
-	backend = DKP_BACKEND (object);
+	backend = UP_BACKEND (object);
 
 	if (backend->priv->daemon != NULL)
 		g_object_unref (backend->priv->daemon);
@@ -366,19 +366,19 @@ dkp_backend_finalize (GObject *object)
 
 	g_object_unref (backend->priv->managed_devices);
 
-	G_OBJECT_CLASS (dkp_backend_parent_class)->finalize (object);
+	G_OBJECT_CLASS (up_backend_parent_class)->finalize (object);
 }
 
 /**
- * dkp_backend_new:
+ * up_backend_new:
  *
- * Return value: a new %DkpBackend object.
+ * Return value: a new %UpBackend object.
  **/
-DkpBackend *
-dkp_backend_new (void)
+UpBackend *
+up_backend_new (void)
 {
-	DkpBackend *backend;
-	backend = g_object_new (DKP_TYPE_BACKEND, NULL);
-	return DKP_BACKEND (backend);
+	UpBackend *backend;
+	backend = g_object_new (UP_TYPE_BACKEND, NULL);
+	return UP_BACKEND (backend);
 }
 

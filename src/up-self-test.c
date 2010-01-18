@@ -45,7 +45,7 @@ main (int argc, char **argv)
 	egg_debug_init (&argc, &argv);
 
 	/* tests go here */
-	dkp_backend_test (test);
+	up_backend_test (test);
 	dkp_device_test (test);
 	dkp_device_list_test (test);
 	dkp_history_test (test);

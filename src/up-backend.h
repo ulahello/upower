@@ -19,8 +19,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef __DKP_BACKEND_H
-#define __DKP_BACKEND_H
+#ifndef __UP_BACKEND_H
+#define __UP_BACKEND_H
 
 #include <glib-object.h>
 #include <dkp-enum.h>
@@ -30,45 +30,45 @@
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_BACKEND		(dkp_backend_get_type ())
-#define DKP_BACKEND(o)			(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_BACKEND, DkpBackend))
-#define DKP_BACKEND_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_BACKEND, DkpBackendClass))
-#define DKP_IS_BACKEND(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_BACKEND))
-#define DKP_IS_BACKEND_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_BACKEND))
-#define DKP_BACKEND_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_BACKEND, DkpBackendClass))
-#define DKP_BACKEND_ERROR		(dkp_backend_error_quark ())
-#define DKP_BACKEND_TYPE_ERROR		(dkp_backend_error_get_type ())
+#define UP_TYPE_BACKEND		(up_backend_get_type ())
+#define UP_BACKEND(o)			(G_TYPE_CHECK_INSTANCE_CAST ((o), UP_TYPE_BACKEND, UpBackend))
+#define UP_BACKEND_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), UP_TYPE_BACKEND, UpBackendClass))
+#define UP_IS_BACKEND(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), UP_TYPE_BACKEND))
+#define UP_IS_BACKEND_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), UP_TYPE_BACKEND))
+#define UP_BACKEND_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), UP_TYPE_BACKEND, UpBackendClass))
+#define UP_BACKEND_ERROR		(up_backend_error_quark ())
+#define UP_BACKEND_TYPE_ERROR		(up_backend_error_get_type ())
 
-typedef struct DkpBackendPrivate DkpBackendPrivate;
+typedef struct UpBackendPrivate UpBackendPrivate;
 
 typedef struct
 {
 	 GObject		 parent;
-	 DkpBackendPrivate	*priv;
-} DkpBackend;
+	 UpBackendPrivate	*priv;
+} UpBackend;
 
 typedef struct
 {
 	GObjectClass	 parent_class;
-	void		(* device_added)	(DkpBackend	*backend,
+	void		(* device_added)	(UpBackend	*backend,
 						 GObject	*native,
 						 DkpDevice	*device);
-	void		(* device_changed)	(DkpBackend	*backend,
+	void		(* device_changed)	(UpBackend	*backend,
 						 GObject	*native,
 						 DkpDevice	*device);
-	void		(* device_removed)	(DkpBackend	*backend,
+	void		(* device_removed)	(UpBackend	*backend,
 						 GObject	*native,
 						 DkpDevice	*device);
-} DkpBackendClass;
+} UpBackendClass;
 
-GType		 dkp_backend_get_type			(void);
-DkpBackend	*dkp_backend_new			(void);
-void		 dkp_backend_test			(gpointer	 user_data);
+GType		 up_backend_get_type			(void);
+UpBackend	*up_backend_new			(void);
+void		 up_backend_test			(gpointer	 user_data);
 
-gboolean	 dkp_backend_coldplug			(DkpBackend	*backend,
+gboolean	 up_backend_coldplug			(UpBackend	*backend,
 							 DkpDaemon	*daemon);
 
 G_END_DECLS
 
-#endif /* __DKP_BACKEND_H */
+#endif /* __UP_BACKEND_H */
 
