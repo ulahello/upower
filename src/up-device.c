@@ -48,7 +48,7 @@ struct UpDevicePrivate
 	DBusGConnection		*system_bus_connection;
 	DBusGProxy		*system_bus_proxy;
 	UpDaemon		*daemon;
-	DkpHistory		*history;
+	UpHistory		*history;
 	GObject			*native;
 	gboolean		 has_ever_refresh;
 	gboolean		 during_coldplug;
@@ -576,7 +576,7 @@ up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 	/* get the id so we can load the old history */
 	id = up_device_get_id (device);
 	if (id != NULL)
-		dkp_history_set_id (device->priv->history, id);
+		up_history_set_id (device->priv->history, id);
 
 out:
 	/* start signals and callbacks */
@@ -612,9 +612,9 @@ up_device_get_statistics (UpDevice *device, const gchar *type, DBusGMethodInvoca
 
 	/* get the correct data */
 	if (g_strcmp0 (type, "charging") == 0)
-		array = dkp_history_get_profile_data (device->priv->history, TRUE);
+		array = up_history_get_profile_data (device->priv->history, TRUE);
 	else if (g_strcmp0 (type, "discharging") == 0)
-		array = dkp_history_get_profile_data (device->priv->history, FALSE);
+		array = up_history_get_profile_data (device->priv->history, FALSE);
 
 	/* maybe the device doesn't support histories */
 	if (array == NULL) {
@@ -658,10 +658,10 @@ up_device_get_history (UpDevice *device, const gchar *type_string, guint timespa
 	GError *error;
 	GPtrArray *array = NULL;
 	GPtrArray *complex;
-	const DkpHistoryObj *obj;
+	const UpHistoryObj *obj;
 	GValue *value;
 	guint i;
-	DkpHistoryType type = DKP_HISTORY_TYPE_UNKNOWN;
+	UpHistoryType type = UP_HISTORY_TYPE_UNKNOWN;
 
 	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 	g_return_val_if_fail (type_string != NULL, FALSE);
@@ -675,17 +675,17 @@ up_device_get_history (UpDevice *device, const gchar *type_string, guint timespa
 
 	/* get the correct data */
 	if (g_strcmp0 (type_string, "rate") == 0)
-		type = DKP_HISTORY_TYPE_RATE;
+		type = UP_HISTORY_TYPE_RATE;
 	else if (g_strcmp0 (type_string, "charge") == 0)
-		type = DKP_HISTORY_TYPE_CHARGE;
+		type = UP_HISTORY_TYPE_CHARGE;
 	else if (g_strcmp0 (type_string, "time-full") == 0)
-		type = DKP_HISTORY_TYPE_TIME_FULL;
+		type = UP_HISTORY_TYPE_TIME_FULL;
 	else if (g_strcmp0 (type_string, "time-empty") == 0)
-		type = DKP_HISTORY_TYPE_TIME_EMPTY;
+		type = UP_HISTORY_TYPE_TIME_EMPTY;
 
 	/* something recognised */
-	if (type != DKP_HISTORY_TYPE_UNKNOWN)
-		array = dkp_history_get_data (device->priv->history, type, timespan, resolution);
+	if (type != UP_HISTORY_TYPE_UNKNOWN)
+		array = up_history_get_data (device->priv->history, type, timespan, resolution);
 
 	/* maybe the device doesn't have any history */
 	if (array == NULL) {
@@ -697,7 +697,7 @@ up_device_get_history (UpDevice *device, const gchar *type_string, guint timespa
 	/* copy data to dbus struct */
 	complex = g_ptr_array_sized_new (array->len);
 	for (i=0; i<array->len; i++) {
-		obj = (const DkpHistoryObj *) g_ptr_array_index (array, i);
+		obj = (const UpHistoryObj *) g_ptr_array_index (array, i);
 		value = g_new0 (GValue, 1);
 		g_value_init (value, DKP_DBUS_STRUCT_UINT_DOUBLE_UINT);
 		g_value_take_boxed (value, dbus_g_type_specialized_construct (DKP_DBUS_STRUCT_UINT_DOUBLE_UINT));
@@ -851,11 +851,11 @@ up_device_perhaps_changed_cb (GObject *object, GParamSpec *pspec, UpDevice *devi
 		return;
 
 	/* save new history */
-	dkp_history_set_state (device->priv->history, device->priv->state);
-	dkp_history_set_charge_data (device->priv->history, device->priv->percentage);
-	dkp_history_set_rate_data (device->priv->history, device->priv->energy_rate);
-	dkp_history_set_time_full_data (device->priv->history, device->priv->time_to_full);
-	dkp_history_set_time_empty_data (device->priv->history, device->priv->time_to_empty);
+	up_history_set_state (device->priv->history, device->priv->state);
+	up_history_set_charge_data (device->priv->history, device->priv->percentage);
+	up_history_set_rate_data (device->priv->history, device->priv->energy_rate);
+	up_history_set_time_full_data (device->priv->history, device->priv->time_to_full);
+	up_history_set_time_empty_data (device->priv->history, device->priv->time_to_empty);
 
 	/*  The order here matters; we want Device::Changed() before
 	 *  the DeviceChanged() signal on the main object */
@@ -879,7 +879,7 @@ up_device_init (UpDevice *device)
 	device->priv->native = NULL;
 	device->priv->has_ever_refresh = FALSE;
 	device->priv->during_coldplug = FALSE;
-	device->priv->history = dkp_history_new ();
+	device->priv->history = up_history_new ();
 
 	device->priv->system_bus_connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (device->priv->system_bus_connection == NULL) {

@@ -19,69 +19,69 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef __DKP_HISTORY_H
-#define __DKP_HISTORY_H
+#ifndef __UP_HISTORY_H
+#define __UP_HISTORY_H
 
 #include <glib-object.h>
 #include <dkp-enum.h>
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_HISTORY		(dkp_history_get_type ())
-#define DKP_HISTORY(o)			(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_HISTORY, DkpHistory))
-#define DKP_HISTORY_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_HISTORY, DkpHistoryClass))
-#define DKP_IS_HISTORY(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_HISTORY))
-#define DKP_IS_HISTORY_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_HISTORY))
-#define DKP_HISTORY_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_HISTORY, DkpHistoryClass))
-#define DKP_HISTORY_ERROR		(dkp_history_error_quark ())
-#define DKP_HISTORY_TYPE_ERROR		(dkp_history_error_get_type ())
+#define UP_TYPE_HISTORY		(up_history_get_type ())
+#define UP_HISTORY(o)			(G_TYPE_CHECK_INSTANCE_CAST ((o), UP_TYPE_HISTORY, UpHistory))
+#define UP_HISTORY_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), UP_TYPE_HISTORY, UpHistoryClass))
+#define UP_IS_HISTORY(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), UP_TYPE_HISTORY))
+#define UP_IS_HISTORY_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), UP_TYPE_HISTORY))
+#define UP_HISTORY_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), UP_TYPE_HISTORY, UpHistoryClass))
+#define UP_HISTORY_ERROR		(up_history_error_quark ())
+#define UP_HISTORY_TYPE_ERROR		(up_history_error_get_type ())
 
-typedef struct DkpHistoryPrivate DkpHistoryPrivate;
+typedef struct UpHistoryPrivate UpHistoryPrivate;
 
 typedef struct
 {
 	 GObject		 parent;
-	 DkpHistoryPrivate	*priv;
-} DkpHistory;
+	 UpHistoryPrivate	*priv;
+} UpHistory;
 
 typedef struct
 {
 	GObjectClass		 parent_class;
-} DkpHistoryClass;
+} UpHistoryClass;
 
 typedef enum {
-	DKP_HISTORY_TYPE_CHARGE,
-	DKP_HISTORY_TYPE_RATE,
-	DKP_HISTORY_TYPE_TIME_FULL,
-	DKP_HISTORY_TYPE_TIME_EMPTY,
-	DKP_HISTORY_TYPE_UNKNOWN
-} DkpHistoryType;
+	UP_HISTORY_TYPE_CHARGE,
+	UP_HISTORY_TYPE_RATE,
+	UP_HISTORY_TYPE_TIME_FULL,
+	UP_HISTORY_TYPE_TIME_EMPTY,
+	UP_HISTORY_TYPE_UNKNOWN
+} UpHistoryType;
 
 
-GType		 dkp_history_get_type			(void);
-DkpHistory	*dkp_history_new			(void);
-void		 dkp_history_test			(gpointer	 user_data);
+GType		 up_history_get_type			(void);
+UpHistory	*up_history_new			(void);
+void		 up_history_test			(gpointer	 user_data);
 
-GPtrArray	*dkp_history_get_data			(DkpHistory		*history,
-							 DkpHistoryType		 type,
+GPtrArray	*up_history_get_data			(UpHistory		*history,
+							 UpHistoryType		 type,
 							 guint			 timespan,
 							 guint			 resolution);
-GPtrArray	*dkp_history_get_profile_data		(DkpHistory		*history,
+GPtrArray	*up_history_get_profile_data		(UpHistory		*history,
 							 gboolean		 charging);
-gboolean	 dkp_history_set_id			(DkpHistory		*history,
+gboolean	 up_history_set_id			(UpHistory		*history,
 							 const gchar		*id);
-gboolean	 dkp_history_set_state			(DkpHistory		*history,
+gboolean	 up_history_set_state			(UpHistory		*history,
 							 UpDeviceState		 state);
-gboolean	 dkp_history_set_charge_data		(DkpHistory		*history,
+gboolean	 up_history_set_charge_data		(UpHistory		*history,
 							 gdouble		 percentage);
-gboolean	 dkp_history_set_rate_data		(DkpHistory		*history,
+gboolean	 up_history_set_rate_data		(UpHistory		*history,
 							 gdouble		 rate);
-gboolean	 dkp_history_set_time_full_data		(DkpHistory		*history,
+gboolean	 up_history_set_time_full_data		(UpHistory		*history,
 							 gint64			 time);
-gboolean	 dkp_history_set_time_empty_data	(DkpHistory		*history,
+gboolean	 up_history_set_time_empty_data	(UpHistory		*history,
 							 gint64			 time);
 
 G_END_DECLS
 
-#endif /* __DKP_HISTORY_H */
+#endif /* __UP_HISTORY_H */
 

@@ -48,7 +48,7 @@ main (int argc, char **argv)
 	up_backend_test (test);
 	up_device_test (test);
 	up_device_list_test (test);
-	dkp_history_test (test);
+	up_history_test (test);
 	up_native_test (test);
 	up_polkit_test (test);
 	dkp_qos_test (test);

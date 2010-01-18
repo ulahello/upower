@@ -37,6 +37,15 @@ typedef struct
 	DkpDeviceState		 state;
 } DkpHistoryObj;
 
+/* compat */
+typedef DkpHistoryObj UpHistoryObj;
+#define up_history_obj_new		dkp_history_obj_new
+#define up_history_obj_create		dkp_history_obj_create
+#define up_history_obj_copy		dkp_history_obj_copy
+#define up_history_obj_free		dkp_history_obj_free
+#define up_history_obj_from_string	dkp_history_obj_from_string
+#define up_history_obj_to_string	dkp_history_obj_to_string
+
 DkpHistoryObj	*dkp_history_obj_new		(void);
 gboolean	 dkp_history_obj_clear		(DkpHistoryObj		*obj);
 void		 dkp_history_obj_free		(DkpHistoryObj		*obj);
