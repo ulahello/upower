@@ -59,7 +59,7 @@ up_device_list_lookup (UpDeviceList *list, GObject *native)
 	g_return_val_if_fail (UP_IS_DEVICE_LIST (list), NULL);
 
 	/* does device exist in db? */
-	native_path = dkp_native_get_native_path (native);
+	native_path = up_native_get_native_path (native);
 	if (native_path == NULL)
 		return NULL;
 	device = g_hash_table_lookup (list->priv->map_native_path_to_device, native_path);
@@ -83,7 +83,7 @@ up_device_list_insert (UpDeviceList *list, GObject *native, GObject *device)
 	g_return_val_if_fail (native != NULL, FALSE);
 	g_return_val_if_fail (device != NULL, FALSE);
 
-	native_path = dkp_native_get_native_path (native);
+	native_path = up_native_get_native_path (native);
 	if (native_path == NULL) {
 		egg_warning ("failed to get native path");
 		return FALSE;

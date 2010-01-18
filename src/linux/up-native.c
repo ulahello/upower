@@ -24,7 +24,7 @@
 #include "up-native.h"
 
 /**
- * dkp_native_get_native_path:
+ * up_native_get_native_path:
  * @object: the native tracking object
  *
  * This converts a GObject used as the device data into a native path.
@@ -34,7 +34,7 @@
  * Return value: The native path for the device which is unique, e.g. "/sys/class/power/BAT1"
  **/
 const gchar *
-dkp_native_get_native_path (GObject *object)
+up_native_get_native_path (GObject *object)
 {
 	return g_udev_device_get_sysfs_path (G_UDEV_DEVICE (object));
 }

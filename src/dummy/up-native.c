@@ -23,7 +23,7 @@
 #include "up-native.h"
 
 /**
- * dkp_native_get_native_path:
+ * up_native_get_native_path:
  * @object: the native tracking object
  *
  * This converts a GObject used as the device data into a native path.
@@ -33,7 +33,7 @@
  * Return value: The native path for the device which is unique, e.g. "/sys/class/power/BAT1"
  **/
 const gchar *
-dkp_native_get_native_path (GObject *object)
+up_native_get_native_path (GObject *object)
 {
 	return "/sys/dummy";
 }
@@ -45,17 +45,17 @@ dkp_native_get_native_path (GObject *object)
 #include "egg-test.h"
 
 void
-dkp_native_test (gpointer user_data)
+up_native_test (gpointer user_data)
 {
 	EggTest *test = (EggTest *) user_data;
 	const gchar *path;
 
-	if (!egg_test_start (test, "DkpNative"))
+	if (!egg_test_start (test, "UpNative"))
 		return;
 
 	/************************************************************/
 	egg_test_title (test, "get instance");
-	path = dkp_native_get_native_path (NULL);
+	path = up_native_get_native_path (NULL);
 	egg_test_assert (test, (g_strcmp0 (path, "/sys/dummy") == 0));
 
 	egg_test_end (test);

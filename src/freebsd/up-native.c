@@ -24,7 +24,7 @@
 #include "up-native.h"
 
 /**
- * dkp_native_get_native_path:
+ * up_native_get_native_path:
  * @object: the native tracking object
  *
  * This converts a GObject used as the device data into a native path.
@@ -32,7 +32,7 @@
  * Return value: The native path for the device which is unique, e.g. "/sys/class/power/BAT1"
  **/
 const gchar *
-dkp_native_get_native_path (GObject *object)
+up_native_get_native_path (GObject *object)
 {
 	return up_acpi_native_get_path (UP_ACPI_NATIVE (object));
 }
@@ -44,19 +44,19 @@ dkp_native_get_native_path (GObject *object)
 #include "egg-test.h"
 
 void
-dkp_native_test (gpointer user_data)
+up_native_test (gpointer user_data)
 {
 	EggTest *test = (EggTest *) user_data;
 	UpAcpiNative *dan;
 	const gchar *path;
 
-	if (!egg_test_start (test, "DkpNative"))
+	if (!egg_test_start (test, "UpNative"))
 		return;
 
 	/************************************************************/
 	egg_test_title (test, "get instance");
 	dan = up_acpi_native_new_driver_unit ("battery", 0);
-	path = dkp_native_get_native_path (dan);
+	path = up_native_get_native_path (dan);
 	egg_test_assert (test, (g_strcmp0 (path, "dev.battery.0") == 0));
 	g_object_unref (dan);
 

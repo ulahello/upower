@@ -538,7 +538,7 @@ up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 	device->priv->native = g_object_ref (native);
 	device->priv->daemon = g_object_ref (daemon);
 
-	native_path = dkp_native_get_native_path (native);
+	native_path = up_native_get_native_path (native);
 	device->priv->native_path = g_strdup (native_path);
 
 	/* stop signals and callbacks */

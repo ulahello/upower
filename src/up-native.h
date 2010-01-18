@@ -18,17 +18,17 @@
  *
  */
 
-#ifndef __DKP_NATIVE_H__
-#define __DKP_NATIVE_H__
+#ifndef __UP_NATIVE_H__
+#define __UP_NATIVE_H__
 
 #include <glib-object.h>
 
 G_BEGIN_DECLS
 
-const gchar	*dkp_native_get_native_path	(GObject	*object);
-void		 dkp_native_test		(gpointer	 user_data);
+const gchar	*up_native_get_native_path	(GObject	*object);
+void		 up_native_test			(gpointer	 user_data);
 
 G_END_DECLS
 
-#endif /* __DKP_NATIVE_H__ */
+#endif /* __UP_NATIVE_H__ */
 
