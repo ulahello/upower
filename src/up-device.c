@@ -596,7 +596,7 @@ up_device_get_statistics (UpDevice *device, const gchar *type, DBusGMethodInvoca
 	GError *error;
 	GPtrArray *array = NULL;
 	GPtrArray *complex;
-	const DkpStatsObj *obj;
+	const UpStatsObj *obj;
 	GValue *value;
 	guint i;
 
@@ -633,7 +633,7 @@ up_device_get_statistics (UpDevice *device, const gchar *type, DBusGMethodInvoca
 	/* copy data to dbus struct */
 	complex = g_ptr_array_sized_new (array->len);
 	for (i=0; i<array->len; i++) {
-		obj = (const DkpStatsObj *) g_ptr_array_index (array, i);
+		obj = (const UpStatsObj *) g_ptr_array_index (array, i);
 		value = g_new0 (GValue, 1);
 		g_value_init (value, DKP_DBUS_STRUCT_DOUBLE_DOUBLE);
 		g_value_take_boxed (value, dbus_g_type_specialized_construct (DKP_DBUS_STRUCT_DOUBLE_DOUBLE));

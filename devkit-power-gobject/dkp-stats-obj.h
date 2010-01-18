@@ -36,6 +36,10 @@ typedef struct
 	gdouble			 accuracy;
 } DkpStatsObj;
 
+typedef DkpStatsObj UpStatsObj;
+
+#define up_stats_obj_create		dkp_stats_obj_create
+
 DkpStatsObj	*dkp_stats_obj_new		(void);
 gboolean	 dkp_stats_obj_free		(DkpStatsObj		*obj);
 DkpStatsObj	*dkp_stats_obj_copy		(const DkpStatsObj	*cobj);

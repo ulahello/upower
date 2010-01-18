@@ -269,7 +269,7 @@ up_history_get_profile_data (UpHistory *history, gboolean charging)
 	const UpHistoryObj *obj_last = NULL;
 	const UpHistoryObj *obj;
 	const UpHistoryObj *obj_old = NULL;
-	DkpStatsObj *stats;
+	UpStatsObj *stats;
 	GPtrArray *array;
 	GPtrArray *data;
 	guint time_s;
@@ -281,7 +281,7 @@ up_history_get_profile_data (UpHistory *history, gboolean charging)
 	/* create 100 item list and set to zero */
 	data = g_ptr_array_new ();
 	for (i=0; i<101; i++) {
-		stats = dkp_stats_obj_create (0.0f, 0.0f);
+		stats = up_stats_obj_create (0.0f, 0.0f);
 		g_ptr_array_add (data, stats);
 	}
 
@@ -319,7 +319,7 @@ up_history_get_profile_data (UpHistory *history, gboolean charging)
 				/* use the accuracy field as a counter for now */
 				if ((charging && obj->state == UP_DEVICE_STATE_CHARGING) ||
 				    (!charging && obj->state == UP_DEVICE_STATE_DISCHARGING)) {
-					stats = (DkpStatsObj *) g_ptr_array_index (data, bin);
+					stats = (UpStatsObj *) g_ptr_array_index (data, bin);
 					stats->value += time_s;
 					stats->accuracy++;
 				}
@@ -332,14 +332,14 @@ cont:
 
 	/* divide the value by the number of samples to make the average */
 	for (i=0; i<101; i++) {
-		stats = (DkpStatsObj *) g_ptr_array_index (data, i);
+		stats = (UpStatsObj *) g_ptr_array_index (data, i);
 		if (stats->accuracy != 0)
 			stats->value = stats->value / stats->accuracy;
 	}
 
 	/* find non-zero accuracy values for the average */
 	for (i=0; i<101; i++) {
-		stats = (DkpStatsObj *) g_ptr_array_index (data, i);
+		stats = (UpStatsObj *) g_ptr_array_index (data, i);
 		if (stats->accuracy > 0) {
 			total_value += stats->value;
 			non_zero_accuracy++;
@@ -354,7 +354,7 @@ cont:
 	/* make the values a factor of 0, so that 1.0 is twice the
 	 * average, and -1.0 is half the average */
 	for (i=0; i<101; i++) {
-		stats = (DkpStatsObj *) g_ptr_array_index (data, i);
+		stats = (UpStatsObj *) g_ptr_array_index (data, i);
 		if (stats->accuracy > 0)
 			stats->value = (stats->value - average) / average;
 		else
@@ -363,7 +363,7 @@ cont:
 
 	/* accuracy is a percentage scale, where each cycle = 20% */
 	for (i=0; i<101; i++) {
-		stats = (DkpStatsObj *) g_ptr_array_index (data, i);
+		stats = (UpStatsObj *) g_ptr_array_index (data, i);
 		stats->accuracy *= 20;
 		if (stats->accuracy > 100.0f)
 			stats->accuracy = 100.0f;
