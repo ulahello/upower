@@ -34,7 +34,7 @@
 const gchar *
 dkp_native_get_native_path (GObject *object)
 {
-	return dkp_acpi_native_get_path (DKP_ACPI_NATIVE (object));
+	return up_acpi_native_get_path (UP_ACPI_NATIVE (object));
 }
 
 /***************************************************************************
@@ -47,7 +47,7 @@ void
 dkp_native_test (gpointer user_data)
 {
 	EggTest *test = (EggTest *) user_data;
-	DkpAcpiNative *dan;
+	UpAcpiNative *dan;
 	const gchar *path;
 
 	if (!egg_test_start (test, "DkpNative"))
@@ -55,7 +55,7 @@ dkp_native_test (gpointer user_data)
 
 	/************************************************************/
 	egg_test_title (test, "get instance");
-	dan = dkp_acpi_native_new_driver_unit ("battery", 0);
+	dan = up_acpi_native_new_driver_unit ("battery", 0);
 	path = dkp_native_get_native_path (dan);
 	egg_test_assert (test, (g_strcmp0 (path, "dev.battery.0") == 0));
 	g_object_unref (dan);

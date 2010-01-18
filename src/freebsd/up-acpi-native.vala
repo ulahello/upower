@@ -1,4 +1,4 @@
-public class DkpAcpiNative : Object {
+public class UpAcpiNative : Object {
     private string? _driver;
     private int _unit;
     private string _path;
@@ -15,7 +15,7 @@ public class DkpAcpiNative : Object {
 	get { return _path; }
     }
 
-    public DkpAcpiNative (string path) {
+    public UpAcpiNative (string path) {
 	Regex r;
 	MatchInfo mi;
 	bool ret;
@@ -38,7 +38,7 @@ public class DkpAcpiNative : Object {
 	_path = path;
     }
 
-    public DkpAcpiNative.driver_unit (string driver, int unit) {
+    public UpAcpiNative.driver_unit (string driver, int unit) {
 	_driver = driver;
 	_unit = unit;
 	_path = "dev.%s.%i".printf (_driver, _unit);

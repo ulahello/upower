@@ -45,16 +45,16 @@
 #include "up-enum.h"
 #include "up-device-supply.h"
 
-#define DKP_ACPIDEV			"/dev/acpi"
+#define UP_ACPIDEV			"/dev/acpi"
 
 G_DEFINE_TYPE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
 
 static gboolean		 up_device_supply_refresh	 	(UpDevice *device);
 static UpDeviceTechnology	up_device_supply_convert_device_technology (const gchar *type);
 static gboolean		up_device_supply_acline_coldplug	(UpDevice *device);
-static gboolean		up_device_supply_battery_coldplug	(UpDevice *device, DkpAcpiNative *native);
+static gboolean		up_device_supply_battery_coldplug	(UpDevice *device, UpAcpiNative *native);
 static gboolean		up_device_supply_acline_set_properties	(UpDevice *device);
-static gboolean		up_device_supply_battery_set_properties	(UpDevice *device, DkpAcpiNative *native);
+static gboolean		up_device_supply_battery_set_properties	(UpDevice *device, UpAcpiNative *native);
 static gboolean		up_device_supply_get_on_battery	(UpDevice *device, gboolean *on_battery);
 static gboolean		up_device_supply_get_low_battery	(UpDevice *device, gboolean *low_battery);
 static gboolean		up_device_supply_get_online		(UpDevice *device, gboolean *online);
@@ -62,7 +62,7 @@ static gboolean		up_device_supply_get_online		(UpDevice *device, gboolean *onlin
 /**
  * up_device_supply_convert_device_technology:
  *
- * This is taken from linux/dkp-device-supply.c.
+ * This is taken from linux/up-device-supply.c.
  **/
 static UpDeviceTechnology
 up_device_supply_convert_device_technology (const gchar *type)
@@ -142,7 +142,7 @@ up_device_supply_acline_coldplug (UpDevice *device)
  * up_device_supply_battery_coldplug:
  **/
 static gboolean
-up_device_supply_battery_coldplug (UpDevice *device, DkpAcpiNative *native)
+up_device_supply_battery_coldplug (UpDevice *device, UpAcpiNative *native)
 {
 	gboolean ret;
 
@@ -156,7 +156,7 @@ up_device_supply_battery_coldplug (UpDevice *device, DkpAcpiNative *native)
  * up_device_supply_battery_set_properties:
  **/
 static gboolean
-up_device_supply_battery_set_properties (UpDevice *device, DkpAcpiNative *native)
+up_device_supply_battery_set_properties (UpDevice *device, UpAcpiNative *native)
 {
 	gint fd;
 	gdouble volt, dvolt, rate, lastfull, cap, dcap, lcap, capacity;
@@ -168,14 +168,14 @@ up_device_supply_battery_set_properties (UpDevice *device, DkpAcpiNative *native
 	UpDeviceState state;
 	union acpi_battery_ioctl_arg battif, battst, battinfo;
 
-	if (!dkp_has_sysctl ("hw.acpi.battery.units"))
+	if (!up_has_sysctl ("hw.acpi.battery.units"))
 		return FALSE;
 
 	battif.unit = battst.unit = battinfo.unit =
-		dkp_acpi_native_get_unit (native);
-	fd = open (DKP_ACPIDEV, O_RDONLY);
+		up_acpi_native_get_unit (native);
+	fd = open (UP_ACPIDEV, O_RDONLY);
 	if (fd < 0) {
-		egg_warning ("unable to open %s: '%s'", DKP_ACPIDEV, g_strerror (errno));
+		egg_warning ("unable to open %s: '%s'", UP_ACPIDEV, g_strerror (errno));
 		return FALSE;
 	}
 
@@ -204,9 +204,9 @@ up_device_supply_battery_set_properties (UpDevice *device, DkpAcpiNative *native
 		goto end;
 	}
 
-	vendor = dkp_make_safe_string (battif.bif.oeminfo);
-	model = dkp_make_safe_string (battif.bif.model);
-	serial = dkp_make_safe_string (battif.bif.serial);
+	vendor = up_make_safe_string (battif.bif.oeminfo);
+	model = up_make_safe_string (battif.bif.model);
+	serial = up_make_safe_string (battif.bif.serial);
 	technology = up_device_supply_convert_device_technology (battif.bif.type);
 
 	g_object_set (device,
@@ -330,7 +330,7 @@ up_device_supply_acline_set_properties (UpDevice *device)
 {
 	int acstate;
 
-	if (dkp_get_int_sysctl (&acstate, NULL, "hw.acpi.acline")) {
+	if (up_get_int_sysctl (&acstate, NULL, "hw.acpi.acline")) {
 		g_object_set (device, "online", acstate ? TRUE : FALSE, NULL);
 		return TRUE;
 	}
@@ -345,16 +345,16 @@ up_device_supply_acline_set_properties (UpDevice *device)
 static gboolean
 up_device_supply_coldplug (UpDevice *device)
 {
-	DkpAcpiNative *native;
+	UpAcpiNative *native;
 	const gchar *native_path;
 	const gchar *driver;
 	gboolean ret = FALSE;
 
 	up_device_supply_reset_values (device);
 
-	native = DKP_ACPI_NATIVE (up_device_get_native (device));
-	native_path = dkp_acpi_native_get_path (native);
-	driver = dkp_acpi_native_get_driver (native);
+	native = UP_ACPI_NATIVE (up_device_get_native (device));
+	native_path = up_acpi_native_get_path (native);
+	driver = up_acpi_native_get_driver (native);
 	if (native_path == NULL) {
 		egg_warning ("could not get native path for %p", device);
 		goto out;
@@ -396,7 +396,7 @@ up_device_supply_refresh (UpDevice *device)
 			break;
 		case UP_DEVICE_TYPE_BATTERY:
 			object = up_device_get_native (device);
-			ret = up_device_supply_battery_set_properties (device, DKP_ACPI_NATIVE (object));
+			ret = up_device_supply_battery_set_properties (device, UP_ACPI_NATIVE (object));
 			break;
 		default:
 			g_assert_not_reached ();

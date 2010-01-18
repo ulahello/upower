@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * dkp-devd.h : process devd events
+ * up-devd.h : process devd events
  *
  * Copyright (C) 2006, 2009 Joe Marcus Clarke <marcus@FreeBSD.org>
  *
@@ -20,8 +20,8 @@
  *
  **************************************************************************/
 
-#ifndef _DKP_DEVD_H
-#define _DKP_DEVD_H
+#ifndef _UP_DEVD_H
+#define _UP_DEVD_H
 
 #include "config.h"
 
@@ -38,8 +38,8 @@ typedef struct
 			 const char *subsystem,
 			 const char *type,
 			 const char *data);	/* may be NULL */
-} DkpDevdHandler;
+} UpDevdHandler;
 
-void	dkp_devd_init (UpBackend *backend);
+void	up_devd_init (UpBackend *backend);
 
-#endif /* _DKP_DEVD_H */
+#endif /* _UP_DEVD_H */

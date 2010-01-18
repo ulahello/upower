@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * dkp-util.c : utilities
+ * up-util.c : utilities
  *
  * Copyright (C) 2006, 2007 Jean-Yves Lefort <jylefort@FreeBSD.org>
  *
@@ -34,7 +34,7 @@
 #include "up-util.h"
 
 gboolean
-dkp_has_sysctl (const gchar *format, ...)
+up_has_sysctl (const gchar *format, ...)
 {
 	va_list args;
 	gchar *name;
@@ -54,7 +54,7 @@ dkp_has_sysctl (const gchar *format, ...)
 }
 
 gboolean
-dkp_get_int_sysctl (int *value, GError **err, const gchar *format, ...)
+up_get_int_sysctl (int *value, GError **err, const gchar *format, ...)
 {
 	va_list args;
 	gchar *name;
@@ -77,7 +77,7 @@ dkp_get_int_sysctl (int *value, GError **err, const gchar *format, ...)
 }
 
 gchar *
-dkp_get_string_sysctl (GError **err, const gchar *format, ...)
+up_get_string_sysctl (GError **err, const gchar *format, ...)
 {
 	va_list args;
 	gchar *name;
@@ -108,12 +108,12 @@ dkp_get_string_sysctl (GError **err, const gchar *format, ...)
 }
 
 /**
- * dkp_util_make_safe_string:
+ * up_util_make_safe_string:
  *
- * This is adapted from linux/dkp-device-supply.c.
+ * This is adapted from linux/up-device-supply.c.
  **/
 gchar *
-dkp_make_safe_string (const gchar *text)
+up_make_safe_string (const gchar *text)
 {
 	guint i;
 	guint idx = 0;

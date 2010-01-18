@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * dkp-backend-acpi.h : define some backend objects
+ * up-backend-acpi.h : define some backend objects
  *
  * Copyright (C) 2006, 2009 Joe Marcus Clarke <marcus@FreeBSD.org>
  *
@@ -27,6 +27,6 @@
 
 #include "up-devd.h"
 
-extern DkpDevdHandler up_backend_acpi_devd_handler;
+extern UpDevdHandler up_backend_acpi_devd_handler;
 
 #endif /* _UP_BACKEND_ACPI_H */

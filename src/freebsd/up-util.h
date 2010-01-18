@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * dkp-util.h : utilities
+ * up-util.h : utilities
  *
  * Copyright (C) 2006, 2007 Jean-Yves Lefort <jylefort@FreeBSD.org>
  *
@@ -20,30 +20,30 @@
  *
  **************************************************************************/
 
-#ifndef _DKP_UTIL_H
-#define _DKP_UTIL_H
+#ifndef _UP_UTIL_H
+#define _UP_UTIL_H
 
 #include "config.h"
 
 #include <stdarg.h>
 #include <glib.h>
 
-#define DKP_BOOL_TO_STRING(val)	((val) ? "true" : "false")
+#define UP_BOOL_TO_STRING(val)	((val) ? "true" : "false")
 
-#define DKP_LIST_FOREACH(var, head)	\
+#define UP_LIST_FOREACH(var, head)	\
   for ((var) = (head);			\
        (var);				\
        (var) = (var)->next)
 
-gboolean dkp_has_sysctl (const gchar *format, ...) G_GNUC_PRINTF(1, 2);
-gboolean dkp_get_int_sysctl (int *value,
+gboolean up_has_sysctl (const gchar *format, ...) G_GNUC_PRINTF(1, 2);
+gboolean up_get_int_sysctl (int *value,
 			     GError **err,
 			     const gchar *format,
 			     ...) G_GNUC_PRINTF(3, 4);
-gchar *dkp_get_string_sysctl (GError **err,
+gchar *up_get_string_sysctl (GError **err,
 			      const gchar *format,
 			      ...) G_GNUC_PRINTF(2, 3);
 
-gchar *dkp_make_safe_string (const gchar *text);
+gchar *up_make_safe_string (const gchar *text);
 
-#endif /* _DKP_UTIL_H */
+#endif /* _UP_UTIL_H */

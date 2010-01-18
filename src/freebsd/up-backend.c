@@ -55,7 +55,7 @@ static void	up_backend_finalize	(GObject		*object);
 
 static gboolean	up_backend_refresh_devices (gpointer user_data);
 static gboolean	up_backend_acpi_devd_notify (UpBackend *backend, const gchar *system, const gchar *subsystem, const gchar *type, const gchar *data);
-static gboolean	up_backend_create_new_device (UpBackend *backend, DkpAcpiNative *native);
+static gboolean	up_backend_create_new_device (UpBackend *backend, UpAcpiNative *native);
 static void	up_backend_lid_coldplug (UpBackend *backend);
 static gboolean	up_backend_supports_sleep_state (const gchar *state);
 
@@ -83,7 +83,7 @@ static const gchar *handlers[] = {
 	"battery",
 };
 
-DkpDevdHandler up_backend_acpi_devd_handler = {
+UpDevdHandler up_backend_acpi_devd_handler = {
 	.notify = up_backend_acpi_devd_notify
 };
 
@@ -118,13 +118,13 @@ static gboolean
 up_backend_acpi_devd_notify (UpBackend *backend, const gchar *system, const gchar *subsystem, const gchar *type, const gchar *data)
 {
 	GObject *object = NULL;
-	DkpAcpiNative *native = NULL;
+	UpAcpiNative *native = NULL;
 
 	if (strcmp (system, "ACPI"))
 		return FALSE;
 
 	if (!strcmp (subsystem, "ACAD")) {
-		native = dkp_acpi_native_new ("hw.acpi.acline");
+		native = up_acpi_native_new ("hw.acpi.acline");
 		object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 	} else if (!strcmp (subsystem, "CMBAT")) {
 		gchar *ptr;
@@ -133,7 +133,7 @@ up_backend_acpi_devd_notify (UpBackend *backend, const gchar *system, const gcha
 		ptr = strstr (type, ".BAT");
 
 		if (ptr != NULL && sscanf (ptr, ".BAT%i", &unit)) {
-			native = dkp_acpi_native_new_driver_unit ("battery", unit);
+			native = up_acpi_native_new_driver_unit ("battery", unit);
 			object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 			if (object == NULL) {
 				gpointer hptr;
@@ -186,7 +186,7 @@ out:
  * up_backend_create_new_device:
  **/
 static gboolean
-up_backend_create_new_device (UpBackend *backend, DkpAcpiNative *native)
+up_backend_create_new_device (UpBackend *backend, UpAcpiNative *native)
 {
 	UpDevice *device;
 	gboolean ret;
@@ -196,14 +196,14 @@ up_backend_create_new_device (UpBackend *backend, DkpAcpiNative *native)
 	if (!ret)
 		g_object_unref (device);
 	else {
-		if (!strncmp (dkp_acpi_native_get_path (native), "dev.", strlen ("dev."))) {
+		if (!strncmp (up_acpi_native_get_path (native), "dev.", strlen ("dev."))) {
 			const gchar *path;
 
-			path = dkp_acpi_native_get_path (native);
-			if (dkp_has_sysctl ("%s.%%location", path)) {
+			path = up_acpi_native_get_path (native);
+			if (up_has_sysctl ("%s.%%location", path)) {
 				gchar *location;
 
-				location = dkp_get_string_sysctl (NULL, "%s.%%location", path);
+				location = up_get_string_sysctl (NULL, "%s.%%location", path);
 				if (location != NULL && strstr (location, "handle=") != NULL) {
 					gchar *handle;
 
@@ -229,7 +229,7 @@ up_backend_lid_coldplug (UpBackend *backend)
 {
 	gchar *lid_state;
 
-	lid_state = dkp_get_string_sysctl (NULL, "hw.acpi.lid_switch_state");
+	lid_state = up_get_string_sysctl (NULL, "hw.acpi.lid_switch_state");
 	if (lid_state && strcmp (lid_state, "NONE")) {
 		g_object_set (backend->priv->daemon, "lid-is-present", TRUE, NULL);
 	}
@@ -249,7 +249,7 @@ up_backend_lid_coldplug (UpBackend *backend)
 gboolean
 up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 {
-	DkpAcpiNative *acnative;
+	UpAcpiNative *acnative;
 	int i;
 
 	backend->priv->daemon = g_object_ref (daemon);
@@ -258,12 +258,12 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 	for (i = 0; i < (int) G_N_ELEMENTS (handlers); i++) {
 		int j;
 
-		for (j = 0; dkp_has_sysctl ("dev.%s.%i.%%driver", handlers[i], j); j++) {
-			DkpAcpiNative *native;
+		for (j = 0; up_has_sysctl ("dev.%s.%i.%%driver", handlers[i], j); j++) {
+			UpAcpiNative *native;
 			UpDevice *device;
 			GObject *object;
 
-			native = dkp_acpi_native_new_driver_unit (handlers[i], j);
+			native = up_acpi_native_new_driver_unit (handlers[i], j);
 			object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 			if (object != NULL) {
 				device = UP_DEVICE (object);
@@ -284,11 +284,11 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 
 	up_backend_lid_coldplug (backend);
 
-	acnative = dkp_acpi_native_new ("hw.acpi.acline");
+	acnative = up_acpi_native_new ("hw.acpi.acline");
 	up_backend_create_new_device (backend, acnative);
 	g_object_unref (acnative);
 
-	dkp_devd_init (backend);
+	up_devd_init (backend);
 
 	backend->priv->poll_timer_id =
 		g_timeout_add_seconds (UP_BACKEND_REFRESH_TIMEOUT,
@@ -394,7 +394,7 @@ up_backend_supports_sleep_state (const gchar *state)
 	gchar *sleep_states;
 	gboolean ret = FALSE;
 
-	sleep_states = dkp_get_string_sysctl (NULL, "hw.acpi.supported_sleep_state");
+	sleep_states = up_get_string_sysctl (NULL, "hw.acpi.supported_sleep_state");
 	if (sleep_states != NULL) {
 		if (strstr (sleep_states, state) != NULL)
 			ret = TRUE;

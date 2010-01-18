@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * dkp-devd.c : process devd events
+ * up-devd.c : process devd events
  *
  * Copyright (C) 2006, 2007 Joe Marcus Clarke <marcus@FreeBSD.org>
  *
@@ -36,22 +36,22 @@
 #include "up-backend-acpi.h"
 #include "up-devd.h"
 
-#define DKP_DEVD_SOCK_PATH		"/var/run/devd.pipe"
+#define UP_DEVD_SOCK_PATH		"/var/run/devd.pipe"
 
-#define DKP_DEVD_EVENT_NOTIFY		'!'
-#define DKP_DEVD_EVENT_ADD		'+'
-#define DKP_DEVD_EVENT_REMOVE		'-'
-#define DKP_DEVD_EVENT_NOMATCH		'?'
+#define UP_DEVD_EVENT_NOTIFY		'!'
+#define UP_DEVD_EVENT_ADD		'+'
+#define UP_DEVD_EVENT_REMOVE		'-'
+#define UP_DEVD_EVENT_NOMATCH		'?'
 
-static DkpDevdHandler *handlers[] = {
+static UpDevdHandler *handlers[] = {
 	&up_backend_acpi_devd_handler,
 };
 
-static gboolean dkp_devd_inited = FALSE;
+static gboolean up_devd_inited = FALSE;
 
 #if 0
 static GHashTable *
-dkp_devd_parse_params (const gchar *str)
+up_devd_parse_params (const gchar *str)
 {
 	GHashTable *params;
 	gchar **pairs;
@@ -77,7 +77,7 @@ dkp_devd_parse_params (const gchar *str)
 #endif
 
 static gboolean
-dkp_devd_parse_notify (const gchar *event,
+up_devd_parse_notify (const gchar *event,
 		       gchar **system,
 		       gchar **subsystem,
 		       gchar **type,
@@ -118,7 +118,7 @@ end:
 }
 
 static void
-dkp_devd_process_notify_event (UpBackend *backend,
+up_devd_process_notify_event (UpBackend *backend,
 			       const gchar *system,
 			       const gchar *subsystem,
 			       const gchar *type,
@@ -140,7 +140,7 @@ dkp_devd_process_notify_event (UpBackend *backend,
 }
 
 static void
-dkp_devd_process_event (const gchar *event, gpointer user_data)
+up_devd_process_event (const gchar *event, gpointer user_data)
 {
 	UpBackend *backend;
 
@@ -151,21 +151,21 @@ dkp_devd_process_event (const gchar *event, gpointer user_data)
 	egg_debug("received devd event: '%s'", event);
 
 	switch (event[0]) {
-	case DKP_DEVD_EVENT_ADD:
-	case DKP_DEVD_EVENT_REMOVE:
+	case UP_DEVD_EVENT_ADD:
+	case UP_DEVD_EVENT_REMOVE:
 		/* Do nothing as we don't currently hotplug ACPI devices. */
 		return;
 
-	case DKP_DEVD_EVENT_NOTIFY: {
+	case UP_DEVD_EVENT_NOTIFY: {
 		gchar *system;
 		gchar *subsystem;
 		gchar *type;
 		gchar *data;
 
-		if (!dkp_devd_parse_notify (event + 1, &system, &subsystem, &type, &data))
+		if (!up_devd_parse_notify (event + 1, &system, &subsystem, &type, &data))
 			goto malformed;
 
-		dkp_devd_process_notify_event (backend, system, subsystem, type, data);
+		up_devd_process_notify_event (backend, system, subsystem, type, data);
 
 		g_free (system);
 		g_free (subsystem);
@@ -174,7 +174,7 @@ dkp_devd_process_event (const gchar *event, gpointer user_data)
 	}
 	return;
 
-	case DKP_DEVD_EVENT_NOMATCH:
+	case UP_DEVD_EVENT_NOMATCH:
 		/* Do nothing. */
 		return;
 	}
@@ -184,7 +184,7 @@ malformed:
 }
 
 static gboolean
-dkp_devd_event_cb (GIOChannel *source, GIOCondition condition,
+up_devd_event_cb (GIOChannel *source, GIOCondition condition,
 		   gpointer user_data)
 {
 	gchar *event;
@@ -195,11 +195,11 @@ dkp_devd_event_cb (GIOChannel *source, GIOCondition condition,
 
 	if (status == G_IO_STATUS_NORMAL) {
 		event[terminator] = 0;
-		dkp_devd_process_event(event, user_data);
+		up_devd_process_event(event, user_data);
 		g_free(event);
 	} else if (status == G_IO_STATUS_AGAIN) {
-		dkp_devd_init (UP_BACKEND(user_data));
-		if (dkp_devd_inited) {
+		up_devd_init (UP_BACKEND(user_data));
+		if (up_devd_inited) {
 			int fd;
 
 			fd = g_io_channel_unix_get_fd (source);
@@ -214,7 +214,7 @@ dkp_devd_event_cb (GIOChannel *source, GIOCondition condition,
 }
 
 void
-dkp_devd_init (UpBackend *backend)
+up_devd_init (UpBackend *backend)
 {
 	int event_fd;
 	struct sockaddr_un addr;
@@ -222,23 +222,23 @@ dkp_devd_init (UpBackend *backend)
 	event_fd = socket(PF_UNIX, SOCK_STREAM, 0);
 	if (event_fd < 0) {
 		egg_warning("failed to create event socket: '%s'", g_strerror(errno));
-		dkp_devd_inited = FALSE;
+		up_devd_inited = FALSE;
 		return;
 	}
 
 	addr.sun_family = AF_UNIX;
-	strncpy (addr.sun_path, DKP_DEVD_SOCK_PATH, sizeof(addr.sun_path));
+	strncpy (addr.sun_path, UP_DEVD_SOCK_PATH, sizeof(addr.sun_path));
 	if (connect (event_fd, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
 		GIOChannel *channel;
 
 		channel = g_io_channel_unix_new (event_fd);
-		g_io_add_watch (channel, G_IO_IN, dkp_devd_event_cb, backend);
+		g_io_add_watch (channel, G_IO_IN, up_devd_event_cb, backend);
 		g_io_channel_unref (channel);
-		dkp_devd_inited = TRUE;
+		up_devd_inited = TRUE;
 	} else {
-		egg_warning ("failed to connect to %s: '%s'", DKP_DEVD_SOCK_PATH,
+		egg_warning ("failed to connect to %s: '%s'", UP_DEVD_SOCK_PATH,
 			     g_strerror(errno));
 		close (event_fd);
-		dkp_devd_inited = FALSE;
+		up_devd_inited = FALSE;
 	}
 }
