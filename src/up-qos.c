@@ -257,7 +257,7 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	/* get correct data */
 	type = dkp_qos_type_from_text (type_text);
 	if (type == DKP_QOS_TYPE_UNKNOWN) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
@@ -265,7 +265,7 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	/* as we are async, we can get the sender */
 	sender = dbus_g_method_get_sender (context);
 	if (sender == NULL) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "no DBUS sender");
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "no DBUS sender");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
@@ -286,7 +286,7 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	/* get uid */
 	retval = dkp_polkit_get_uid (qos->priv->polkit, subject, &uid);
 	if (!retval) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "cannot get UID");
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "cannot get UID");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
@@ -294,7 +294,7 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	/* get pid */
 	retval = dkp_polkit_get_pid (qos->priv->polkit, subject, &pid);
 	if (!retval) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "cannot get PID");
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "cannot get PID");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
@@ -302,7 +302,7 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	/* get command line */
 	cmdline = dkp_qos_get_cmdline (pid);
 	if (cmdline == NULL) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "cannot get cmdline");
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "cannot get cmdline");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
@@ -361,7 +361,7 @@ dkp_qos_cancel_request (DkpQos *qos, guint cookie, DBusGMethodInvocation *contex
 	/* find the correct cookie */
 	obj = dkp_qos_find_from_cookie (qos, cookie);
 	if (obj == NULL) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL,
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL,
 				     "Cannot find request for #%i", cookie);
 		dbus_g_method_return_error (context, error);
 		goto out;
@@ -370,7 +370,7 @@ dkp_qos_cancel_request (DkpQos *qos, guint cookie, DBusGMethodInvocation *contex
 	/* get the sender? */
 	sender = dbus_g_method_get_sender (context);
 	if (sender == NULL) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "no DBUS sender");
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "no DBUS sender");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
@@ -412,7 +412,7 @@ dkp_qos_get_latency (DkpQos *qos, const gchar *type_text, gint *value, GError **
 	/* get correct data */
 	type = dkp_qos_type_from_text (type_text);
 	if (type == DKP_QOS_TYPE_UNKNOWN) {
-		g_set_error (error, DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
+		g_set_error (error, UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		return FALSE;
 	}
 
@@ -433,7 +433,7 @@ dkp_qos_set_minimum_latency (DkpQos *qos, const gchar *type_text, gint value, DB
 	/* type valid? */
 	type = dkp_qos_type_from_text (type_text);
 	if (type == DKP_QOS_TYPE_UNKNOWN) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		dbus_g_method_return_error (context, error);
 		return;
 	}

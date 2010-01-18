@@ -63,7 +63,7 @@ static gboolean	up_backend_supports_sleep_state (const gchar *state);
 
 struct UpBackendPrivate
 {
-	DkpDaemon		*daemon;
+	UpDaemon		*daemon;
 	DkpDeviceList		*device_list;
 	GHashTable		*handle_map;
 	guint			poll_timer_id;
@@ -239,7 +239,7 @@ up_backend_lid_coldplug (UpBackend *backend)
 /**
  * up_backend_coldplug:
  * @backend: The %UpBackend class instance
- * @daemon: The %DkpDaemon controlling instance
+ * @daemon: The %UpDaemon controlling instance
  *
  * Finds all the devices already plugged in, and emits device-add signals for
  * each of them.
@@ -247,13 +247,13 @@ up_backend_lid_coldplug (UpBackend *backend)
  * Return value: %TRUE for success
  **/
 gboolean
-up_backend_coldplug (UpBackend *backend, DkpDaemon *daemon)
+up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 {
 	DkpAcpiNative *acnative;
 	int i;
 
 	backend->priv->daemon = g_object_ref (daemon);
-	backend->priv->device_list = dkp_daemon_get_device_list (daemon);
+	backend->priv->device_list = up_daemon_get_device_list (daemon);
 
 	for (i = 0; i < (int) G_N_ELEMENTS (handlers); i++) {
 		int j;

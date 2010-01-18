@@ -45,7 +45,7 @@ up-marshal.c: up-marshal.list
 	echo "#include \"up-marshal.h\"" > $@ && glib-genmarshal $< --prefix=dkp_marshal --body >> $@
 
 up-daemon-glue.h: org.freedesktop.DeviceKit.Power.xml Makefile.am
-	dbus-binding-tool --prefix=dkp_daemon --mode=glib-server --output=up-daemon-glue.h org.freedesktop.DeviceKit.Power.xml
+	dbus-binding-tool --prefix=up_daemon --mode=glib-server --output=up-daemon-glue.h org.freedesktop.DeviceKit.Power.xml
 
 up-device-glue.h: org.freedesktop.DeviceKit.Power.Device.xml Makefile.am
 	dbus-binding-tool --prefix=dkp_device --mode=glib-server --output=up-device-glue.h org.freedesktop.DeviceKit.Power.Device.xml

@@ -77,9 +77,9 @@ DkpDevice	*dkp_device_new			(void);
 void		 dkp_device_test		(gpointer	 user_data);
 
 gboolean	 dkp_device_coldplug		(DkpDevice	*device,
-						 DkpDaemon	*daemon,
+						 UpDaemon	*daemon,
 						 GObject	*native);
-DkpDaemon	*dkp_device_get_daemon		(DkpDevice	*device);
+UpDaemon	*dkp_device_get_daemon		(DkpDevice	*device);
 GObject		*dkp_device_get_native		(DkpDevice	*device);
 const gchar	*dkp_device_get_object_path	(DkpDevice	*device);
 gboolean	 dkp_device_get_on_battery	(DkpDevice	*device,

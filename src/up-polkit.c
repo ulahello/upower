@@ -75,7 +75,7 @@ dkp_polkit_check_auth (DkpPolkit *polkit, PolkitSubject *subject, const gchar *a
 	/* check auth */
 	result = polkit_authority_check_authorization_sync (polkit->priv->authority, subject, action_id, NULL, POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION, NULL, &error_local);
 	if (result == NULL) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "failed to check authorisation: %s", error_local->message);
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "failed to check authorisation: %s", error_local->message);
 		dbus_g_method_return_error (context, error);
 		g_error_free (error_local);
 		g_error_free (error);
@@ -86,7 +86,7 @@ dkp_polkit_check_auth (DkpPolkit *polkit, PolkitSubject *subject, const gchar *a
 	if (polkit_authorization_result_get_is_authorized (result)) {
 		ret = TRUE;
 	} else {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "not authorized");
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "not authorized");
 		dbus_g_method_return_error (context, error);
 		g_error_free (error);
 	}

@@ -53,7 +53,7 @@ struct DkpInputPrivate
 	struct input_event	 event;
 	gsize			 offset;
 	GIOChannel		*channel;
-	DkpDaemon		*daemon;
+	UpDaemon		*daemon;
 };
 
 G_DEFINE_TYPE (DkpInput, dkp_input, G_TYPE_OBJECT)
@@ -164,7 +164,7 @@ out:
  * dkp_input_coldplug:
  **/
 gboolean
-dkp_input_coldplug (DkpInput *input, DkpDaemon *daemon, GUdevDevice *d)
+dkp_input_coldplug (DkpInput *input, UpDaemon *daemon, GUdevDevice *d)
 {
 	gboolean ret = FALSE;
 	gchar *path;

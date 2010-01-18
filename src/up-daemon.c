@@ -67,7 +67,7 @@ enum
 
 static guint signals[SIGNAL_LAST] = { 0 };
 
-struct DkpDaemonPrivate
+struct UpDaemonPrivate
 {
 	DBusGConnection		*connection;
 	DBusGProxy		*proxy;
@@ -87,27 +87,27 @@ struct DkpDaemonPrivate
 	guint			 battery_poll_count;
 };
 
-static void	dkp_daemon_finalize		(GObject	*object);
-static gboolean	dkp_daemon_get_on_battery_local	(DkpDaemon	*daemon);
-static gboolean	dkp_daemon_get_on_low_battery_local (DkpDaemon	*daemon);
-static gboolean	dkp_daemon_get_on_ac_local 	(DkpDaemon	*daemon);
+static void	up_daemon_finalize		(GObject	*object);
+static gboolean	up_daemon_get_on_battery_local	(UpDaemon	*daemon);
+static gboolean	up_daemon_get_on_low_battery_local (UpDaemon	*daemon);
+static gboolean	up_daemon_get_on_ac_local 	(UpDaemon	*daemon);
 
-G_DEFINE_TYPE (DkpDaemon, dkp_daemon, G_TYPE_OBJECT)
+G_DEFINE_TYPE (UpDaemon, up_daemon, G_TYPE_OBJECT)
 
-#define DKP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_DAEMON, DkpDaemonPrivate))
+#define UP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DAEMON, UpDaemonPrivate))
 
 /* if using more memory compared to usable swap, disable hibernate */
-#define DKP_DAEMON_SWAP_WATERLINE 			80.0f /* % */
+#define UP_DAEMON_SWAP_WATERLINE 			80.0f /* % */
 
 /* refresh all the devices after this much time when on-battery has changed */
-#define DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY	1 /* seconds */
-#define DKP_DAEMON_POLL_BATTERY_NUMBER_TIMES		5
+#define UP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY	1 /* seconds */
+#define UP_DAEMON_POLL_BATTERY_NUMBER_TIMES		5
 
 /**
- * dkp_daemon_check_sleep_states:
+ * up_daemon_check_sleep_states:
  **/
 static gboolean
-dkp_daemon_check_sleep_states (DkpDaemon *daemon)
+up_daemon_check_sleep_states (UpDaemon *daemon)
 {
 	gchar *contents = NULL;
 	GError *error = NULL;
@@ -131,7 +131,7 @@ out:
 }
 
 /**
- * dkp_daemon_check_encrypted_swap:
+ * up_daemon_check_encrypted_swap:
  *
  * user@local:~$ cat /proc/swaps
  * Filename                                Type            Size    Used    Priority
@@ -144,7 +144,7 @@ out:
  * Loop over the swap partitions in /proc/swaps, looking for matches in /etc/crypttab
  **/
 static gboolean
-dkp_daemon_check_encrypted_swap (DkpDaemon *daemon)
+up_daemon_check_encrypted_swap (UpDaemon *daemon)
 {
 	gchar *contents_swaps = NULL;
 	gchar *contents_crypttab = NULL;
@@ -238,10 +238,10 @@ out:
 }
 
 /**
- * dkp_daemon_check_swap_space:
+ * up_daemon_check_swap_space:
  **/
 static gfloat
-dkp_daemon_check_swap_space (DkpDaemon *daemon)
+up_daemon_check_swap_space (UpDaemon *daemon)
 {
 	gchar *contents = NULL;
 	gchar **lines = NULL;
@@ -298,12 +298,12 @@ out:
 }
 
 /**
- * dkp_daemon_get_on_battery_local:
+ * up_daemon_get_on_battery_local:
  *
  * As soon as _any_ battery goes discharging, this is true
  **/
 static gboolean
-dkp_daemon_get_on_battery_local (DkpDaemon *daemon)
+up_daemon_get_on_battery_local (UpDaemon *daemon)
 {
 	guint i;
 	gboolean ret;
@@ -327,10 +327,10 @@ dkp_daemon_get_on_battery_local (DkpDaemon *daemon)
 }
 
 /**
- * dkp_daemon_get_number_devices_of_type:
+ * up_daemon_get_number_devices_of_type:
  **/
 guint
-dkp_daemon_get_number_devices_of_type (DkpDaemon *daemon, DkpDeviceType type)
+up_daemon_get_number_devices_of_type (UpDaemon *daemon, DkpDeviceType type)
 {
 	guint i;
 	DkpDevice *device;
@@ -353,12 +353,12 @@ dkp_daemon_get_number_devices_of_type (DkpDaemon *daemon, DkpDeviceType type)
 }
 
 /**
- * dkp_daemon_get_on_low_battery_local:
+ * up_daemon_get_on_low_battery_local:
  *
  * As soon as _all_ batteries are low, this is true
  **/
 static gboolean
-dkp_daemon_get_on_low_battery_local (DkpDaemon *daemon)
+up_daemon_get_on_low_battery_local (UpDaemon *daemon)
 {
 	guint i;
 	gboolean ret;
@@ -382,12 +382,12 @@ dkp_daemon_get_on_low_battery_local (DkpDaemon *daemon)
 }
 
 /**
- * dkp_daemon_get_on_ac_local:
+ * up_daemon_get_on_ac_local:
  *
  * As soon as _any_ ac supply goes online, this is true
  **/
 static gboolean
-dkp_daemon_get_on_ac_local (DkpDaemon *daemon)
+up_daemon_get_on_ac_local (UpDaemon *daemon)
 {
 	guint i;
 	gboolean ret;
@@ -411,12 +411,12 @@ dkp_daemon_get_on_ac_local (DkpDaemon *daemon)
 }
 
 /**
- * dkp_daemon_set_pmutils_powersave:
+ * up_daemon_set_pmutils_powersave:
  *
  * Uses pm-utils to run scripts in power.d
  **/
 static gboolean
-dkp_daemon_set_pmutils_powersave (DkpDaemon *daemon, gboolean powersave)
+up_daemon_set_pmutils_powersave (UpDaemon *daemon, gboolean powersave)
 {
 	gboolean ret;
 	gchar *command;
@@ -437,10 +437,10 @@ out:
 }
 
 /**
- * dkp_daemon_refresh_battery_devices:
+ * up_daemon_refresh_battery_devices:
  **/
 static gboolean
-dkp_daemon_refresh_battery_devices (DkpDaemon *daemon)
+up_daemon_refresh_battery_devices (UpDaemon *daemon)
 {
 	guint i;
 	GPtrArray *array;
@@ -464,10 +464,10 @@ dkp_daemon_refresh_battery_devices (DkpDaemon *daemon)
 }
 
 /**
- * dkp_daemon_enumerate_devices:
+ * up_daemon_enumerate_devices:
  **/
 gboolean
-dkp_daemon_enumerate_devices (DkpDaemon *daemon, DBusGMethodInvocation *context)
+up_daemon_enumerate_devices (UpDaemon *daemon, DBusGMethodInvocation *context)
 {
 	guint i;
 	GPtrArray *array;
@@ -492,10 +492,10 @@ dkp_daemon_enumerate_devices (DkpDaemon *daemon, DBusGMethodInvocation *context)
 }
 
 /**
- * dkp_daemon_suspend:
+ * up_daemon_suspend:
  **/
 gboolean
-dkp_daemon_suspend (DkpDaemon *daemon, DBusGMethodInvocation *context)
+up_daemon_suspend (UpDaemon *daemon, DBusGMethodInvocation *context)
 {
 	gboolean ret;
 	GError *error;
@@ -506,8 +506,8 @@ dkp_daemon_suspend (DkpDaemon *daemon, DBusGMethodInvocation *context)
 
 	/* no kernel support */
 	if (!daemon->priv->kernel_can_suspend) {
-		error = g_error_new (DKP_DAEMON_ERROR,
-				     DKP_DAEMON_ERROR_GENERAL,
+		error = g_error_new (UP_DAEMON_ERROR,
+				     UP_DAEMON_ERROR_GENERAL,
 				     "No kernel support");
 		g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
@@ -523,8 +523,8 @@ dkp_daemon_suspend (DkpDaemon *daemon, DBusGMethodInvocation *context)
 
 	ret = g_spawn_command_line_sync ("/usr/sbin/pm-suspend", &stdout, &stderr, NULL, &error_local);
 	if (!ret) {
-		error = g_error_new (DKP_DAEMON_ERROR,
-				     DKP_DAEMON_ERROR_GENERAL,
+		error = g_error_new (UP_DAEMON_ERROR,
+				     UP_DAEMON_ERROR_GENERAL,
 				     "Failed to spawn: %s, stdout:%s, stderr:%s", error_local->message, stdout, stderr);
 		g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
@@ -540,10 +540,10 @@ out:
 }
 
 /**
- * dkp_daemon_hibernate:
+ * up_daemon_hibernate:
  **/
 gboolean
-dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
+up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 {
 	gboolean ret;
 	GError *error;
@@ -554,8 +554,8 @@ dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 
 	/* no kernel support */
 	if (!daemon->priv->kernel_can_hibernate) {
-		error = g_error_new (DKP_DAEMON_ERROR,
-				     DKP_DAEMON_ERROR_GENERAL,
+		error = g_error_new (UP_DAEMON_ERROR,
+				     UP_DAEMON_ERROR_GENERAL,
 				     "No kernel support");
 		g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
@@ -564,8 +564,8 @@ dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 
 	/* enough swap? */
 	if (!daemon->priv->hibernate_has_swap_space) {
-		error = g_error_new (DKP_DAEMON_ERROR,
-				     DKP_DAEMON_ERROR_GENERAL,
+		error = g_error_new (UP_DAEMON_ERROR,
+				     UP_DAEMON_ERROR_GENERAL,
 				     "Not enough swap space");
 		g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
@@ -574,8 +574,8 @@ dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 
 	/* encrypted swap? */
 	if (daemon->priv->hibernate_has_encrypted_swap) {
-		error = g_error_new (DKP_DAEMON_ERROR,
-				     DKP_DAEMON_ERROR_GENERAL,
+		error = g_error_new (UP_DAEMON_ERROR,
+				     UP_DAEMON_ERROR_GENERAL,
 				     "Swap space is encrypted");
 		g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
@@ -591,8 +591,8 @@ dkp_daemon_hibernate (DkpDaemon *daemon, DBusGMethodInvocation *context)
 
 	ret = g_spawn_command_line_sync ("/usr/sbin/pm-hibernate", &stdout, &stderr, NULL, &error_local);
 	if (!ret) {
-		error = g_error_new (DKP_DAEMON_ERROR,
-				     DKP_DAEMON_ERROR_GENERAL,
+		error = g_error_new (UP_DAEMON_ERROR,
+				     UP_DAEMON_ERROR_GENERAL,
 				     "Failed to spawn: %s, stdout:%s, stderr:%s", error_local->message, stdout, stderr);
 		g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
@@ -608,10 +608,10 @@ out:
 }
 
 /**
- * dkp_daemon_register_power_daemon:
+ * up_daemon_register_power_daemon:
  **/
 static gboolean
-dkp_daemon_register_power_daemon (DkpDaemon *daemon)
+up_daemon_register_power_daemon (UpDaemon *daemon)
 {
 	GError *error = NULL;
 	gboolean ret = FALSE;
@@ -643,17 +643,17 @@ out:
 }
 
 /**
- * dkp_daemon_startup:
+ * up_daemon_startup:
  **/
 gboolean
-dkp_daemon_startup (DkpDaemon *daemon)
+up_daemon_startup (UpDaemon *daemon)
 {
 	gboolean ret;
 	gboolean on_battery;
 	gboolean on_low_battery;
 
 	/* register on bus */
-	ret = dkp_daemon_register_power_daemon (daemon);
+	ret = up_daemon_register_power_daemon (daemon);
 	if (!ret) {
 		egg_warning ("failed to register");
 		goto out;
@@ -672,9 +672,9 @@ dkp_daemon_startup (DkpDaemon *daemon)
 	}
 
 	/* get battery state */
-	on_battery = (dkp_daemon_get_on_battery_local (daemon) &&
-		      !dkp_daemon_get_on_ac_local (daemon));
-	on_low_battery = dkp_daemon_get_on_low_battery_local (daemon);
+	on_battery = (up_daemon_get_on_battery_local (daemon) &&
+		      !up_daemon_get_on_ac_local (daemon));
+	on_low_battery = up_daemon_get_on_low_battery_local (daemon);
 	g_object_set (daemon,
 		      "on-battery", on_battery,
 		      "on-low-battery", on_low_battery,
@@ -686,25 +686,25 @@ dkp_daemon_startup (DkpDaemon *daemon)
 	egg_debug ("daemon now not coldplug");
 
 	/* set pm-utils power policy */
-	dkp_daemon_set_pmutils_powersave (daemon, daemon->priv->on_battery);
+	up_daemon_set_pmutils_powersave (daemon, daemon->priv->on_battery);
 out:
 	return ret;
 }
 
 /**
- * dkp_daemon_get_device_list:
+ * up_daemon_get_device_list:
  **/
 DkpDeviceList *
-dkp_daemon_get_device_list (DkpDaemon *daemon)
+up_daemon_get_device_list (UpDaemon *daemon)
 {
 	return g_object_ref (daemon->priv->power_devices);
 }
 
 /**
- * dkp_daemon_refresh_battery_devices_cb:
+ * up_daemon_refresh_battery_devices_cb:
  **/
 static gboolean
-dkp_daemon_refresh_battery_devices_cb (DkpDaemon *daemon)
+up_daemon_refresh_battery_devices_cb (UpDaemon *daemon)
 {
 	/* no more left to do? */
 	if (daemon->priv->battery_poll_count-- == 0) {
@@ -713,39 +713,39 @@ dkp_daemon_refresh_battery_devices_cb (DkpDaemon *daemon)
 	}
 
 	egg_debug ("doing the delayed refresh (%i)", daemon->priv->battery_poll_count);
-	dkp_daemon_refresh_battery_devices (daemon);
+	up_daemon_refresh_battery_devices (daemon);
 
 	/* keep going until none left to do */
 	return TRUE;
 }
 
 /**
- * dkp_daemon_poll_battery_devices_for_a_little_bit:
+ * up_daemon_poll_battery_devices_for_a_little_bit:
  **/
 static void
-dkp_daemon_poll_battery_devices_for_a_little_bit (DkpDaemon *daemon)
+up_daemon_poll_battery_devices_for_a_little_bit (UpDaemon *daemon)
 {
-	daemon->priv->battery_poll_count = DKP_DAEMON_POLL_BATTERY_NUMBER_TIMES;
+	daemon->priv->battery_poll_count = UP_DAEMON_POLL_BATTERY_NUMBER_TIMES;
 
 	/* already polling */
 	if (daemon->priv->battery_poll_id != 0)
 		return;
 	daemon->priv->battery_poll_id =
-		g_timeout_add_seconds (DKP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
-				       (GSourceFunc) dkp_daemon_refresh_battery_devices_cb, daemon);
+		g_timeout_add_seconds (UP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
+				       (GSourceFunc) up_daemon_refresh_battery_devices_cb, daemon);
 }
 
 /**
- * dkp_daemon_device_changed_cb:
+ * up_daemon_device_changed_cb:
  **/
 static void
-dkp_daemon_device_changed_cb (DkpDevice *device, DkpDaemon *daemon)
+up_daemon_device_changed_cb (DkpDevice *device, UpDaemon *daemon)
 {
 	const gchar *object_path;
 	DkpDeviceType type;
 	gboolean ret;
 
-	g_return_if_fail (DKP_IS_DAEMON (daemon));
+	g_return_if_fail (UP_IS_DAEMON (daemon));
 	g_return_if_fail (DKP_IS_DEVICE (device));
 
 	/* refresh battery devices when AC state changes */
@@ -754,19 +754,19 @@ dkp_daemon_device_changed_cb (DkpDevice *device, DkpDaemon *daemon)
 		      NULL);
 	if (type == DKP_DEVICE_TYPE_LINE_POWER) {
 		/* refresh now, and again in a little while */
-		dkp_daemon_refresh_battery_devices (daemon);
-		dkp_daemon_poll_battery_devices_for_a_little_bit (daemon);
+		up_daemon_refresh_battery_devices (daemon);
+		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 	}
 
 	/* second, check if the on_battery and on_low_battery state has changed */
-	ret = (dkp_daemon_get_on_battery_local (daemon) && !dkp_daemon_get_on_ac_local (daemon));
+	ret = (up_daemon_get_on_battery_local (daemon) && !up_daemon_get_on_ac_local (daemon));
 	if (ret != daemon->priv->on_battery) {
 		g_object_set (daemon, "on-battery", ret, NULL);
 
 		/* set pm-utils power policy */
-		dkp_daemon_set_pmutils_powersave (daemon, ret);
+		up_daemon_set_pmutils_powersave (daemon, ret);
 	}
-	ret = dkp_daemon_get_on_low_battery_local (daemon);
+	ret = up_daemon_get_on_low_battery_local (daemon);
 	if (ret != daemon->priv->on_low_battery) {
 		g_object_set (daemon, "on-low-battery", ret, NULL);
 	}
@@ -786,15 +786,15 @@ dkp_daemon_device_changed_cb (DkpDevice *device, DkpDaemon *daemon)
 }
 
 /**
- * dkp_daemon_device_added_cb:
+ * up_daemon_device_added_cb:
  **/
 static void
-dkp_daemon_device_added_cb (UpBackend *backend, GObject *native, DkpDevice *device, DkpDaemon *daemon)
+up_daemon_device_added_cb (UpBackend *backend, GObject *native, DkpDevice *device, UpDaemon *daemon)
 {
 	DkpDeviceType type;
 	const gchar *object_path;
 
-	g_return_if_fail (DKP_IS_DAEMON (daemon));
+	g_return_if_fail (UP_IS_DAEMON (daemon));
 	g_return_if_fail (DKP_IS_DEVICE (device));
 	g_return_if_fail (G_IS_OBJECT (native));
 
@@ -803,14 +803,14 @@ dkp_daemon_device_added_cb (UpBackend *backend, GObject *native, DkpDevice *devi
 
 	/* connect, so we get changes */
 	g_signal_connect (device, "changed",
-			  G_CALLBACK (dkp_daemon_device_changed_cb), daemon);
+			  G_CALLBACK (up_daemon_device_changed_cb), daemon);
 
 	/* refresh after a short delay */
 	g_object_get (device,
 		      "type", &type,
 		      NULL);
 	if (type == DKP_DEVICE_TYPE_BATTERY)
-		dkp_daemon_poll_battery_devices_for_a_little_bit (daemon);
+		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */
 	if (!daemon->priv->during_coldplug) {
@@ -827,15 +827,15 @@ dkp_daemon_device_added_cb (UpBackend *backend, GObject *native, DkpDevice *devi
 }
 
 /**
- * dkp_daemon_device_removed_cb:
+ * up_daemon_device_removed_cb:
  **/
 static void
-dkp_daemon_device_removed_cb (UpBackend *backend, GObject *native, DkpDevice *device, DkpDaemon *daemon)
+up_daemon_device_removed_cb (UpBackend *backend, GObject *native, DkpDevice *device, UpDaemon *daemon)
 {
 	DkpDeviceType type;
 	const gchar *object_path;
 
-	g_return_if_fail (DKP_IS_DAEMON (daemon));
+	g_return_if_fail (UP_IS_DAEMON (daemon));
 	g_return_if_fail (DKP_IS_DEVICE (device));
 	g_return_if_fail (G_IS_OBJECT (native));
 
@@ -847,7 +847,7 @@ dkp_daemon_device_removed_cb (UpBackend *backend, GObject *native, DkpDevice *de
 		      "type", &type,
 		      NULL);
 	if (type == DKP_DEVICE_TYPE_BATTERY)
-		dkp_daemon_poll_battery_devices_for_a_little_bit (daemon);
+		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */
 	if (!daemon->priv->during_coldplug) {
@@ -867,12 +867,12 @@ dkp_daemon_device_removed_cb (UpBackend *backend, GObject *native, DkpDevice *de
 }
 
 /**
- * dkp_daemon_properties_changed_cb:
+ * up_daemon_properties_changed_cb:
  **/
 static void
-dkp_daemon_properties_changed_cb (GObject *object, GParamSpec *pspec, DkpDaemon *daemon)
+up_daemon_properties_changed_cb (GObject *object, GParamSpec *pspec, UpDaemon *daemon)
 {
-	g_return_if_fail (DKP_IS_DAEMON (daemon));
+	g_return_if_fail (UP_IS_DAEMON (daemon));
 
 	/* emit */
 	if (!daemon->priv->during_coldplug) {
@@ -882,14 +882,14 @@ dkp_daemon_properties_changed_cb (GObject *object, GParamSpec *pspec, DkpDaemon 
 }
 
 /**
- * dkp_daemon_init:
+ * up_daemon_init:
  **/
 static void
-dkp_daemon_init (DkpDaemon *daemon)
+up_daemon_init (UpDaemon *daemon)
 {
 	gfloat waterline;
 
-	daemon->priv = DKP_DAEMON_GET_PRIVATE (daemon);
+	daemon->priv = UP_DAEMON_GET_PRIVATE (daemon);
 	daemon->priv->polkit = dkp_polkit_new ();
 	daemon->priv->lid_is_present = FALSE;
 	daemon->priv->lid_is_closed = FALSE;
@@ -906,27 +906,27 @@ dkp_daemon_init (DkpDaemon *daemon)
 
 	daemon->priv->backend = up_backend_new ();
 	g_signal_connect (daemon->priv->backend, "device-added",
-			  G_CALLBACK (dkp_daemon_device_added_cb), daemon);
+			  G_CALLBACK (up_daemon_device_added_cb), daemon);
 	g_signal_connect (daemon->priv->backend, "device-removed",
-			  G_CALLBACK (dkp_daemon_device_removed_cb), daemon);
+			  G_CALLBACK (up_daemon_device_removed_cb), daemon);
 
 	/* watch when these properties change */
 	g_signal_connect (daemon, "notify::lid-is-present",
-			  G_CALLBACK (dkp_daemon_properties_changed_cb), daemon);
+			  G_CALLBACK (up_daemon_properties_changed_cb), daemon);
 	g_signal_connect (daemon, "notify::lid-is-closed",
-			  G_CALLBACK (dkp_daemon_properties_changed_cb), daemon);
+			  G_CALLBACK (up_daemon_properties_changed_cb), daemon);
 	g_signal_connect (daemon, "notify::on-battery",
-			  G_CALLBACK (dkp_daemon_properties_changed_cb), daemon);
+			  G_CALLBACK (up_daemon_properties_changed_cb), daemon);
 	g_signal_connect (daemon, "notify::on-low-battery",
-			  G_CALLBACK (dkp_daemon_properties_changed_cb), daemon);
+			  G_CALLBACK (up_daemon_properties_changed_cb), daemon);
 
 	/* check if we have support */
-	dkp_daemon_check_sleep_states (daemon);
+	up_daemon_check_sleep_states (daemon);
 
 	/* do we have enough swap? */
 	if (daemon->priv->kernel_can_hibernate) {
-		waterline = dkp_daemon_check_swap_space (daemon);
-		if (waterline < DKP_DAEMON_SWAP_WATERLINE)
+		waterline = up_daemon_check_swap_space (daemon);
+		if (waterline < UP_DAEMON_SWAP_WATERLINE)
 			daemon->priv->hibernate_has_swap_space = TRUE;
 		else
 			egg_debug ("not enough swap to enable hibernate");
@@ -934,51 +934,51 @@ dkp_daemon_init (DkpDaemon *daemon)
 
 	/* is the swap usable? */
 	if (daemon->priv->kernel_can_hibernate)
-		daemon->priv->hibernate_has_encrypted_swap = dkp_daemon_check_encrypted_swap (daemon);
+		daemon->priv->hibernate_has_encrypted_swap = up_daemon_check_encrypted_swap (daemon);
 }
 
 /**
- * dkp_daemon_error_quark:
+ * up_daemon_error_quark:
  **/
 GQuark
-dkp_daemon_error_quark (void)
+up_daemon_error_quark (void)
 {
 	static GQuark ret = 0;
 	if (ret == 0)
-		ret = g_quark_from_static_string ("dkp_daemon_error");
+		ret = g_quark_from_static_string ("up_daemon_error");
 	return ret;
 }
 
 #define ENUM_ENTRY(NAME, DESC) { NAME, "" #NAME "", DESC }
 /**
- * dkp_daemon_error_get_type:
+ * up_daemon_error_get_type:
  **/
 GType
-dkp_daemon_error_get_type (void)
+up_daemon_error_get_type (void)
 {
 	static GType etype = 0;
 
 	if (etype == 0) {
 		static const GEnumValue values[] = {
-			ENUM_ENTRY (DKP_DAEMON_ERROR_GENERAL, "GeneralError"),
-			ENUM_ENTRY (DKP_DAEMON_ERROR_NOT_SUPPORTED, "NotSupported"),
-			ENUM_ENTRY (DKP_DAEMON_ERROR_NO_SUCH_DEVICE, "NoSuchDevice"),
+			ENUM_ENTRY (UP_DAEMON_ERROR_GENERAL, "GeneralError"),
+			ENUM_ENTRY (UP_DAEMON_ERROR_NOT_SUPPORTED, "NotSupported"),
+			ENUM_ENTRY (UP_DAEMON_ERROR_NO_SUCH_DEVICE, "NoSuchDevice"),
 			{ 0, 0, 0 }
 		};
-		g_assert (DKP_DAEMON_NUM_ERRORS == G_N_ELEMENTS (values) - 1);
-		etype = g_enum_register_static ("DkpDaemonError", values);
+		g_assert (UP_DAEMON_NUM_ERRORS == G_N_ELEMENTS (values) - 1);
+		etype = g_enum_register_static ("UpDaemonError", values);
 	}
 	return etype;
 }
 
 /**
- * dkp_daemon_get_property:
+ * up_daemon_get_property:
  **/
 static void
-dkp_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
+up_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
 {
-	DkpDaemon *daemon;
-	daemon = DKP_DAEMON (object);
+	UpDaemon *daemon;
+	daemon = UP_DAEMON (object);
 	switch (prop_id) {
 	case PROP_DAEMON_VERSION:
 		g_value_set_string (value, PACKAGE_VERSION);
@@ -1010,12 +1010,12 @@ dkp_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 }
 
 /**
- * dkp_daemon_set_property:
+ * up_daemon_set_property:
  **/
 static void
-dkp_daemon_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
+up_daemon_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
 {
-	DkpDaemon *daemon = DKP_DAEMON (object);
+	UpDaemon *daemon = UP_DAEMON (object);
 	switch (prop_id) {
 	case PROP_LID_IS_CLOSED:
 		daemon->priv->lid_is_closed = g_value_get_boolean (value);
@@ -1040,17 +1040,17 @@ dkp_daemon_set_property (GObject *object, guint prop_id, const GValue *value, GP
 }
 
 /**
- * dkp_daemon_class_init:
+ * up_daemon_class_init:
  **/
 static void
-dkp_daemon_class_init (DkpDaemonClass *klass)
+up_daemon_class_init (UpDaemonClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	object_class->finalize = dkp_daemon_finalize;
-	object_class->get_property = dkp_daemon_get_property;
-	object_class->set_property = dkp_daemon_set_property;
+	object_class->finalize = up_daemon_finalize;
+	object_class->get_property = up_daemon_get_property;
+	object_class->set_property = up_daemon_set_property;
 
-	g_type_class_add_private (klass, sizeof (DkpDaemonPrivate));
+	g_type_class_add_private (klass, sizeof (UpDaemonPrivate));
 
 	signals[SIGNAL_DEVICE_ADDED] =
 		g_signal_new ("device-added",
@@ -1141,23 +1141,23 @@ dkp_daemon_class_init (DkpDaemonClass *klass)
 							       FALSE,
 							       G_PARAM_READWRITE));
 
-	dbus_g_object_type_install_info (DKP_TYPE_DAEMON, &dbus_glib_dkp_daemon_object_info);
+	dbus_g_object_type_install_info (UP_TYPE_DAEMON, &dbus_glib_up_daemon_object_info);
 
-	dbus_g_error_domain_register (DKP_DAEMON_ERROR, NULL, DKP_DAEMON_TYPE_ERROR);
+	dbus_g_error_domain_register (UP_DAEMON_ERROR, NULL, UP_DAEMON_TYPE_ERROR);
 }
 
 /**
- * dkp_daemon_finalize:
+ * up_daemon_finalize:
  **/
 static void
-dkp_daemon_finalize (GObject *object)
+up_daemon_finalize (GObject *object)
 {
-	DkpDaemon *daemon;
+	UpDaemon *daemon;
 
 	g_return_if_fail (object != NULL);
-	g_return_if_fail (DKP_IS_DAEMON (object));
+	g_return_if_fail (UP_IS_DAEMON (object));
 
-	daemon = DKP_DAEMON (object);
+	daemon = UP_DAEMON (object);
 
 	g_return_if_fail (daemon->priv != NULL);
 
@@ -1172,17 +1172,17 @@ dkp_daemon_finalize (GObject *object)
 	g_object_unref (daemon->priv->polkit);
 	g_object_unref (daemon->priv->backend);
 
-	G_OBJECT_CLASS (dkp_daemon_parent_class)->finalize (object);
+	G_OBJECT_CLASS (up_daemon_parent_class)->finalize (object);
 }
 
 /**
- * dkp_daemon_new:
+ * up_daemon_new:
  **/
-DkpDaemon *
-dkp_daemon_new (void)
+UpDaemon *
+up_daemon_new (void)
 {
-	DkpDaemon *daemon;
-	daemon = DKP_DAEMON (g_object_new (DKP_TYPE_DAEMON, NULL));
+	UpDaemon *daemon;
+	daemon = UP_DAEMON (g_object_new (UP_TYPE_DAEMON, NULL));
 	return daemon;
 }
 
@@ -1193,17 +1193,17 @@ dkp_daemon_new (void)
 #include "egg-test.h"
 
 void
-dkp_daemon_test (gpointer user_data)
+up_daemon_test (gpointer user_data)
 {
 	EggTest *test = (EggTest *) user_data;
-	DkpDaemon *daemon;
+	UpDaemon *daemon;
 
-	if (!egg_test_start (test, "DkpDaemon"))
+	if (!egg_test_start (test, "UpDaemon"))
 		return;
 
 	/************************************************************/
 	egg_test_title (test, "get instance");
-	daemon = dkp_daemon_new ();
+	daemon = up_daemon_new ();
 	egg_test_assert (test, daemon != NULL);
 
 	/* unref */

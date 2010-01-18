@@ -53,7 +53,7 @@ main (int argc, char **argv)
 	dkp_polkit_test (test);
 	dkp_qos_test (test);
 	dkp_wakeups_test (test);
-	dkp_daemon_test (test);
+	up_daemon_test (test);
 
 	return (egg_test_finish (test));
 }

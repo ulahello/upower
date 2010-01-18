@@ -49,7 +49,7 @@ static void	up_backend_finalize	(GObject		*object);
 
 struct UpBackendPrivate
 {
-	DkpDaemon		*daemon;
+	UpDaemon		*daemon;
 	DkpDeviceList		*device_list;
 	GUdevClient		*gudev_client;
 	DkpDeviceList		*managed_devices;
@@ -270,7 +270,7 @@ up_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 /**
  * up_backend_coldplug:
  * @backend: The %UpBackend class instance
- * @daemon: The %DkpDaemon controlling instance
+ * @daemon: The %UpDaemon controlling instance
  *
  * Finds all the devices already plugged in, and emits device-add signals for
  * each of them.
@@ -278,7 +278,7 @@ up_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
  * Return value: %TRUE for success
  **/
 gboolean
-up_backend_coldplug (UpBackend *backend, DkpDaemon *daemon)
+up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 {
 	GUdevDevice *native;
 	GList *devices;
@@ -287,7 +287,7 @@ up_backend_coldplug (UpBackend *backend, DkpDaemon *daemon)
 	const gchar *subsystems[] = {"power_supply", "usb", "tty", "input", NULL};
 
 	backend->priv->daemon = g_object_ref (daemon);
-	backend->priv->device_list = dkp_daemon_get_device_list (daemon);
+	backend->priv->device_list = up_daemon_get_device_list (daemon);
 	backend->priv->gudev_client = g_udev_client_new (subsystems);
 	g_signal_connect (backend->priv->gudev_client, "uevent",
 			  G_CALLBACK (up_backend_uevent_signal_handler_cb), backend);

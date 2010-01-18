@@ -123,7 +123,7 @@ gint
 main (gint argc, gchar **argv)
 {
 	GError *error = NULL;
-	DkpDaemon *daemon = NULL;
+	UpDaemon *daemon = NULL;
 	DkpQos *qos = NULL;
 	DkpWakeups *wakeups = NULL;
 	GOptionContext *context;
@@ -182,9 +182,9 @@ main (gint argc, gchar **argv)
 
 	qos = dkp_qos_new ();
 	wakeups = dkp_wakeups_new ();
-	daemon = dkp_daemon_new ();
+	daemon = up_daemon_new ();
 	loop = g_main_loop_new (NULL, FALSE);
-	ret = dkp_daemon_startup (daemon);
+	ret = up_daemon_startup (daemon);
 	if (!ret) {
 		egg_warning ("Could not startup; bailing out");
 		goto out;

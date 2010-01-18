@@ -47,7 +47,7 @@ struct DkpDevicePrivate
 	gchar			*object_path;
 	DBusGConnection		*system_bus_connection;
 	DBusGProxy		*system_bus_proxy;
-	DkpDaemon		*daemon;
+	UpDaemon		*daemon;
 	DkpHistory		*history;
 	GObject			*native;
 	gboolean		 has_ever_refresh;
@@ -509,9 +509,9 @@ out:
 /**
  * dkp_device_get_daemon:
  *
- * Returns a refcounted #DkpDaemon instance, or %NULL
+ * Returns a refcounted #UpDaemon instance, or %NULL
  **/
-DkpDaemon *
+UpDaemon *
 dkp_device_get_daemon (DkpDevice *device)
 {
 	if (device->priv->daemon == NULL)
@@ -525,7 +525,7 @@ dkp_device_get_daemon (DkpDevice *device)
  * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 gboolean
-dkp_device_coldplug (DkpDevice *device, DkpDaemon *daemon, GObject *native)
+dkp_device_coldplug (DkpDevice *device, UpDaemon *daemon, GObject *native)
 {
 	gboolean ret;
 	const gchar *native_path;
@@ -605,7 +605,7 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvo
 
 	/* doesn't even try to support this */
 	if (!device->priv->has_statistics) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device does not support getting stats");
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "device does not support getting stats");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
@@ -618,14 +618,14 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvo
 
 	/* maybe the device doesn't support histories */
 	if (array == NULL) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device has no statistics");
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "device has no statistics");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
 
 	/* always 101 items of data */
 	if (array->len != 101) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "statistics invalid as have %i items", array->len);
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "statistics invalid as have %i items", array->len);
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
@@ -668,7 +668,7 @@ dkp_device_get_history (DkpDevice *device, const gchar *type_string, guint times
 
 	/* doesn't even try to support this */
 	if (!device->priv->has_history) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device does not support getting history");
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "device does not support getting history");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
@@ -689,7 +689,7 @@ dkp_device_get_history (DkpDevice *device, const gchar *type_string, guint times
 
 	/* maybe the device doesn't have any history */
 	if (array == NULL) {
-		error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "device has no history");
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "device has no history");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}

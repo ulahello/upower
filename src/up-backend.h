@@ -23,8 +23,8 @@
 #define __UP_BACKEND_H
 
 #include <glib-object.h>
-#include <dkp-enum.h>
 
+#include "up-enum.h"
 #include "up-device.h"
 #include "up-daemon.h"
 
@@ -66,7 +66,7 @@ UpBackend	*up_backend_new			(void);
 void		 up_backend_test			(gpointer	 user_data);
 
 gboolean	 up_backend_coldplug			(UpBackend	*backend,
-							 DkpDaemon	*daemon);
+							 UpDaemon	*daemon);
 
 G_END_DECLS
 

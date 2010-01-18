@@ -404,7 +404,7 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 	gboolean recall_notice;
 	const gchar *recall_vendor = NULL;
 	const gchar *recall_url = NULL;
-	DkpDaemon *daemon;
+	UpDaemon *daemon;
 	gboolean on_battery;
 	guint battery_count;
 
@@ -600,7 +600,7 @@ dkp_device_supply_refresh_battery (DkpDeviceSupply *supply)
 			      NULL);
 
 		/* only guess when we have more than one battery devices */
-		battery_count = dkp_daemon_get_number_devices_of_type (daemon, DKP_DEVICE_TYPE_BATTERY);
+		battery_count = up_daemon_get_number_devices_of_type (daemon, DKP_DEVICE_TYPE_BATTERY);
 
 		/* try to find a suitable icon depending on AC state */
 		if (battery_count > 1) {

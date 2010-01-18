@@ -42,7 +42,7 @@ static void	up_backend_finalize	(GObject		*object);
 
 struct UpBackendPrivate
 {
-	DkpDaemon		*daemon;
+	UpDaemon		*daemon;
 	DkpDevice		*device;
 	DkpDeviceList		*device_list; /* unused */
 	GObject			*native;
@@ -103,7 +103,7 @@ out:
 /**
  * up_backend_coldplug:
  * @backend: The %UpBackend class instance
- * @daemon: The %DkpDaemon controlling instance
+ * @daemon: The %UpDaemon controlling instance
  *
  * Finds all the devices already plugged in, and emits device-add signals for
  * each of them.
@@ -111,10 +111,10 @@ out:
  * Return value: %TRUE for success
  **/
 gboolean
-up_backend_coldplug (UpBackend *backend, DkpDaemon *daemon)
+up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 {
 	backend->priv->daemon = g_object_ref (daemon);
-	backend->priv->device_list = dkp_daemon_get_device_list (daemon);
+	backend->priv->device_list = up_daemon_get_device_list (daemon);
 
 	/* small delay until first device is added */
 	g_timeout_add_seconds (1, (GSourceFunc) up_backend_add_cb, backend);

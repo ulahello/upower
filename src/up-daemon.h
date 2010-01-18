@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef __DKP_DAEMON_H__
-#define __DKP_DAEMON_H__
+#ifndef __UP_DAEMON_H__
+#define __UP_DAEMON_H__
 
 #include <glib-object.h>
 #include <polkit/polkit.h>
@@ -30,68 +30,68 @@
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_DAEMON		(dkp_daemon_get_type ())
-#define DKP_DAEMON(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_DAEMON, DkpDaemon))
-#define DKP_DAEMON_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_DAEMON, DkpDaemonClass))
-#define DKP_IS_DAEMON(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_DAEMON))
-#define DKP_IS_DAEMON_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_DAEMON))
-#define DKP_DAEMON_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_DAEMON, DkpDaemonClass))
+#define UP_TYPE_DAEMON		(up_daemon_get_type ())
+#define UP_DAEMON(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), UP_TYPE_DAEMON, UpDaemon))
+#define UP_DAEMON_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), UP_TYPE_DAEMON, UpDaemonClass))
+#define UP_IS_DAEMON(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), UP_TYPE_DAEMON))
+#define UP_IS_DAEMON_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), UP_TYPE_DAEMON))
+#define UP_DAEMON_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), UP_TYPE_DAEMON, UpDaemonClass))
 
-typedef struct DkpDaemonPrivate DkpDaemonPrivate;
+typedef struct UpDaemonPrivate UpDaemonPrivate;
 
 typedef struct
 {
 	GObject	parent;
-	DkpDaemonPrivate	*priv;
-} DkpDaemon;
+	UpDaemonPrivate	*priv;
+} UpDaemon;
 
 typedef struct
 {
 	GObjectClass		 parent_class;
-} DkpDaemonClass;
+} UpDaemonClass;
 
 typedef enum
 {
-	DKP_DAEMON_ERROR_GENERAL,
-	DKP_DAEMON_ERROR_NOT_SUPPORTED,
-	DKP_DAEMON_ERROR_NO_SUCH_DEVICE,
-	DKP_DAEMON_NUM_ERRORS
-} DkpDaemonError;
+	UP_DAEMON_ERROR_GENERAL,
+	UP_DAEMON_ERROR_NOT_SUPPORTED,
+	UP_DAEMON_ERROR_NO_SUCH_DEVICE,
+	UP_DAEMON_NUM_ERRORS
+} UpDaemonError;
 
-#define DKP_DAEMON_ERROR dkp_daemon_error_quark ()
+#define UP_DAEMON_ERROR up_daemon_error_quark ()
 
-GType dkp_daemon_error_get_type (void);
-#define DKP_DAEMON_TYPE_ERROR (dkp_daemon_error_get_type ())
+GType up_daemon_error_get_type (void);
+#define UP_DAEMON_TYPE_ERROR (up_daemon_error_get_type ())
 
-GQuark		 dkp_daemon_error_quark		(void);
-GType		 dkp_daemon_get_type		(void);
-DkpDaemon	*dkp_daemon_new			(void);
-void		 dkp_daemon_test		(gpointer	 user_data);
+GQuark		 up_daemon_error_quark		(void);
+GType		 up_daemon_get_type		(void);
+UpDaemon	*up_daemon_new			(void);
+void		 up_daemon_test		(gpointer	 user_data);
 
 /* private */
-guint		 dkp_daemon_get_number_devices_of_type (DkpDaemon	*daemon,
+guint		 up_daemon_get_number_devices_of_type (UpDaemon	*daemon,
 						 DkpDeviceType		 type);
-DkpDeviceList	*dkp_daemon_get_device_list	(DkpDaemon		*daemon);
-gboolean	 dkp_daemon_startup		(DkpDaemon		*daemon);
+DkpDeviceList	*up_daemon_get_device_list	(UpDaemon		*daemon);
+gboolean	 up_daemon_startup		(UpDaemon		*daemon);
 
 /* exported */
-gboolean	 dkp_daemon_enumerate_devices	(DkpDaemon		*daemon,
+gboolean	 up_daemon_enumerate_devices	(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
-gboolean	 dkp_daemon_get_on_battery	(DkpDaemon		*daemon,
+gboolean	 up_daemon_get_on_battery	(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
-gboolean	 dkp_daemon_get_low_battery	(DkpDaemon		*daemon,
+gboolean	 up_daemon_get_low_battery	(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
-gboolean	 dkp_daemon_suspend		(DkpDaemon		*daemon,
+gboolean	 up_daemon_suspend		(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
-gboolean	 dkp_daemon_hibernate		(DkpDaemon		*daemon,
+gboolean	 up_daemon_hibernate		(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
-gboolean	 dkp_daemon_can_suspend		(DkpDaemon		*daemon,
+gboolean	 up_daemon_can_suspend		(UpDaemon		*daemon,
 						 gboolean		 interactive,
 						 DBusGMethodInvocation	*context);
-gboolean	 dkp_daemon_can_hibernate	(DkpDaemon		*daemon,
+gboolean	 up_daemon_can_hibernate	(UpDaemon		*daemon,
 						 gboolean		 interactive,
 						 DBusGMethodInvocation	*context);
 
 G_END_DECLS
 
-#endif /* __DKP_DAEMON_H__ */
+#endif /* __UP_DAEMON_H__ */
