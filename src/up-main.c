@@ -125,7 +125,7 @@ main (gint argc, gchar **argv)
 	GError *error = NULL;
 	UpDaemon *daemon = NULL;
 	UpQos *qos = NULL;
-	DkpWakeups *wakeups = NULL;
+	UpWakeups *wakeups = NULL;
 	GOptionContext *context;
 	DBusGProxy *bus_proxy;
 	DBusGConnection *bus;
@@ -181,7 +181,7 @@ main (gint argc, gchar **argv)
 	egg_debug ("Starting devkit-power-daemon version %s", PACKAGE_VERSION);
 
 	qos = up_qos_new ();
-	wakeups = dkp_wakeups_new ();
+	wakeups = up_wakeups_new ();
 	daemon = up_daemon_new ();
 	loop = g_main_loop_new (NULL, FALSE);
 	ret = up_daemon_startup (daemon);

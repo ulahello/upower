@@ -35,12 +35,12 @@
 #include "up-wakeups-glue.h"
 #include "up-wakeups-obj.h"
 
-static void     dkp_wakeups_finalize   (GObject		*object);
-static gboolean	dkp_wakeups_timerstats_enable (DkpWakeups *wakeups);
+static void     up_wakeups_finalize   (GObject		*object);
+static gboolean	up_wakeups_timerstats_enable (UpWakeups *wakeups);
 
-#define DKP_WAKEUPS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_WAKEUPS, DkpWakeupsPrivate))
+#define UP_WAKEUPS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_WAKEUPS, UpWakeupsPrivate))
 
-#define DKP_WAKEUPS_REQUESTS_STRUCT_TYPE (dbus_g_type_get_struct ("GValueArray",	\
+#define UP_WAKEUPS_REQUESTS_STRUCT_TYPE (dbus_g_type_get_struct ("GValueArray",	\
 							      G_TYPE_BOOLEAN,	\
 							      G_TYPE_UINT,	\
 							      G_TYPE_DOUBLE,	\
@@ -48,15 +48,15 @@ static gboolean	dkp_wakeups_timerstats_enable (DkpWakeups *wakeups);
 							      G_TYPE_STRING,	\
 							      G_TYPE_INVALID))
 
-#define DKP_WAKEUPS_POLL_INTERVAL_KERNEL	2 /* seconds */
-#define DKP_WAKEUPS_POLL_INTERVAL_USERSPACE	2 /* seconds */
-#define DKP_WAKEUPS_DISABLE_INTERVAL		30 /* seconds */
-#define DKP_WAKEUPS_SOURCE_KERNEL		"/proc/interrupts"
-#define DKP_WAKEUPS_SOURCE_USERSPACE		"/proc/timer_stats"
-#define DKP_WAKEUPS_SMALLEST_VALUE		0.1f /* seconds */
-#define DKP_WAKEUPS_TOTAL_SMOOTH_FACTOR		0.125f
+#define UP_WAKEUPS_POLL_INTERVAL_KERNEL	2 /* seconds */
+#define UP_WAKEUPS_POLL_INTERVAL_USERSPACE	2 /* seconds */
+#define UP_WAKEUPS_DISABLE_INTERVAL		30 /* seconds */
+#define UP_WAKEUPS_SOURCE_KERNEL		"/proc/interrupts"
+#define UP_WAKEUPS_SOURCE_USERSPACE		"/proc/timer_stats"
+#define UP_WAKEUPS_SMALLEST_VALUE		0.1f /* seconds */
+#define UP_WAKEUPS_TOTAL_SMOOTH_FACTOR		0.125f
 
-struct DkpWakeupsPrivate
+struct UpWakeupsPrivate
 {
 	GPtrArray		*data;
 	DBusGConnection		*connection;
@@ -82,13 +82,13 @@ enum {
 
 static guint signals [LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (DkpWakeups, dkp_wakeups, G_TYPE_OBJECT)
+G_DEFINE_TYPE (UpWakeups, up_wakeups, G_TYPE_OBJECT)
 
 /**
- * dkp_wakeups_get_cmdline:
+ * up_wakeups_get_cmdline:
  **/
 static gchar *
-dkp_wakeups_get_cmdline (guint pid)
+up_wakeups_get_cmdline (guint pid)
 {
 	gboolean ret;
 	gchar *filename = NULL;
@@ -109,10 +109,10 @@ out:
 }
 
 /**
- * dkp_wakeups_data_obj_compare:
+ * up_wakeups_data_obj_compare:
  **/
 static gint
-dkp_wakeups_data_obj_compare (const DkpWakeupsObj **obj1, const DkpWakeupsObj **obj2)
+up_wakeups_data_obj_compare (const UpWakeupsObj **obj1, const UpWakeupsObj **obj2)
 {
 	if ((*obj1)->value > (*obj2)->value)
 		return -1;
@@ -122,20 +122,20 @@ dkp_wakeups_data_obj_compare (const DkpWakeupsObj **obj1, const DkpWakeupsObj **
 }
 
 /**
- * dkp_wakeups_data_get_or_create:
+ * up_wakeups_data_get_or_create:
  **/
-static DkpWakeupsObj *
-dkp_wakeups_data_get_or_create (DkpWakeups *wakeups, guint id)
+static UpWakeupsObj *
+up_wakeups_data_get_or_create (UpWakeups *wakeups, guint id)
 {
 	guint i;
-	DkpWakeupsObj *obj;
+	UpWakeupsObj *obj;
 
 	for (i=0; i<wakeups->priv->data->len; i++) {
 		obj = g_ptr_array_index (wakeups->priv->data, i);
 		if (obj->id == id)
 			goto out;
 	}
-	obj = dkp_wakeups_obj_new ();
+	obj = up_wakeups_obj_new ();
 	obj->id = id;
 	g_ptr_array_add (wakeups->priv->data, obj);
 out:
@@ -143,14 +143,14 @@ out:
 }
 
 /**
- * dkp_wakeups_data_get_total:
+ * up_wakeups_data_get_total:
  **/
 static guint
-dkp_wakeups_data_get_total (DkpWakeups *wakeups)
+up_wakeups_data_get_total (UpWakeups *wakeups)
 {
 	guint i;
 	gfloat total = 0;
-	DkpWakeupsObj *obj;
+	UpWakeupsObj *obj;
 
 	for (i=0; i<wakeups->priv->data->len; i++) {
 		obj = g_ptr_array_index (wakeups->priv->data, i);
@@ -160,12 +160,12 @@ dkp_wakeups_data_get_total (DkpWakeups *wakeups)
 }
 
 /**
- * dkp_wakeups_get_total:
+ * up_wakeups_get_total:
  *
  * Gets the current latency
  **/
 gboolean
-dkp_wakeups_get_total (DkpWakeups *wakeups, guint *value, GError **error)
+up_wakeups_get_total (UpWakeups *wakeups, guint *value, GError **error)
 {
 	gboolean ret;
 
@@ -176,7 +176,7 @@ dkp_wakeups_get_total (DkpWakeups *wakeups, guint *value, GError **error)
 	}
 
 	/* start if not already started */
-	ret = dkp_wakeups_timerstats_enable (wakeups);
+	ret = up_wakeups_timerstats_enable (wakeups);
 
 	/* no data */
 	if (!ret) {
@@ -190,14 +190,14 @@ dkp_wakeups_get_total (DkpWakeups *wakeups, guint *value, GError **error)
 }
 
 /**
- * dkp_wakeups_get_data:
+ * up_wakeups_get_data:
  **/
 gboolean
-dkp_wakeups_get_data (DkpWakeups *wakeups, GPtrArray **data, GError **error)
+up_wakeups_get_data (UpWakeups *wakeups, GPtrArray **data, GError **error)
 {
 	guint i;
 	GPtrArray *array;
-	DkpWakeupsObj *obj;
+	UpWakeupsObj *obj;
 
 	/* no capability */
 	if (!wakeups->priv->has_capability) {
@@ -206,10 +206,10 @@ dkp_wakeups_get_data (DkpWakeups *wakeups, GPtrArray **data, GError **error)
 	}
 
 	/* start if not already started */
-	dkp_wakeups_timerstats_enable (wakeups);
+	up_wakeups_timerstats_enable (wakeups);
 
 	/* sort data */
-	g_ptr_array_sort (wakeups->priv->data, (GCompareFunc) dkp_wakeups_data_obj_compare);
+	g_ptr_array_sort (wakeups->priv->data, (GCompareFunc) up_wakeups_data_obj_compare);
 
 	*data = g_ptr_array_new ();
 	array = wakeups->priv->data;
@@ -217,10 +217,10 @@ dkp_wakeups_get_data (DkpWakeups *wakeups, GPtrArray **data, GError **error)
 		GValue elem = {0};
 
 		obj = g_ptr_array_index (array, i);
-		if (obj->value < DKP_WAKEUPS_SMALLEST_VALUE)
+		if (obj->value < UP_WAKEUPS_SMALLEST_VALUE)
 			continue;
-		g_value_init (&elem, DKP_WAKEUPS_REQUESTS_STRUCT_TYPE);
-		g_value_take_boxed (&elem, dbus_g_type_specialized_construct (DKP_WAKEUPS_REQUESTS_STRUCT_TYPE));
+		g_value_init (&elem, UP_WAKEUPS_REQUESTS_STRUCT_TYPE);
+		g_value_take_boxed (&elem, dbus_g_type_specialized_construct (UP_WAKEUPS_REQUESTS_STRUCT_TYPE));
 		dbus_g_type_struct_set (&elem,
 					0, obj->is_userspace,
 					1, obj->id,
@@ -239,10 +239,10 @@ dkp_wakeups_get_data (DkpWakeups *wakeups, GPtrArray **data, GError **error)
 }
 
 /**
- * dkp_is_in:
+ * up_is_in:
  **/
 static gboolean
-dkp_is_in (gchar needle, const gchar *delimiters)
+up_is_in (gchar needle, const gchar *delimiters)
 {
 	guint i;
 	for (i=0; delimiters[i] != '\0'; i++) {
@@ -253,10 +253,10 @@ dkp_is_in (gchar needle, const gchar *delimiters)
 }
 
 /**
- * dkp_strsplit_complete_set:
+ * up_strsplit_complete_set:
  **/
 static GPtrArray *
-dkp_strsplit_complete_set (const gchar *string, const gchar *delimiters, guint max_tokens)
+up_strsplit_complete_set (const gchar *string, const gchar *delimiters, guint max_tokens)
 {
 	guint i;
 	gboolean ret;
@@ -269,7 +269,7 @@ dkp_strsplit_complete_set (const gchar *string, const gchar *delimiters, guint m
 	/* find sections not delimited by space */
 	array = g_ptr_array_new_with_free_func (g_free);
 	for (i=0; string[i] != '\0'; i++) {
-		ret = dkp_is_in (string[i], delimiters);
+		ret = up_is_in (string[i], delimiters);
 		if (ret) {
 			/* no character data yet */
 			if (start == NULL)
@@ -300,21 +300,21 @@ dkp_strsplit_complete_set (const gchar *string, const gchar *delimiters, guint m
 }
 
 /**
- * dkp_wakeups_perhaps_data_changed:
+ * up_wakeups_perhaps_data_changed:
  **/
 static void
-dkp_wakeups_perhaps_data_changed (DkpWakeups *wakeups)
+up_wakeups_perhaps_data_changed (UpWakeups *wakeups)
 {
 	guint total;
 
 	/* total has changed */
-	total = dkp_wakeups_data_get_total (wakeups);
+	total = up_wakeups_data_get_total (wakeups);
 	if (total != wakeups->priv->total_old) {
 		/* no old data, assume this is true */
 		if (wakeups->priv->total_old == 0)
 			wakeups->priv->total_ave = total;
 		else
-			wakeups->priv->total_ave = DKP_WAKEUPS_TOTAL_SMOOTH_FACTOR * (gfloat) (total - wakeups->priv->total_old);
+			wakeups->priv->total_ave = UP_WAKEUPS_TOTAL_SMOOTH_FACTOR * (gfloat) (total - wakeups->priv->total_old);
 		g_signal_emit (wakeups, signals [TOTAL_CHANGED], 0, wakeups->priv->total_ave);
 	}
 
@@ -323,10 +323,10 @@ dkp_wakeups_perhaps_data_changed (DkpWakeups *wakeups)
 }
 
 /**
- * dkp_wakeups_poll_kernel_cb:
+ * up_wakeups_poll_kernel_cb:
  **/
 static gboolean
-dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
+up_wakeups_poll_kernel_cb (UpWakeups *wakeups)
 {
 	guint i;
 	guint j;
@@ -341,7 +341,7 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 	guint irq;
 	guint interrupts;
 	GPtrArray *sections;
-	DkpWakeupsObj *obj;
+	UpWakeupsObj *obj;
 
 	egg_debug ("event");
 
@@ -353,7 +353,7 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 	}
 
 	/* get the data */
-	ret = g_file_get_contents (DKP_WAKEUPS_SOURCE_KERNEL, &data, NULL, &error);
+	ret = g_file_get_contents (UP_WAKEUPS_SOURCE_KERNEL, &data, NULL, &error);
 	if (!ret) {
 		egg_warning ("failed to get data: %s", error->message);
 		g_error_free (error);
@@ -364,7 +364,7 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 	lines = g_strsplit (data, "\n", 0);
 
 	/* find out how many processors we have */
-	sections = dkp_strsplit_complete_set (lines[0], " ", 0);
+	sections = up_strsplit_complete_set (lines[0], " ", 0);
 	cpus = sections->len;
 	g_ptr_array_unref (sections);
 
@@ -372,7 +372,7 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 	for (i=1; lines[i] != NULL; i++) {
 
 		/* get sections and check correct length */
-		sections = dkp_strsplit_complete_set (lines[i], " :", 2 + cpus);
+		sections = up_strsplit_complete_set (lines[i], " :", 2 + cpus);
 		if (sections->len != 2 + cpus)
 			goto skip;
 
@@ -415,7 +415,7 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 		found = g_ptr_array_index (sections, cpus+1);
 
 		/* save in database */
-		obj = dkp_wakeups_data_get_or_create (wakeups, irq);
+		obj = up_wakeups_data_get_or_create (wakeups, irq);
 		if (obj->details == NULL) {
 
 			/* remove the interrupt type */
@@ -436,14 +436,14 @@ dkp_wakeups_poll_kernel_cb (DkpWakeups *wakeups)
 		}
 		/* we report this in minutes, not seconds */
 		if (obj->old > 0)
-			obj->value = (interrupts - obj->old) / (gfloat) DKP_WAKEUPS_POLL_INTERVAL_KERNEL;
+			obj->value = (interrupts - obj->old) / (gfloat) UP_WAKEUPS_POLL_INTERVAL_KERNEL;
 		obj->old = interrupts;
 skip:
 		g_ptr_array_unref (sections);
 	}
 
 	/* tell GUI we've changed */
-	dkp_wakeups_perhaps_data_changed (wakeups);
+	up_wakeups_perhaps_data_changed (wakeups);
 out:
 	g_free (data);
 	g_strfreev (lines);
@@ -451,10 +451,10 @@ out:
 }
 
 /**
- * dkp_wakeups_poll_userspace_cb:
+ * up_wakeups_poll_userspace_cb:
  **/
 static gboolean
-dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
+up_wakeups_poll_userspace_cb (UpWakeups *wakeups)
 {
 	guint i;
 	gboolean ret;
@@ -462,7 +462,7 @@ dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
 	gchar *data = NULL;
 	gchar **lines = NULL;
 	const gchar *string;
-	DkpWakeupsObj *obj;
+	UpWakeupsObj *obj;
 	GPtrArray *sections;
 	guint pid;
 	guint interrupts;
@@ -478,7 +478,7 @@ dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
 	}
 
 	/* get the data */
-	ret = g_file_get_contents (DKP_WAKEUPS_SOURCE_USERSPACE, &data, NULL, &error);
+	ret = g_file_get_contents (UP_WAKEUPS_SOURCE_USERSPACE, &data, NULL, &error);
 	if (!ret) {
 		egg_warning ("failed to get data: %s", error->message);
 		g_error_free (error);
@@ -497,7 +497,7 @@ dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
 			continue;
 
 		/* get sections */
-		sections = dkp_strsplit_complete_set (lines[i], " :", 4);
+		sections = up_strsplit_complete_set (lines[i], " :", 4);
 
 		/* get timeout */
 		if (strstr (lines[i], "Sample period:") != NULL) {
@@ -533,7 +533,7 @@ dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
 		/* get details */
 
 		/* save in database */
-		obj = dkp_wakeups_data_get_or_create (wakeups, pid);
+		obj = up_wakeups_data_get_or_create (wakeups, pid);
 		if (obj->details == NULL) {
 			/* get process name (truncated) */
 			string = g_ptr_array_index (sections, 2);
@@ -544,7 +544,7 @@ dkp_wakeups_poll_userspace_cb (DkpWakeups *wakeups)
 				obj->is_userspace = FALSE;
 			} else {
 				/* try to get a better command line */
-				obj->cmdline = dkp_wakeups_get_cmdline (pid);
+				obj->cmdline = up_wakeups_get_cmdline (pid);
 				if (obj->cmdline == NULL || obj->cmdline[0] == '\0')
 					obj->cmdline = g_strdup (string);
 				obj->is_userspace = TRUE;
@@ -560,7 +560,7 @@ skip:
 	}
 
 	/* tell GUI we've changed */
-	dkp_wakeups_perhaps_data_changed (wakeups);
+	up_wakeups_perhaps_data_changed (wakeups);
 out:
 	g_free (data);
 	g_strfreev (lines);
@@ -568,10 +568,10 @@ out:
 }
 
 /**
- * dkp_wakeups_timerstats_disable:
+ * up_wakeups_timerstats_disable:
  **/
 static gboolean
-dkp_wakeups_timerstats_disable (DkpWakeups *wakeups)
+up_wakeups_timerstats_disable (UpWakeups *wakeups)
 {
 	FILE *file;
 
@@ -595,7 +595,7 @@ dkp_wakeups_timerstats_disable (DkpWakeups *wakeups)
 		wakeups->priv->disable_id = 0;
 	}
 
-	file = fopen (DKP_WAKEUPS_SOURCE_USERSPACE, "w");
+	file = fopen (UP_WAKEUPS_SOURCE_USERSPACE, "w");
 	if (file == NULL)
 		return FALSE;
 	fprintf (file, "0\n");
@@ -605,30 +605,30 @@ dkp_wakeups_timerstats_disable (DkpWakeups *wakeups)
 }
 
 /**
- * dkp_wakeups_disable_cb:
+ * up_wakeups_disable_cb:
  **/
 static gboolean
-dkp_wakeups_disable_cb (DkpWakeups *wakeups)
+up_wakeups_disable_cb (UpWakeups *wakeups)
 {
 	egg_debug ("disabling timer stats as we are idle");
-	dkp_wakeups_timerstats_disable (wakeups);
+	up_wakeups_timerstats_disable (wakeups);
 
 	/* never repeat */
 	return FALSE;
 }
 
 /**
- * dkp_wakeups_timerstats_enable:
+ * up_wakeups_timerstats_enable:
  **/
 static gboolean
-dkp_wakeups_timerstats_enable (DkpWakeups *wakeups)
+up_wakeups_timerstats_enable (UpWakeups *wakeups)
 {
 	FILE *file;
 
 	/* reset timeout */
 	if (wakeups->priv->disable_id != 0)
 		g_source_remove (wakeups->priv->disable_id);
-	wakeups->priv->disable_id = g_timeout_add_seconds (DKP_WAKEUPS_DISABLE_INTERVAL, (GSourceFunc) dkp_wakeups_disable_cb, wakeups);
+	wakeups->priv->disable_id = g_timeout_add_seconds (UP_WAKEUPS_DISABLE_INTERVAL, (GSourceFunc) up_wakeups_disable_cb, wakeups);
 
 	/* already same state */
 	if (wakeups->priv->polling_enabled)
@@ -637,10 +637,10 @@ dkp_wakeups_timerstats_enable (DkpWakeups *wakeups)
 	egg_debug ("enabling timer stats");
 
 	/* setup polls */
-	wakeups->priv->poll_kernel_id = g_timeout_add_seconds (DKP_WAKEUPS_POLL_INTERVAL_KERNEL, (GSourceFunc) dkp_wakeups_poll_kernel_cb, wakeups);
-	wakeups->priv->poll_userspace_id = g_timeout_add_seconds (DKP_WAKEUPS_POLL_INTERVAL_USERSPACE, (GSourceFunc) dkp_wakeups_poll_userspace_cb, wakeups);
+	wakeups->priv->poll_kernel_id = g_timeout_add_seconds (UP_WAKEUPS_POLL_INTERVAL_KERNEL, (GSourceFunc) up_wakeups_poll_kernel_cb, wakeups);
+	wakeups->priv->poll_userspace_id = g_timeout_add_seconds (UP_WAKEUPS_POLL_INTERVAL_USERSPACE, (GSourceFunc) up_wakeups_poll_userspace_cb, wakeups);
 
-	file = fopen (DKP_WAKEUPS_SOURCE_USERSPACE, "w");
+	file = fopen (UP_WAKEUPS_SOURCE_USERSPACE, "w");
 	if (file == NULL)
 		return FALSE;
 	fprintf (file, "1\n");
@@ -650,14 +650,14 @@ dkp_wakeups_timerstats_enable (DkpWakeups *wakeups)
 }
 
 /**
- * dkp_wakeups_get_property:
+ * up_wakeups_get_property:
  **/
 static void
-dkp_wakeups_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
+up_wakeups_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
 {
-	DkpWakeups *wakeups;
+	UpWakeups *wakeups;
 
-	wakeups = DKP_WAKEUPS (object);
+	wakeups = UP_WAKEUPS (object);
 
 	switch (prop_id) {
 
@@ -672,25 +672,25 @@ dkp_wakeups_get_property (GObject *object, guint prop_id, GValue *value, GParamS
 }
 
 /**
- * dkp_wakeups_class_init:
+ * up_wakeups_class_init:
  **/
 static void
-dkp_wakeups_class_init (DkpWakeupsClass *klass)
+up_wakeups_class_init (UpWakeupsClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	object_class->finalize = dkp_wakeups_finalize;
-	object_class->get_property = dkp_wakeups_get_property;
+	object_class->finalize = up_wakeups_finalize;
+	object_class->get_property = up_wakeups_get_property;
 
 	signals [TOTAL_CHANGED] =
 		g_signal_new ("total-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (DkpWakeupsClass, total_changed),
+			      G_STRUCT_OFFSET (UpWakeupsClass, total_changed),
 			      NULL, NULL, g_cclosure_marshal_VOID__UINT,
 			      G_TYPE_NONE, 1, G_TYPE_UINT);
 	signals [DATA_CHANGED] =
 		g_signal_new ("data-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (DkpWakeupsClass, data_changed),
+			      G_STRUCT_OFFSET (UpWakeupsClass, data_changed),
 			      NULL, NULL, g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
 
@@ -703,21 +703,21 @@ dkp_wakeups_class_init (DkpWakeupsClass *klass)
 							       G_PARAM_READABLE));
 
 	/* introspection */
-	dbus_g_object_type_install_info (DKP_TYPE_WAKEUPS, &dbus_glib_dkp_wakeups_object_info);
+	dbus_g_object_type_install_info (UP_TYPE_WAKEUPS, &dbus_glib_up_wakeups_object_info);
 
-	g_type_class_add_private (klass, sizeof (DkpWakeupsPrivate));
+	g_type_class_add_private (klass, sizeof (UpWakeupsPrivate));
 }
 
 /**
- * dkp_wakeups_init:
+ * up_wakeups_init:
  **/
 static void
-dkp_wakeups_init (DkpWakeups *wakeups)
+up_wakeups_init (UpWakeups *wakeups)
 {
 	GError *error = NULL;
 
-	wakeups->priv = DKP_WAKEUPS_GET_PRIVATE (wakeups);
-	wakeups->priv->data = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_wakeups_obj_free);
+	wakeups->priv = UP_WAKEUPS_GET_PRIVATE (wakeups);
+	wakeups->priv->data = g_ptr_array_new_with_free_func ((GDestroyNotify) up_wakeups_obj_free);
 	wakeups->priv->total_old = 0;
 	wakeups->priv->total_ave = 0;
 	wakeups->priv->poll_userspace_id = 0;
@@ -733,8 +733,8 @@ dkp_wakeups_init (DkpWakeups *wakeups)
 	}
 
 	/* test if we have an interface */
-	if (g_file_test (DKP_WAKEUPS_SOURCE_KERNEL, G_FILE_TEST_EXISTS) ||
-	    g_file_test (DKP_WAKEUPS_SOURCE_KERNEL, G_FILE_TEST_EXISTS)) {
+	if (g_file_test (UP_WAKEUPS_SOURCE_KERNEL, G_FILE_TEST_EXISTS) ||
+	    g_file_test (UP_WAKEUPS_SOURCE_KERNEL, G_FILE_TEST_EXISTS)) {
 		wakeups->priv->has_capability = TRUE;
 	}
 
@@ -743,36 +743,36 @@ dkp_wakeups_init (DkpWakeups *wakeups)
 }
 
 /**
- * dkp_wakeups_finalize:
+ * up_wakeups_finalize:
  **/
 static void
-dkp_wakeups_finalize (GObject *object)
+up_wakeups_finalize (GObject *object)
 {
-	DkpWakeups *wakeups;
+	UpWakeups *wakeups;
 
 	g_return_if_fail (object != NULL);
-	g_return_if_fail (DKP_IS_WAKEUPS (object));
+	g_return_if_fail (UP_IS_WAKEUPS (object));
 
-	wakeups = DKP_WAKEUPS (object);
-	wakeups->priv = DKP_WAKEUPS_GET_PRIVATE (wakeups);
+	wakeups = UP_WAKEUPS (object);
+	wakeups->priv = UP_WAKEUPS_GET_PRIVATE (wakeups);
 
 	/* stop timerstats */
-	dkp_wakeups_timerstats_disable (wakeups);
+	up_wakeups_timerstats_disable (wakeups);
 
 	g_ptr_array_unref (wakeups->priv->data);
 
-	G_OBJECT_CLASS (dkp_wakeups_parent_class)->finalize (object);
+	G_OBJECT_CLASS (up_wakeups_parent_class)->finalize (object);
 }
 
 /**
- * dkp_wakeups_new:
+ * up_wakeups_new:
  **/
-DkpWakeups *
-dkp_wakeups_new (void)
+UpWakeups *
+up_wakeups_new (void)
 {
-	DkpWakeups *wakeups;
-	wakeups = g_object_new (DKP_TYPE_WAKEUPS, NULL);
-	return DKP_WAKEUPS (wakeups);
+	UpWakeups *wakeups;
+	wakeups = g_object_new (UP_TYPE_WAKEUPS, NULL);
+	return UP_WAKEUPS (wakeups);
 }
 
 /***************************************************************************
@@ -782,17 +782,17 @@ dkp_wakeups_new (void)
 #include "egg-test.h"
 
 void
-dkp_wakeups_test (gpointer user_data)
+up_wakeups_test (gpointer user_data)
 {
 	EggTest *test = (EggTest *) user_data;
-	DkpWakeups *wakeups;
+	UpWakeups *wakeups;
 
-	if (!egg_test_start (test, "DkpWakeups"))
+	if (!egg_test_start (test, "UpWakeups"))
 		return;
 
 	/************************************************************/
 	egg_test_title (test, "get instance");
-	wakeups = dkp_wakeups_new ();
+	wakeups = up_wakeups_new ();
 	egg_test_assert (test, wakeups != NULL);
 
 	/* unref */

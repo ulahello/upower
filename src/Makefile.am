@@ -54,7 +54,7 @@ up-qos-glue.h: org.freedesktop.DeviceKit.Power.QoS.xml Makefile.am
 	dbus-binding-tool --prefix=up_qos --mode=glib-server --output=up-qos-glue.h org.freedesktop.DeviceKit.Power.QoS.xml
 
 up-wakeups-glue.h: org.freedesktop.DeviceKit.Power.Wakeups.xml Makefile.am
-	dbus-binding-tool --prefix=dkp_wakeups --mode=glib-server --output=up-wakeups-glue.h org.freedesktop.DeviceKit.Power.Wakeups.xml
+	dbus-binding-tool --prefix=up_wakeups --mode=glib-server --output=up-wakeups-glue.h org.freedesktop.DeviceKit.Power.Wakeups.xml
 
 libexec_PROGRAMS = devkit-power-daemon
 

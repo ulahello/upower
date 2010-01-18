@@ -19,49 +19,49 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef __DKP_WAKEUPS_H
-#define __DKP_WAKEUPS_H
+#ifndef __UP_WAKEUPS_H
+#define __UP_WAKEUPS_H
 
 #include <glib-object.h>
 #include <dbus/dbus-glib.h>
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_WAKEUPS		(dkp_wakeups_get_type ())
-#define DKP_WAKEUPS(o)			(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_WAKEUPS, DkpWakeups))
-#define DKP_WAKEUPS_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_WAKEUPS, DkpWakeupsClass))
-#define DKP_IS_WAKEUPS(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_WAKEUPS))
-#define DKP_IS_WAKEUPS_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_WAKEUPS))
-#define DKP_WAKEUPS_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_WAKEUPS, DkpWakeupsClass))
+#define UP_TYPE_WAKEUPS		(up_wakeups_get_type ())
+#define UP_WAKEUPS(o)			(G_TYPE_CHECK_INSTANCE_CAST ((o), UP_TYPE_WAKEUPS, UpWakeups))
+#define UP_WAKEUPS_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), UP_TYPE_WAKEUPS, UpWakeupsClass))
+#define UP_IS_WAKEUPS(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), UP_TYPE_WAKEUPS))
+#define UP_IS_WAKEUPS_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), UP_TYPE_WAKEUPS))
+#define UP_WAKEUPS_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), UP_TYPE_WAKEUPS, UpWakeupsClass))
 
-typedef struct DkpWakeupsPrivate DkpWakeupsPrivate;
+typedef struct UpWakeupsPrivate UpWakeupsPrivate;
 
 typedef struct
 {
 	GObject		 	 parent;
-	DkpWakeupsPrivate	*priv;
-} DkpWakeups;
+	UpWakeupsPrivate	*priv;
+} UpWakeups;
 
 typedef struct
 {
 	GObjectClass	parent_class;
-	void		(* total_changed)		(DkpWakeups	*wakeups,
+	void		(* total_changed)		(UpWakeups	*wakeups,
 							 guint		 value);
-	void		(* data_changed)		(DkpWakeups	*wakeups);
-} DkpWakeupsClass;
+	void		(* data_changed)		(UpWakeups	*wakeups);
+} UpWakeupsClass;
 
-DkpWakeups	*dkp_wakeups_new			(void);
-void		 dkp_wakeups_test			(gpointer	 user_data);
+UpWakeups	*up_wakeups_new			(void);
+void		 up_wakeups_test			(gpointer	 user_data);
 
-GType		 dkp_wakeups_get_type			(void);
-gboolean	 dkp_wakeups_get_total			(DkpWakeups	*wakeups,
+GType		 up_wakeups_get_type			(void);
+gboolean	 up_wakeups_get_total			(UpWakeups	*wakeups,
 							 guint		*value,
 							 GError		**error);
-gboolean	 dkp_wakeups_get_data			(DkpWakeups	*wakeups,
+gboolean	 up_wakeups_get_data			(UpWakeups	*wakeups,
 							 GPtrArray	**requests,
 							 GError		**error);
 
 G_END_DECLS
 
-#endif	/* __DKP_WAKEUPS_H */
+#endif	/* __UP_WAKEUPS_H */
 
