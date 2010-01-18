@@ -9,4 +9,6 @@
 *.gcda
 *.gcno
 dkp-version.h
+*.gir
+*.typelib
 

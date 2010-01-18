@@ -17,17 +17,17 @@ noinst_LTLIBRARIES = libdkpshared.la
 endif
 
 libdkpshared_la_SOURCES =					\
-	dkp-acpi-native.c					\
-	dkp-acpi-native.h					\
-	dkp-backend-acpi.h					\
-	dkp-backend.c						\
-	dkp-devd.c						\
-	dkp-devd.h						\
-	dkp-device-supply.c					\
-	dkp-device-supply.h					\
-	dkp-native.c						\
-	dkp-util.c						\
-	dkp-util.h						\
+	up-acpi-native.c					\
+	up-acpi-native.h					\
+	up-backend-acpi.h					\
+	up-backend.c						\
+	up-devd.c						\
+	up-devd.h						\
+	up-device-supply.c					\
+	up-device-supply.h					\
+	up-native.c						\
+	up-util.c						\
+	up-util.h						\
 	$(BUILT_SOURCES)
 
 libdkpshared_la_CFLAGS =					\
@@ -37,7 +37,7 @@ libdkpshared_la_LIBADD =					\
 	-lkvm
 
 EXTRA_DIST =							\
-	dkp-acpi-native.vala					\
+	up-acpi-native.vala					\
 	TODO
 
 clean-local :

@@ -65,6 +65,14 @@ libdevkit_power_gobject_la_CFLAGS =				\
 	$(NULL)
 
 EXTRA_DIST =							\
+	up-client.h						\
+	up-device.h						\
+	up-enum.h						\
+	up-history-obj.h					\
+	up-qos-obj.h						\
+	up-stats-obj.h						\
+	up-wakeups-obj.h					\
+	up-wakeups.h						\
 	dkp-version.h.in
 
 CLEANFILES = $(BUILT_SOURCES)

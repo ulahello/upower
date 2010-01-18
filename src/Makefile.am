@@ -19,6 +19,7 @@ INCLUDES = \
 	-DEGG_VERBOSE="\"DKP_VERBOSE\""				\
 	-DEGG_LOGGING="\"DKP_LOGGING\""				\
 	-DEGG_CONSOLE="\"DKP_CONSOLE\""				\
+	-I$(top_srcdir)/libupower-glib				\
 	-I$(top_srcdir)/devkit-power-gobject			\
 	-I$(top_srcdir)						\
 	$(GIO_CFLAGS)						\
@@ -30,30 +31,30 @@ INCLUDES = \
 DEVKIT_POWER_LIBS = $(top_builddir)/devkit-power-gobject/libdevkit-power-gobject.la
 
 BUILT_SOURCES =							\
-	dkp-daemon-glue.h					\
-	dkp-device-glue.h					\
-	dkp-qos-glue.h						\
-	dkp-wakeups-glue.h					\
-	dkp-marshal.h						\
-	dkp-marshal.c
+	up-daemon-glue.h					\
+	up-device-glue.h					\
+	up-qos-glue.h						\
+	up-wakeups-glue.h					\
+	up-marshal.h						\
+	up-marshal.c
 
-dkp-marshal.h: dkp-marshal.list
+up-marshal.h: up-marshal.list
 	glib-genmarshal $< --prefix=dkp_marshal --header > $@
 
-dkp-marshal.c: dkp-marshal.list
-	echo "#include \"dkp-marshal.h\"" > $@ && glib-genmarshal $< --prefix=dkp_marshal --body >> $@
+up-marshal.c: up-marshal.list
+	echo "#include \"up-marshal.h\"" > $@ && glib-genmarshal $< --prefix=dkp_marshal --body >> $@
 
-dkp-daemon-glue.h: org.freedesktop.DeviceKit.Power.xml Makefile.am
-	dbus-binding-tool --prefix=dkp_daemon --mode=glib-server --output=dkp-daemon-glue.h org.freedesktop.DeviceKit.Power.xml
+up-daemon-glue.h: org.freedesktop.DeviceKit.Power.xml Makefile.am
+	dbus-binding-tool --prefix=dkp_daemon --mode=glib-server --output=up-daemon-glue.h org.freedesktop.DeviceKit.Power.xml
 
-dkp-device-glue.h: org.freedesktop.DeviceKit.Power.Device.xml Makefile.am
-	dbus-binding-tool --prefix=dkp_device --mode=glib-server --output=dkp-device-glue.h org.freedesktop.DeviceKit.Power.Device.xml
+up-device-glue.h: org.freedesktop.DeviceKit.Power.Device.xml Makefile.am
+	dbus-binding-tool --prefix=dkp_device --mode=glib-server --output=up-device-glue.h org.freedesktop.DeviceKit.Power.Device.xml
 
-dkp-qos-glue.h: org.freedesktop.DeviceKit.Power.QoS.xml Makefile.am
-	dbus-binding-tool --prefix=dkp_qos --mode=glib-server --output=dkp-qos-glue.h org.freedesktop.DeviceKit.Power.QoS.xml
+up-qos-glue.h: org.freedesktop.DeviceKit.Power.QoS.xml Makefile.am
+	dbus-binding-tool --prefix=dkp_qos --mode=glib-server --output=up-qos-glue.h org.freedesktop.DeviceKit.Power.QoS.xml
 
-dkp-wakeups-glue.h: org.freedesktop.DeviceKit.Power.Wakeups.xml Makefile.am
-	dbus-binding-tool --prefix=dkp_wakeups --mode=glib-server --output=dkp-wakeups-glue.h org.freedesktop.DeviceKit.Power.Wakeups.xml
+up-wakeups-glue.h: org.freedesktop.DeviceKit.Power.Wakeups.xml Makefile.am
+	dbus-binding-tool --prefix=dkp_wakeups --mode=glib-server --output=up-wakeups-glue.h org.freedesktop.DeviceKit.Power.Wakeups.xml
 
 libexec_PROGRAMS = devkit-power-daemon
 
@@ -67,28 +68,28 @@ dbusif_DATA =							\
 devkit_power_daemon_SOURCES =					\
 	egg-debug.c						\
 	egg-debug.h						\
-	dkp-polkit.h						\
-	dkp-polkit.c						\
-	dkp-daemon.h						\
-	dkp-daemon.c						\
-	dkp-device.h						\
-	dkp-device.c						\
-	dkp-device-list.h					\
-	dkp-device-list.c					\
-	dkp-qos.h						\
-	dkp-qos.c						\
-	dkp-wakeups.h						\
-	dkp-wakeups.c						\
-	dkp-history.h						\
-	dkp-history.c						\
-	dkp-backend.h						\
-	dkp-native.h						\
-	dkp-main.c						\
+	up-polkit.h						\
+	up-polkit.c						\
+	up-daemon.h						\
+	up-daemon.c						\
+	up-device.h						\
+	up-device.c						\
+	up-device-list.h					\
+	up-device-list.c					\
+	up-qos.h						\
+	up-qos.c						\
+	up-wakeups.h						\
+	up-wakeups.c						\
+	up-history.h						\
+	up-history.c						\
+	up-backend.h						\
+	up-native.h						\
+	up-main.c						\
 	$(BUILT_SOURCES)
 
 devkit_power_daemon_CPPFLAGS =					\
 	-I$(top_srcdir)/src					\
-	-DG_LOG_DOMAIN=\"dkp-daemon\"				\
+	-DG_LOG_DOMAIN=\"up-daemon\"				\
 	$(DISABLE_DEPRECATED)					\
 	$(AM_CPPFLAGS)
 
@@ -123,33 +124,33 @@ devkit_power_daemon_CFLAGS =					\
 
 if EGG_BUILD_TESTS
 check_PROGRAMS =						\
-	dkp-self-test
+	up-self-test
 
-dkp_self_test_SOURCES =						\
+up_self_test_SOURCES =						\
 	egg-test.h						\
 	egg-test.c						\
 	egg-debug.c						\
 	egg-debug.h						\
-	dkp-self-test.c						\
-	dkp-polkit.h						\
-	dkp-polkit.c						\
-	dkp-daemon.h						\
-	dkp-daemon.c						\
-	dkp-device.h						\
-	dkp-device.c						\
-	dkp-device-list.h					\
-	dkp-device-list.c					\
-	dkp-qos.h						\
-	dkp-qos.c						\
-	dkp-wakeups.h						\
-	dkp-wakeups.c						\
-	dkp-history.h						\
-	dkp-history.c						\
-	dkp-backend.h						\
-	dkp-native.h						\
+	up-self-test.c						\
+	up-polkit.h						\
+	up-polkit.c						\
+	up-daemon.h						\
+	up-daemon.c						\
+	up-device.h						\
+	up-device.c						\
+	up-device-list.h					\
+	up-device-list.c					\
+	up-qos.h						\
+	up-qos.c						\
+	up-wakeups.h						\
+	up-wakeups.c						\
+	up-history.h						\
+	up-history.c						\
+	up-backend.h						\
+	up-native.h						\
 	$(BUILT_SOURCES)
 
-dkp_self_test_LDADD =						\
+up_self_test_LDADD =						\
 	-lm							\
 	dummy/libdkpshared.la					\
 	$(GLIB_LIBS)						\
@@ -158,9 +159,9 @@ dkp_self_test_LDADD =						\
 	$(DEVKIT_POWER_LIBS)					\
 	$(POLKIT_LIBS)
 
-dkp_self_test_CFLAGS = -DEGG_TEST $(AM_CFLAGS) $(WARNINGFLAGS_C)
+up_self_test_CFLAGS = -DEGG_TEST $(AM_CFLAGS) $(WARNINGFLAGS_C)
 
-TESTS = dkp-self-test
+TESTS = up-self-test
 endif
 
 servicedir       = $(datadir)/dbus-1/system-services
@@ -189,7 +190,7 @@ EXTRA_DIST =							\
 	org.freedesktop.DeviceKit.Power.Device.xml		\
 	org.freedesktop.DeviceKit.Power.QoS.xml			\
 	org.freedesktop.DeviceKit.Power.Wakeups.xml		\
-	dkp-marshal.list					\
+	up-marshal.list						\
 	$(service_in_files)					\
 	$(dbusconf_in_files)
 

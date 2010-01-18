@@ -16,8 +16,8 @@ INCLUDES = \
 noinst_LTLIBRARIES = libdkpshared.la
 
 libdkpshared_la_SOURCES =					\
-	dkp-backend.c						\
-	dkp-native.c						\
+	up-backend.c						\
+	up-native.c						\
 	$(BUILT_SOURCES)
 
 clean-local :

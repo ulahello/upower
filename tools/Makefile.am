@@ -24,24 +24,24 @@ INCLUDES = \
 DEVKIT_POWER_LIBS = $(top_builddir)/devkit-power-gobject/libdevkit-power-gobject.la
 
 BUILT_SOURCES =						\
-	dkp-daemon-glue.h				\
-	dkp-marshal.h		dkp-marshal.c
+	up-daemon-glue.h				\
+	up-marshal.h		up-marshal.c
 
-dkp-marshal.h: $(top_srcdir)/src/dkp-marshal.list
+up-marshal.h: $(top_srcdir)/src/up-marshal.list
 	glib-genmarshal $< --prefix=devkit_power_marshal --header > $@
 
-dkp-marshal.c: $(top_srcdir)/src/dkp-marshal.list
-	echo "#include \"dkp-marshal.h\"" > $@ && glib-genmarshal $< --prefix=devkit_power_marshal --body >> $@
+up-marshal.c: $(top_srcdir)/src/up-marshal.list
+	echo "#include \"up-marshal.h\"" > $@ && glib-genmarshal $< --prefix=devkit_power_marshal --body >> $@
 
-dkp-daemon-glue.h: $(top_srcdir)/src/org.freedesktop.DeviceKit.Power.xml Makefile.am
-	dbus-binding-tool --prefix=devkit_power_daemon --mode=glib-client --output=dkp-daemon-glue.h $(top_srcdir)/src/org.freedesktop.DeviceKit.Power.xml
+up-daemon-glue.h: $(top_srcdir)/src/org.freedesktop.DeviceKit.Power.xml Makefile.am
+	dbus-binding-tool --prefix=devkit_power_daemon --mode=glib-client --output=up-daemon-glue.h $(top_srcdir)/src/org.freedesktop.DeviceKit.Power.xml
 
 bin_PROGRAMS = devkit-power
 
 devkit_power_SOURCES = 					\
 	egg-debug.c					\
 	egg-debug.h					\
-	dkp-tool.c					\
+	up-tool.c					\
 	$(BUILT_SOURCES)
 
 devkit_power_CPPFLAGS = 				\

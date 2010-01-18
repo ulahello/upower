@@ -20,18 +20,18 @@ noinst_LTLIBRARIES = libdkpshared.la
 endif
 
 libdkpshared_la_SOURCES =					\
-	dkp-device-supply.c					\
-	dkp-device-supply.h					\
-	dkp-device-csr.c					\
-	dkp-device-csr.h					\
-	dkp-device-hid.c					\
-	dkp-device-hid.h					\
-	dkp-device-wup.c					\
-	dkp-device-wup.h					\
-	dkp-input.c						\
-	dkp-input.h						\
-	dkp-backend.c						\
-	dkp-native.c						\
+	up-device-supply.c					\
+	up-device-supply.h					\
+	up-device-csr.c						\
+	up-device-csr.h						\
+	up-device-hid.c						\
+	up-device-hid.h						\
+	up-device-wup.c						\
+	up-device-wup.h						\
+	up-input.c						\
+	up-input.h						\
+	up-backend.c						\
+	up-native.c						\
 	sysfs-utils.c						\
 	sysfs-utils.h						\
 	$(BUILT_SOURCES)
