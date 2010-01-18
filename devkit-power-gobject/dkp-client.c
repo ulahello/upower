@@ -138,8 +138,7 @@ dkp_client_enumerate_devices_private (DkpClient *client, GError **error)
 				 G_TYPE_INVALID);
 	if (!ret) {
 		g_warning ("Couldn't enumerate devices: %s", error_local->message);
-		if (error != NULL)
-			*error = g_error_new (1, 0, "%s", error_local->message);
+		g_set_error (error, 1, 0, "%s", error_local->message);
 		g_error_free (error_local);
 	}
 	return devices;
@@ -178,8 +177,7 @@ dkp_client_suspend (DkpClient *client, GError **error)
 
 		/* an actual error */
 		g_warning ("Couldn't suspend: %s", error_local->message);
-		if (error != NULL)
-			*error = g_error_new (1, 0, "%s", error_local->message);
+		g_set_error (error, 1, 0, "%s", error_local->message);
 	}
 out:
 	if (error_local != NULL)
@@ -218,8 +216,7 @@ dkp_client_hibernate (DkpClient *client, GError **error)
 
 		/* an actual error */
 		g_warning ("Couldn't hibernate: %s", error_local->message);
-		if (error != NULL)
-			*error = g_error_new (1, 0, "%s", error_local->message);
+		g_set_error (error, 1, 0, "%s", error_local->message);
 	}
 out:
 	if (error_local != NULL)

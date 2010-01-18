@@ -171,7 +171,7 @@ dkp_wakeups_get_total (DkpWakeups *wakeups, guint *value, GError **error)
 
 	/* no capability */
 	if (!wakeups->priv->has_capability) {
-		*error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "no hardware support");
+		g_set_error_literal (error, DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "no hardware support");
 		return FALSE;
 	}
 
@@ -180,7 +180,7 @@ dkp_wakeups_get_total (DkpWakeups *wakeups, guint *value, GError **error)
 
 	/* no data */
 	if (!ret) {
-		*error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "cannot enable timerstats");
+		g_set_error_literal (error, DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "cannot enable timerstats");
 		return FALSE;
 	}
 
@@ -201,7 +201,7 @@ dkp_wakeups_get_data (DkpWakeups *wakeups, GPtrArray **data, GError **error)
 
 	/* no capability */
 	if (!wakeups->priv->has_capability) {
-		*error = g_error_new (DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "no hardware support");
+		g_set_error_literal (error, DKP_DAEMON_ERROR, DKP_DAEMON_ERROR_GENERAL, "no hardware support");
 		return FALSE;
 	}
 
