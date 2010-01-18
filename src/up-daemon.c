@@ -71,7 +71,7 @@ struct UpDaemonPrivate
 {
 	DBusGConnection		*connection;
 	DBusGProxy		*proxy;
-	DkpPolkit		*polkit;
+	UpPolkit		*polkit;
 	UpBackend		*backend;
 	UpDeviceList		*power_devices;
 	gboolean		 on_battery;
@@ -514,11 +514,11 @@ up_daemon_suspend (UpDaemon *daemon, DBusGMethodInvocation *context)
 		goto out;
 	}
 
-	subject = dkp_polkit_get_subject (daemon->priv->polkit, context);
+	subject = up_polkit_get_subject (daemon->priv->polkit, context);
 	if (subject == NULL)
 		goto out;
 
-	if (!dkp_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.devicekit.power.suspend", context))
+	if (!up_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.devicekit.power.suspend", context))
 		goto out;
 
 	ret = g_spawn_command_line_sync ("/usr/sbin/pm-suspend", &stdout, &stderr, NULL, &error_local);
@@ -582,11 +582,11 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 		goto out;
 	}
 
-	subject = dkp_polkit_get_subject (daemon->priv->polkit, context);
+	subject = up_polkit_get_subject (daemon->priv->polkit, context);
 	if (subject == NULL)
 		goto out;
 
-	if (!dkp_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.devicekit.power.hibernate", context))
+	if (!up_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.devicekit.power.hibernate", context))
 		goto out;
 
 	ret = g_spawn_command_line_sync ("/usr/sbin/pm-hibernate", &stdout, &stderr, NULL, &error_local);
@@ -890,7 +890,7 @@ up_daemon_init (UpDaemon *daemon)
 	gfloat waterline;
 
 	daemon->priv = UP_DAEMON_GET_PRIVATE (daemon);
-	daemon->priv->polkit = dkp_polkit_new ();
+	daemon->priv->polkit = up_polkit_new ();
 	daemon->priv->lid_is_present = FALSE;
 	daemon->priv->lid_is_closed = FALSE;
 	daemon->priv->kernel_can_suspend = FALSE;

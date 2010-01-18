@@ -35,22 +35,22 @@
 #include "up-polkit.h"
 #include "up-daemon.h"
 
-#define DKP_POLKIT_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_POLKIT, DkpPolkitPrivate))
+#define UP_POLKIT_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_POLKIT, UpPolkitPrivate))
 
-struct DkpPolkitPrivate
+struct UpPolkitPrivate
 {
 	DBusGConnection		*connection;
 	PolkitAuthority         *authority;
 };
 
-G_DEFINE_TYPE (DkpPolkit, dkp_polkit, G_TYPE_OBJECT)
-static gpointer dkp_polkit_object = NULL;
+G_DEFINE_TYPE (UpPolkit, up_polkit, G_TYPE_OBJECT)
+static gpointer up_polkit_object = NULL;
 
 /**
- * dkp_polkit_get_subject:
+ * up_polkit_get_subject:
  **/
 PolkitSubject *
-dkp_polkit_get_subject (DkpPolkit *polkit, DBusGMethodInvocation *context)
+up_polkit_get_subject (UpPolkit *polkit, DBusGMethodInvocation *context)
 {
 	const gchar *sender;
 	PolkitSubject *subject;
@@ -62,10 +62,10 @@ dkp_polkit_get_subject (DkpPolkit *polkit, DBusGMethodInvocation *context)
 }
 
 /**
- * dkp_polkit_check_auth:
+ * up_polkit_check_auth:
  **/
 gboolean
-dkp_polkit_check_auth (DkpPolkit *polkit, PolkitSubject *subject, const gchar *action_id, DBusGMethodInvocation *context)
+up_polkit_check_auth (UpPolkit *polkit, PolkitSubject *subject, const gchar *action_id, DBusGMethodInvocation *context)
 {
 	gboolean ret = FALSE;
 	GError *error;
@@ -97,10 +97,10 @@ out:
 }
 
 /**
- * dkp_polkit_get_uid:
+ * up_polkit_get_uid:
  **/
 gboolean
-dkp_polkit_get_uid (DkpPolkit *polkit, PolkitSubject *subject, uid_t *uid)
+up_polkit_get_uid (UpPolkit *polkit, PolkitSubject *subject, uid_t *uid)
 {
 	DBusConnection *connection;
 	const gchar *name;
@@ -117,10 +117,10 @@ dkp_polkit_get_uid (DkpPolkit *polkit, PolkitSubject *subject, uid_t *uid)
 }
 
 /**
- * dkp_polkit_get_pid:
+ * up_polkit_get_pid:
  **/
 gboolean
-dkp_polkit_get_pid (DkpPolkit *polkit, PolkitSubject *subject, pid_t *pid)
+up_polkit_get_pid (UpPolkit *polkit, PolkitSubject *subject, pid_t *pid)
 {
 	gboolean ret = FALSE;
 	GError *error = NULL;
@@ -162,46 +162,46 @@ out:
 }
 
 /**
- * dkp_polkit_finalize:
+ * up_polkit_finalize:
  **/
 static void
-dkp_polkit_finalize (GObject *object)
+up_polkit_finalize (GObject *object)
 {
-	DkpPolkit *polkit;
-	g_return_if_fail (DKP_IS_POLKIT (object));
-	polkit = DKP_POLKIT (object);
+	UpPolkit *polkit;
+	g_return_if_fail (UP_IS_POLKIT (object));
+	polkit = UP_POLKIT (object);
 
 	if (polkit->priv->connection != NULL)
 		dbus_g_connection_unref (polkit->priv->connection);
 	g_object_unref (polkit->priv->authority);
 
-	G_OBJECT_CLASS (dkp_polkit_parent_class)->finalize (object);
+	G_OBJECT_CLASS (up_polkit_parent_class)->finalize (object);
 }
 
 /**
- * dkp_polkit_class_init:
+ * up_polkit_class_init:
  **/
 static void
-dkp_polkit_class_init (DkpPolkitClass *klass)
+up_polkit_class_init (UpPolkitClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	object_class->finalize = dkp_polkit_finalize;
-	g_type_class_add_private (klass, sizeof (DkpPolkitPrivate));
+	object_class->finalize = up_polkit_finalize;
+	g_type_class_add_private (klass, sizeof (UpPolkitPrivate));
 }
 
 /**
- * dkp_polkit_init:
+ * up_polkit_init:
  *
  * initializes the polkit class. NOTE: We expect polkit objects
  * to *NOT* be removed or added during the session.
  * We only control the first polkit object if there are more than one.
  **/
 static void
-dkp_polkit_init (DkpPolkit *polkit)
+up_polkit_init (UpPolkit *polkit)
 {
 	GError *error = NULL;
 
-	polkit->priv = DKP_POLKIT_GET_PRIVATE (polkit);
+	polkit->priv = UP_POLKIT_GET_PRIVATE (polkit);
 
 	polkit->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (polkit->priv->connection == NULL) {
@@ -217,19 +217,19 @@ out:
 }
 
 /**
- * dkp_polkit_new:
+ * up_polkit_new:
  * Return value: A new polkit class instance.
  **/
-DkpPolkit *
-dkp_polkit_new (void)
+UpPolkit *
+up_polkit_new (void)
 {
-	if (dkp_polkit_object != NULL) {
-		g_object_ref (dkp_polkit_object);
+	if (up_polkit_object != NULL) {
+		g_object_ref (up_polkit_object);
 	} else {
-		dkp_polkit_object = g_object_new (DKP_TYPE_POLKIT, NULL);
-		g_object_add_weak_pointer (dkp_polkit_object, &dkp_polkit_object);
+		up_polkit_object = g_object_new (UP_TYPE_POLKIT, NULL);
+		g_object_add_weak_pointer (up_polkit_object, &up_polkit_object);
 	}
-	return DKP_POLKIT (dkp_polkit_object);
+	return UP_POLKIT (up_polkit_object);
 }
 
 /***************************************************************************
@@ -239,17 +239,17 @@ dkp_polkit_new (void)
 #include "egg-test.h"
 
 void
-dkp_polkit_test (gpointer user_data)
+up_polkit_test (gpointer user_data)
 {
 	EggTest *test = (EggTest *) user_data;
-	DkpPolkit *polkit;
+	UpPolkit *polkit;
 
-	if (!egg_test_start (test, "DkpPolkit"))
+	if (!egg_test_start (test, "UpPolkit"))
 		return;
 
 	/************************************************************/
 	egg_test_title (test, "get instance");
-	polkit = dkp_polkit_new ();
+	polkit = up_polkit_new ();
 	egg_test_assert (test, polkit != NULL);
 
 	/* unref */

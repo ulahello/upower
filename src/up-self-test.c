@@ -50,7 +50,7 @@ main (int argc, char **argv)
 	up_device_list_test (test);
 	dkp_history_test (test);
 	dkp_native_test (test);
-	dkp_polkit_test (test);
+	up_polkit_test (test);
 	dkp_qos_test (test);
 	dkp_wakeups_test (test);
 	up_daemon_test (test);

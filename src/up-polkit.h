@@ -19,52 +19,52 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef __DKP_POLKIT_H
-#define __DKP_POLKIT_H
+#ifndef __UP_POLKIT_H
+#define __UP_POLKIT_H
 
 #include <glib-object.h>
 #include <polkit/polkit.h>
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_POLKIT		(dkp_polkit_get_type ())
-#define DKP_POLKIT(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_POLKIT, DkpPolkit))
-#define DKP_POLKIT_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_POLKIT, DkpPolkitClass))
-#define DKP_IS_POLKIT(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_POLKIT))
-#define DKP_IS_POLKIT_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_POLKIT))
-#define DKP_POLKIT_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_POLKIT, DkpPolkitClass))
+#define UP_TYPE_POLKIT		(up_polkit_get_type ())
+#define UP_POLKIT(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), UP_TYPE_POLKIT, UpPolkit))
+#define UP_POLKIT_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), UP_TYPE_POLKIT, UpPolkitClass))
+#define UP_IS_POLKIT(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), UP_TYPE_POLKIT))
+#define UP_IS_POLKIT_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), UP_TYPE_POLKIT))
+#define UP_POLKIT_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), UP_TYPE_POLKIT, UpPolkitClass))
 
-typedef struct DkpPolkitPrivate DkpPolkitPrivate;
-
-typedef struct
-{
-	GObject			 parent;
-	DkpPolkitPrivate	*priv;
-} DkpPolkit;
+typedef struct UpPolkitPrivate UpPolkitPrivate;
 
 typedef struct
 {
-	GObjectClass		 parent_class;
-} DkpPolkitClass;
+	GObject parent;
+	UpPolkitPrivate	*priv;
+} UpPolkit;
 
-GType		 dkp_polkit_get_type		(void);
-DkpPolkit	*dkp_polkit_new			(void);
-void		 dkp_polkit_test		(gpointer		 user_data);
+typedef struct
+{
+	GObjectClass parent_class;
+} UpPolkitClass;
 
-PolkitSubject	*dkp_polkit_get_subject		(DkpPolkit		*polkit,
+GType		 up_polkit_get_type		(void);
+UpPolkit	*up_polkit_new			(void);
+void		 up_polkit_test			(gpointer		 user_data);
+
+PolkitSubject	*up_polkit_get_subject		(UpPolkit		*polkit,
 						 DBusGMethodInvocation	*context);
-gboolean	 dkp_polkit_check_auth		(DkpPolkit		*polkit,
+gboolean	 up_polkit_check_auth		(UpPolkit		*polkit,
 						 PolkitSubject		*subject,
 						 const gchar		*action_id,
 						 DBusGMethodInvocation	*context);
-gboolean         dkp_polkit_get_uid             (DkpPolkit              *polkit,
+gboolean         up_polkit_get_uid		(UpPolkit              *polkit,
                                                  PolkitSubject          *subject,
                                                  uid_t                  *uid);
-gboolean         dkp_polkit_get_pid             (DkpPolkit              *polkit,
+gboolean         up_polkit_get_pid		(UpPolkit              *polkit,
                                                  PolkitSubject          *subject,
                                                  pid_t                  *pid);
 
 G_END_DECLS
 
-#endif /* __DKP_POLKIT_H */
+#endif /* __UP_POLKIT_H */
 

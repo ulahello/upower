@@ -62,7 +62,7 @@ struct DkpQosPrivate
 	gint			 fd[DKP_QOS_TYPE_LAST];
 	gint			 last[DKP_QOS_TYPE_LAST];
 	gint			 minimum[DKP_QOS_TYPE_LAST];
-	DkpPolkit		*polkit;
+	UpPolkit		*polkit;
 	DBusGConnection		*connection;
 	DBusGProxy		*proxy;
 };
@@ -271,7 +271,7 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	}
 
 	/* get the subject */
-	subject = dkp_polkit_get_subject (qos->priv->polkit, context);
+	subject = up_polkit_get_subject (qos->priv->polkit, context);
 	if (subject == NULL)
 		goto out;
 
@@ -280,11 +280,11 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 		auth = "org.freedesktop.devicekit.power.qos.request-latency-persistent";
 	else
 		auth = "org.freedesktop.devicekit.power.qos.request-latency";
-	if (!dkp_polkit_check_auth (qos->priv->polkit, subject, auth, context))
+	if (!up_polkit_check_auth (qos->priv->polkit, subject, auth, context))
 		goto out;
 
 	/* get uid */
-	retval = dkp_polkit_get_uid (qos->priv->polkit, subject, &uid);
+	retval = up_polkit_get_uid (qos->priv->polkit, subject, &uid);
 	if (!retval) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "cannot get UID");
 		dbus_g_method_return_error (context, error);
@@ -292,7 +292,7 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	}
 
 	/* get pid */
-	retval = dkp_polkit_get_pid (qos->priv->polkit, subject, &pid);
+	retval = up_polkit_get_pid (qos->priv->polkit, subject, &pid);
 	if (!retval) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "cannot get PID");
 		dbus_g_method_return_error (context, error);
@@ -377,10 +377,10 @@ dkp_qos_cancel_request (DkpQos *qos, guint cookie, DBusGMethodInvocation *contex
 
 	/* are we not the sender? */
 	if (g_strcmp0 (sender, obj->sender) != 0) {
-		subject = dkp_polkit_get_subject (qos->priv->polkit, context);
+		subject = up_polkit_get_subject (qos->priv->polkit, context);
 		if (subject == NULL)
 			goto out;
-		if (!dkp_polkit_check_auth (qos->priv->polkit, subject, "org.freedesktop.devicekit.power.qos.cancel-request", context))
+		if (!up_polkit_check_auth (qos->priv->polkit, subject, "org.freedesktop.devicekit.power.qos.cancel-request", context))
 			goto out;
 	}
 
@@ -555,7 +555,7 @@ dkp_qos_init (DkpQos *qos)
 	GError *error = NULL;
 
 	qos->priv = DKP_QOS_GET_PRIVATE (qos);
-	qos->priv->polkit = dkp_polkit_new ();
+	qos->priv->polkit = up_polkit_new ();
 	qos->priv->data = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_qos_free_data_obj);
 	/* TODO: need to load persistent values */
 
