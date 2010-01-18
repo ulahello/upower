@@ -59,9 +59,9 @@ static void     dkp_qos_finalize   (GObject	*object);
 struct DkpQosPrivate
 {
 	GPtrArray		*data;
-	gint			 fd[DKP_QOS_TYPE_LAST];
-	gint			 last[DKP_QOS_TYPE_LAST];
-	gint			 minimum[DKP_QOS_TYPE_LAST];
+	gint			 fd[UP_QOS_TYPE_LAST];
+	gint			 last[UP_QOS_TYPE_LAST];
+	gint			 minimum[UP_QOS_TYPE_LAST];
 	UpPolkit		*polkit;
 	DBusGConnection		*connection;
 	DBusGProxy		*proxy;
@@ -256,7 +256,7 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 
 	/* get correct data */
 	type = dkp_qos_type_from_text (type_text);
-	if (type == DKP_QOS_TYPE_UNKNOWN) {
+	if (type == UP_QOS_TYPE_UNKNOWN) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		dbus_g_method_return_error (context, error);
 		goto out;
@@ -411,7 +411,7 @@ dkp_qos_get_latency (DkpQos *qos, const gchar *type_text, gint *value, GError **
 
 	/* get correct data */
 	type = dkp_qos_type_from_text (type_text);
-	if (type == DKP_QOS_TYPE_UNKNOWN) {
+	if (type == UP_QOS_TYPE_UNKNOWN) {
 		g_set_error (error, UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		return FALSE;
 	}
@@ -432,7 +432,7 @@ dkp_qos_set_minimum_latency (DkpQos *qos, const gchar *type_text, gint value, DB
 
 	/* type valid? */
 	type = dkp_qos_type_from_text (type_text);
-	if (type == DKP_QOS_TYPE_UNKNOWN) {
+	if (type == UP_QOS_TYPE_UNKNOWN) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		dbus_g_method_return_error (context, error);
 		return;
@@ -560,18 +560,18 @@ dkp_qos_init (DkpQos *qos)
 	/* TODO: need to load persistent values */
 
 	/* setup lowest */
-	for (i=0; i<DKP_QOS_TYPE_LAST; i++)
+	for (i=0; i<UP_QOS_TYPE_LAST; i++)
 		qos->priv->last[i] = dkp_qos_get_lowest (qos, i);
 
 	/* setup minimum */
-	for (i=0; i<DKP_QOS_TYPE_LAST; i++)
+	for (i=0; i<UP_QOS_TYPE_LAST; i++)
 		qos->priv->minimum[i] = -1;
 
-	qos->priv->fd[DKP_QOS_TYPE_CPU_DMA] = open ("/dev/cpu_dma_latency", O_WRONLY);
-	if (qos->priv->fd[DKP_QOS_TYPE_CPU_DMA] < 0)
+	qos->priv->fd[UP_QOS_TYPE_CPU_DMA] = open ("/dev/cpu_dma_latency", O_WRONLY);
+	if (qos->priv->fd[UP_QOS_TYPE_CPU_DMA] < 0)
 		egg_warning ("cannot open cpu_dma device file");
-	qos->priv->fd[DKP_QOS_TYPE_NETWORK] = open ("/dev/network_latency", O_WRONLY);
-	if (qos->priv->fd[DKP_QOS_TYPE_NETWORK] < 0)
+	qos->priv->fd[UP_QOS_TYPE_NETWORK] = open ("/dev/network_latency", O_WRONLY);
+	if (qos->priv->fd[UP_QOS_TYPE_NETWORK] < 0)
 		egg_warning ("cannot open network device file");
 
 	qos->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
@@ -609,7 +609,7 @@ dkp_qos_finalize (GObject *object)
 	qos->priv = DKP_QOS_GET_PRIVATE (qos);
 
 	/* close files */
-	for (i=0; i<DKP_QOS_TYPE_LAST; i++) {
+	for (i=0; i<UP_QOS_TYPE_LAST; i++) {
 		if (qos->priv->fd[i] > 0)
 			close (qos->priv->fd[i]);
 	}

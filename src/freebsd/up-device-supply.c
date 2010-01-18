@@ -68,22 +68,22 @@ static UpDeviceTechnology
 up_device_supply_convert_device_technology (const gchar *type)
 {
 	if (type == NULL)
-		return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
+		return UP_DEVICE_TECHNOLOGY_UNKNOWN;
 	if (g_ascii_strcasecmp (type, "li-ion") == 0 ||
 	    g_ascii_strcasecmp (type, "lion") == 0)
-		return DKP_DEVICE_TECHNOLOGY_LITHIUM_ION;
+		return UP_DEVICE_TECHNOLOGY_LITHIUM_ION;
 	if (g_ascii_strcasecmp (type, "pb") == 0 ||
 	    g_ascii_strcasecmp (type, "pbac") == 0)
-		return DKP_DEVICE_TECHNOLOGY_LEAD_ACID;
+		return UP_DEVICE_TECHNOLOGY_LEAD_ACID;
 	if (g_ascii_strcasecmp (type, "lip") == 0 ||
 	    g_ascii_strcasecmp (type, "lipo") == 0 ||
 	    g_ascii_strcasecmp (type, "li-poly") == 0)
-		return DKP_DEVICE_TECHNOLOGY_LITHIUM_POLYMER;
+		return UP_DEVICE_TECHNOLOGY_LITHIUM_POLYMER;
 	if (g_ascii_strcasecmp (type, "nimh") == 0)
-		return DKP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE;
+		return UP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE;
 	if (g_ascii_strcasecmp (type, "lifo") == 0)
-		return DKP_DEVICE_TECHNOLOGY_LITHIUM_IRON_PHOSPHATE;
-	return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
+		return UP_DEVICE_TECHNOLOGY_LITHIUM_IRON_PHOSPHATE;
+	return UP_DEVICE_TECHNOLOGY_UNKNOWN;
 }
 
 /**
@@ -105,7 +105,7 @@ up_device_supply_reset_values (UpDevice *device)
 		      "is-rechargeable", FALSE,
 		      "has-history", FALSE,
 		      "has-statistics", FALSE,
-		      "state", DKP_DEVICE_STATE_UNKNOWN,
+		      "state", UP_DEVICE_STATE_UNKNOWN,
 		      "capacity", (gdouble) 0.0,
 		      "energy-empty", (gdouble) 0.0,
 		      "energy-full", (gdouble) 0.0,
@@ -115,7 +115,7 @@ up_device_supply_reset_values (UpDevice *device)
 		      "time-to-empty", (guint64) 0,
 		      "time-to-full", (guint64) 0,
 		      "percentage", (gdouble) 0.0,
-		      "technology", DKP_DEVICE_TECHNOLOGY_UNKNOWN,
+		      "technology", UP_DEVICE_TECHNOLOGY_UNKNOWN,
 		      NULL);
 }
 
@@ -130,7 +130,7 @@ up_device_supply_acline_coldplug (UpDevice *device)
 	g_object_set (device,
 		      "online", FALSE,
 		      "power-supply", TRUE,
-		      "type", DKP_DEVICE_TYPE_LINE_POWER,
+		      "type", UP_DEVICE_TYPE_LINE_POWER,
 		      NULL);
 
 	ret = up_device_supply_acline_set_properties (device);
@@ -146,7 +146,7 @@ up_device_supply_battery_coldplug (UpDevice *device, DkpAcpiNative *native)
 {
 	gboolean ret;
 
-	g_object_set (device, "type", DKP_DEVICE_TYPE_BATTERY, NULL);
+	g_object_set (device, "type", UP_DEVICE_TYPE_BATTERY, NULL);
 	ret = up_device_supply_battery_set_properties (device, native);
 
 	return ret;
@@ -286,7 +286,7 @@ up_device_supply_battery_set_properties (UpDevice *device, DkpAcpiNative *native
 	time_to_full = 0;
 
 	if (battinfo.battinfo.state & ACPI_BATT_STAT_DISCHARG) {
-		state = DKP_DEVICE_STATE_DISCHARGING;
+		state = UP_DEVICE_STATE_DISCHARGING;
 		if (battinfo.battinfo.min > 0)
 			time_to_empty = battinfo.battinfo.min * 60;
 		else if (rate > 0) {
@@ -295,7 +295,7 @@ up_device_supply_battery_set_properties (UpDevice *device, DkpAcpiNative *native
 				time_to_empty = 0;
 		}
 	} else if (battinfo.battinfo.state & ACPI_BATT_STAT_CHARGING) {
-		state = DKP_DEVICE_STATE_CHARGING;
+		state = UP_DEVICE_STATE_CHARGING;
 		if (battinfo.battinfo.min > 0)
 			time_to_full = battinfo.battinfo.min * 60;
 		else if (rate > 0) {
@@ -304,11 +304,11 @@ up_device_supply_battery_set_properties (UpDevice *device, DkpAcpiNative *native
 				time_to_full = 0;
 		}
 	} else if (battinfo.battinfo.state & ACPI_BATT_STAT_CRITICAL) {
-		state = DKP_DEVICE_STATE_EMPTY;
+		state = UP_DEVICE_STATE_EMPTY;
 	} else if (battinfo.battinfo.state == 0) {
-		state = DKP_DEVICE_STATE_FULLY_CHARGED;
+		state = UP_DEVICE_STATE_FULLY_CHARGED;
 	} else {
-		state = DKP_DEVICE_STATE_UNKNOWN;
+		state = UP_DEVICE_STATE_UNKNOWN;
 	}
 
 	g_object_set (device,
@@ -391,10 +391,10 @@ up_device_supply_refresh (UpDevice *device)
 
 	g_object_get (device, "type", &type, NULL);
 	switch (type) {
-		case DKP_DEVICE_TYPE_LINE_POWER:
+		case UP_DEVICE_TYPE_LINE_POWER:
 			ret = up_device_supply_acline_set_properties (device);
 			break;
-		case DKP_DEVICE_TYPE_BATTERY:
+		case UP_DEVICE_TYPE_BATTERY:
 			object = up_device_get_native (device);
 			ret = up_device_supply_battery_set_properties (device, DKP_ACPI_NATIVE (object));
 			break;
@@ -429,14 +429,14 @@ up_device_supply_get_on_battery (UpDevice *device, gboolean *on_battery)
 		      "is-present", &is_present,
 		      NULL);
 
-	if (type != DKP_DEVICE_TYPE_BATTERY)
+	if (type != UP_DEVICE_TYPE_BATTERY)
 		return FALSE;
-	if (state == DKP_DEVICE_STATE_UNKNOWN)
+	if (state == UP_DEVICE_STATE_UNKNOWN)
 		return FALSE;
 	if (!is_present)
 		return FALSE;
 
-	*on_battery = (state == DKP_DEVICE_STATE_DISCHARGING);
+	*on_battery = (state == UP_DEVICE_STATE_DISCHARGING);
 	return TRUE;
 }
 
@@ -482,7 +482,7 @@ up_device_supply_get_online (UpDevice *device, gboolean *online)
 		      "online", &online_tmp,
 		      NULL);
 
-	if (type != DKP_DEVICE_TYPE_LINE_POWER)
+	if (type != UP_DEVICE_TYPE_LINE_POWER)
 		return FALSE;
 
 	*online = online_tmp;

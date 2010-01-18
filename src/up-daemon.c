@@ -455,7 +455,7 @@ up_daemon_refresh_battery_devices (UpDaemon *daemon)
 		g_object_get (device,
 			      "type", &type,
 			      NULL);
-		if (type == DKP_DEVICE_TYPE_BATTERY)
+		if (type == UP_DEVICE_TYPE_BATTERY)
 			up_device_refresh_internal (device);
 	}
 	g_ptr_array_unref (array);
@@ -752,7 +752,7 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 	g_object_get (device,
 		      "type", &type,
 		      NULL);
-	if (type == DKP_DEVICE_TYPE_LINE_POWER) {
+	if (type == UP_DEVICE_TYPE_LINE_POWER) {
 		/* refresh now, and again in a little while */
 		up_daemon_refresh_battery_devices (daemon);
 		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
@@ -809,7 +809,7 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
 	g_object_get (device,
 		      "type", &type,
 		      NULL);
-	if (type == DKP_DEVICE_TYPE_BATTERY)
+	if (type == UP_DEVICE_TYPE_BATTERY)
 		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */
@@ -846,7 +846,7 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 	g_object_get (device,
 		      "type", &type,
 		      NULL);
-	if (type == DKP_DEVICE_TYPE_BATTERY)
+	if (type == UP_DEVICE_TYPE_BATTERY)
 		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */

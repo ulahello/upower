@@ -433,11 +433,11 @@ up_device_get_id (UpDevice *device)
 	gchar *id = NULL;
 
 	/* line power */
-	if (device->priv->type == DKP_DEVICE_TYPE_LINE_POWER) {
+	if (device->priv->type == UP_DEVICE_TYPE_LINE_POWER) {
 		goto out;
 
 	/* batteries */
-	} else if (device->priv->type == DKP_DEVICE_TYPE_BATTERY) {
+	} else if (device->priv->type == UP_DEVICE_TYPE_BATTERY) {
 		/* we don't have an ID if we are not present */
 		if (!device->priv->is_present)
 			goto out;
@@ -1047,9 +1047,9 @@ up_device_class_init (UpDeviceClass *klass)
 					 PROP_TYPE,
 					 g_param_spec_uint ("type",
 							    NULL, NULL,
-							    DKP_DEVICE_TYPE_UNKNOWN,
-							    DKP_DEVICE_TYPE_LAST,
-							    DKP_DEVICE_TYPE_UNKNOWN,
+							    UP_DEVICE_TYPE_UNKNOWN,
+							    UP_DEVICE_TYPE_LAST,
+							    UP_DEVICE_TYPE_UNKNOWN,
 							    G_PARAM_READWRITE));
 	/**
 	 * UpDevice:state:
@@ -1058,9 +1058,9 @@ up_device_class_init (UpDeviceClass *klass)
 					 PROP_STATE,
 					 g_param_spec_uint ("state",
 							    NULL, NULL,
-							    DKP_DEVICE_STATE_UNKNOWN,
-							    DKP_DEVICE_STATE_LAST,
-							    DKP_DEVICE_STATE_UNKNOWN,
+							    UP_DEVICE_STATE_UNKNOWN,
+							    UP_DEVICE_STATE_LAST,
+							    UP_DEVICE_STATE_UNKNOWN,
 							    G_PARAM_READWRITE));
 	/**
 	 * UpDevice:technology:
@@ -1069,9 +1069,9 @@ up_device_class_init (UpDeviceClass *klass)
 					 PROP_TECHNOLOGY,
 					 g_param_spec_uint ("technology",
 							    NULL, NULL,
-							    DKP_DEVICE_TECHNOLOGY_UNKNOWN,
-							    DKP_DEVICE_TECHNOLOGY_LAST,
-							    DKP_DEVICE_TECHNOLOGY_UNKNOWN,
+							    UP_DEVICE_TECHNOLOGY_UNKNOWN,
+							    UP_DEVICE_TECHNOLOGY_LAST,
+							    UP_DEVICE_TECHNOLOGY_UNKNOWN,
 							    G_PARAM_READWRITE));
 	/**
 	 * UpDevice:capacity:

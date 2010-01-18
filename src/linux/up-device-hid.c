@@ -170,11 +170,11 @@ static UpDeviceTechnology
 up_device_hid_convert_device_technology (const gchar *type)
 {
 	if (type == NULL)
-		return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
+		return UP_DEVICE_TECHNOLOGY_UNKNOWN;
 	if (g_ascii_strcasecmp (type, "pb") == 0 ||
 	    g_ascii_strcasecmp (type, "pbac") == 0)
-		return DKP_DEVICE_TECHNOLOGY_LEAD_ACID;
-	return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
+		return UP_DEVICE_TECHNOLOGY_LEAD_ACID;
+	return UP_DEVICE_TECHNOLOGY_UNKNOWN;
 }
 
 /**
@@ -196,11 +196,11 @@ up_device_hid_set_values (UpDeviceHid *hid, int code, int value)
 		break;
 	case UP_DEVICE_HID_CHARGING:
 		if (value != 0)
-			g_object_set (device, "state", DKP_DEVICE_STATE_CHARGING, NULL);
+			g_object_set (device, "state", UP_DEVICE_STATE_CHARGING, NULL);
 		break;
 	case UP_DEVICE_HID_DISCHARGING:
 		if (value != 0)
-			g_object_set (device, "state", DKP_DEVICE_STATE_DISCHARGING, NULL);
+			g_object_set (device, "state", UP_DEVICE_STATE_DISCHARGING, NULL);
 		break;
 	case UP_DEVICE_HID_BATTERY_PRESENT:
 		g_object_set (device, "is-present", (value != 0), NULL);
@@ -292,9 +292,9 @@ up_device_hid_fixup_state (UpDevice *device)
 	/* map states the UPS cannot express */
 	g_object_get (device, "percentage", &percentage, NULL);
 	if (percentage < 0.01)
-		g_object_set (device, "state", DKP_DEVICE_STATE_EMPTY, NULL);
+		g_object_set (device, "state", UP_DEVICE_STATE_EMPTY, NULL);
 	if (percentage > 99.9)
-		g_object_set (device, "state", DKP_DEVICE_STATE_FULLY_CHARGED, NULL);
+		g_object_set (device, "state", UP_DEVICE_STATE_FULLY_CHARGED, NULL);
 }
 
 /**
@@ -347,7 +347,7 @@ up_device_hid_coldplug (UpDevice *device)
 
 	/* hardcode some values */
 	g_object_set (device,
-		      "type", DKP_DEVICE_TYPE_UPS,
+		      "type", UP_DEVICE_TYPE_UPS,
 		      "is-rechargeable", TRUE,
 		      "power-supply", TRUE,
 		      "is-present", TRUE,

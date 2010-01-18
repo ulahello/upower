@@ -363,7 +363,7 @@ up_device_wup_coldplug (UpDevice *device)
 	/* hardcode some values */
 	native_path = g_udev_device_get_sysfs_path (native);
 	g_object_set (device,
-		      "type", DKP_DEVICE_TYPE_MONITOR,
+		      "type", UP_DEVICE_TYPE_MONITOR,
 		      "is-rechargeable", FALSE,
 		      "power-supply", FALSE,
 		      "is-present", FALSE,
@@ -371,7 +371,7 @@ up_device_wup_coldplug (UpDevice *device)
 		      "model", product,
 		      "serial", g_strstrip (sysfs_get_string (native_path, "serial")),
 		      "has-history", TRUE,
-		      "state", DKP_DEVICE_STATE_DISCHARGING,
+		      "state", UP_DEVICE_STATE_DISCHARGING,
 		      NULL);
 
 	/* coldplug */

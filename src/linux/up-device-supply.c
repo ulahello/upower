@@ -141,14 +141,14 @@ up_device_supply_get_on_battery (UpDevice *device, gboolean *on_battery)
 		      "is-present", &is_present,
 		      NULL);
 
-	if (type != DKP_DEVICE_TYPE_BATTERY)
+	if (type != UP_DEVICE_TYPE_BATTERY)
 		return FALSE;
-	if (state == DKP_DEVICE_STATE_UNKNOWN)
+	if (state == UP_DEVICE_STATE_UNKNOWN)
 		return FALSE;
 	if (!is_present)
 		return FALSE;
 
-	*on_battery = (state == DKP_DEVICE_STATE_DISCHARGING);
+	*on_battery = (state == UP_DEVICE_STATE_DISCHARGING);
 	return TRUE;
 }
 
@@ -200,7 +200,7 @@ up_device_supply_get_online (UpDevice *device, gboolean *online)
 		      "online", &online_tmp,
 		      NULL);
 
-	if (type != DKP_DEVICE_TYPE_LINE_POWER)
+	if (type != UP_DEVICE_TYPE_LINE_POWER)
 		return FALSE;
 
 	*online = online_tmp;
@@ -255,23 +255,23 @@ static UpDeviceTechnology
 up_device_supply_convert_device_technology (const gchar *type)
 {
 	if (type == NULL)
-		return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
+		return UP_DEVICE_TECHNOLOGY_UNKNOWN;
 	/* every case combination of Li-Ion is commonly used.. */
 	if (g_ascii_strcasecmp (type, "li-ion") == 0 ||
 	    g_ascii_strcasecmp (type, "lion") == 0)
-		return DKP_DEVICE_TECHNOLOGY_LITHIUM_ION;
+		return UP_DEVICE_TECHNOLOGY_LITHIUM_ION;
 	if (g_ascii_strcasecmp (type, "pb") == 0 ||
 	    g_ascii_strcasecmp (type, "pbac") == 0)
-		return DKP_DEVICE_TECHNOLOGY_LEAD_ACID;
+		return UP_DEVICE_TECHNOLOGY_LEAD_ACID;
 	if (g_ascii_strcasecmp (type, "lip") == 0 ||
 	    g_ascii_strcasecmp (type, "lipo") == 0 ||
 	    g_ascii_strcasecmp (type, "li-poly") == 0)
-		return DKP_DEVICE_TECHNOLOGY_LITHIUM_POLYMER;
+		return UP_DEVICE_TECHNOLOGY_LITHIUM_POLYMER;
 	if (g_ascii_strcasecmp (type, "nimh") == 0)
-		return DKP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE;
+		return UP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE;
 	if (g_ascii_strcasecmp (type, "lifo") == 0)
-		return DKP_DEVICE_TECHNOLOGY_LITHIUM_IRON_PHOSPHATE;
-	return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
+		return UP_DEVICE_TECHNOLOGY_LITHIUM_IRON_PHOSPHATE;
+	return UP_DEVICE_TECHNOLOGY_UNKNOWN;
 }
 
 /**
@@ -512,26 +512,26 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 
 	status = g_strstrip (sysfs_get_string (native_path, "status"));
 	if (g_ascii_strcasecmp (status, "charging") == 0)
-		state = DKP_DEVICE_STATE_CHARGING;
+		state = UP_DEVICE_STATE_CHARGING;
 	else if (g_ascii_strcasecmp (status, "discharging") == 0)
-		state = DKP_DEVICE_STATE_DISCHARGING;
+		state = UP_DEVICE_STATE_DISCHARGING;
 	else if (g_ascii_strcasecmp (status, "full") == 0)
-		state = DKP_DEVICE_STATE_FULLY_CHARGED;
+		state = UP_DEVICE_STATE_FULLY_CHARGED;
 	else if (g_ascii_strcasecmp (status, "empty") == 0)
-		state = DKP_DEVICE_STATE_EMPTY;
+		state = UP_DEVICE_STATE_EMPTY;
 	else if (g_ascii_strcasecmp (status, "unknown") == 0)
-		state = DKP_DEVICE_STATE_UNKNOWN;
+		state = UP_DEVICE_STATE_UNKNOWN;
 	else {
 		egg_warning ("unknown status string: %s", status);
-		state = DKP_DEVICE_STATE_UNKNOWN;
+		state = UP_DEVICE_STATE_UNKNOWN;
 	}
 
 	/* only disable the polling if the kernel tells us we're fully charged,
 	   not if we've guessed the state to be fully charged */
-	supply->priv->enable_poll = (state != DKP_DEVICE_STATE_FULLY_CHARGED);
+	supply->priv->enable_poll = (state != UP_DEVICE_STATE_FULLY_CHARGED);
 
 	/* reset unknown counter */
-	if (state != DKP_DEVICE_STATE_UNKNOWN) {
+	if (state != UP_DEVICE_STATE_UNKNOWN) {
 		egg_debug ("resetting unknown timeout after %i retries", supply->priv->unknown_retries);
 		supply->priv->unknown_retries = 0;
 	}
@@ -583,15 +583,15 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	}
 
 	/* some batteries stop charging much before 100% */
-	if (state == DKP_DEVICE_STATE_UNKNOWN &&
+	if (state == UP_DEVICE_STATE_UNKNOWN &&
 	    percentage > UP_DEVICE_SUPPLY_CHARGED_THRESHOLD) {
 		egg_debug ("fixing up unknown %f", percentage);
-		state = DKP_DEVICE_STATE_FULLY_CHARGED;
+		state = UP_DEVICE_STATE_FULLY_CHARGED;
 	}
 
 	/* the battery isn't charging or discharging, it's just
 	 * sitting there half full doing nothing: try to guess a state */
-	if (state == DKP_DEVICE_STATE_UNKNOWN) {
+	if (state == UP_DEVICE_STATE_UNKNOWN) {
 
 		/* get global battery status */
 		daemon = up_device_get_daemon (device);
@@ -600,27 +600,27 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 			      NULL);
 
 		/* only guess when we have more than one battery devices */
-		battery_count = up_daemon_get_number_devices_of_type (daemon, DKP_DEVICE_TYPE_BATTERY);
+		battery_count = up_daemon_get_number_devices_of_type (daemon, UP_DEVICE_TYPE_BATTERY);
 
 		/* try to find a suitable icon depending on AC state */
 		if (battery_count > 1) {
 			if (on_battery && percentage < 1.0f) {
 				/* battery is low */
-				state = DKP_DEVICE_STATE_EMPTY;
+				state = UP_DEVICE_STATE_EMPTY;
 			} else if (on_battery) {
 				/* battery is waiting */
-				state = DKP_DEVICE_STATE_PENDING_DISCHARGE;
+				state = UP_DEVICE_STATE_PENDING_DISCHARGE;
 			} else {
 				/* battery is waiting */
-				state = DKP_DEVICE_STATE_PENDING_CHARGE;
+				state = UP_DEVICE_STATE_PENDING_CHARGE;
 			}
 		} else {
 			if (on_battery) {
 				/* battery is assumed discharging */
-				state = DKP_DEVICE_STATE_DISCHARGING;
+				state = UP_DEVICE_STATE_DISCHARGING;
 			} else {
 				/* battery is waiting */
-				state = DKP_DEVICE_STATE_FULLY_CHARGED;
+				state = UP_DEVICE_STATE_FULLY_CHARGED;
 			}
 		}
 
@@ -632,9 +632,9 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	}
 
 	/* if empty, and BIOS does not know what to do */
-	if (state == DKP_DEVICE_STATE_UNKNOWN && energy < 0.01) {
+	if (state == UP_DEVICE_STATE_UNKNOWN && energy < 0.01) {
 		egg_warning ("Setting %s state empty as unknown and very low", native_path);
-		state = DKP_DEVICE_STATE_EMPTY;
+		state = UP_DEVICE_STATE_EMPTY;
 	}
 
 	/* some batteries give out massive rate values when nearly empty */
@@ -645,9 +645,9 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	time_to_empty = 0;
 	time_to_full = 0;
 	if (energy_rate > 0) {
-		if (state == DKP_DEVICE_STATE_DISCHARGING)
+		if (state == UP_DEVICE_STATE_DISCHARGING)
 			time_to_empty = 3600 * (energy / energy_rate);
-		else if (state == DKP_DEVICE_STATE_CHARGING)
+		else if (state == UP_DEVICE_STATE_CHARGING)
 			time_to_full = 3600 * ((energy_full - energy) / energy_rate);
 		/* TODO: need to factor in battery charge metrics */
 	}
@@ -718,7 +718,7 @@ up_device_supply_coldplug (UpDevice *device)
 	GUdevDevice *native;
 	const gchar *native_path;
 	gchar *device_type = NULL;
-	UpDeviceType type = DKP_DEVICE_TYPE_UNKNOWN;
+	UpDeviceType type = UP_DEVICE_TYPE_UNKNOWN;
 
 	up_device_supply_reset_values (supply);
 
@@ -734,21 +734,21 @@ up_device_supply_coldplug (UpDevice *device)
 	device_type = up_device_supply_get_string (native_path, "type");
 	if (device_type != NULL) {
 		if (g_ascii_strcasecmp (device_type, "mains") == 0) {
-			type = DKP_DEVICE_TYPE_LINE_POWER;
+			type = UP_DEVICE_TYPE_LINE_POWER;
 		} else if (g_ascii_strcasecmp (device_type, "battery") == 0) {
-			type = DKP_DEVICE_TYPE_BATTERY;
+			type = UP_DEVICE_TYPE_BATTERY;
 		} else {
 			egg_warning ("did not recognise type %s, please report", device_type);
 		}
 	}
 
 	/* if reading the device type did not work, use the previous method */
-	if (type == DKP_DEVICE_TYPE_UNKNOWN) {
+	if (type == UP_DEVICE_TYPE_UNKNOWN) {
 		if (sysfs_file_exists (native_path, "online")) {
-			type = DKP_DEVICE_TYPE_LINE_POWER;
+			type = UP_DEVICE_TYPE_LINE_POWER;
 		} else {
 			/* this is a good guess as UPS and CSR are not in the kernel */
-			type = DKP_DEVICE_TYPE_BATTERY;
+			type = UP_DEVICE_TYPE_BATTERY;
 		}
 	}
 
@@ -778,7 +778,7 @@ up_device_supply_setup_poll (UpDevice *device)
 		goto out;
 
 	/* if it's unknown, poll faster than we would normally */
-	if (state == DKP_DEVICE_STATE_UNKNOWN &&
+	if (state == UP_DEVICE_STATE_UNKNOWN &&
 	    supply->priv->unknown_retries < UP_DEVICE_SUPPLY_UNKNOWN_RETRIES) {
 		supply->priv->poll_timer_id =
 			g_timeout_add_seconds (UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT,
@@ -816,10 +816,10 @@ up_device_supply_refresh (UpDevice *device)
 
 	g_object_get (device, "type", &type, NULL);
 	switch (type) {
-	case DKP_DEVICE_TYPE_LINE_POWER:
+	case UP_DEVICE_TYPE_LINE_POWER:
 		ret = up_device_supply_refresh_line_power (supply);
 		break;
-	case DKP_DEVICE_TYPE_BATTERY:
+	case UP_DEVICE_TYPE_BATTERY:
 		ret = up_device_supply_refresh_battery (supply);
 
 		/* Seems that we don't get change uevents from the

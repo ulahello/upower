@@ -114,7 +114,7 @@ dkp_history_array_limit_resolution (GPtrArray *array, guint max_num)
 	guint last;
 	guint first;
 	GPtrArray *new;
-	UpDeviceState state = DKP_DEVICE_STATE_UNKNOWN;
+	UpDeviceState state = UP_DEVICE_STATE_UNKNOWN;
 	guint64 time_s = 0;
 	gdouble value = 0;
 	guint64 count = 0;
@@ -317,8 +317,8 @@ dkp_history_get_profile_data (DkpHistory *history, gboolean charging)
 
 				time_s = obj->time - obj_old->time;
 				/* use the accuracy field as a counter for now */
-				if ((charging && obj->state == DKP_DEVICE_STATE_CHARGING) ||
-				    (!charging && obj->state == DKP_DEVICE_STATE_DISCHARGING)) {
+				if ((charging && obj->state == UP_DEVICE_STATE_CHARGING) ||
+				    (!charging && obj->state == UP_DEVICE_STATE_DISCHARGING)) {
 					stats = (DkpStatsObj *) g_ptr_array_index (data, bin);
 					stats->value += time_s;
 					stats->accuracy++;
@@ -551,7 +551,7 @@ dkp_history_is_low_power (DkpHistory *history)
 	const DkpHistoryObj *obj;
 
 	/* current status is always up to date */
-	if (history->priv->state != DKP_DEVICE_STATE_DISCHARGING)
+	if (history->priv->state != UP_DEVICE_STATE_DISCHARGING)
 		return FALSE;
 
 	/* have we got any data? */
@@ -561,7 +561,7 @@ dkp_history_is_low_power (DkpHistory *history)
 
 	/* get the last saved charge object */
 	obj = (const DkpHistoryObj *) g_ptr_array_index (history->priv->data_charge, length-1);
-	if (obj->state != DKP_DEVICE_STATE_DISCHARGING)
+	if (obj->state != UP_DEVICE_STATE_DISCHARGING)
 		return FALSE;
 
 	/* high enough */
@@ -632,7 +632,7 @@ dkp_history_load_data (DkpHistory *history)
 	g_free (filename);
 
 	/* save a marker so we don't use incomplete percentages */
-	obj = dkp_history_obj_create (0, DKP_DEVICE_STATE_UNKNOWN);
+	obj = dkp_history_obj_create (0, UP_DEVICE_STATE_UNKNOWN);
 	g_ptr_array_add (history->priv->data_rate, dkp_history_obj_copy (obj));
 	g_ptr_array_add (history->priv->data_charge, dkp_history_obj_copy (obj));
 	g_ptr_array_add (history->priv->data_time_full, dkp_history_obj_copy (obj));
@@ -691,7 +691,7 @@ dkp_history_set_charge_data (DkpHistory *history, gdouble percentage)
 
 	if (history->priv->id == NULL)
 		return FALSE;
-	if (history->priv->state == DKP_DEVICE_STATE_UNKNOWN)
+	if (history->priv->state == UP_DEVICE_STATE_UNKNOWN)
 		return FALSE;
 	if (history->priv->percentage_last == percentage)
 		return FALSE;
@@ -719,7 +719,7 @@ dkp_history_set_rate_data (DkpHistory *history, gdouble rate)
 
 	if (history->priv->id == NULL)
 		return FALSE;
-	if (history->priv->state == DKP_DEVICE_STATE_UNKNOWN)
+	if (history->priv->state == UP_DEVICE_STATE_UNKNOWN)
 		return FALSE;
 	if (history->priv->rate_last == rate)
 		return FALSE;
@@ -747,7 +747,7 @@ dkp_history_set_time_full_data (DkpHistory *history, gint64 time_s)
 
 	if (history->priv->id == NULL)
 		return FALSE;
-	if (history->priv->state == DKP_DEVICE_STATE_UNKNOWN)
+	if (history->priv->state == UP_DEVICE_STATE_UNKNOWN)
 		return FALSE;
 	if (time_s < 0)
 		return FALSE;
@@ -777,7 +777,7 @@ dkp_history_set_time_empty_data (DkpHistory *history, gint64 time_s)
 
 	if (history->priv->id == NULL)
 		return FALSE;
-	if (history->priv->state == DKP_DEVICE_STATE_UNKNOWN)
+	if (history->priv->state == UP_DEVICE_STATE_UNKNOWN)
 		return FALSE;
 	if (time_s < 0)
 		return FALSE;
@@ -818,7 +818,7 @@ dkp_history_init (DkpHistory *history)
 	history->priv->id = NULL;
 	history->priv->rate_last = 0;
 	history->priv->percentage_last = 0;
-	history->priv->state = DKP_DEVICE_STATE_UNKNOWN;
+	history->priv->state = UP_DEVICE_STATE_UNKNOWN;
 	history->priv->data_rate = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_history_obj_free);
 	history->priv->data_charge = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_history_obj_free);
 	history->priv->data_time_full = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_history_obj_free);
