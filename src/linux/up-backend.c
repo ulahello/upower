@@ -77,7 +77,7 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 	const gchar *subsys;
 	const gchar *native_path;
 	UpDevice *device = NULL;
-	DkpInput *input;
+	UpInput *input;
 	gboolean ret;
 
 	subsys = g_udev_device_get_subsystem (native);
@@ -127,8 +127,8 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 	} else if (g_strcmp0 (subsys, "input") == 0) {
 
 		/* check input device */
-		input = dkp_input_new ();
-		ret = dkp_input_coldplug (input, backend->priv->daemon, native);
+		input = up_input_new ();
+		ret = up_input_coldplug (input, backend->priv->daemon, native);
 		if (!ret) {
 			g_object_unref (input);
 			goto out;

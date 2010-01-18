@@ -47,7 +47,7 @@
 #include "up-input.h"
 #include "up-daemon.h"
 
-struct DkpInputPrivate
+struct UpInputPrivate
 {
 	int			 eventfp;
 	struct input_event	 event;
@@ -56,8 +56,8 @@ struct DkpInputPrivate
 	UpDaemon		*daemon;
 };
 
-G_DEFINE_TYPE (DkpInput, dkp_input, G_TYPE_OBJECT)
-#define DKP_INPUT_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_INPUT, DkpInputPrivate))
+G_DEFINE_TYPE (UpInput, up_input, G_TYPE_OBJECT)
+#define UP_INPUT_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_INPUT, UpInputPrivate))
 
 /* we must use this kernel-compatible implementation */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -68,10 +68,10 @@ G_DEFINE_TYPE (DkpInput, dkp_input, G_TYPE_OBJECT)
 #define test_bit(bit, array)    ((array[LONG(bit)] >> OFF(bit)) & 1)
 
 /**
- * dkp_input_str_to_bitmask:
+ * up_input_str_to_bitmask:
  **/
 static gint
-dkp_input_str_to_bitmask (const gchar *s, glong *bitmask, size_t max_size)
+up_input_str_to_bitmask (const gchar *s, glong *bitmask, size_t max_size)
 {
 	gint i, j;
 	gchar **v;
@@ -96,12 +96,12 @@ dkp_input_str_to_bitmask (const gchar *s, glong *bitmask, size_t max_size)
 }
 
 /**
- * dkp_input_event_io:
+ * up_input_event_io:
  **/
 static gboolean
-dkp_input_event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
+up_input_event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 {
-	DkpInput *input = (DkpInput*) data;
+	UpInput *input = (UpInput*) data;
 	GError *error = NULL;
 	gsize read_bytes;
 	glong bitmask[NBITS(SW_MAX)];
@@ -161,10 +161,10 @@ out:
 }
 
 /**
- * dkp_input_coldplug:
+ * up_input_coldplug:
  **/
 gboolean
-dkp_input_coldplug (DkpInput *input, UpDaemon *daemon, GUdevDevice *d)
+up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
 {
 	gboolean ret = FALSE;
 	gchar *path;
@@ -200,7 +200,7 @@ dkp_input_coldplug (DkpInput *input, UpDaemon *daemon, GUdevDevice *d)
 	}
 
 	/* convert to a bitmask */
-	num_bits = dkp_input_str_to_bitmask (contents, bitmask, sizeof (bitmask));
+	num_bits = up_input_str_to_bitmask (contents, bitmask, sizeof (bitmask));
 	if (num_bits != 1) {
 		egg_debug ("not one bitmask entry for %s", native_path);
 		ret = FALSE;
@@ -254,7 +254,7 @@ dkp_input_coldplug (DkpInput *input, UpDaemon *daemon, GUdevDevice *d)
 	input->priv->daemon = g_object_ref (daemon);
 
 	/* watch this */
-	g_io_add_watch (input->priv->channel, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL, dkp_input_event_io, input);
+	g_io_add_watch (input->priv->channel, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL, up_input_event_io, input);
 
 	/* set if we are closed */
 	egg_debug ("using %s for lid event", native_path);
@@ -268,29 +268,29 @@ out:
 }
 
 /**
- * dkp_input_init:
+ * up_input_init:
  **/
 static void
-dkp_input_init (DkpInput *input)
+up_input_init (UpInput *input)
 {
-	input->priv = DKP_INPUT_GET_PRIVATE (input);
+	input->priv = UP_INPUT_GET_PRIVATE (input);
 	input->priv->eventfp = -1;
 	input->priv->channel = NULL;
 	input->priv->daemon = NULL;
 }
 
 /**
- * dkp_input_finalize:
+ * up_input_finalize:
  **/
 static void
-dkp_input_finalize (GObject *object)
+up_input_finalize (GObject *object)
 {
-	DkpInput *input;
+	UpInput *input;
 
 	g_return_if_fail (object != NULL);
-	g_return_if_fail (DKP_IS_INPUT (object));
+	g_return_if_fail (UP_IS_INPUT (object));
 
-	input = DKP_INPUT (object);
+	input = UP_INPUT (object);
 	g_return_if_fail (input->priv != NULL);
 
 	if (input->priv->daemon != NULL)
@@ -301,26 +301,26 @@ dkp_input_finalize (GObject *object)
 		g_io_channel_shutdown (input->priv->channel, FALSE, NULL);
 		g_io_channel_unref (input->priv->channel);
 	}
-	G_OBJECT_CLASS (dkp_input_parent_class)->finalize (object);
+	G_OBJECT_CLASS (up_input_parent_class)->finalize (object);
 }
 
 /**
- * dkp_input_class_init:
+ * up_input_class_init:
  **/
 static void
-dkp_input_class_init (DkpInputClass *klass)
+up_input_class_init (UpInputClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	object_class->finalize = dkp_input_finalize;
-	g_type_class_add_private (klass, sizeof (DkpInputPrivate));
+	object_class->finalize = up_input_finalize;
+	g_type_class_add_private (klass, sizeof (UpInputPrivate));
 }
 
 /**
- * dkp_input_new:
+ * up_input_new:
  **/
-DkpInput *
-dkp_input_new (void)
+UpInput *
+up_input_new (void)
 {
-	return g_object_new (DKP_TYPE_INPUT, NULL);
+	return g_object_new (UP_TYPE_INPUT, NULL);
 }
 
