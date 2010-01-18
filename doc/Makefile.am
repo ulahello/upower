@@ -52,9 +52,9 @@ content_files =  			    				\
 	man/devkit-power.xml		    				\
 	man/devkit-power-daemon.xml		    			\
 	man/DeviceKit-power.xml		    				\
-	dbus/org.freedesktop.DeviceKit.Power.ref.xml			\
-	dbus/org.freedesktop.DeviceKit.Power.Device.ref.xml		\
-	dbus/org.freedesktop.DeviceKit.Power.QoS.ref.xml		\
+	dbus/org.freedesktop.UPower.ref.xml			\
+	dbus/org.freedesktop.UPower.Device.ref.xml		\
+	dbus/org.freedesktop.UPower.QoS.ref.xml		\
 	$(NULL)
 
 # Images to copy into HTML directory

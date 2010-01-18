@@ -244,7 +244,7 @@ dkp_client_ensure_properties (DkpClient *client)
 
 	error = NULL;
 	ret = dbus_g_proxy_call (client->priv->prop_proxy, "GetAll", &error,
-				 G_TYPE_STRING, "org.freedesktop.DeviceKit.Power",
+				 G_TYPE_STRING, "org.freedesktop.UPower",
 				 G_TYPE_INVALID,
 				 dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_VALUE), &props,
 				 G_TYPE_INVALID);
@@ -652,9 +652,9 @@ dkp_client_init (DkpClient *client)
 
 	/* connect to main interface */
 	client->priv->proxy = dbus_g_proxy_new_for_name (client->priv->bus,
-							 "org.freedesktop.DeviceKit.Power",
-							 "/org/freedesktop/DeviceKit/Power",
-							 "org.freedesktop.DeviceKit.Power");
+							 "org.freedesktop.UPower",
+							 "/org/freedesktop/UPower",
+							 "org.freedesktop.UPower");
 	if (client->priv->proxy == NULL) {
 		g_warning ("Couldn't connect to proxy");
 		goto out;
@@ -662,8 +662,8 @@ dkp_client_init (DkpClient *client)
 
 	/* connect to properties interface */
 	client->priv->prop_proxy = dbus_g_proxy_new_for_name (client->priv->bus,
-							      "org.freedesktop.DeviceKit.Power",
-							      "/org/freedesktop/DeviceKit/Power",
+							      "org.freedesktop.UPower",
+							      "/org/freedesktop/UPower",
 							      "org.freedesktop.DBus.Properties");
 	if (client->priv->prop_proxy == NULL) {
 		g_warning ("Couldn't connect to proxy");

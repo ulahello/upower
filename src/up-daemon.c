@@ -633,7 +633,7 @@ up_daemon_register_power_daemon (UpDaemon *daemon)
 
 	/* register GObject */
 	dbus_g_connection_register_g_object (daemon->priv->connection,
-					     "/org/freedesktop/DeviceKit/Power",
+					     "/org/freedesktop/UPower",
 					     G_OBJECT (daemon));
 
 	/* success */

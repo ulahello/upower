@@ -1,14 +1,14 @@
 <!DOCTYPE node PUBLIC
 "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd" [
-  <!ENTITY ERROR_GENERAL "org.freedesktop.DeviceKit.Power.GeneralError">
+  <!ENTITY ERROR_GENERAL "org.freedesktop.UPower.GeneralError">
 ]>
 <node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
-  <interface name="org.freedesktop.DeviceKit.Power.Wakeups">
+  <interface name="org.freedesktop.UPower.Wakeups">
     <doc:doc>
       <doc:description>
         <doc:para>
-          org.freedesktop.DeviceKit.Power.Wakeups is a DBus interface implimented
+          org.freedesktop.UPower.Wakeups is a DBus interface implimented
           by DeviceKit-power.
           It allows applications to watch what applications and drivers are
           causing the wakeups on the system.

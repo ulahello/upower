@@ -33,8 +33,8 @@ up-marshal.h: $(top_srcdir)/src/up-marshal.list
 up-marshal.c: $(top_srcdir)/src/up-marshal.list
 	echo "#include \"up-marshal.h\"" > $@ && glib-genmarshal $< --prefix=devkit_power_marshal --body >> $@
 
-up-daemon-glue.h: $(top_srcdir)/src/org.freedesktop.DeviceKit.Power.xml Makefile.am
-	dbus-binding-tool --prefix=devkit_power_daemon --mode=glib-client --output=up-daemon-glue.h $(top_srcdir)/src/org.freedesktop.DeviceKit.Power.xml
+up-daemon-glue.h: $(top_srcdir)/src/org.freedesktop.UPower.xml Makefile.am
+	dbus-binding-tool --prefix=devkit_power_daemon --mode=glib-client --output=up-daemon-glue.h $(top_srcdir)/src/org.freedesktop.UPower.xml
 
 bin_PROGRAMS = devkit-power
 

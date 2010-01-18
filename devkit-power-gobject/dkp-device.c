@@ -126,7 +126,7 @@ dkp_device_get_device_properties (DkpDevice *device, GError **error)
 	GHashTable *hash_table = NULL;
 
 	ret = dbus_g_proxy_call (device->priv->proxy_props, "GetAll", &error_local,
-				 G_TYPE_STRING, "org.freedesktop.DeviceKit.Power.Device",
+				 G_TYPE_STRING, "org.freedesktop.UPower.Device",
 				 G_TYPE_INVALID,
 				 dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_VALUE),
 				 &hash_table,
@@ -270,7 +270,7 @@ dkp_device_set_object_path (DkpDevice *device, const gchar *object_path, GError 
 	}
 
 	/* connect to the correct path for properties */
-	proxy_props = dbus_g_proxy_new_for_name (device->priv->bus, "org.freedesktop.DeviceKit.Power",
+	proxy_props = dbus_g_proxy_new_for_name (device->priv->bus, "org.freedesktop.UPower",
 						 object_path, "org.freedesktop.DBus.Properties");
 	if (proxy_props == NULL) {
 		g_set_error_literal (error, 1, 0, "Couldn't connect to proxy");
@@ -278,8 +278,8 @@ dkp_device_set_object_path (DkpDevice *device, const gchar *object_path, GError 
 	}
 
 	/* connect to the correct path for all the other methods */
-	proxy_device = dbus_g_proxy_new_for_name (device->priv->bus, "org.freedesktop.DeviceKit.Power",
-						  object_path, "org.freedesktop.DeviceKit.Power.Device");
+	proxy_device = dbus_g_proxy_new_for_name (device->priv->bus, "org.freedesktop.UPower",
+						  object_path, "org.freedesktop.UPower.Device");
 	if (proxy_device == NULL) {
 		g_set_error_literal (error, 1, 0, "Couldn't connect to proxy");
 		goto out;

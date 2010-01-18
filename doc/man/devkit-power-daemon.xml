@@ -27,11 +27,11 @@
   <refsect1><title>DESCRIPTION</title>
     <para>
       <emphasis><refentrytitle>devkit-power-daemon</refentrytitle></emphasis> provides
-      the <emphasis>org.freedesktop.DeviceKit.Power</emphasis> service on the
+      the <emphasis>org.freedesktop.UPower</emphasis> service on the
       system message bus. Users or administrators should never need to
       start this daemon as it will be automatically started by
       <citerefentry><refentrytitle>dbus-daemon</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-      whenever an application calls into the <emphasis>org.freedesktop.DeviceKit.Power</emphasis>
+      whenever an application calls into the <emphasis>org.freedesktop.UPower</emphasis>
       service.
     </para>
   </refsect1>

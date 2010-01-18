@@ -1,18 +1,18 @@
 <!DOCTYPE node PUBLIC
 "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd" [
-  <!ENTITY ERROR_GENERAL "org.freedesktop.DeviceKit.Power.Device.GeneralError">
+  <!ENTITY ERROR_GENERAL "org.freedesktop.UPower.Device.GeneralError">
 ]>
 <node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
-  <interface name="org.freedesktop.DeviceKit.Power.Device">
+  <interface name="org.freedesktop.UPower.Device">
     <doc:doc>
       <doc:description>
         <doc:para>
           Objects implementing this interface are usually discovered through
-          the <doc:tt>org.freedesktop.DeviceKit.Power</doc:tt> interface on
-          the <doc:tt>/org/freedesktop/DeviceKit/Power</doc:tt> object on
+          the <doc:tt>org.freedesktop.UPower</doc:tt> interface on
+          the <doc:tt>/org/freedesktop/UPower</doc:tt> object on
           the D-Bus system bus service with the well-known
-          name <doc:tt>org.freedesktop.DeviceKit.Power</doc:tt> using
+          name <doc:tt>org.freedesktop.UPower</doc:tt> using
           the
           <doc:ref type="method" to="Power.EnumerateDevices">EnumerateDevices</doc:ref>
           method.
@@ -22,10 +22,10 @@
             <doc:code>
 $ dbus-send --print-reply \
             --system \
-            --dest=org.freedesktop.DeviceKit.Power \
-            /org/freedesktop/DeviceKit/Power/devices/battery_BAT0 \
+            --dest=org.freedesktop.UPower \
+            /org/freedesktop/UPower/devices/battery_BAT0 \
             org.freedesktop.DBus.Properties.GetAll \
-            string:org.freedesktop.DeviceKit.Power.Device
+            string:org.freedesktop.UPower.Device
 
 method return sender=:1.386 -> dest=:1.477 reply_serial=2
    array [

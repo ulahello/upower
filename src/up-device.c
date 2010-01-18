@@ -809,7 +809,7 @@ up_device_compute_object_path (UpDevice *device)
 		if (id[i] == ':')
 			id[i] = 'o';
 	}
-	object_path = g_build_filename ("/org/freedesktop/DeviceKit/Power/devices", id, NULL);
+	object_path = g_build_filename ("/org/freedesktop/UPower/devices", id, NULL);
 
 	g_free (basename);
 	g_free (id);

@@ -1,5 +1,5 @@
 [D-BUS Service]
-Name=org.freedesktop.DeviceKit.Power
+Name=org.freedesktop.UPower
 Exec=@libexecdir@/devkit-power-daemon
 User=root
 

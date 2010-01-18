@@ -582,7 +582,7 @@ up_qos_init (UpQos *qos)
 	}
 
 	/* register on the bus */
-	dbus_g_connection_register_g_object (qos->priv->connection, "/org/freedesktop/DeviceKit/Power/Policy", G_OBJECT (qos));
+	dbus_g_connection_register_g_object (qos->priv->connection, "/org/freedesktop/UPower/Policy", G_OBJECT (qos));
 
 	/* watch NOC */
 	qos->priv->proxy = dbus_g_proxy_new_for_name_owner (qos->priv->connection, DBUS_SERVICE_DBUS,

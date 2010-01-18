@@ -183,7 +183,7 @@ dkp_wakeups_ensure_properties (DkpWakeups *wakeups)
 
 	error = NULL;
 	ret = dbus_g_proxy_call (wakeups->priv->prop_proxy, "GetAll", &error,
-				 G_TYPE_STRING, "org.freedesktop.DeviceKit.Power.Wakeups",
+				 G_TYPE_STRING, "org.freedesktop.UPower.Wakeups",
 				 G_TYPE_INVALID,
 				 dbus_g_type_get_map ("GHashTable", G_TYPE_STRING, G_TYPE_VALUE), &props,
 				 G_TYPE_INVALID);
@@ -286,8 +286,8 @@ dkp_wakeups_init (DkpWakeups *wakeups)
 
 	/* connect to properties interface */
 	wakeups->priv->prop_proxy = dbus_g_proxy_new_for_name (wakeups->priv->bus,
-							      "org.freedesktop.DeviceKit.Power",
-							      "/org/freedesktop/DeviceKit/Power/Wakeups",
+							      "org.freedesktop.UPower",
+							      "/org/freedesktop/UPower/Wakeups",
 							      "org.freedesktop.DBus.Properties");
 	if (wakeups->priv->prop_proxy == NULL) {
 		g_warning ("Couldn't connect to proxy");
@@ -296,9 +296,9 @@ dkp_wakeups_init (DkpWakeups *wakeups)
 
 	/* connect to main interface */
 	wakeups->priv->proxy = dbus_g_proxy_new_for_name (wakeups->priv->bus,
-							 "org.freedesktop.DeviceKit.Power",
-							 "/org/freedesktop/DeviceKit/Power/Wakeups",
-							 "org.freedesktop.DeviceKit.Power.Wakeups");
+							 "org.freedesktop.UPower",
+							 "/org/freedesktop/UPower/Wakeups",
+							 "org.freedesktop.UPower.Wakeups");
 	if (wakeups->priv->proxy == NULL) {
 		g_warning ("Couldn't connect to proxy");
 		goto out;

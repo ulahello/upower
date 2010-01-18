@@ -42,7 +42,7 @@
 #include "up-qos.h"
 #include "up-wakeups.h"
 
-#define DEVKIT_POWER_SERVICE_NAME "org.freedesktop.DeviceKit.Power"
+#define DEVKIT_POWER_SERVICE_NAME "org.freedesktop.UPower"
 static GMainLoop *loop = NULL;
 
 /**

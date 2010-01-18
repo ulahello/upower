@@ -3,30 +3,30 @@
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
 
-  <interface name="org.freedesktop.DeviceKit.Power">
+  <interface name="org.freedesktop.UPower">
     <doc:doc>
       <doc:description>
         <doc:para>
           The DeviceKit-power service is available via the system message
           bus. To access the service, use
-          the <doc:tt>org.freedesktop.DeviceKit.Power</doc:tt> interface on
-          the <doc:tt>/org/freedesktop/DeviceKit/Power</doc:tt> object on
+          the <doc:tt>org.freedesktop.UPower</doc:tt> interface on
+          the <doc:tt>/org/freedesktop/UPower</doc:tt> object on
           the D-Bus system bus service with the well-known
-          name <doc:tt>org.freedesktop.DeviceKit.Power</doc:tt>.
+          name <doc:tt>org.freedesktop.UPower</doc:tt>.
         </doc:para>
         <doc:para>
           <doc:example language="shell" title="simple example">
             <doc:code>
 $ dbus-send --print-reply \
             --system \
-            --dest=org.freedesktop.DeviceKit.Power \
-            /org/freedesktop/DeviceKit/Power \
-            org.freedesktop.DeviceKit.Power.EnumerateDevices
+            --dest=org.freedesktop.UPower \
+            /org/freedesktop/UPower \
+            org.freedesktop.UPower.EnumerateDevices
 
 method return sender=:1.386 -> dest=:1.451 reply_serial=2
    array [
-      object path "/org/freedesktop/DeviceKit/Power/devices/line_power_AC"
-      object path "/org/freedesktop/DeviceKit/Power/devices/battery_BAT0"
+      object path "/org/freedesktop/UPower/devices/line_power_AC"
+      object path "/org/freedesktop/UPower/devices/battery_BAT0"
    ]
             </doc:code>
           </doc:example>

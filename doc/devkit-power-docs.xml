@@ -64,9 +64,9 @@
 	DeviceKit-power daemon.
       </para>
     </partintro>
-    <xi:include href="dbus/org.freedesktop.DeviceKit.Power.ref.xml"/>
-    <xi:include href="dbus/org.freedesktop.DeviceKit.Power.Device.ref.xml"/>
-    <xi:include href="dbus/org.freedesktop.DeviceKit.Power.QoS.ref.xml"/>
+    <xi:include href="dbus/org.freedesktop.UPower.ref.xml"/>
+    <xi:include href="dbus/org.freedesktop.UPower.Device.ref.xml"/>
+    <xi:include href="dbus/org.freedesktop.UPower.QoS.ref.xml"/>
   </reference>
 
   <reference id="tools-fileformats">

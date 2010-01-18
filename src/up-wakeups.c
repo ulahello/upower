@@ -739,7 +739,7 @@ up_wakeups_init (UpWakeups *wakeups)
 	}
 
 	/* register on the bus */
-	dbus_g_connection_register_g_object (wakeups->priv->connection, "/org/freedesktop/DeviceKit/Power/Wakeups", G_OBJECT (wakeups));
+	dbus_g_connection_register_g_object (wakeups->priv->connection, "/org/freedesktop/UPower/Wakeups", G_OBJECT (wakeups));
 }
 
 /**

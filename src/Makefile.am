@@ -44,26 +44,26 @@ up-marshal.h: up-marshal.list
 up-marshal.c: up-marshal.list
 	echo "#include \"up-marshal.h\"" > $@ && glib-genmarshal $< --prefix=up_marshal --body >> $@
 
-up-daemon-glue.h: org.freedesktop.DeviceKit.Power.xml Makefile.am
-	dbus-binding-tool --prefix=up_daemon --mode=glib-server --output=up-daemon-glue.h org.freedesktop.DeviceKit.Power.xml
+up-daemon-glue.h: org.freedesktop.UPower.xml Makefile.am
+	dbus-binding-tool --prefix=up_daemon --mode=glib-server --output=up-daemon-glue.h org.freedesktop.UPower.xml
 
-up-device-glue.h: org.freedesktop.DeviceKit.Power.Device.xml Makefile.am
-	dbus-binding-tool --prefix=up_device --mode=glib-server --output=up-device-glue.h org.freedesktop.DeviceKit.Power.Device.xml
+up-device-glue.h: org.freedesktop.UPower.Device.xml Makefile.am
+	dbus-binding-tool --prefix=up_device --mode=glib-server --output=up-device-glue.h org.freedesktop.UPower.Device.xml
 
-up-qos-glue.h: org.freedesktop.DeviceKit.Power.QoS.xml Makefile.am
-	dbus-binding-tool --prefix=up_qos --mode=glib-server --output=up-qos-glue.h org.freedesktop.DeviceKit.Power.QoS.xml
+up-qos-glue.h: org.freedesktop.UPower.QoS.xml Makefile.am
+	dbus-binding-tool --prefix=up_qos --mode=glib-server --output=up-qos-glue.h org.freedesktop.UPower.QoS.xml
 
-up-wakeups-glue.h: org.freedesktop.DeviceKit.Power.Wakeups.xml Makefile.am
-	dbus-binding-tool --prefix=up_wakeups --mode=glib-server --output=up-wakeups-glue.h org.freedesktop.DeviceKit.Power.Wakeups.xml
+up-wakeups-glue.h: org.freedesktop.UPower.Wakeups.xml Makefile.am
+	dbus-binding-tool --prefix=up_wakeups --mode=glib-server --output=up-wakeups-glue.h org.freedesktop.UPower.Wakeups.xml
 
 libexec_PROGRAMS = devkit-power-daemon
 
 dbusifdir = $(datadir)/dbus-1/interfaces
 dbusif_DATA =							\
-	org.freedesktop.DeviceKit.Power.xml			\
-	org.freedesktop.DeviceKit.Power.Device.xml		\
-	org.freedesktop.DeviceKit.Power.QoS.xml			\
-	org.freedesktop.DeviceKit.Power.Wakeups.xml
+	org.freedesktop.UPower.xml			\
+	org.freedesktop.UPower.Device.xml		\
+	org.freedesktop.UPower.QoS.xml			\
+	org.freedesktop.UPower.Wakeups.xml
 
 devkit_power_daemon_SOURCES =					\
 	egg-debug.c						\
@@ -165,14 +165,14 @@ TESTS = up-self-test
 endif
 
 servicedir       = $(datadir)/dbus-1/system-services
-service_in_files = org.freedesktop.DeviceKit.Power.service.in
+service_in_files = org.freedesktop.UPower.service.in
 service_DATA     = $(service_in_files:.service.in=.service)
 
 $(service_DATA): $(service_in_files) Makefile
 	@sed -e "s|\@libexecdir\@|$(libexecdir)|" $< > $@
 
 dbusconfdir = $(sysconfdir)/dbus-1/system.d
-dbusconf_in_files = org.freedesktop.DeviceKit.Power.conf.in
+dbusconf_in_files = org.freedesktop.UPower.conf.in
 dbusconf_DATA = $(dbusconf_in_files:.conf.in=.conf)
 
 $(dbusconf_DATA): $(dbusconf_in_files) Makefile
@@ -186,10 +186,10 @@ install-data-hook:
 CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST =							\
-	org.freedesktop.DeviceKit.Power.xml			\
-	org.freedesktop.DeviceKit.Power.Device.xml		\
-	org.freedesktop.DeviceKit.Power.QoS.xml			\
-	org.freedesktop.DeviceKit.Power.Wakeups.xml		\
+	org.freedesktop.UPower.xml			\
+	org.freedesktop.UPower.Device.xml		\
+	org.freedesktop.UPower.QoS.xml			\
+	org.freedesktop.UPower.Wakeups.xml		\
 	up-marshal.list						\
 	$(service_in_files)					\
 	$(dbusconf_in_files)
