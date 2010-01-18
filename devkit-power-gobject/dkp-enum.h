@@ -76,6 +76,7 @@ typedef enum {
 typedef DkpDeviceType UpDeviceType;
 typedef DkpDeviceState UpDeviceState;
 typedef DkpDeviceTechnology UpDeviceTechnology;
+typedef DkpQosType UpQosType;
 #define up_device_type_to_text			dkp_device_type_to_text
 #define up_device_state_to_text			dkp_device_state_to_text
 #define up_device_technology_to_text		dkp_device_technology_to_text

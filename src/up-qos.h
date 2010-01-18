@@ -19,62 +19,62 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef __DKP_QOS_H
-#define __DKP_QOS_H
+#ifndef __UP_QOS_H
+#define __UP_QOS_H
 
 #include <glib-object.h>
 #include <dbus/dbus-glib.h>
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_QOS		(dkp_qos_get_type ())
-#define DKP_QOS(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_QOS, DkpQos))
-#define DKP_QOS_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_QOS, DkpQosClass))
-#define DKP_IS_QOS(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_QOS))
-#define DKP_IS_QOS_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_QOS))
-#define DKP_QOS_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_QOS, DkpQosClass))
+#define UP_TYPE_QOS		(up_qos_get_type ())
+#define UP_QOS(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), UP_TYPE_QOS, UpQos))
+#define UP_QOS_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), UP_TYPE_QOS, UpQosClass))
+#define UP_IS_QOS(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), UP_TYPE_QOS))
+#define UP_IS_QOS_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), UP_TYPE_QOS))
+#define UP_QOS_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), UP_TYPE_QOS, UpQosClass))
 
-typedef struct DkpQosPrivate DkpQosPrivate;
+typedef struct UpQosPrivate UpQosPrivate;
 
 typedef struct
 {
 	GObject		  parent;
-	DkpQosPrivate	 *priv;
-} DkpQos;
+	UpQosPrivate	 *priv;
+} UpQos;
 
 typedef struct
 {
 	GObjectClass	parent_class;
-	void		(* latency_changed)		(DkpQos		*qos,
+	void		(* latency_changed)		(UpQos		*qos,
 							 const gchar	*type,
 							 gint		 value);
-	void		(* requests_changed)		(DkpQos		*qos);
-} DkpQosClass;
+	void		(* requests_changed)		(UpQos		*qos);
+} UpQosClass;
 
-DkpQos		*dkp_qos_new				(void);
-GType		 dkp_qos_get_type			(void);
-void		 dkp_qos_test				(gpointer	 user_data);
+UpQos		*up_qos_new				(void);
+GType		 up_qos_get_type			(void);
+void		 up_qos_test				(gpointer	 user_data);
 
-void		 dkp_qos_request_latency		(DkpQos		*qos,
+void		 up_qos_request_latency		(UpQos		*qos,
 							 const gchar	*type,
 							 gint		 value,
 							 gboolean	 persistent,
 							 DBusGMethodInvocation *context);
-void		 dkp_qos_cancel_request			(DkpQos		*qos,
+void		 up_qos_cancel_request			(UpQos		*qos,
 							 guint32	 cookie,
 							 DBusGMethodInvocation *context);
-void		 dkp_qos_set_minimum_latency		(DkpQos		*qos,
+void		 up_qos_set_minimum_latency		(UpQos		*qos,
 							 const gchar	*type,
 							 gint		 value,
 							 DBusGMethodInvocation *context);
-gboolean	 dkp_qos_get_latency			(DkpQos		*qos,
+gboolean	 up_qos_get_latency			(UpQos		*qos,
 							 const gchar	*type,
 							 gint		*value,
 							 GError		**error);
-gboolean	 dkp_qos_get_latency_requests		(DkpQos		*qos,
+gboolean	 up_qos_get_latency_requests		(UpQos		*qos,
 							 GPtrArray	**requests,
 							 GError		**error);
 
 G_END_DECLS
 
-#endif	/* __DKP_QOS_H */
+#endif	/* __UP_QOS_H */

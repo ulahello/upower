@@ -43,6 +43,9 @@ typedef struct
 	gint			 value;
 } DkpQosObj;
 
+/* compat */
+typedef DkpQosObj UpQosObj;
+
 DkpQosObj	*dkp_qos_obj_new		(void);
 void		 dkp_qos_obj_free		(DkpQosObj		*obj);
 DkpQosObj	*dkp_qos_obj_copy		(const DkpQosObj	*cobj);

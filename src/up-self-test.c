@@ -51,7 +51,7 @@ main (int argc, char **argv)
 	up_history_test (test);
 	up_native_test (test);
 	up_polkit_test (test);
-	dkp_qos_test (test);
+	up_qos_test (test);
 	dkp_wakeups_test (test);
 	up_daemon_test (test);
 

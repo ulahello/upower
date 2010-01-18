@@ -41,11 +41,11 @@
 #include "up-qos-obj.h"
 #include "up-qos-glue.h"
 
-static void     dkp_qos_finalize   (GObject	*object);
+static void     up_qos_finalize   (GObject	*object);
 
-#define DKP_QOS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_QOS, DkpQosPrivate))
+#define UP_QOS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_QOS, UpQosPrivate))
 
-#define DKP_QOS_REQUESTS_STRUCT_TYPE (dbus_g_type_get_struct ("GValueArray",	\
+#define UP_QOS_REQUESTS_STRUCT_TYPE (dbus_g_type_get_struct ("GValueArray",	\
 							      G_TYPE_UINT,	\
 							      G_TYPE_UINT,	\
 							      G_TYPE_UINT,	\
@@ -56,7 +56,7 @@ static void     dkp_qos_finalize   (GObject	*object);
 							      G_TYPE_INT,	\
 							      G_TYPE_INVALID))
 
-struct DkpQosPrivate
+struct UpQosPrivate
 {
 	GPtrArray		*data;
 	gint			 fd[UP_QOS_TYPE_LAST];
@@ -75,17 +75,17 @@ enum {
 
 static guint signals [LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (DkpQos, dkp_qos, G_TYPE_OBJECT)
+G_DEFINE_TYPE (UpQos, up_qos, G_TYPE_OBJECT)
 
 /**
- * dkp_qos_find_from_cookie:
+ * up_qos_find_from_cookie:
  **/
-static DkpQosObj *
-dkp_qos_find_from_cookie (DkpQos *qos, guint32 cookie)
+static UpQosObj *
+up_qos_find_from_cookie (UpQos *qos, guint32 cookie)
 {
 	guint i;
 	GPtrArray *data;
-	DkpQosObj *obj;
+	UpQosObj *obj;
 
 	/* search list */
 	data = qos->priv->data;
@@ -100,33 +100,33 @@ dkp_qos_find_from_cookie (DkpQos *qos, guint32 cookie)
 }
 
 /**
- * dkp_qos_generate_cookie:
+ * up_qos_generate_cookie:
  *
  * Return value: a random cookie not already allocated
  **/
 static guint32
-dkp_qos_generate_cookie (DkpQos *qos)
+up_qos_generate_cookie (UpQos *qos)
 {
 	guint32 cookie;
 
 	/* iterate until we have a unique cookie */
 	do {
 		cookie = (guint32) g_random_int_range (1, G_MAXINT32);
-	} while (dkp_qos_find_from_cookie (qos, cookie) != NULL);
+	} while (up_qos_find_from_cookie (qos, cookie) != NULL);
 
 	return cookie;
 }
 
 /**
- * dkp_qos_get_lowest:
+ * up_qos_get_lowest:
  **/
 static gint
-dkp_qos_get_lowest (DkpQos *qos, DkpQosType type)
+up_qos_get_lowest (UpQos *qos, UpQosType type)
 {
 	guint i;
 	gint lowest = G_MAXINT;
 	GPtrArray *data;
-	DkpQosObj *obj;
+	UpQosObj *obj;
 
 	/* find lowest */
 	data = qos->priv->data;
@@ -150,10 +150,10 @@ dkp_qos_get_lowest (DkpQos *qos, DkpQosType type)
 }
 
 /**
- * dkp_qos_latency_write:
+ * up_qos_latency_write:
  **/
 static gboolean
-dkp_qos_latency_write (DkpQos *qos, DkpQosType type, gint value)
+up_qos_latency_write (UpQos *qos, UpQosType type, gint value)
 {
 	gchar *text = NULL;
 	gint retval;
@@ -184,16 +184,16 @@ out:
 }
 
 /**
- * dkp_qos_latency_perhaps_changed:
+ * up_qos_latency_perhaps_changed:
  **/
 static gboolean
-dkp_qos_latency_perhaps_changed (DkpQos *qos, DkpQosType type)
+up_qos_latency_perhaps_changed (UpQos *qos, UpQosType type)
 {
 	gint lowest;
 	gint *last;
 
 	/* re-find the lowest value */
-	lowest = dkp_qos_get_lowest (qos, type);
+	lowest = up_qos_get_lowest (qos, type);
 
 	/* find the last value */
 	last = &qos->priv->last[type];
@@ -203,19 +203,19 @@ dkp_qos_latency_perhaps_changed (DkpQos *qos, DkpQosType type)
 		return FALSE;
 
 	/* write to file */
-	dkp_qos_latency_write (qos, type, lowest);
+	up_qos_latency_write (qos, type, lowest);
 
 	/* emit signal */
-	g_signal_emit (qos, signals [LATENCY_CHANGED], 0, dkp_qos_type_to_text (type), lowest);
+	g_signal_emit (qos, signals [LATENCY_CHANGED], 0, up_qos_type_to_text (type), lowest);
 	*last = lowest;
 	return TRUE;
 }
 
 /**
- * dkp_qos_get_cmdline:
+ * up_qos_get_cmdline:
  **/
 static gchar *
-dkp_qos_get_cmdline (gint pid)
+up_qos_get_cmdline (gint pid)
 {
 	gboolean ret;
 	gchar *filename = NULL;
@@ -236,14 +236,14 @@ out:
 }
 
 /**
- * dkp_qos_request_latency:
+ * up_qos_request_latency:
  *
  * Return value: a new random cookie
  **/
 void
-dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboolean persistent, DBusGMethodInvocation *context)
+up_qos_request_latency (UpQos *qos, const gchar *type_text, gint value, gboolean persistent, DBusGMethodInvocation *context)
 {
-	DkpQosObj *obj;
+	UpQosObj *obj;
 	gchar *sender = NULL;
 	const gchar *auth;
 	gchar *cmdline = NULL;
@@ -252,10 +252,10 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	gint pid;
 	PolkitSubject *subject = NULL;
 	gboolean retval;
-	DkpQosType type;
+	UpQosType type;
 
 	/* get correct data */
-	type = dkp_qos_type_from_text (type_text);
+	type = up_qos_type_from_text (type_text);
 	if (type == UP_QOS_TYPE_UNKNOWN) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		dbus_g_method_return_error (context, error);
@@ -300,7 +300,7 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	}
 
 	/* get command line */
-	cmdline = dkp_qos_get_cmdline (pid);
+	cmdline = up_qos_get_cmdline (pid);
 	if (cmdline == NULL) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "cannot get cmdline");
 		dbus_g_method_return_error (context, error);
@@ -308,8 +308,8 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	}
 
 	/* seems okay, add to list */
-	obj = g_new (DkpQosObj, 1);
-	obj->cookie = dkp_qos_generate_cookie (qos);
+	obj = g_new (UpQosObj, 1);
+	obj->cookie = up_qos_generate_cookie (qos);
 	obj->sender = g_strdup (sender);
 	obj->value = value;
 	obj->uid = uid;
@@ -325,7 +325,7 @@ dkp_qos_request_latency (DkpQos *qos, const gchar *type_text, gint value, gboole
 	/* TODO: if persistent add to datadase */
 
 	/* only emit event on the first one */
-	dkp_qos_latency_perhaps_changed (qos, type);
+	up_qos_latency_perhaps_changed (qos, type);
 	dbus_g_method_return (context, obj->cookie);
 out:
 	if (subject != NULL)
@@ -335,10 +335,10 @@ out:
 }
 
 /**
- * dkp_qos_free_data_obj:
+ * up_qos_free_data_obj:
  **/
 static void
-dkp_qos_free_data_obj (DkpQosObj *obj)
+up_qos_free_data_obj (UpQosObj *obj)
 {
 	g_free (obj->cmdline);
 	g_free (obj->sender);
@@ -346,20 +346,20 @@ dkp_qos_free_data_obj (DkpQosObj *obj)
 }
 
 /**
- * dkp_qos_cancel_request:
+ * up_qos_cancel_request:
  *
- * Removes a cookie and associated data from the DkpQosObj struct.
+ * Removes a cookie and associated data from the UpQosObj struct.
  **/
 void
-dkp_qos_cancel_request (DkpQos *qos, guint cookie, DBusGMethodInvocation *context)
+up_qos_cancel_request (UpQos *qos, guint cookie, DBusGMethodInvocation *context)
 {
-	DkpQosObj *obj;
+	UpQosObj *obj;
 	GError *error;
 	gchar *sender = NULL;
 	PolkitSubject *subject = NULL;
 
 	/* find the correct cookie */
-	obj = dkp_qos_find_from_cookie (qos, cookie);
+	obj = up_qos_find_from_cookie (qos, cookie);
 	if (obj == NULL) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL,
 				     "Cannot find request for #%i", cookie);
@@ -388,7 +388,7 @@ dkp_qos_cancel_request (DkpQos *qos, guint cookie, DBusGMethodInvocation *contex
 
 	/* remove object from list */
 	g_ptr_array_remove (qos->priv->data, obj);
-	dkp_qos_latency_perhaps_changed (qos, obj->type);
+	up_qos_latency_perhaps_changed (qos, obj->type);
 
 	/* TODO: if persistent remove from datadase */
 
@@ -400,38 +400,38 @@ out:
 }
 
 /**
- * dkp_qos_get_latency:
+ * up_qos_get_latency:
  *
  * Gets the current latency
  **/
 gboolean
-dkp_qos_get_latency (DkpQos *qos, const gchar *type_text, gint *value, GError **error)
+up_qos_get_latency (UpQos *qos, const gchar *type_text, gint *value, GError **error)
 {
-	DkpQosType type;
+	UpQosType type;
 
 	/* get correct data */
-	type = dkp_qos_type_from_text (type_text);
+	type = up_qos_type_from_text (type_text);
 	if (type == UP_QOS_TYPE_UNKNOWN) {
 		g_set_error (error, UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		return FALSE;
 	}
 
 	/* get the lowest value for this type */
-	*value = dkp_qos_get_lowest (qos, type);
+	*value = up_qos_get_lowest (qos, type);
 	return TRUE;
 }
 
 /**
- * dkp_qos_set_minimum_latency:
+ * up_qos_set_minimum_latency:
  **/
 void
-dkp_qos_set_minimum_latency (DkpQos *qos, const gchar *type_text, gint value, DBusGMethodInvocation *context)
+up_qos_set_minimum_latency (UpQos *qos, const gchar *type_text, gint value, DBusGMethodInvocation *context)
 {
-	DkpQosType type;
+	UpQosType type;
 	GError *error;
 
 	/* type valid? */
-	type = dkp_qos_type_from_text (type_text);
+	type = up_qos_type_from_text (type_text);
 	if (type == UP_QOS_TYPE_UNKNOWN) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		dbus_g_method_return_error (context, error);
@@ -442,19 +442,19 @@ dkp_qos_set_minimum_latency (DkpQos *qos, const gchar *type_text, gint value, DB
 	qos->priv->minimum[type] = value;
 
 	/* may have changed */
-	dkp_qos_latency_perhaps_changed (qos, type);
+	up_qos_latency_perhaps_changed (qos, type);
 	dbus_g_method_return (context, NULL);
 }
 
 /**
- * dkp_qos_get_latency_requests:
+ * up_qos_get_latency_requests:
  **/
 gboolean
-dkp_qos_get_latency_requests (DkpQos *qos, GPtrArray **requests, GError **error)
+up_qos_get_latency_requests (UpQos *qos, GPtrArray **requests, GError **error)
 {
 	guint i;
 	GPtrArray *data;
-	DkpQosObj *obj;
+	UpQosObj *obj;
 
 	*requests = g_ptr_array_new ();
 	data = qos->priv->data;
@@ -462,8 +462,8 @@ dkp_qos_get_latency_requests (DkpQos *qos, GPtrArray **requests, GError **error)
 		GValue elem = {0};
 
 		obj = g_ptr_array_index (data, i);
-		g_value_init (&elem, DKP_QOS_REQUESTS_STRUCT_TYPE);
-		g_value_take_boxed (&elem, dbus_g_type_specialized_construct (DKP_QOS_REQUESTS_STRUCT_TYPE));
+		g_value_init (&elem, UP_QOS_REQUESTS_STRUCT_TYPE);
+		g_value_take_boxed (&elem, dbus_g_type_specialized_construct (UP_QOS_REQUESTS_STRUCT_TYPE));
 		dbus_g_type_struct_set (&elem,
 					0, obj->cookie,
 					1, obj->uid,
@@ -471,7 +471,7 @@ dkp_qos_get_latency_requests (DkpQos *qos, GPtrArray **requests, GError **error)
 					3, obj->cmdline,
 					4, 0, //obj->timespec,
 					5, obj->persistent,
-					6, dkp_qos_type_to_text (obj->type),
+					6, up_qos_type_to_text (obj->type),
 					7, obj->value,
 					G_MAXUINT);
 		g_ptr_array_add (*requests, g_value_get_boxed (&elem));
@@ -486,14 +486,14 @@ dkp_qos_get_latency_requests (DkpQos *qos, GPtrArray **requests, GError **error)
 
 
 /**
- * dkp_qos_remove_dbus:
+ * up_qos_remove_dbus:
  **/
 static void
-dkp_qos_remove_dbus (DkpQos *qos, const gchar *sender)
+up_qos_remove_dbus (UpQos *qos, const gchar *sender)
 {
 	guint i;
 	GPtrArray *data;
-	DkpQosObj *obj;
+	UpQosObj *obj;
 
 	/* remove *any* senders that match the sender */
 	data = qos->priv->data;
@@ -502,66 +502,66 @@ dkp_qos_remove_dbus (DkpQos *qos, const gchar *sender)
 		if (strcmp (obj->sender, sender) == 0) {
 			egg_debug ("Auto-revoked idle qos on %s", sender);
 			g_ptr_array_remove (qos->priv->data, obj);
-			dkp_qos_latency_perhaps_changed (qos, obj->type);
+			up_qos_latency_perhaps_changed (qos, obj->type);
 		}
 	}
 }
 
 /**
- * dkp_qos_name_owner_changed_cb:
+ * up_qos_name_owner_changed_cb:
  **/
 static void
-dkp_qos_name_owner_changed_cb (DBusGProxy *proxy, const gchar *name, const gchar *prev, const gchar *new, DkpQos *qos)
+up_qos_name_owner_changed_cb (DBusGProxy *proxy, const gchar *name, const gchar *prev, const gchar *new, UpQos *qos)
 {
 	if (strlen (new) == 0)
-		dkp_qos_remove_dbus (qos, name);
+		up_qos_remove_dbus (qos, name);
 }
 
 /**
- * dkp_qos_class_init:
+ * up_qos_class_init:
  **/
 static void
-dkp_qos_class_init (DkpQosClass *klass)
+up_qos_class_init (UpQosClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	object_class->finalize = dkp_qos_finalize;
+	object_class->finalize = up_qos_finalize;
 
 	signals [LATENCY_CHANGED] =
 		g_signal_new ("latency-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (DkpQosClass, latency_changed),
+			      G_STRUCT_OFFSET (UpQosClass, latency_changed),
 			      NULL, NULL, up_marshal_VOID__STRING_INT,
 			      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	signals [REQUESTS_CHANGED] =
 		g_signal_new ("requests-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (DkpQosClass, requests_changed),
+			      G_STRUCT_OFFSET (UpQosClass, requests_changed),
 			      NULL, NULL, g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
 
 	/* introspection */
-	dbus_g_object_type_install_info (DKP_TYPE_QOS, &dbus_glib_dkp_qos_object_info);
+	dbus_g_object_type_install_info (UP_TYPE_QOS, &dbus_glib_up_qos_object_info);
 
-	g_type_class_add_private (klass, sizeof (DkpQosPrivate));
+	g_type_class_add_private (klass, sizeof (UpQosPrivate));
 }
 
 /**
- * dkp_qos_init:
+ * up_qos_init:
  **/
 static void
-dkp_qos_init (DkpQos *qos)
+up_qos_init (UpQos *qos)
 {
 	guint i;
 	GError *error = NULL;
 
-	qos->priv = DKP_QOS_GET_PRIVATE (qos);
+	qos->priv = UP_QOS_GET_PRIVATE (qos);
 	qos->priv->polkit = up_polkit_new ();
-	qos->priv->data = g_ptr_array_new_with_free_func ((GDestroyNotify) dkp_qos_free_data_obj);
+	qos->priv->data = g_ptr_array_new_with_free_func ((GDestroyNotify) up_qos_free_data_obj);
 	/* TODO: need to load persistent values */
 
 	/* setup lowest */
 	for (i=0; i<UP_QOS_TYPE_LAST; i++)
-		qos->priv->last[i] = dkp_qos_get_lowest (qos, i);
+		qos->priv->last[i] = up_qos_get_lowest (qos, i);
 
 	/* setup minimum */
 	for (i=0; i<UP_QOS_TYPE_LAST; i++)
@@ -590,23 +590,23 @@ dkp_qos_init (DkpQos *qos)
 	dbus_g_proxy_add_signal (qos->priv->proxy, "NameOwnerChanged",
 				 G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INVALID);
 	dbus_g_proxy_connect_signal (qos->priv->proxy, "NameOwnerChanged",
-				     G_CALLBACK (dkp_qos_name_owner_changed_cb), qos, NULL);
+				     G_CALLBACK (up_qos_name_owner_changed_cb), qos, NULL);
 }
 
 /**
- * dkp_qos_finalize:
+ * up_qos_finalize:
  **/
 static void
-dkp_qos_finalize (GObject *object)
+up_qos_finalize (GObject *object)
 {
-	DkpQos *qos;
+	UpQos *qos;
 	guint i;
 
 	g_return_if_fail (object != NULL);
-	g_return_if_fail (DKP_IS_QOS (object));
+	g_return_if_fail (UP_IS_QOS (object));
 
-	qos = DKP_QOS (object);
-	qos->priv = DKP_QOS_GET_PRIVATE (qos);
+	qos = UP_QOS (object);
+	qos->priv = UP_QOS_GET_PRIVATE (qos);
 
 	/* close files */
 	for (i=0; i<UP_QOS_TYPE_LAST; i++) {
@@ -618,18 +618,18 @@ dkp_qos_finalize (GObject *object)
 
 	g_object_unref (qos->priv->polkit);
 
-	G_OBJECT_CLASS (dkp_qos_parent_class)->finalize (object);
+	G_OBJECT_CLASS (up_qos_parent_class)->finalize (object);
 }
 
 /**
- * dkp_qos_new:
+ * up_qos_new:
  **/
-DkpQos *
-dkp_qos_new (void)
+UpQos *
+up_qos_new (void)
 {
-	DkpQos *qos;
-	qos = g_object_new (DKP_TYPE_QOS, NULL);
-	return DKP_QOS (qos);
+	UpQos *qos;
+	qos = g_object_new (UP_TYPE_QOS, NULL);
+	return UP_QOS (qos);
 }
 
 /***************************************************************************
@@ -639,17 +639,17 @@ dkp_qos_new (void)
 #include "egg-test.h"
 
 void
-dkp_qos_test (gpointer user_data)
+up_qos_test (gpointer user_data)
 {
 	EggTest *test = (EggTest *) user_data;
-	DkpQos *qos;
+	UpQos *qos;
 
-	if (!egg_test_start (test, "DkpQos"))
+	if (!egg_test_start (test, "UpQos"))
 		return;
 
 	/************************************************************/
 	egg_test_title (test, "get instance");
-	qos = dkp_qos_new ();
+	qos = up_qos_new ();
 	egg_test_assert (test, qos != NULL);
 
 	/* unref */
