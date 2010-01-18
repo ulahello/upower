@@ -13,9 +13,9 @@ INCLUDES = \
 	$(POLKIT_CFLAGS)					\
 	$(GLIB_CFLAGS)
 
-noinst_LTLIBRARIES = libdkpshared.la
+noinst_LTLIBRARIES = libupshared.la
 
-libdkpshared_la_SOURCES =					\
+libupshared_la_SOURCES =					\
 	up-backend.c						\
 	up-native.c						\
 	$(BUILT_SOURCES)

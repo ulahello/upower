@@ -102,18 +102,18 @@ devkit_power_daemon_LDADD =					\
 
 if BACKEND_TYPE_DUMMY
 devkit_power_daemon_LDADD += 					\
-	dummy/libdkpshared.la
+	dummy/libupshared.la
 endif
 
 if BACKEND_TYPE_FREEBSD
 devkit_power_daemon_LDADD +=					\
-	freebsd/libdkpshared.la					\
+	freebsd/libupshared.la					\
 	$(DEVKIT_POWER_LIBS)
 endif
 
 if BACKEND_TYPE_LINUX
 devkit_power_daemon_LDADD += 					\
-	linux/libdkpshared.la					\
+	linux/libupshared.la					\
 	$(GUDEV_LIBS)						\
 	$(DEVKIT_POWER_LIBS)
 endif
@@ -152,7 +152,7 @@ up_self_test_SOURCES =						\
 
 up_self_test_LDADD =						\
 	-lm							\
-	dummy/libdkpshared.la					\
+	dummy/libupshared.la					\
 	$(GLIB_LIBS)						\
 	$(GIO_CFLAGS)						\
 	$(SELFTEST_LIBS)					\

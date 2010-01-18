@@ -16,10 +16,10 @@ INCLUDES = \
 	$(GLIB_CFLAGS)
 
 if BACKEND_TYPE_LINUX
-noinst_LTLIBRARIES = libdkpshared.la
+noinst_LTLIBRARIES = libupshared.la
 endif
 
-libdkpshared_la_SOURCES =					\
+libupshared_la_SOURCES =					\
 	up-device-supply.c					\
 	up-device-supply.h					\
 	up-device-csr.c						\
@@ -36,7 +36,7 @@ libdkpshared_la_SOURCES =					\
 	sysfs-utils.h						\
 	$(BUILT_SOURCES)
 
-libdkpshared_la_CFLAGS =					\
+libupshared_la_CFLAGS =					\
 	$(WARNINGFLAGS_C)
 
 clean-local :

@@ -13,10 +13,10 @@ INCLUDES = \
 	$(GLIB_CFLAGS)
 
 if BACKEND_TYPE_FREEBSD
-noinst_LTLIBRARIES = libdkpshared.la
+noinst_LTLIBRARIES = libupshared.la
 endif
 
-libdkpshared_la_SOURCES =					\
+libupshared_la_SOURCES =					\
 	up-acpi-native.c					\
 	up-acpi-native.h					\
 	up-backend-acpi.h					\
@@ -30,10 +30,10 @@ libdkpshared_la_SOURCES =					\
 	up-util.h						\
 	$(BUILT_SOURCES)
 
-libdkpshared_la_CFLAGS =					\
+libupshared_la_CFLAGS =					\
 	$(WARNINGFLAGS_C)
 
-libdkpshared_la_LIBADD =					\
+libupshared_la_LIBADD =					\
 	-lkvm
 
 EXTRA_DIST =							\
