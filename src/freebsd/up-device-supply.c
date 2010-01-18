@@ -47,25 +47,25 @@
 
 #define DKP_ACPIDEV			"/dev/acpi"
 
-G_DEFINE_TYPE (DkpDeviceSupply, dkp_device_supply, DKP_TYPE_DEVICE)
+G_DEFINE_TYPE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
 
-static gboolean		 dkp_device_supply_refresh	 	(DkpDevice *device);
-static DkpDeviceTechnology	dkp_device_supply_convert_device_technology (const gchar *type);
-static gboolean		dkp_device_supply_acline_coldplug	(DkpDevice *device);
-static gboolean		dkp_device_supply_battery_coldplug	(DkpDevice *device, DkpAcpiNative *native);
-static gboolean		dkp_device_supply_acline_set_properties	(DkpDevice *device);
-static gboolean		dkp_device_supply_battery_set_properties	(DkpDevice *device, DkpAcpiNative *native);
-static gboolean		dkp_device_supply_get_on_battery	(DkpDevice *device, gboolean *on_battery);
-static gboolean		dkp_device_supply_get_low_battery	(DkpDevice *device, gboolean *low_battery);
-static gboolean		dkp_device_supply_get_online		(DkpDevice *device, gboolean *online);
+static gboolean		 up_device_supply_refresh	 	(UpDevice *device);
+static UpDeviceTechnology	up_device_supply_convert_device_technology (const gchar *type);
+static gboolean		up_device_supply_acline_coldplug	(UpDevice *device);
+static gboolean		up_device_supply_battery_coldplug	(UpDevice *device, DkpAcpiNative *native);
+static gboolean		up_device_supply_acline_set_properties	(UpDevice *device);
+static gboolean		up_device_supply_battery_set_properties	(UpDevice *device, DkpAcpiNative *native);
+static gboolean		up_device_supply_get_on_battery	(UpDevice *device, gboolean *on_battery);
+static gboolean		up_device_supply_get_low_battery	(UpDevice *device, gboolean *low_battery);
+static gboolean		up_device_supply_get_online		(UpDevice *device, gboolean *online);
 
 /**
- * dkp_device_supply_convert_device_technology:
+ * up_device_supply_convert_device_technology:
  *
  * This is taken from linux/dkp-device-supply.c.
  **/
-static DkpDeviceTechnology
-dkp_device_supply_convert_device_technology (const gchar *type)
+static UpDeviceTechnology
+up_device_supply_convert_device_technology (const gchar *type)
 {
 	if (type == NULL)
 		return DKP_DEVICE_TECHNOLOGY_UNKNOWN;
@@ -87,10 +87,10 @@ dkp_device_supply_convert_device_technology (const gchar *type)
 }
 
 /**
- * dkp_device_supply_reset_values:
+ * up_device_supply_reset_values:
  **/
 static void
-dkp_device_supply_reset_values (DkpDevice *device)
+up_device_supply_reset_values (UpDevice *device)
 {
 	/* reset to default */
 	g_object_set (device,
@@ -120,10 +120,10 @@ dkp_device_supply_reset_values (DkpDevice *device)
 }
 
 /**
- * dkp_device_supply_acline_coldplug:
+ * up_device_supply_acline_coldplug:
  **/
 static gboolean
-dkp_device_supply_acline_coldplug (DkpDevice *device)
+up_device_supply_acline_coldplug (UpDevice *device)
 {
 	gboolean ret;
 
@@ -133,30 +133,30 @@ dkp_device_supply_acline_coldplug (DkpDevice *device)
 		      "type", DKP_DEVICE_TYPE_LINE_POWER,
 		      NULL);
 
-	ret = dkp_device_supply_acline_set_properties (device);
+	ret = up_device_supply_acline_set_properties (device);
 
 	return ret;
 }
 
 /**
- * dkp_device_supply_battery_coldplug:
+ * up_device_supply_battery_coldplug:
  **/
 static gboolean
-dkp_device_supply_battery_coldplug (DkpDevice *device, DkpAcpiNative *native)
+up_device_supply_battery_coldplug (UpDevice *device, DkpAcpiNative *native)
 {
 	gboolean ret;
 
 	g_object_set (device, "type", DKP_DEVICE_TYPE_BATTERY, NULL);
-	ret = dkp_device_supply_battery_set_properties (device, native);
+	ret = up_device_supply_battery_set_properties (device, native);
 
 	return ret;
 }
 
 /**
- * dkp_device_supply_battery_set_properties:
+ * up_device_supply_battery_set_properties:
  **/
 static gboolean
-dkp_device_supply_battery_set_properties (DkpDevice *device, DkpAcpiNative *native)
+up_device_supply_battery_set_properties (UpDevice *device, DkpAcpiNative *native)
 {
 	gint fd;
 	gdouble volt, dvolt, rate, lastfull, cap, dcap, lcap, capacity;
@@ -164,8 +164,8 @@ dkp_device_supply_battery_set_properties (DkpDevice *device, DkpAcpiNative *nati
 	gboolean ret = FALSE;
 	guint64 time_to_empty, time_to_full;
 	gchar *vendor, *model, *serial;
-	DkpDeviceTechnology technology;
-	DkpDeviceState state;
+	UpDeviceTechnology technology;
+	UpDeviceState state;
 	union acpi_battery_ioctl_arg battif, battst, battinfo;
 
 	if (!dkp_has_sysctl ("hw.acpi.battery.units"))
@@ -200,14 +200,14 @@ dkp_device_supply_battery_set_properties (DkpDevice *device, DkpAcpiNative *nati
 	g_object_set (device, "is-present", is_present, NULL);
 
 	if (!is_present) {
-		dkp_device_supply_reset_values (device);
+		up_device_supply_reset_values (device);
 		goto end;
 	}
 
 	vendor = dkp_make_safe_string (battif.bif.oeminfo);
 	model = dkp_make_safe_string (battif.bif.model);
 	serial = dkp_make_safe_string (battif.bif.serial);
-	technology = dkp_device_supply_convert_device_technology (battif.bif.type);
+	technology = up_device_supply_convert_device_technology (battif.bif.type);
 
 	g_object_set (device,
 		      "vendor", vendor,
@@ -323,10 +323,10 @@ end:
 }
 
 /**
- * dkp_device_supply_acline_set_properties:
+ * up_device_supply_acline_set_properties:
  **/
 static gboolean
-dkp_device_supply_acline_set_properties (DkpDevice *device)
+up_device_supply_acline_set_properties (UpDevice *device)
 {
 	int acstate;
 
@@ -339,20 +339,20 @@ dkp_device_supply_acline_set_properties (DkpDevice *device)
 }
 
 /**
- * dkp_device_supply_coldplug:
+ * up_device_supply_coldplug:
  * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 static gboolean
-dkp_device_supply_coldplug (DkpDevice *device)
+up_device_supply_coldplug (UpDevice *device)
 {
 	DkpAcpiNative *native;
 	const gchar *native_path;
 	const gchar *driver;
 	gboolean ret = FALSE;
 
-	dkp_device_supply_reset_values (device);
+	up_device_supply_reset_values (device);
 
-	native = DKP_ACPI_NATIVE (dkp_device_get_native (device));
+	native = DKP_ACPI_NATIVE (up_device_get_native (device));
 	native_path = dkp_acpi_native_get_path (native);
 	driver = dkp_acpi_native_get_driver (native);
 	if (native_path == NULL) {
@@ -361,12 +361,12 @@ dkp_device_supply_coldplug (DkpDevice *device)
 	}
 
 	if (!strcmp (native_path, "hw.acpi.acline")) {
-		ret = dkp_device_supply_acline_coldplug (device);
+		ret = up_device_supply_acline_coldplug (device);
 		goto out;
 	}
 
 	if (!g_strcmp0 (driver, "battery")) {
-		ret = dkp_device_supply_battery_coldplug (device, native);
+		ret = up_device_supply_battery_coldplug (device, native);
 		goto out;
 	}
 
@@ -377,26 +377,26 @@ out:
 }
 
 /**
- * dkp_device_supply_refresh:
+ * up_device_supply_refresh:
  *
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
-dkp_device_supply_refresh (DkpDevice *device)
+up_device_supply_refresh (UpDevice *device)
 {
 	GObject *object;
 	GTimeVal timeval;
-	DkpDeviceType type;
+	UpDeviceType type;
 	gboolean ret;
 
 	g_object_get (device, "type", &type, NULL);
 	switch (type) {
 		case DKP_DEVICE_TYPE_LINE_POWER:
-			ret = dkp_device_supply_acline_set_properties (device);
+			ret = up_device_supply_acline_set_properties (device);
 			break;
 		case DKP_DEVICE_TYPE_BATTERY:
-			object = dkp_device_get_native (device);
-			ret = dkp_device_supply_battery_set_properties (device, DKP_ACPI_NATIVE (object));
+			object = up_device_get_native (device);
+			ret = up_device_supply_battery_set_properties (device, DKP_ACPI_NATIVE (object));
 			break;
 		default:
 			g_assert_not_reached ();
@@ -412,13 +412,13 @@ dkp_device_supply_refresh (DkpDevice *device)
 }
 
 /**
- * dkp_device_supply_get_on_battery:
+ * up_device_supply_get_on_battery:
  **/
 static gboolean
-dkp_device_supply_get_on_battery (DkpDevice *device, gboolean *on_battery)
+up_device_supply_get_on_battery (UpDevice *device, gboolean *on_battery)
 {
-	DkpDeviceType type;
-	DkpDeviceState state;
+	UpDeviceType type;
+	UpDeviceState state;
 	gboolean is_present;
 
 	g_return_val_if_fail (on_battery != NULL, FALSE);
@@ -441,10 +441,10 @@ dkp_device_supply_get_on_battery (DkpDevice *device, gboolean *on_battery)
 }
 
 /**
- * dkp_device_supply_get_low_battery:
+ * up_device_supply_get_low_battery:
  **/
 static gboolean
-dkp_device_supply_get_low_battery (DkpDevice *device, gboolean *low_battery)
+up_device_supply_get_low_battery (UpDevice *device, gboolean *low_battery)
 {
 	gboolean ret;
 	gboolean on_battery;
@@ -452,7 +452,7 @@ dkp_device_supply_get_low_battery (DkpDevice *device, gboolean *low_battery)
 
 	g_return_val_if_fail (low_battery != NULL, FALSE);
 
-	ret = dkp_device_supply_get_on_battery (device, &on_battery);
+	ret = up_device_supply_get_on_battery (device, &on_battery);
 	if (!ret)
 		return FALSE;
 
@@ -467,12 +467,12 @@ dkp_device_supply_get_low_battery (DkpDevice *device, gboolean *low_battery)
 }
 
 /**
- * dkp_device_supply_get_online:
+ * up_device_supply_get_online:
  **/
 static gboolean
-dkp_device_supply_get_online (DkpDevice *device, gboolean *online)
+up_device_supply_get_online (UpDevice *device, gboolean *online)
 {
-	DkpDeviceType type;
+	UpDeviceType type;
 	gboolean online_tmp;
 
 	g_return_val_if_fail (online != NULL, FALSE);
@@ -491,52 +491,52 @@ dkp_device_supply_get_online (DkpDevice *device, gboolean *online)
 }
 
 /**
- * dkp_device_supply_init:
+ * up_device_supply_init:
  **/
 static void
-dkp_device_supply_init (DkpDeviceSupply *supply)
+up_device_supply_init (UpDeviceSupply *supply)
 {
 }
 
 /**
- * dkp_device_supply_finalize:
+ * up_device_supply_finalize:
  **/
 static void
-dkp_device_supply_finalize (GObject *object)
+up_device_supply_finalize (GObject *object)
 {
-	DkpDeviceSupply *supply;
+	UpDeviceSupply *supply;
 
 	g_return_if_fail (object != NULL);
-	g_return_if_fail (DKP_IS_SUPPLY (object));
+	g_return_if_fail (UP_IS_DEVICE_SUPPLY (object));
 
-	supply = DKP_DEVICE_SUPPLY (object);
+	supply = UP_DEVICE_SUPPLY (object);
 
-	G_OBJECT_CLASS (dkp_device_supply_parent_class)->finalize (object);
+	G_OBJECT_CLASS (up_device_supply_parent_class)->finalize (object);
 }
 
 /**
- * dkp_device_supply_class_init:
+ * up_device_supply_class_init:
  **/
 static void
-dkp_device_supply_class_init (DkpDeviceSupplyClass *klass)
+up_device_supply_class_init (UpDeviceSupplyClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	DkpDeviceClass *device_class = DKP_DEVICE_CLASS (klass);
+	UpDeviceClass *device_class = UP_DEVICE_CLASS (klass);
 
-	object_class->finalize = dkp_device_supply_finalize;
-	device_class->get_on_battery = dkp_device_supply_get_on_battery;
-	device_class->get_low_battery = dkp_device_supply_get_low_battery;
-	device_class->get_online = dkp_device_supply_get_online;
-	device_class->coldplug = dkp_device_supply_coldplug;
-	device_class->refresh = dkp_device_supply_refresh;
+	object_class->finalize = up_device_supply_finalize;
+	device_class->get_on_battery = up_device_supply_get_on_battery;
+	device_class->get_low_battery = up_device_supply_get_low_battery;
+	device_class->get_online = up_device_supply_get_online;
+	device_class->coldplug = up_device_supply_coldplug;
+	device_class->refresh = up_device_supply_refresh;
 }
 
 /**
- * dkp_device_supply_new:
+ * up_device_supply_new:
  **/
-DkpDeviceSupply *
-dkp_device_supply_new (void)
+UpDeviceSupply *
+up_device_supply_new (void)
 {
-	return g_object_new (DKP_TYPE_SUPPLY, NULL);
+	return g_object_new (UP_TYPE_DEVICE_SUPPLY, NULL);
 }
 

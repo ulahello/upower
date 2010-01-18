@@ -40,7 +40,7 @@
 #include "up-enum.h"
 #include "up-device-csr.h"
 
-#define DKP_DEVICE_CSR_REFRESH_TIMEOUT		30L
+#define UP_DEVICE_CSR_REFRESH_TIMEOUT		30L
 
 /* Internal CSR registers */
 #define CSR_P6  			(buf[0])
@@ -52,7 +52,7 @@
 #define CSR_PB0 			(buf[6])
 #define CSR_PB1 			(buf[7])
 
-struct DkpDeviceCsrPrivate
+struct UpDeviceCsrPrivate
 {
 	guint			 poll_timer_id;
 	gboolean		 is_dual;
@@ -62,31 +62,31 @@ struct DkpDeviceCsrPrivate
 	struct usb_device	*device;
 };
 
-G_DEFINE_TYPE (DkpDeviceCsr, dkp_device_csr, DKP_TYPE_DEVICE)
-#define DKP_DEVICE_CSR_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_CSR, DkpDeviceCsrPrivate))
+G_DEFINE_TYPE (UpDeviceCsr, up_device_csr, UP_TYPE_DEVICE)
+#define UP_DEVICE_CSR_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE_CSR, UpDeviceCsrPrivate))
 
-static gboolean		 dkp_device_csr_refresh	 	(DkpDevice *device);
+static gboolean		 up_device_csr_refresh	 	(UpDevice *device);
 
 /**
- * dkp_device_csr_poll_cb:
+ * up_device_csr_poll_cb:
  **/
 static gboolean
-dkp_device_csr_poll_cb (DkpDeviceCsr *csr)
+up_device_csr_poll_cb (UpDeviceCsr *csr)
 {
-	DkpDevice *device = DKP_DEVICE (csr);
+	UpDevice *device = UP_DEVICE (csr);
 
-	egg_debug ("Polling: %s", dkp_device_get_object_path (device));
-	dkp_device_csr_refresh (device);
+	egg_debug ("Polling: %s", up_device_get_object_path (device));
+	up_device_csr_refresh (device);
 
 	/* always continue polling */
 	return TRUE;
 }
 
 /**
- * dkp_device_csr_find_device:
+ * up_device_csr_find_device:
  **/
 static struct usb_device *
-dkp_device_csr_find_device (DkpDeviceCsr *csr)
+up_device_csr_find_device (UpDeviceCsr *csr)
 {
 	struct usb_bus *curr_bus;
 	struct usb_device *curr_device;
@@ -123,14 +123,14 @@ out:
 }
 
 /**
- * dkp_device_csr_coldplug:
+ * up_device_csr_coldplug:
  *
  * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 static gboolean
-dkp_device_csr_coldplug (DkpDevice *device)
+up_device_csr_coldplug (UpDevice *device)
 {
-	DkpDeviceCsr *csr = DKP_DEVICE_CSR (device);
+	UpDeviceCsr *csr = UP_DEVICE_CSR (device);
 	GUdevDevice *native;
 	gboolean ret = FALSE;
 	const gchar *type;
@@ -139,7 +139,7 @@ dkp_device_csr_coldplug (DkpDevice *device)
 	const gchar *product;
 
 	/* get the type */
-	native = G_UDEV_DEVICE (dkp_device_get_native (device));
+	native = G_UDEV_DEVICE (up_device_get_native (device));
 	type = g_udev_device_get_property (native, "DKP_BATTERY_TYPE");
 	if (type == NULL)
 		goto out;
@@ -166,7 +166,7 @@ dkp_device_csr_coldplug (DkpDevice *device)
 	}
 
 	/* try to get the usb device */
-	csr->priv->device = dkp_device_csr_find_device (csr);
+	csr->priv->device = up_device_csr_find_device (csr);
 	if (csr->priv->device == NULL) {
 		egg_debug ("failed to get device %p", csr);
 		goto out;
@@ -198,29 +198,29 @@ dkp_device_csr_coldplug (DkpDevice *device)
 		      NULL);
 
 	/* coldplug */
-	ret = dkp_device_csr_refresh (device);
+	ret = up_device_csr_refresh (device);
 	if (!ret)
 		goto out;
 
 	/* set up a poll */
-	csr->priv->poll_timer_id = g_timeout_add_seconds (DKP_DEVICE_CSR_REFRESH_TIMEOUT,
-							  (GSourceFunc) dkp_device_csr_poll_cb, csr);
+	csr->priv->poll_timer_id = g_timeout_add_seconds (UP_DEVICE_CSR_REFRESH_TIMEOUT,
+							  (GSourceFunc) up_device_csr_poll_cb, csr);
 
 out:
 	return ret;
 }
 
 /**
- * dkp_device_csr_refresh:
+ * up_device_csr_refresh:
  *
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
-dkp_device_csr_refresh (DkpDevice *device)
+up_device_csr_refresh (UpDevice *device)
 {
 	gboolean ret = FALSE;
 	GTimeVal timeval;
-	DkpDeviceCsr *csr = DKP_DEVICE_CSR (device);
+	UpDeviceCsr *csr = UP_DEVICE_CSR (device);
 	usb_dev_handle *handle = NULL;
 	char buf[80];
 	unsigned int addr;
@@ -245,7 +245,7 @@ dkp_device_csr_refresh (DkpDevice *device)
 	}
 
 	/* get the charge */
-	written = usb_control_msg (handle, 0xc0, 0x09, 0x03|addr, 0x00|addr, buf, 8, DKP_DEVICE_CSR_REFRESH_TIMEOUT);
+	written = usb_control_msg (handle, 0xc0, 0x09, 0x03|addr, 0x00|addr, buf, 8, UP_DEVICE_CSR_REFRESH_TIMEOUT);
 	ret = (written == 8);
 	if (!ret) {
 		egg_warning ("failed to write to device, wrote %i bytes", written);
@@ -277,12 +277,12 @@ out:
 }
 
 /**
- * dkp_device_csr_init:
+ * up_device_csr_init:
  **/
 static void
-dkp_device_csr_init (DkpDeviceCsr *csr)
+up_device_csr_init (UpDeviceCsr *csr)
 {
-	csr->priv = DKP_DEVICE_CSR_GET_PRIVATE (csr);
+	csr->priv = UP_DEVICE_CSR_GET_PRIVATE (csr);
 
 	usb_init ();
 	usb_find_busses ();
@@ -294,47 +294,47 @@ dkp_device_csr_init (DkpDeviceCsr *csr)
 }
 
 /**
- * dkp_device_csr_finalize:
+ * up_device_csr_finalize:
  **/
 static void
-dkp_device_csr_finalize (GObject *object)
+up_device_csr_finalize (GObject *object)
 {
-	DkpDeviceCsr *csr;
+	UpDeviceCsr *csr;
 
 	g_return_if_fail (object != NULL);
-	g_return_if_fail (DKP_IS_CSR (object));
+	g_return_if_fail (UP_IS_DEVICE_CSR (object));
 
-	csr = DKP_DEVICE_CSR (object);
+	csr = UP_DEVICE_CSR (object);
 	g_return_if_fail (csr->priv != NULL);
 
 	if (csr->priv->poll_timer_id > 0)
 		g_source_remove (csr->priv->poll_timer_id);
 
-	G_OBJECT_CLASS (dkp_device_csr_parent_class)->finalize (object);
+	G_OBJECT_CLASS (up_device_csr_parent_class)->finalize (object);
 }
 
 /**
- * dkp_device_csr_class_init:
+ * up_device_csr_class_init:
  **/
 static void
-dkp_device_csr_class_init (DkpDeviceCsrClass *klass)
+up_device_csr_class_init (UpDeviceCsrClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	DkpDeviceClass *device_class = DKP_DEVICE_CLASS (klass);
+	UpDeviceClass *device_class = UP_DEVICE_CLASS (klass);
 
-	object_class->finalize = dkp_device_csr_finalize;
-	device_class->coldplug = dkp_device_csr_coldplug;
-	device_class->refresh = dkp_device_csr_refresh;
+	object_class->finalize = up_device_csr_finalize;
+	device_class->coldplug = up_device_csr_coldplug;
+	device_class->refresh = up_device_csr_refresh;
 
-	g_type_class_add_private (klass, sizeof (DkpDeviceCsrPrivate));
+	g_type_class_add_private (klass, sizeof (UpDeviceCsrPrivate));
 }
 
 /**
- * dkp_device_csr_new:
+ * up_device_csr_new:
  **/
-DkpDeviceCsr *
-dkp_device_csr_new (void)
+UpDeviceCsr *
+up_device_csr_new (void)
 {
-	return g_object_new (DKP_TYPE_CSR, NULL);
+	return g_object_new (UP_TYPE_DEVICE_CSR, NULL);
 }
 

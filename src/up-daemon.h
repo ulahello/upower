@@ -70,8 +70,8 @@ void		 up_daemon_test		(gpointer	 user_data);
 
 /* private */
 guint		 up_daemon_get_number_devices_of_type (UpDaemon	*daemon,
-						 DkpDeviceType		 type);
-DkpDeviceList	*up_daemon_get_device_list	(UpDaemon		*daemon);
+						 UpDeviceType		 type);
+UpDeviceList	*up_daemon_get_device_list	(UpDaemon		*daemon);
 gboolean	 up_daemon_startup		(UpDaemon		*daemon);
 
 /* exported */

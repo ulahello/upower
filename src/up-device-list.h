@@ -19,50 +19,50 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef __DKP_DEVICE_LIST_H
-#define __DKP_DEVICE_LIST_H
+#ifndef __UP_DEVICE_LIST_H
+#define __UP_DEVICE_LIST_H
 
 #include <glib-object.h>
 #include <dkp-enum.h>
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_DEVICE_LIST		(dkp_device_list_get_type ())
-#define DKP_DEVICE_LIST(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_DEVICE_LIST, DkpDeviceList))
-#define DKP_DEVICE_LIST_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_DEVICE_LIST, DkpDeviceListClass))
-#define DKP_IS_DEVICE_LIST(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_DEVICE_LIST))
-#define DKP_IS_DEVICE_LIST_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_DEVICE_LIST))
-#define DKP_DEVICE_LIST_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_DEVICE_LIST, DkpDeviceListClass))
-#define DKP_DEVICE_LIST_ERROR		(dkp_device_list_error_quark ())
-#define DKP_DEVICE_LIST_TYPE_ERROR	(dkp_device_list_error_get_type ())
+#define UP_TYPE_DEVICE_LIST		(up_device_list_get_type ())
+#define UP_DEVICE_LIST(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), UP_TYPE_DEVICE_LIST, UpDeviceList))
+#define UP_DEVICE_LIST_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), UP_TYPE_DEVICE_LIST, UpDeviceListClass))
+#define UP_IS_DEVICE_LIST(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), UP_TYPE_DEVICE_LIST))
+#define UP_IS_DEVICE_LIST_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), UP_TYPE_DEVICE_LIST))
+#define UP_DEVICE_LIST_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), UP_TYPE_DEVICE_LIST, UpDeviceListClass))
+#define UP_DEVICE_LIST_ERROR		(up_device_list_error_quark ())
+#define UP_DEVICE_LIST_TYPE_ERROR	(up_device_list_error_get_type ())
 
-typedef struct DkpDeviceListPrivate DkpDeviceListPrivate;
+typedef struct UpDeviceListPrivate UpDeviceListPrivate;
 
 typedef struct
 {
 	 GObject		 parent;
-	 DkpDeviceListPrivate	*priv;
-} DkpDeviceList;
+	 UpDeviceListPrivate	*priv;
+} UpDeviceList;
 
 typedef struct
 {
 	GObjectClass		 parent_class;
-} DkpDeviceListClass;
+} UpDeviceListClass;
 
-GType		 dkp_device_list_get_type		(void);
-DkpDeviceList	*dkp_device_list_new			(void);
-void		 dkp_device_list_test			(gpointer		 user_data);
+GType		 up_device_list_get_type		(void);
+UpDeviceList	*up_device_list_new			(void);
+void		 up_device_list_test			(gpointer		 user_data);
 
-GObject		*dkp_device_list_lookup			(DkpDeviceList		*list,
+GObject		*up_device_list_lookup			(UpDeviceList		*list,
 							 GObject		*native);
-gboolean	 dkp_device_list_insert			(DkpDeviceList		*list,
+gboolean	 up_device_list_insert			(UpDeviceList		*list,
 							 GObject		*native,
 							 GObject		*device);
-gboolean	 dkp_device_list_remove			(DkpDeviceList		*list,
+gboolean	 up_device_list_remove			(UpDeviceList		*list,
 							 GObject		*device);
-GPtrArray	*dkp_device_list_get_array		(DkpDeviceList		*list);
+GPtrArray	*up_device_list_get_array		(UpDeviceList		*list);
 
 G_END_DECLS
 
-#endif /* __DKP_DEVICE_LIST_H */
+#endif /* __UP_DEVICE_LIST_H */
 

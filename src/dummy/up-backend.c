@@ -43,8 +43,8 @@ static void	up_backend_finalize	(GObject		*object);
 struct UpBackendPrivate
 {
 	UpDaemon		*daemon;
-	DkpDevice		*device;
-	DkpDeviceList		*device_list; /* unused */
+	UpDevice		*device;
+	UpDeviceList		*device_list; /* unused */
 	GObject			*native;
 };
 
@@ -64,7 +64,7 @@ G_DEFINE_TYPE (UpBackend, up_backend, G_TYPE_OBJECT)
 static gboolean
 up_backend_changed_time_cb (UpBackend *backend)
 {
-	DkpDevice *device;
+	UpDevice *device;
 	GTimeVal timeval;
 
 	//FIXME!
@@ -85,7 +85,7 @@ up_backend_add_cb (UpBackend *backend)
 	gboolean ret;
 
 	/* coldplug */
-	ret = dkp_device_coldplug (backend->priv->device, backend->priv->daemon, backend->priv->native);
+	ret = up_device_coldplug (backend->priv->device, backend->priv->daemon, backend->priv->native);
 	if (!ret) {
 		egg_warning ("failed to coldplug");
 		goto out;
@@ -157,8 +157,8 @@ up_backend_init (UpBackend *backend)
 	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
 	backend->priv->daemon = NULL;
 	backend->priv->device_list = NULL;
-	backend->priv->native = g_object_new (DKP_TYPE_DEVICE, NULL);
-	backend->priv->device = dkp_device_new ();
+	backend->priv->native = g_object_new (UP_TYPE_DEVICE, NULL);
+	backend->priv->device = up_device_new ();
 
 	/* setup dummy */
 	g_object_set (backend->priv->device,

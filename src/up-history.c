@@ -45,7 +45,7 @@ struct DkpHistoryPrivate
 	gint64			 time_full_last;
 	gint64			 time_empty_last;
 	gdouble			 percentage_last;
-	DkpDeviceState		 state;
+	UpDeviceState		 state;
 	GPtrArray		*data_rate;
 	GPtrArray		*data_charge;
 	GPtrArray		*data_time_full;
@@ -114,7 +114,7 @@ dkp_history_array_limit_resolution (GPtrArray *array, guint max_num)
 	guint last;
 	guint first;
 	GPtrArray *new;
-	DkpDeviceState state = DKP_DEVICE_STATE_UNKNOWN;
+	UpDeviceState state = DKP_DEVICE_STATE_UNKNOWN;
 	guint64 time_s = 0;
 	gdouble value = 0;
 	guint64 count = 0;
@@ -669,7 +669,7 @@ dkp_history_set_id (DkpHistory *history, const gchar *id)
  * dkp_history_set_state:
  **/
 gboolean
-dkp_history_set_state (DkpHistory *history, DkpDeviceState state)
+dkp_history_set_state (DkpHistory *history, UpDeviceState state)
 {
 	g_return_val_if_fail (DKP_IS_HISTORY (history), FALSE);
 

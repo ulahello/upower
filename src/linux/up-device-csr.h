@@ -19,38 +19,38 @@
  *
  */
 
-#ifndef __DKP_DEVICE_CSR_H__
-#define __DKP_DEVICE_CSR_H__
+#ifndef __UP_DEVICE_CSR_H__
+#define __UP_DEVICE_CSR_H__
 
 #include <glib-object.h>
 #include "up-device.h"
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_CSR  			(dkp_device_csr_get_type ())
-#define DKP_DEVICE_CSR(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_CSR, DkpDeviceCsr))
-#define DKP_DEVICE_CSR_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_CSR, DkpDeviceCsrClass))
-#define DKP_IS_CSR(o)			(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_CSR))
-#define DKP_IS_CSR_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_CSR))
-#define DKP_DEVICE_CSR_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_CSR, DkpDeviceCsrClass))
+#define UP_TYPE_DEVICE_CSR  			(up_device_csr_get_type ())
+#define UP_DEVICE_CSR(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), UP_TYPE_DEVICE_CSR, UpDeviceCsr))
+#define UP_DEVICE_CSR_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), UP_TYPE_DEVICE_CSR, UpDeviceCsrClass))
+#define UP_IS_DEVICE_CSR(o)			(G_TYPE_CHECK_INSTANCE_TYPE ((o), UP_TYPE_DEVICE_CSR))
+#define UP_IS_DEVICE_CSR_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), UP_TYPE_DEVICE_CSR))
+#define UP_DEVICE_CSR_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), UP_TYPE_DEVICE_CSR, UpDeviceCsrClass))
 
-typedef struct DkpDeviceCsrPrivate DkpDeviceCsrPrivate;
-
-typedef struct
-{
-	DkpDevice		 parent;
-	DkpDeviceCsrPrivate	*priv;
-} DkpDeviceCsr;
+typedef struct UpDeviceCsrPrivate UpDeviceCsrPrivate;
 
 typedef struct
 {
-	DkpDeviceClass		 parent_class;
-} DkpDeviceCsrClass;
+	UpDevice		 parent;
+	UpDeviceCsrPrivate	*priv;
+} UpDeviceCsr;
 
-GType		 dkp_device_csr_get_type		(void);
-DkpDeviceCsr	*dkp_device_csr_new			(void);
+typedef struct
+{
+	UpDeviceClass		 parent_class;
+} UpDeviceCsrClass;
+
+GType		 up_device_csr_get_type		(void);
+UpDeviceCsr	*up_device_csr_new			(void);
 
 G_END_DECLS
 
-#endif /* __DKP_DEVICE_CSR_H__ */
+#endif /* __UP_DEVICE_CSR_H__ */
 

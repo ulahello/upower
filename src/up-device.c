@@ -42,7 +42,7 @@
 #include "up-marshal.h"
 #include "up-device-glue.h"
 
-struct DkpDevicePrivate
+struct UpDevicePrivate
 {
 	gchar			*object_path;
 	DBusGConnection		*system_bus_connection;
@@ -65,9 +65,9 @@ struct DkpDevicePrivate
 	gboolean		 is_rechargeable;
 	gboolean		 has_history;
 	gboolean		 has_statistics;
-	DkpDeviceType		 type;
-	DkpDeviceState		 state;
-	DkpDeviceTechnology	 technology;
+	UpDeviceType		 type;
+	UpDeviceState		 state;
+	UpDeviceTechnology	 technology;
 	gdouble			 capacity;		/* percent */
 	gdouble			 energy;		/* Watt Hours */
 	gdouble			 energy_empty;		/* Watt Hours */
@@ -83,7 +83,7 @@ struct DkpDevicePrivate
 	gchar			*recall_url;
 };
 
-static gboolean	dkp_device_register_device	(DkpDevice *device);
+static gboolean	up_device_register_device	(UpDevice *device);
 
 enum {
 	PROP_0,
@@ -124,23 +124,23 @@ enum {
 
 static guint signals[SIGNAL_LAST] = { 0 };
 
-G_DEFINE_TYPE (DkpDevice, dkp_device, G_TYPE_OBJECT)
-#define DKP_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), DKP_TYPE_DEVICE, DkpDevicePrivate))
+G_DEFINE_TYPE (UpDevice, up_device, G_TYPE_OBJECT)
+#define UP_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE, UpDevicePrivate))
 #define DKP_DBUS_STRUCT_UINT_DOUBLE_UINT (dbus_g_type_get_struct ("GValueArray", \
 	G_TYPE_UINT, G_TYPE_DOUBLE, G_TYPE_UINT, G_TYPE_INVALID))
 #define DKP_DBUS_STRUCT_DOUBLE_DOUBLE (dbus_g_type_get_struct ("GValueArray", \
 	G_TYPE_DOUBLE, G_TYPE_DOUBLE, G_TYPE_INVALID))
 
 /**
- * dkp_device_error_quark:
+ * up_device_error_quark:
  **/
 GQuark
-dkp_device_error_quark (void)
+up_device_error_quark (void)
 {
 	static GQuark ret = 0;
 
 	if (ret == 0) {
-		ret = g_quark_from_static_string ("dkp_device_error");
+		ret = g_quark_from_static_string ("up_device_error");
 	}
 
 	return ret;
@@ -149,10 +149,10 @@ dkp_device_error_quark (void)
 #define ENUM_ENTRY(NAME, DESC) { NAME, "" #NAME "", DESC }
 
 /**
- * dkp_device_error_get_type:
+ * up_device_error_get_type:
  **/
 GType
-dkp_device_error_get_type (void)
+up_device_error_get_type (void)
 {
 	static GType etype = 0;
 
@@ -160,22 +160,22 @@ dkp_device_error_get_type (void)
 	{
 		static const GEnumValue values[] =
 			{
-				ENUM_ENTRY (DKP_DEVICE_ERROR_GENERAL, "GeneralError"),
+				ENUM_ENTRY (UP_DEVICE_ERROR_GENERAL, "GeneralError"),
 				{ 0, 0, 0 }
 			};
-		g_assert (DKP_DEVICE_NUM_ERRORS == G_N_ELEMENTS (values) - 1);
-		etype = g_enum_register_static ("DkpDeviceError", values);
+		g_assert (UP_DEVICE_NUM_ERRORS == G_N_ELEMENTS (values) - 1);
+		etype = g_enum_register_static ("UpDeviceError", values);
 	}
 	return etype;
 }
 
 /**
- * dkp_device_get_property:
+ * up_device_get_property:
  **/
 static void
-dkp_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
+up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
 {
-	DkpDevice *device = DKP_DEVICE (object);
+	UpDevice *device = UP_DEVICE (object);
 	switch (prop_id) {
 	case PROP_NATIVE_PATH:
 		g_value_set_string (value, device->priv->native_path);
@@ -265,12 +265,12 @@ dkp_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 }
 
 /**
- * dkp_device_set_property:
+ * up_device_set_property:
  **/
 static void
-dkp_device_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
+up_device_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
 {
-	DkpDevice *device = DKP_DEVICE (object);
+	UpDevice *device = UP_DEVICE (object);
 
 	switch (prop_id) {
 	case PROP_NATIVE_PATH:
@@ -367,16 +367,16 @@ dkp_device_set_property (GObject *object, guint prop_id, const GValue *value, GP
 }
 
 /**
- * dkp_device_get_on_battery:
+ * up_device_get_on_battery:
  *
  * Note: Only implement for system devices, i.e. ones supplying the system
  **/
 gboolean
-dkp_device_get_on_battery (DkpDevice *device, gboolean *on_battery)
+up_device_get_on_battery (UpDevice *device, gboolean *on_battery)
 {
-	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+	UpDeviceClass *klass = UP_DEVICE_GET_CLASS (device);
 
-	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
+	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 
 	/* no support */
 	if (klass->get_on_battery == NULL)
@@ -386,16 +386,16 @@ dkp_device_get_on_battery (DkpDevice *device, gboolean *on_battery)
 }
 
 /**
- * dkp_device_get_low_battery:
+ * up_device_get_low_battery:
  *
  * Note: Only implement for system devices, i.e. ones supplying the system
  **/
 gboolean
-dkp_device_get_low_battery (DkpDevice *device, gboolean *low_battery)
+up_device_get_low_battery (UpDevice *device, gboolean *low_battery)
 {
-	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+	UpDeviceClass *klass = UP_DEVICE_GET_CLASS (device);
 
-	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
+	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 
 	/* no support */
 	if (klass->get_low_battery == NULL)
@@ -405,16 +405,16 @@ dkp_device_get_low_battery (DkpDevice *device, gboolean *low_battery)
 }
 
 /**
- * dkp_device_get_online:
+ * up_device_get_online:
  *
  * Note: Only implement for system devices, i.e. devices supplying the system
  **/
 gboolean
-dkp_device_get_online (DkpDevice *device, gboolean *online)
+up_device_get_online (UpDevice *device, gboolean *online)
 {
-	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+	UpDeviceClass *klass = UP_DEVICE_GET_CLASS (device);
 
-	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
+	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 
 	/* no support */
 	if (klass->get_online == NULL)
@@ -424,10 +424,10 @@ dkp_device_get_online (DkpDevice *device, gboolean *online)
 }
 
 /**
- * dkp_device_get_id:
+ * up_device_get_id:
  **/
 static gchar *
-dkp_device_get_id (DkpDevice *device)
+up_device_get_id (UpDevice *device)
 {
 	GString *string;
 	gchar *id = NULL;
@@ -507,12 +507,12 @@ out:
 }
 
 /**
- * dkp_device_get_daemon:
+ * up_device_get_daemon:
  *
  * Returns a refcounted #UpDaemon instance, or %NULL
  **/
 UpDaemon *
-dkp_device_get_daemon (DkpDevice *device)
+up_device_get_daemon (UpDevice *device)
 {
 	if (device->priv->daemon == NULL)
 		return NULL;
@@ -520,19 +520,19 @@ dkp_device_get_daemon (DkpDevice *device)
 }
 
 /**
- * dkp_device_coldplug:
+ * up_device_coldplug:
  *
  * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 gboolean
-dkp_device_coldplug (DkpDevice *device, UpDaemon *daemon, GObject *native)
+up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 {
 	gboolean ret;
 	const gchar *native_path;
-	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+	UpDeviceClass *klass = UP_DEVICE_GET_CLASS (device);
 	gchar *id = NULL;
 
-	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
+	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 
 	/* save */
 	device->priv->native = g_object_ref (native);
@@ -556,14 +556,14 @@ dkp_device_coldplug (DkpDevice *device, UpDaemon *daemon, GObject *native)
 	}
 
 	/* only put on the bus if we succeeded */
-	ret = dkp_device_register_device (device);
+	ret = up_device_register_device (device);
 	if (!ret) {
 		egg_warning ("failed to register device %s", device->priv->native_path);
 		goto out;
 	}
 
 	/* force a refresh, although failure isn't fatal */
-	ret = dkp_device_refresh_internal (device);
+	ret = up_device_refresh_internal (device);
 	if (!ret) {
 		egg_debug ("failed to refresh %s", device->priv->native_path);
 
@@ -574,7 +574,7 @@ dkp_device_coldplug (DkpDevice *device, UpDaemon *daemon, GObject *native)
 	}
 
 	/* get the id so we can load the old history */
-	id = dkp_device_get_id (device);
+	id = up_device_get_id (device);
 	if (id != NULL)
 		dkp_history_set_id (device->priv->history, id);
 
@@ -588,10 +588,10 @@ out:
 }
 
 /**
- * dkp_device_get_statistics:
+ * up_device_get_statistics:
  **/
 gboolean
-dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvocation *context)
+up_device_get_statistics (UpDevice *device, const gchar *type, DBusGMethodInvocation *context)
 {
 	GError *error;
 	GPtrArray *array = NULL;
@@ -600,7 +600,7 @@ dkp_device_get_statistics (DkpDevice *device, const gchar *type, DBusGMethodInvo
 	GValue *value;
 	guint i;
 
-	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
+	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 	g_return_val_if_fail (type != NULL, FALSE);
 
 	/* doesn't even try to support this */
@@ -650,10 +650,10 @@ out:
 }
 
 /**
- * dkp_device_get_history:
+ * up_device_get_history:
  **/
 gboolean
-dkp_device_get_history (DkpDevice *device, const gchar *type_string, guint timespan, guint resolution, DBusGMethodInvocation *context)
+up_device_get_history (UpDevice *device, const gchar *type_string, guint timespan, guint resolution, DBusGMethodInvocation *context)
 {
 	GError *error;
 	GPtrArray *array = NULL;
@@ -663,7 +663,7 @@ dkp_device_get_history (DkpDevice *device, const gchar *type_string, guint times
 	guint i;
 	DkpHistoryType type = DKP_HISTORY_TYPE_UNKNOWN;
 
-	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
+	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 	g_return_val_if_fail (type_string != NULL, FALSE);
 
 	/* doesn't even try to support this */
@@ -715,17 +715,17 @@ out:
 }
 
 /**
- * dkp_device_refresh_internal:
+ * up_device_refresh_internal:
  *
  * NOTE: if you're calling this function you have to ensure you're doing the
  * the changed signals on the right interfaces, although by monitoring
  * notify::update-time this should be mostly done.
  **/
 gboolean
-dkp_device_refresh_internal (DkpDevice *device)
+up_device_refresh_internal (UpDevice *device)
 {
 	gboolean ret = FALSE;
-	DkpDeviceClass *klass = DKP_DEVICE_GET_CLASS (device);
+	UpDeviceClass *klass = UP_DEVICE_GET_CLASS (device);
 
 	/* not implemented */
 	if (klass->refresh == NULL)
@@ -749,44 +749,44 @@ out:
 }
 
 /**
- * dkp_device_refresh:
+ * up_device_refresh:
  *
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 gboolean
-dkp_device_refresh (DkpDevice *device, DBusGMethodInvocation *context)
+up_device_refresh (UpDevice *device, DBusGMethodInvocation *context)
 {
 	gboolean ret;
 
-	g_return_val_if_fail (DKP_IS_DEVICE (device), FALSE);
+	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 
-	ret = dkp_device_refresh_internal (device);
+	ret = up_device_refresh_internal (device);
 	dbus_g_method_return (context);
 	return ret;
 }
 
 /**
- * dkp_device_get_object_path:
+ * up_device_get_object_path:
  **/
 const gchar *
-dkp_device_get_object_path (DkpDevice *device)
+up_device_get_object_path (UpDevice *device)
 {
-	g_return_val_if_fail (DKP_IS_DEVICE (device), NULL);
+	g_return_val_if_fail (UP_IS_DEVICE (device), NULL);
 	return device->priv->object_path;
 }
 
 GObject *
-dkp_device_get_native (DkpDevice *device)
+up_device_get_native (UpDevice *device)
 {
-	g_return_val_if_fail (DKP_IS_DEVICE (device), NULL);
+	g_return_val_if_fail (UP_IS_DEVICE (device), NULL);
 	return device->priv->native;
 }
 
 /**
- * dkp_device_compute_object_path:
+ * up_device_compute_object_path:
  **/
 static gchar *
-dkp_device_compute_object_path (DkpDevice *device)
+up_device_compute_object_path (UpDevice *device)
 {
 	gchar *basename;
 	gchar *id;
@@ -795,7 +795,7 @@ dkp_device_compute_object_path (DkpDevice *device)
 	const gchar *type;
 	guint i;
 
-	type = dkp_device_type_to_text (device->priv->type);
+	type = up_device_type_to_text (device->priv->type);
 	native_path = device->priv->native_path;
 	basename = g_path_get_basename (native_path);
 	id = g_strjoin ("_", type, basename, NULL);
@@ -818,14 +818,14 @@ dkp_device_compute_object_path (DkpDevice *device)
 }
 
 /**
- * dkp_device_register_device:
+ * up_device_register_device:
  **/
 static gboolean
-dkp_device_register_device (DkpDevice *device)
+up_device_register_device (UpDevice *device)
 {
 	gboolean ret = TRUE;
 
-	device->priv->object_path = dkp_device_compute_object_path (device);
+	device->priv->object_path = up_device_compute_object_path (device);
 	egg_debug ("object path = %s", device->priv->object_path);
 	dbus_g_connection_register_g_object (device->priv->system_bus_connection,
 					     device->priv->object_path, G_OBJECT (device));
@@ -839,12 +839,12 @@ dkp_device_register_device (DkpDevice *device)
 }
 
 /**
- * dkp_device_perhaps_changed_cb:
+ * up_device_perhaps_changed_cb:
  **/
 static void
-dkp_device_perhaps_changed_cb (GObject *object, GParamSpec *pspec, DkpDevice *device)
+up_device_perhaps_changed_cb (GObject *object, GParamSpec *pspec, UpDevice *device)
 {
-	g_return_if_fail (DKP_IS_DEVICE (device));
+	g_return_if_fail (UP_IS_DEVICE (device));
 
 	/* don't proxy during coldplug */
 	if (device->priv->during_coldplug)
@@ -864,14 +864,14 @@ dkp_device_perhaps_changed_cb (GObject *object, GParamSpec *pspec, DkpDevice *de
 }
 
 /**
- * dkp_device_init:
+ * up_device_init:
  **/
 static void
-dkp_device_init (DkpDevice *device)
+up_device_init (UpDevice *device)
 {
 	GError *error = NULL;
 
-	device->priv = DKP_DEVICE_GET_PRIVATE (device);
+	device->priv = UP_DEVICE_GET_PRIVATE (device);
 	device->priv->object_path = NULL;
 	device->priv->system_bus_connection = NULL;
 	device->priv->system_bus_proxy = NULL;
@@ -886,21 +886,21 @@ dkp_device_init (DkpDevice *device)
 		egg_error ("error getting system bus: %s", error->message);
 		g_error_free (error);
 	}
-	g_signal_connect (device, "notify::update-time", G_CALLBACK (dkp_device_perhaps_changed_cb), device);
+	g_signal_connect (device, "notify::update-time", G_CALLBACK (up_device_perhaps_changed_cb), device);
 }
 
 /**
- * dkp_device_finalize:
+ * up_device_finalize:
  **/
 static void
-dkp_device_finalize (GObject *object)
+up_device_finalize (GObject *object)
 {
-	DkpDevice *device;
+	UpDevice *device;
 
 	g_return_if_fail (object != NULL);
-	g_return_if_fail (DKP_IS_DEVICE (object));
+	g_return_if_fail (UP_IS_DEVICE (object));
 
-	device = DKP_DEVICE (object);
+	device = UP_DEVICE (object);
 	g_return_if_fail (device->priv != NULL);
 	if (device->priv->native != NULL)
 		g_object_unref (device->priv->native);
@@ -915,21 +915,21 @@ dkp_device_finalize (GObject *object)
 	g_free (device->priv->recall_vendor);
 	g_free (device->priv->recall_url);
 
-	G_OBJECT_CLASS (dkp_device_parent_class)->finalize (object);
+	G_OBJECT_CLASS (up_device_parent_class)->finalize (object);
 }
 
 /**
- * dkp_device_class_init:
+ * up_device_class_init:
  **/
 static void
-dkp_device_class_init (DkpDeviceClass *klass)
+up_device_class_init (UpDeviceClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	object_class->get_property = dkp_device_get_property;
-	object_class->set_property = dkp_device_set_property;
-	object_class->finalize = dkp_device_finalize;
+	object_class->get_property = up_device_get_property;
+	object_class->set_property = up_device_set_property;
+	object_class->finalize = up_device_finalize;
 
-	g_type_class_add_private (klass, sizeof (DkpDevicePrivate));
+	g_type_class_add_private (klass, sizeof (UpDevicePrivate));
 
 	signals[SIGNAL_CHANGED] =
 		g_signal_new ("changed",
@@ -939,10 +939,10 @@ dkp_device_class_init (DkpDeviceClass *klass)
 			      g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
 
-	dbus_g_object_type_install_info (DKP_TYPE_DEVICE, &dbus_glib_dkp_device_object_info);
+	dbus_g_object_type_install_info (UP_TYPE_DEVICE, &dbus_glib_up_device_object_info);
 
 	/**
-	 * DkpDevice:update-time:
+	 * UpDevice:update-time:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_UPDATE_TIME,
@@ -951,7 +951,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      0, G_MAXUINT64, 0,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:vendor:
+	 * UpDevice:vendor:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_VENDOR,
@@ -960,7 +960,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      NULL,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:model:
+	 * UpDevice:model:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_MODEL,
@@ -969,7 +969,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      NULL,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:serial:
+	 * UpDevice:serial:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_SERIAL,
@@ -978,7 +978,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      NULL,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:native-path:
+	 * UpDevice:native-path:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_NATIVE_PATH,
@@ -987,7 +987,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      NULL,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:power-supply:
+	 * UpDevice:power-supply:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_POWER_SUPPLY,
@@ -996,7 +996,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							       FALSE,
 							       G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:online:
+	 * UpDevice:online:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_ONLINE,
@@ -1005,7 +1005,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							       FALSE,
 							       G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:is-present:
+	 * UpDevice:is-present:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_IS_PRESENT,
@@ -1014,7 +1014,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							       FALSE,
 							       G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:is-rechargeable:
+	 * UpDevice:is-rechargeable:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_IS_RECHARGEABLE,
@@ -1023,7 +1023,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							       FALSE,
 							       G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:has-history:
+	 * UpDevice:has-history:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_HAS_HISTORY,
@@ -1032,7 +1032,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							       FALSE,
 							       G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:has-statistics:
+	 * UpDevice:has-statistics:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_HAS_STATISTICS,
@@ -1041,7 +1041,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							       FALSE,
 							       G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:type:
+	 * UpDevice:type:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_TYPE,
@@ -1052,7 +1052,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							    DKP_DEVICE_TYPE_UNKNOWN,
 							    G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:state:
+	 * UpDevice:state:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_STATE,
@@ -1063,7 +1063,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							    DKP_DEVICE_STATE_UNKNOWN,
 							    G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:technology:
+	 * UpDevice:technology:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_TECHNOLOGY,
@@ -1074,7 +1074,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							    DKP_DEVICE_TECHNOLOGY_UNKNOWN,
 							    G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:capacity:
+	 * UpDevice:capacity:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_CAPACITY,
@@ -1082,7 +1082,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      0.0, 100.f, 100.0,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:energy:
+	 * UpDevice:energy:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_ENERGY,
@@ -1090,7 +1090,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      0.0, G_MAXDOUBLE, 0.0,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:energy-empty:
+	 * UpDevice:energy-empty:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_ENERGY_EMPTY,
@@ -1098,7 +1098,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      0.0, G_MAXDOUBLE, 0.0,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:energy-full:
+	 * UpDevice:energy-full:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_ENERGY_FULL,
@@ -1106,7 +1106,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      0.0, G_MAXDOUBLE, 0.0,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:energy-full-design:
+	 * UpDevice:energy-full-design:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_ENERGY_FULL_DESIGN,
@@ -1114,7 +1114,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      0.0, G_MAXDOUBLE, 0.0,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:energy-rate:
+	 * UpDevice:energy-rate:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_ENERGY_RATE,
@@ -1122,7 +1122,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      0.0, G_MAXDOUBLE, 0.0,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:voltage:
+	 * UpDevice:voltage:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_VOLTAGE,
@@ -1130,7 +1130,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      0.0, G_MAXDOUBLE, 0.0,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:time-to-empty:
+	 * UpDevice:time-to-empty:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_TIME_TO_EMPTY,
@@ -1138,7 +1138,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      0, G_MAXINT64, 0,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:time-to-full:
+	 * UpDevice:time-to-full:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_TIME_TO_FULL,
@@ -1146,7 +1146,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      0, G_MAXINT64, 0,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:percentage:
+	 * UpDevice:percentage:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_PERCENTAGE,
@@ -1154,7 +1154,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      0.0, 100.f, 100.0,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:recall-notice:
+	 * UpDevice:recall-notice:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_RECALL_NOTICE,
@@ -1163,7 +1163,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							       FALSE,
 							       G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:recall-vendor:
+	 * UpDevice:recall-vendor:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_RECALL_VENDOR,
@@ -1172,7 +1172,7 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      NULL,
 							      G_PARAM_READWRITE));
 	/**
-	 * DkpDevice:recall-url:
+	 * UpDevice:recall-url:
 	 */
 	g_object_class_install_property (object_class,
 					 PROP_RECALL_URL,
@@ -1181,17 +1181,17 @@ dkp_device_class_init (DkpDeviceClass *klass)
 							      NULL,
 							      G_PARAM_READWRITE));
 
-	dbus_g_error_domain_register (DKP_DEVICE_ERROR, NULL, DKP_DEVICE_TYPE_ERROR);
+	dbus_g_error_domain_register (UP_DEVICE_ERROR, NULL, UP_DEVICE_TYPE_ERROR);
 }
 
 /**
- * dkp_device_new:
+ * up_device_new:
  **/
-DkpDevice *
-dkp_device_new (void)
+UpDevice *
+up_device_new (void)
 {
-	DkpDevice *device;
-	device = DKP_DEVICE (g_object_new (DKP_TYPE_DEVICE, NULL));
+	UpDevice *device;
+	device = UP_DEVICE (g_object_new (UP_TYPE_DEVICE, NULL));
 	return device;
 }
 
@@ -1202,17 +1202,17 @@ dkp_device_new (void)
 #include "egg-test.h"
 
 void
-dkp_device_test (gpointer user_data)
+up_device_test (gpointer user_data)
 {
 	EggTest *test = (EggTest *) user_data;
-	DkpDevice *device;
+	UpDevice *device;
 
-	if (!egg_test_start (test, "DkpDevice"))
+	if (!egg_test_start (test, "UpDevice"))
 		return;
 
 	/************************************************************/
 	egg_test_title (test, "get instance");
-	device = dkp_device_new ();
+	device = up_device_new ();
 	egg_test_assert (test, device != NULL);
 
 	/* unref */

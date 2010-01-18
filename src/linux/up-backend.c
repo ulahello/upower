@@ -50,9 +50,9 @@ static void	up_backend_finalize	(GObject		*object);
 struct UpBackendPrivate
 {
 	UpDaemon		*daemon;
-	DkpDeviceList		*device_list;
+	UpDeviceList		*device_list;
 	GUdevClient		*gudev_client;
-	DkpDeviceList		*managed_devices;
+	UpDeviceList		*managed_devices;
 };
 
 enum {
@@ -71,12 +71,12 @@ static void up_backend_device_remove (UpBackend *backend, GUdevDevice *native);
 /**
  * up_backend_device_new:
  **/
-static DkpDevice *
+static UpDevice *
 up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 {
 	const gchar *subsys;
 	const gchar *native_path;
-	DkpDevice *device = NULL;
+	UpDevice *device = NULL;
 	DkpInput *input;
 	gboolean ret;
 
@@ -84,8 +84,8 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 	if (g_strcmp0 (subsys, "power_supply") == 0) {
 
 		/* are we a valid power supply */
-		device = DKP_DEVICE (dkp_device_supply_new ());
-		ret = dkp_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+		device = UP_DEVICE (up_device_supply_new ());
+		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
 		if (ret)
 			goto out;
 		g_object_unref (device);
@@ -96,8 +96,8 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 	} else if (g_strcmp0 (subsys, "tty") == 0) {
 
 		/* try to detect a Watts Up? Pro monitor */
-		device = DKP_DEVICE (dkp_device_wup_new ());
-		ret = dkp_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+		device = UP_DEVICE (up_device_wup_new ());
+		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
 		if (ret)
 			goto out;
 		g_object_unref (device);
@@ -108,15 +108,15 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 	} else if (g_strcmp0 (subsys, "usb") == 0) {
 
 		/* see if this is a CSR mouse or keyboard */
-		device = DKP_DEVICE (dkp_device_csr_new ());
-		ret = dkp_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+		device = UP_DEVICE (up_device_csr_new ());
+		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
 		if (ret)
 			goto out;
 		g_object_unref (device);
 
 		/* try to detect a HID UPS */
-		device = DKP_DEVICE (dkp_device_hid_new ());
-		ret = dkp_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+		device = UP_DEVICE (up_device_hid_new ());
+		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
 		if (ret)
 			goto out;
 		g_object_unref (device);
@@ -140,7 +140,7 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 			      NULL);
 
 		/* not a power device */
-		dkp_device_list_insert (backend->priv->managed_devices, G_OBJECT (native), G_OBJECT (input));
+		up_device_list_insert (backend->priv->managed_devices, G_OBJECT (native), G_OBJECT (input));
 
 		/* no valid input object */
 		device = NULL;
@@ -160,11 +160,11 @@ static void
 up_backend_device_changed (UpBackend *backend, GUdevDevice *native)
 {
 	GObject *object;
-	DkpDevice *device;
+	UpDevice *device;
 	gboolean ret;
 
 	/* first, check the device and add it if it doesn't exist */
-	object = dkp_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
+	object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 	if (object == NULL) {
 		egg_warning ("treating change event as add on %s", g_udev_device_get_sysfs_path (native));
 		up_backend_device_add (backend, native);
@@ -172,10 +172,10 @@ up_backend_device_changed (UpBackend *backend, GUdevDevice *native)
 	}
 
 	/* need to refresh device */
-	device = DKP_DEVICE (object);
-	ret = dkp_device_refresh_internal (device);
+	device = UP_DEVICE (object);
+	ret = up_device_refresh_internal (device);
 	if (!ret) {
-		egg_debug ("no changes on %s", dkp_device_get_object_path (device));
+		egg_debug ("no changes on %s", up_device_get_object_path (device));
 		goto out;
 	}
 out:
@@ -190,15 +190,15 @@ static gboolean
 up_backend_device_add (UpBackend *backend, GUdevDevice *native)
 {
 	GObject *object;
-	DkpDevice *device;
+	UpDevice *device;
 	gboolean ret = TRUE;
 
 	/* does device exist in db? */
-	object = dkp_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
+	object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 	if (object != NULL) {
-		device = DKP_DEVICE (object);
+		device = UP_DEVICE (object);
 		/* we already have the device; treat as change event */
-		egg_warning ("treating add event as change event on %s", dkp_device_get_object_path (device));
+		egg_warning ("treating add event as change event on %s", up_device_get_object_path (device));
 		up_backend_device_changed (backend, native);
 		goto out;
 	}
@@ -225,16 +225,16 @@ static void
 up_backend_device_remove (UpBackend *backend, GUdevDevice *native)
 {
 	GObject *object;
-	DkpDevice *device;
+	UpDevice *device;
 
 	/* does device exist in db? */
-	object = dkp_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
+	object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 	if (object == NULL) {
 		egg_debug ("ignoring remove event on %s", g_udev_device_get_sysfs_path (native));
 		goto out;
 	}
 
-	device = DKP_DEVICE (object);
+	device = UP_DEVICE (object);
 	/* emit */
 	egg_debug ("emitting device-removed: %s", g_udev_device_get_sysfs_path (native));
 	g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, native, device);
@@ -342,7 +342,7 @@ up_backend_init (UpBackend *backend)
 	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
 	backend->priv->daemon = NULL;
 	backend->priv->device_list = NULL;
-	backend->priv->managed_devices = dkp_device_list_new ();
+	backend->priv->managed_devices = up_device_list_new ();
 }
 
 /**

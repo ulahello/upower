@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef __DKP_DEVICE_H__
-#define __DKP_DEVICE_H__
+#ifndef __UP_DEVICE_H__
+#define __UP_DEVICE_H__
 
 #include <glib-object.h>
 #include <polkit/polkit.h>
@@ -30,78 +30,78 @@
 
 G_BEGIN_DECLS
 
-#define DKP_TYPE_DEVICE		(dkp_device_get_type ())
-#define DKP_DEVICE(o)	   	(G_TYPE_CHECK_INSTANCE_CAST ((o), DKP_TYPE_DEVICE, DkpDevice))
-#define DKP_DEVICE_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), DKP_TYPE_DEVICE, DkpDeviceClass))
-#define DKP_IS_DEVICE(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), DKP_TYPE_DEVICE))
-#define DKP_IS_DEVICE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), DKP_TYPE_DEVICE))
-#define DKP_DEVICE_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), DKP_TYPE_DEVICE, DkpDeviceClass))
+#define UP_TYPE_DEVICE		(up_device_get_type ())
+#define UP_DEVICE(o)	   	(G_TYPE_CHECK_INSTANCE_CAST ((o), UP_TYPE_DEVICE, UpDevice))
+#define UP_DEVICE_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), UP_TYPE_DEVICE, UpDeviceClass))
+#define UP_IS_DEVICE(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), UP_TYPE_DEVICE))
+#define UP_IS_DEVICE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), UP_TYPE_DEVICE))
+#define UP_DEVICE_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), UP_TYPE_DEVICE, UpDeviceClass))
 
-typedef struct DkpDevicePrivate DkpDevicePrivate;
+typedef struct UpDevicePrivate UpDevicePrivate;
 
 typedef struct
 {
 	GObject			 parent;
-	DkpDevicePrivate	*priv;
-} DkpDevice;
+	UpDevicePrivate	*priv;
+} UpDevice;
 
 typedef struct
 {
 	GObjectClass	 parent_class;
 
 	/* vtable */
-	gboolean	 (*coldplug)		(DkpDevice	*device);
-	gboolean	 (*refresh)		(DkpDevice	*device);
-	const gchar	*(*get_id)		(DkpDevice	*device);
-	gboolean	 (*get_on_battery)	(DkpDevice	*device,
+	gboolean	 (*coldplug)		(UpDevice	*device);
+	gboolean	 (*refresh)		(UpDevice	*device);
+	const gchar	*(*get_id)		(UpDevice	*device);
+	gboolean	 (*get_on_battery)	(UpDevice	*device,
 						 gboolean	*on_battery);
-	gboolean	 (*get_low_battery)	(DkpDevice	*device,
+	gboolean	 (*get_low_battery)	(UpDevice	*device,
 						 gboolean	*low_battery);
-	gboolean	 (*get_online)		(DkpDevice	*device,
+	gboolean	 (*get_online)		(UpDevice	*device,
 						 gboolean	*online);
-} DkpDeviceClass;
+} UpDeviceClass;
 
 typedef enum
 {
-	DKP_DEVICE_ERROR_GENERAL,
-	DKP_DEVICE_NUM_ERRORS
-} DkpDeviceError;
+	UP_DEVICE_ERROR_GENERAL,
+	UP_DEVICE_NUM_ERRORS
+} UpDeviceError;
 
-#define DKP_DEVICE_ERROR dkp_device_error_quark ()
-#define DKP_DEVICE_TYPE_ERROR (dkp_device_error_get_type ())
+#define UP_DEVICE_ERROR up_device_error_quark ()
+#define UP_DEVICE_TYPE_ERROR (up_device_error_get_type ())
 
-GQuark		 dkp_device_error_quark		(void);
-GType		 dkp_device_error_get_type	(void);
-GType		 dkp_device_get_type		(void);
-DkpDevice	*dkp_device_new			(void);
-void		 dkp_device_test		(gpointer	 user_data);
+GQuark		 up_device_error_quark		(void);
+GType		 up_device_error_get_type	(void);
+GType		 up_device_get_type		(void);
+UpDevice	*up_device_new			(void);
+void		 up_device_test		(gpointer	 user_data);
 
-gboolean	 dkp_device_coldplug		(DkpDevice	*device,
+gboolean	 up_device_coldplug		(UpDevice	*device,
 						 UpDaemon	*daemon,
 						 GObject	*native);
-UpDaemon	*dkp_device_get_daemon		(DkpDevice	*device);
-GObject		*dkp_device_get_native		(DkpDevice	*device);
-const gchar	*dkp_device_get_object_path	(DkpDevice	*device);
-gboolean	 dkp_device_get_on_battery	(DkpDevice	*device,
+UpDaemon	*up_device_get_daemon		(UpDevice	*device);
+GObject		*up_device_get_native		(UpDevice	*device);
+const gchar	*up_device_get_object_path	(UpDevice	*device);
+gboolean	 up_device_get_on_battery	(UpDevice	*device,
 						 gboolean	*on_battery);
-gboolean	 dkp_device_get_low_battery	(DkpDevice	*device,
+gboolean	 up_device_get_low_battery	(UpDevice	*device,
 						 gboolean	*low_battery);
-gboolean	 dkp_device_get_online		(DkpDevice	*device,
+gboolean	 up_device_get_online		(UpDevice	*device,
 						 gboolean	*online);
-gboolean	 dkp_device_refresh_internal	(DkpDevice	*device);
+gboolean	 up_device_refresh_internal	(UpDevice	*device);
 
 /* exported methods */
-gboolean	 dkp_device_refresh		(DkpDevice		*device,
+gboolean	 up_device_refresh		(UpDevice		*device,
 						 DBusGMethodInvocation	*context);
-gboolean	 dkp_device_get_history		(DkpDevice		*device,
+gboolean	 up_device_get_history		(UpDevice		*device,
 						 const gchar		*type,
 						 guint			 timespan,
 						 guint			 resolution,
 						 DBusGMethodInvocation	*context);
-gboolean	 dkp_device_get_statistics	(DkpDevice		*device,
+gboolean	 up_device_get_statistics	(UpDevice		*device,
 						 const gchar		*type,
 						 DBusGMethodInvocation	*context);
 
 G_END_DECLS
 
-#endif /* __DKP_DEVICE_H__ */
+#endif /* __UP_DEVICE_H__ */

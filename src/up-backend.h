@@ -52,13 +52,13 @@ typedef struct
 	GObjectClass	 parent_class;
 	void		(* device_added)	(UpBackend	*backend,
 						 GObject	*native,
-						 DkpDevice	*device);
+						 UpDevice	*device);
 	void		(* device_changed)	(UpBackend	*backend,
 						 GObject	*native,
-						 DkpDevice	*device);
+						 UpDevice	*device);
 	void		(* device_removed)	(UpBackend	*backend,
 						 GObject	*native,
-						 DkpDevice	*device);
+						 UpDevice	*device);
 } UpBackendClass;
 
 GType		 up_backend_get_type			(void);

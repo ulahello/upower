@@ -71,7 +71,7 @@ GPtrArray	*dkp_history_get_profile_data		(DkpHistory		*history,
 gboolean	 dkp_history_set_id			(DkpHistory		*history,
 							 const gchar		*id);
 gboolean	 dkp_history_set_state			(DkpHistory		*history,
-							 DkpDeviceState		 state);
+							 UpDeviceState		 state);
 gboolean	 dkp_history_set_charge_data		(DkpHistory		*history,
 							 gdouble		 percentage);
 gboolean	 dkp_history_set_rate_data		(DkpHistory		*history,

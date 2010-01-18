@@ -73,7 +73,7 @@ struct UpDaemonPrivate
 	DBusGProxy		*proxy;
 	DkpPolkit		*polkit;
 	UpBackend		*backend;
-	DkpDeviceList		*power_devices;
+	UpDeviceList		*power_devices;
 	gboolean		 on_battery;
 	gboolean		 on_low_battery;
 	gboolean		 lid_is_closed;
@@ -309,14 +309,14 @@ up_daemon_get_on_battery_local (UpDaemon *daemon)
 	gboolean ret;
 	gboolean result = FALSE;
 	gboolean on_battery;
-	DkpDevice *device;
+	UpDevice *device;
 	GPtrArray *array;
 
 	/* ask each device */
-	array = dkp_device_list_get_array (daemon->priv->power_devices);
+	array = up_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
-		device = (DkpDevice *) g_ptr_array_index (array, i);
-		ret = dkp_device_get_on_battery (device, &on_battery);
+		device = (UpDevice *) g_ptr_array_index (array, i);
+		ret = up_device_get_on_battery (device, &on_battery);
 		if (ret && on_battery) {
 			result = TRUE;
 			break;
@@ -330,18 +330,18 @@ up_daemon_get_on_battery_local (UpDaemon *daemon)
  * up_daemon_get_number_devices_of_type:
  **/
 guint
-up_daemon_get_number_devices_of_type (UpDaemon *daemon, DkpDeviceType type)
+up_daemon_get_number_devices_of_type (UpDaemon *daemon, UpDeviceType type)
 {
 	guint i;
-	DkpDevice *device;
+	UpDevice *device;
 	GPtrArray *array;
-	DkpDeviceType type_tmp;
+	UpDeviceType type_tmp;
 	guint count = 0;
 
 	/* ask each device */
-	array = dkp_device_list_get_array (daemon->priv->power_devices);
+	array = up_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
-		device = (DkpDevice *) g_ptr_array_index (array, i);
+		device = (UpDevice *) g_ptr_array_index (array, i);
 		g_object_get (device,
 			      "type", &type_tmp,
 			      NULL);
@@ -364,14 +364,14 @@ up_daemon_get_on_low_battery_local (UpDaemon *daemon)
 	gboolean ret;
 	gboolean result = TRUE;
 	gboolean on_low_battery;
-	DkpDevice *device;
+	UpDevice *device;
 	GPtrArray *array;
 
 	/* ask each device */
-	array = dkp_device_list_get_array (daemon->priv->power_devices);
+	array = up_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
-		device = (DkpDevice *) g_ptr_array_index (array, i);
-		ret = dkp_device_get_low_battery (device, &on_low_battery);
+		device = (UpDevice *) g_ptr_array_index (array, i);
+		ret = up_device_get_low_battery (device, &on_low_battery);
 		if (ret && !on_low_battery) {
 			result = FALSE;
 			break;
@@ -393,14 +393,14 @@ up_daemon_get_on_ac_local (UpDaemon *daemon)
 	gboolean ret;
 	gboolean result = FALSE;
 	gboolean online;
-	DkpDevice *device;
+	UpDevice *device;
 	GPtrArray *array;
 
 	/* ask each device */
-	array = dkp_device_list_get_array (daemon->priv->power_devices);
+	array = up_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
-		device = (DkpDevice *) g_ptr_array_index (array, i);
-		ret = dkp_device_get_online (device, &online);
+		device = (UpDevice *) g_ptr_array_index (array, i);
+		ret = up_device_get_online (device, &online);
 		if (ret && online) {
 			result = TRUE;
 			break;
@@ -444,19 +444,19 @@ up_daemon_refresh_battery_devices (UpDaemon *daemon)
 {
 	guint i;
 	GPtrArray *array;
-	DkpDevice *device;
-	DkpDeviceType type;
+	UpDevice *device;
+	UpDeviceType type;
 
 	/* refresh all devices in array */
-	array = dkp_device_list_get_array (daemon->priv->power_devices);
+	array = up_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
-		device = (DkpDevice *) g_ptr_array_index (array, i);
+		device = (UpDevice *) g_ptr_array_index (array, i);
 		/* only refresh battery devices */
 		g_object_get (device,
 			      "type", &type,
 			      NULL);
 		if (type == DKP_DEVICE_TYPE_BATTERY)
-			dkp_device_refresh_internal (device);
+			up_device_refresh_internal (device);
 	}
 	g_ptr_array_unref (array);
 
@@ -472,14 +472,14 @@ up_daemon_enumerate_devices (UpDaemon *daemon, DBusGMethodInvocation *context)
 	guint i;
 	GPtrArray *array;
 	GPtrArray *object_paths;
-	DkpDevice *device;
+	UpDevice *device;
 
 	/* build a pointer array of the object paths */
 	object_paths = g_ptr_array_new_with_free_func (g_free);
-	array = dkp_device_list_get_array (daemon->priv->power_devices);
+	array = up_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
-		device = (DkpDevice *) g_ptr_array_index (array, i);
-		g_ptr_array_add (object_paths, g_strdup (dkp_device_get_object_path (device)));
+		device = (UpDevice *) g_ptr_array_index (array, i);
+		g_ptr_array_add (object_paths, g_strdup (up_device_get_object_path (device)));
 	}
 	g_ptr_array_unref (array);
 
@@ -694,7 +694,7 @@ out:
 /**
  * up_daemon_get_device_list:
  **/
-DkpDeviceList *
+UpDeviceList *
 up_daemon_get_device_list (UpDaemon *daemon)
 {
 	return g_object_ref (daemon->priv->power_devices);
@@ -739,14 +739,14 @@ up_daemon_poll_battery_devices_for_a_little_bit (UpDaemon *daemon)
  * up_daemon_device_changed_cb:
  **/
 static void
-up_daemon_device_changed_cb (DkpDevice *device, UpDaemon *daemon)
+up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 {
 	const gchar *object_path;
-	DkpDeviceType type;
+	UpDeviceType type;
 	gboolean ret;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
-	g_return_if_fail (DKP_IS_DEVICE (device));
+	g_return_if_fail (UP_IS_DEVICE (device));
 
 	/* refresh battery devices when AC state changes */
 	g_object_get (device,
@@ -773,7 +773,7 @@ up_daemon_device_changed_cb (DkpDevice *device, UpDaemon *daemon)
 
 	/* emit */
 	if (!daemon->priv->during_coldplug) {
-		object_path = dkp_device_get_object_path (device);
+		object_path = up_device_get_object_path (device);
 		egg_debug ("emitting device-changed: %s", object_path);
 
 		/* don't crash the session */
@@ -789,17 +789,17 @@ up_daemon_device_changed_cb (DkpDevice *device, UpDaemon *daemon)
  * up_daemon_device_added_cb:
  **/
 static void
-up_daemon_device_added_cb (UpBackend *backend, GObject *native, DkpDevice *device, UpDaemon *daemon)
+up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device, UpDaemon *daemon)
 {
-	DkpDeviceType type;
+	UpDeviceType type;
 	const gchar *object_path;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
-	g_return_if_fail (DKP_IS_DEVICE (device));
+	g_return_if_fail (UP_IS_DEVICE (device));
 	g_return_if_fail (G_IS_OBJECT (native));
 
 	/* add to device list */
-	dkp_device_list_insert (daemon->priv->power_devices, native, G_OBJECT (device));
+	up_device_list_insert (daemon->priv->power_devices, native, G_OBJECT (device));
 
 	/* connect, so we get changes */
 	g_signal_connect (device, "changed",
@@ -814,7 +814,7 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, DkpDevice *devic
 
 	/* emit */
 	if (!daemon->priv->during_coldplug) {
-		object_path = dkp_device_get_object_path (device);
+		object_path = up_device_get_object_path (device);
 		egg_debug ("emitting added: %s (during coldplug %i)", object_path, daemon->priv->during_coldplug);
 
 		/* don't crash the session */
@@ -830,17 +830,17 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, DkpDevice *devic
  * up_daemon_device_removed_cb:
  **/
 static void
-up_daemon_device_removed_cb (UpBackend *backend, GObject *native, DkpDevice *device, UpDaemon *daemon)
+up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *device, UpDaemon *daemon)
 {
-	DkpDeviceType type;
+	UpDeviceType type;
 	const gchar *object_path;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
-	g_return_if_fail (DKP_IS_DEVICE (device));
+	g_return_if_fail (UP_IS_DEVICE (device));
 	g_return_if_fail (G_IS_OBJECT (native));
 
 	/* remove from list */
-	dkp_device_list_remove (daemon->priv->power_devices, G_OBJECT(device));
+	up_device_list_remove (daemon->priv->power_devices, G_OBJECT(device));
 
 	/* refresh after a short delay */
 	g_object_get (device,
@@ -851,7 +851,7 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, DkpDevice *dev
 
 	/* emit */
 	if (!daemon->priv->during_coldplug) {
-		object_path = dkp_device_get_object_path (device);
+		object_path = up_device_get_object_path (device);
 		egg_debug ("emitting device-removed: %s", object_path);
 
 		/* don't crash the session */
@@ -897,7 +897,7 @@ up_daemon_init (UpDaemon *daemon)
 	daemon->priv->kernel_can_hibernate = FALSE;
 	daemon->priv->hibernate_has_swap_space = FALSE;
 	daemon->priv->hibernate_has_encrypted_swap = FALSE;
-	daemon->priv->power_devices = dkp_device_list_new ();
+	daemon->priv->power_devices = up_device_list_new ();
 	daemon->priv->on_battery = FALSE;
 	daemon->priv->on_low_battery = FALSE;
 	daemon->priv->during_coldplug = FALSE;

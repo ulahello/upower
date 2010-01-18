@@ -72,6 +72,19 @@ typedef enum {
 	DKP_QOS_TYPE_LAST
 } DkpQosType;
 
+/* compat */
+typedef DkpDeviceType UpDeviceType;
+typedef DkpDeviceState UpDeviceState;
+typedef DkpDeviceTechnology UpDeviceTechnology;
+#define up_device_type_to_text			dkp_device_type_to_text
+#define up_device_state_to_text			dkp_device_state_to_text
+#define up_device_technology_to_text		dkp_device_technology_to_text
+#define up_qos_type_to_text			dkp_qos_type_to_text
+#define up_device_type_from_text		dkp_device_type_from_text
+#define up_device_state_from_text		dkp_device_state_from_text
+#define up_device_technology_from_text		dkp_device_technology_from_text
+#define up_qos_type_from_text			dkp_qos_type_from_text
+
 const gchar	*dkp_device_type_to_text	(DkpDeviceType		 type_enum);
 const gchar	*dkp_device_state_to_text	(DkpDeviceState		 state_enum);
 const gchar	*dkp_device_technology_to_text	(DkpDeviceTechnology	 technology_enum);
