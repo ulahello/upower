@@ -2,15 +2,15 @@
 
 udevrulesdir = $(slashlibdir)/udev/rules.d
 udevrules_DATA =						\
-	95-devkit-power-battery-recall-dell.rules		\
-	95-devkit-power-battery-recall-fujitsu.rules		\
-	95-devkit-power-battery-recall-gateway.rules		\
-	95-devkit-power-battery-recall-ibm.rules		\
-	95-devkit-power-battery-recall-lenovo.rules		\
-	95-devkit-power-battery-recall-toshiba.rules		\
-	95-devkit-power-wup.rules				\
-	95-devkit-power-hid.rules				\
-	95-devkit-power-csr.rules
+	95-upower-battery-recall-dell.rules			\
+	95-upower-battery-recall-fujitsu.rules			\
+	95-upower-battery-recall-gateway.rules			\
+	95-upower-battery-recall-ibm.rules			\
+	95-upower-battery-recall-lenovo.rules			\
+	95-upower-battery-recall-toshiba.rules			\
+	95-upower-wup.rules					\
+	95-upower-hid.rules					\
+	95-upower-csr.rules
 
 EXTRA_DIST =							\
 	$(udevrules_DATA)
