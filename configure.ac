@@ -1,9 +1,17 @@
 dnl Process this file with autoconf to produce a configure script.
 
+m4_define([up_major_version], [0])
+m4_define([up_minor_version], [9])
+m4_define([up_micro_version], [0])
+m4_define([up_version],
+          [up_major_version.up_minor_version.up_micro_version])
+
 AC_PREREQ(2.62)
-AC_INIT(DeviceKit-power, 015, http://lists.freedesktop.org/mailman/listinfo/devkit-devel)
-AM_INIT_AUTOMAKE(DeviceKit-power, 015)
+AC_INIT(UPower, [up_version], [richard@hughsie.com], [UPower])
+AC_CONFIG_SRCDIR(src)
+AM_INIT_AUTOMAKE([1.9 tar-ustar dist-bzip2])
 AM_CONFIG_HEADER(config.h)
+AC_CONFIG_MACRO_DIR([m4])
 AM_MAINTAINER_MODE
 AC_CONFIG_MACRO_DIR([m4])
 
