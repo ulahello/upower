@@ -1,6 +1,5 @@
 .deps
-devkit-power
-devkit-power-on-battery
+upower
 *-glue.h
 *.o
 *-marshal.c

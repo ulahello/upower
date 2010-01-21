@@ -30,7 +30,6 @@
 #include <glib.h>
 #include <glib/gi18n-lib.h>
 
-#include "up-marshal.h"
 #include "up-client.h"
 #include "up-device.h"
 #include "up-wakeups.h"
