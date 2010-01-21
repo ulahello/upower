@@ -6,10 +6,10 @@ NULL =
 AUTOMAKE_OPTIONS = 1.7
 
 # The name of the module.
-DOC_MODULE=devkit-power
+DOC_MODULE=upower
 
 # The top-level SGML file.
-DOC_MAIN_SGML_FILE=devkit-power-docs.xml
+DOC_MAIN_SGML_FILE=upower-docs.xml
 
 # Extra options to supply to gtkdoc-scan
 SCAN_OPTIONS=--ignore-headers=config.h
@@ -67,8 +67,8 @@ FIXXREF_OPTIONS=
 MAINTAINERCLEANFILES =		\
 	*~			\
 	Makefile.in		\
-	devkit-power.types	\
-	devkit-power-*.txt	\
+	upower.types	\
+	upower-*.txt	\
 	$(NULL)
 
 if ENABLE_GTK_DOC
