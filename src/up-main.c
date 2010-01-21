@@ -178,7 +178,7 @@ main (gint argc, gchar **argv)
 	/* do stuff on ctrl-c */
 	signal (SIGINT, up_main_sigint_handler);
 
-	egg_debug ("Starting devkit-power-daemon version %s", PACKAGE_VERSION);
+	egg_debug ("Starting upowerd version %s", PACKAGE_VERSION);
 
 	qos = up_qos_new ();
 	wakeups = up_wakeups_new ();

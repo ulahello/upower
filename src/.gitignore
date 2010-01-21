@@ -1,5 +1,5 @@
 .deps
-devkit-power-daemon
+upowerd
 dkp-self-test
 *.o
 *-glue.h

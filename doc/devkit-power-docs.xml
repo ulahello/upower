@@ -77,7 +77,7 @@
       </para>
     </partintro>
     <xi:include href="man/DeviceKit-power.xml"/>
-    <xi:include href="man/devkit-power-daemon.xml"/>
+    <xi:include href="man/upowerd.xml"/>
     <xi:include href="man/devkit-power.xml"/>
   </reference>
 

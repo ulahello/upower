@@ -56,16 +56,16 @@ up-qos-glue.h: org.freedesktop.UPower.QoS.xml Makefile.am
 up-wakeups-glue.h: org.freedesktop.UPower.Wakeups.xml Makefile.am
 	dbus-binding-tool --prefix=up_wakeups --mode=glib-server --output=up-wakeups-glue.h org.freedesktop.UPower.Wakeups.xml
 
-libexec_PROGRAMS = devkit-power-daemon
+libexec_PROGRAMS = upowerd
 
 dbusifdir = $(datadir)/dbus-1/interfaces
 dbusif_DATA =							\
-	org.freedesktop.UPower.xml			\
-	org.freedesktop.UPower.Device.xml		\
-	org.freedesktop.UPower.QoS.xml			\
+	org.freedesktop.UPower.xml				\
+	org.freedesktop.UPower.Device.xml			\
+	org.freedesktop.UPower.QoS.xml				\
 	org.freedesktop.UPower.Wakeups.xml
 
-devkit_power_daemon_SOURCES =					\
+upowerd_SOURCES =						\
 	egg-debug.c						\
 	egg-debug.h						\
 	up-polkit.h						\
@@ -87,13 +87,12 @@ devkit_power_daemon_SOURCES =					\
 	up-main.c						\
 	$(BUILT_SOURCES)
 
-devkit_power_daemon_CPPFLAGS =					\
+upowerd_CPPFLAGS =						\
 	-I$(top_srcdir)/src					\
 	-DG_LOG_DOMAIN=\"up-daemon\"				\
-	$(DISABLE_DEPRECATED)					\
 	$(AM_CPPFLAGS)
 
-devkit_power_daemon_LDADD =					\
+upowerd_LDADD =							\
 	-lm							\
 	$(USB_LIBS)						\
 	$(GIO_LIBS)						\
@@ -101,24 +100,24 @@ devkit_power_daemon_LDADD =					\
 	$(POLKIT_LIBS)
 
 if BACKEND_TYPE_DUMMY
-devkit_power_daemon_LDADD += 					\
+upowerd_LDADD += 						\
 	dummy/libupshared.la
 endif
 
 if BACKEND_TYPE_FREEBSD
-devkit_power_daemon_LDADD +=					\
+upowerd_LDADD +=						\
 	freebsd/libupshared.la					\
 	$(DEVKIT_POWER_LIBS)
 endif
 
 if BACKEND_TYPE_LINUX
-devkit_power_daemon_LDADD += 					\
+upowerd_LDADD += 						\
 	linux/libupshared.la					\
 	$(GUDEV_LIBS)						\
 	$(DEVKIT_POWER_LIBS)
 endif
 
-devkit_power_daemon_CFLAGS =					\
+upowerd_CFLAGS =						\
 	$(WARNINGFLAGS_C)					\
 	$(NULL)
 
@@ -183,13 +182,16 @@ install-data-hook:
 		mkdir -p $(DESTDIR)$(localstatedir)/lib/DeviceKit-power; \
 	fi
 
+install-exec-hook:
+	cd $(DESTDIR)$(libexecdir) && $(LN_S) -f upowerd devkit-power-daemon
+
 CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST =							\
-	org.freedesktop.UPower.xml			\
-	org.freedesktop.UPower.Device.xml		\
-	org.freedesktop.UPower.QoS.xml			\
-	org.freedesktop.UPower.Wakeups.xml		\
+	org.freedesktop.UPower.xml				\
+	org.freedesktop.UPower.Device.xml			\
+	org.freedesktop.UPower.QoS.xml				\
+	org.freedesktop.UPower.Wakeups.xml			\
 	up-marshal.list						\
 	$(service_in_files)					\
 	$(dbusconf_in_files)

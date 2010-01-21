@@ -1,24 +1,24 @@
-<refentry id="devkit-power-daemon.8">
+<refentry id="upowerd.8">
   <refentryinfo>
-    <title>devkit-power-daemon</title>
+    <title>upowerd</title>
     <date>April 2008</date>
-    <productname>devkit-power-daemon</productname>
+    <productname>upowerd</productname>
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>devkit-power-daemon</refentrytitle>
+    <refentrytitle>upowerd</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo class="version"></refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>devkit-power-daemon</refname>
-    <refpurpose>DeviceKit-power Daemon</refpurpose>
+    <refname>upowerd</refname>
+    <refpurpose>UPower Daemon</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>devkit-power-daemon</command>
+      <command>upowerd</command>
       <arg><option>--help</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -26,7 +26,7 @@
 
   <refsect1><title>DESCRIPTION</title>
     <para>
-      <emphasis><refentrytitle>devkit-power-daemon</refentrytitle></emphasis> provides
+      <emphasis><refentrytitle>upowerd</refentrytitle></emphasis> provides
       the <emphasis>org.freedesktop.UPower</emphasis> service on the
       system message bus. Users or administrators should never need to
       start this daemon as it will be automatically started by
@@ -71,10 +71,10 @@
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>DeviceKit-power</refentrytitle><manvolnum>7</manvolnum>
+        <refentrytitle>UPower</refentrytitle><manvolnum>7</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>devkit-power</refentrytitle><manvolnum>1</manvolnum>
+        <refentrytitle>upower</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>dbus-daemon</refentrytitle><manvolnum>1</manvolnum>
