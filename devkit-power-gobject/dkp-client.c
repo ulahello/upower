@@ -74,6 +74,7 @@ enum {
 };
 
 static guint signals [DKP_CLIENT_LAST_SIGNAL] = { 0 };
+static gpointer dkp_client_object = NULL;
 
 G_DEFINE_TYPE (DkpClient, dkp_client, G_TYPE_OBJECT)
 
@@ -734,8 +735,12 @@ dkp_client_finalize (GObject *object)
 DkpClient *
 dkp_client_new (void)
 {
-	DkpClient *client;
-	client = g_object_new (DKP_TYPE_CLIENT, NULL);
-	return DKP_CLIENT (client);
+	if (dkp_client_object != NULL) {
+		g_object_ref (dkp_client_object);
+	} else {
+		dkp_client_object = g_object_new (DKP_TYPE_CLIENT, NULL);
+		g_object_add_weak_pointer (dkp_client_object, &dkp_client_object);
+	}
+	return DKP_CLIENT (dkp_client_object);
 }
 
