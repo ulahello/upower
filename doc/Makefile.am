@@ -6,7 +6,7 @@ NULL =
 AUTOMAKE_OPTIONS = 1.7
 
 # The name of the module.
-DOC_MODULE=upower
+DOC_MODULE=UPower
 
 # The top-level SGML file.
 DOC_MAIN_SGML_FILE=upower-docs.xml
@@ -25,6 +25,7 @@ CFILE_GLOB=
 
 # Headers to ignore
 IGNORE_HFILES= \
+	config.h					\
 	$(NULL)
 
 # CFLAGS and LDFLAGS for compiling scan program. Only needed
@@ -32,11 +33,16 @@ IGNORE_HFILES= \
 INCLUDES = \
 	$(DBUS_GLIB_CFLAGS)		\
 	$(GLIB_CFLAGS)			\
-	-I$(top_srcdir)/policy 		\
-	-I$(top_builddir)/policy	\
+	-I$(top_srcdir)/libupower-glib 		\
+	-I$(top_builddir)/libupower-glib	\
+	$(NULL)
+
+UPOWER_GLIB_LIBS =						\
+	$(top_builddir)/libupower-glib/libupower-glib.la	\
 	$(NULL)
 
 GTKDOC_LIBS = 			\
+	$(UPOWER_GLIB_LIBS)					\
 	$(DBUS_GLIB_LIBS)	\
 	$(NULL)
 

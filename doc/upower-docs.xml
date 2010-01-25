@@ -9,13 +9,13 @@
     <releaseinfo>Version &version;</releaseinfo>
     <authorgroup>
       <author>
-	<firstname>David</firstname>
-	<surname>Zeuthen</surname>
-	<affiliation>
-	  <address>
-	    <email>davidz@redhat.com</email>
-	  </address>
-	</affiliation>
+        <firstname>Richard</firstname>
+        <surname>Hughes</surname>
+        <affiliation>
+          <address>
+            <email>richard@hughsie.com</email>
+          </address>
+        </affiliation>
       </author>
     </authorgroup>
 
@@ -67,6 +67,27 @@
     <xi:include href="dbus/org.freedesktop.UPower.ref.xml"/>
     <xi:include href="dbus/org.freedesktop.UPower.Device.ref.xml"/>
     <xi:include href="dbus/org.freedesktop.UPower.QoS.ref.xml"/>
+  </reference>
+
+  <reference id="libupower-glib">
+    <title>libpackagekit GObjects</title>
+    <partintro>
+      <para>
+        This part documents GObjects used in libupower-glib.
+      </para>
+    </partintro>
+    <xi:include href="xml/up-client.xml"/>
+    <xi:include href="xml/up-device.xml"/>
+  </reference>
+
+  <reference id="libupower-glib-helpers">
+    <title>libupower-glib helpers</title>
+    <partintro>
+      <para>
+        This part documents helper funtions in libupower-glib.
+      </para>
+    </partintro>
+    <xi:include href="xml/up-types.xml"/>
   </reference>
 
   <reference id="tools-fileformats">

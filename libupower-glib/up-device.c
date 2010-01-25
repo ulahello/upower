@@ -19,6 +19,16 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:up-device
+ * @short_description: Client object for accessing information about UPower devices
+ *
+ * A helper GObject to use for accessing UPower devices, and to be notified
+ * when it is changed.
+ *
+ * See also: #UpClient
+ */
+
 #include "config.h"
 
 #include <stdlib.h>
@@ -35,7 +45,12 @@ static void	up_device_finalize	(GObject		*object);
 
 #define UP_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE, UpDevicePrivate))
 
-struct UpDevicePrivate
+/**
+ * UpDevicePrivate:
+ *
+ * Private #PkDevice data
+ **/
+struct _UpDevicePrivate
 {
 	gchar			*object_path;
 	DBusGConnection		*bus;
@@ -113,9 +128,9 @@ static guint signals [SIGNAL_LAST] = { 0 };
 
 G_DEFINE_TYPE (UpDevice, up_device, G_TYPE_OBJECT)
 
-/**
+/*
  * up_device_get_device_properties:
- **/
+ */
 static GHashTable *
 up_device_get_device_properties (UpDevice *device, GError **error)
 {
@@ -138,9 +153,9 @@ out:
 	return hash_table;
 }
 
-/**
+/*
  * up_device_collect_props_cb:
- **/
+ */
 static void
 up_device_collect_props_cb (const char *key, const GValue *value, UpDevice *device)
 {
@@ -209,9 +224,9 @@ up_device_collect_props_cb (const char *key, const GValue *value, UpDevice *devi
 	}
 }
 
-/**
+/*
  * up_device_refresh_internal:
- **/
+ */
 static gboolean
 up_device_refresh_internal (UpDevice *device, GError **error)
 {
@@ -230,9 +245,9 @@ up_device_refresh_internal (UpDevice *device, GError **error)
 	return TRUE;
 }
 
-/**
+/*
  * up_device_changed_cb:
- **/
+ */
 static void
 up_device_changed_cb (DBusGProxy *proxy, UpDevice *device)
 {
@@ -325,18 +340,18 @@ up_device_get_object_path (UpDevice *device)
 	return device->priv->object_path;
 }
 
-/**
+/*
  * up_device_bool_to_string:
- **/
+ */
 static const gchar *
 up_device_bool_to_string (gboolean ret)
 {
 	return ret ? "yes" : "no";
 }
 
-/**
+/*
  * up_device_to_text_time_to_string:
- **/
+ */
 static gchar *
 up_device_to_text_time_to_string (gint seconds)
 {
@@ -358,6 +373,8 @@ up_device_to_text_time_to_string (gint seconds)
 
 /**
  * up_device_to_text:
+ *
+ * Converts the device to a string description.
  *
  * Return value: text representation of #UpDevice
  *
@@ -491,9 +508,9 @@ out:
 	return ret;
 }
 
-/**
+/*
  * up_device_set_property:
- **/
+ */
 static void
 up_device_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
 {
@@ -593,9 +610,9 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 	}
 }
 
-/**
+/*
  * up_device_get_property:
- **/
+ */
 static void
 up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
 {
@@ -689,9 +706,9 @@ up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
     }
 }
 
-/**
+/*
  * up_device_class_init:
- **/
+ */
 static void
 up_device_class_init (UpDeviceClass *klass)
 {
@@ -701,7 +718,7 @@ up_device_class_init (UpDeviceClass *klass)
 	object_class->get_property = up_device_get_property;
 
 	/**
-	 * PkClient::changed:
+	 * UpDevice::changed:
 	 * @device: the #UpDevice instance that emitted the signal
 	 *
 	 * The ::changed signal is emitted when the device data has changed.
@@ -718,6 +735,8 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:update-time:
 	 *
+	 * The last time the device was updated.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -728,6 +747,8 @@ up_device_class_init (UpDeviceClass *klass)
 							      G_PARAM_READWRITE));
 	/**
 	 * UpDevice:vendor:
+	 *
+	 * The vendor of the device.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -740,6 +761,8 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:model:
 	 *
+	 * The model of the device.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -750,6 +773,8 @@ up_device_class_init (UpDeviceClass *klass)
 							      G_PARAM_READWRITE));
 	/**
 	 * UpDevice:serial:
+	 *
+	 * The serial number of the device.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -762,6 +787,8 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:native-path:
 	 *
+	 * The native path of the device, useful for direct device access.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -772,6 +799,8 @@ up_device_class_init (UpDeviceClass *klass)
 							      G_PARAM_READWRITE));
 	/**
 	 * UpDevice:power-supply:
+	 *
+	 * If the device is powering the system.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -784,6 +813,8 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:online:
 	 *
+	 * If the device is online, i.e. connected.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -794,6 +825,10 @@ up_device_class_init (UpDeviceClass *klass)
 							       G_PARAM_READWRITE));
 	/**
 	 * UpDevice:is-present:
+	 *
+	 * If the device is present, as some devices like laptop batteries
+	 * can be removed, leaving an empty bay that is still technically a
+	 * device.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -806,6 +841,8 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:is-rechargeable:
 	 *
+	 * If the device has a rechargable battery.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -816,6 +853,8 @@ up_device_class_init (UpDeviceClass *klass)
 							       G_PARAM_READWRITE));
 	/**
 	 * UpDevice:has-history:
+	 *
+	 * If the device has history data that might be useful.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -828,6 +867,8 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:has-statistics:
 	 *
+	 * If the device has statistics data that might be useful.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -838,6 +879,8 @@ up_device_class_init (UpDeviceClass *klass)
 							       G_PARAM_READWRITE));
 	/**
 	 * UpDevice:type:
+	 *
+	 * The device type, e.g. %UP_DEVICE_TYPE_KEYBOARD.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -852,6 +895,8 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:state:
 	 *
+	 * The state the device is in at this time, e.g. %UP_DEVICE_STATE_EMPTY.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -864,6 +909,8 @@ up_device_class_init (UpDeviceClass *klass)
 							    G_PARAM_READWRITE));
 	/**
 	 * UpDevice:technology:
+	 *
+	 * The battery technology e.g. %UP_DEVICE_TECHNOLOGY_LITHIUM_ION.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -878,6 +925,9 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:capacity:
 	 *
+	 * The percentage capacity of the device where 100% means the device has
+	 * the same charge potential as when it was manufactured.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -887,6 +937,8 @@ up_device_class_init (UpDeviceClass *klass)
 							      G_PARAM_READWRITE));
 	/**
 	 * UpDevice:energy:
+	 *
+	 * The energy left in the device. Measured in mWh.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -898,6 +950,9 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:energy-empty:
 	 *
+	 * The energy the device will have when it is empty. This is usually zero.
+	 * Measured in mWh.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -907,6 +962,8 @@ up_device_class_init (UpDeviceClass *klass)
 							      G_PARAM_READWRITE));
 	/**
 	 * UpDevice:energy-full:
+	 *
+	 * The amount of energy when the device is fully charged. Measured in mWh.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -918,6 +975,8 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:energy-full-design:
 	 *
+	 * The amount of energy when the device was brand new. Measured in mWh.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -927,6 +986,8 @@ up_device_class_init (UpDeviceClass *klass)
 							      G_PARAM_READWRITE));
 	/**
 	 * UpDevice:energy-rate:
+	 *
+	 * The rate of discharge or charge. Measured in mW.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -938,6 +999,8 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:voltage:
 	 *
+	 * The current voltage of the device.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -947,6 +1010,8 @@ up_device_class_init (UpDeviceClass *klass)
 							      G_PARAM_READWRITE));
 	/**
 	 * UpDevice:time-to-empty:
+	 *
+	 * The amount of time until the device is empty.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -958,6 +1023,8 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:time-to-full:
 	 *
+	 * The amount of time until the device is fully charged.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -968,6 +1035,8 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:percentage:
 	 *
+	 * The percentage charge of the device.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -977,6 +1046,10 @@ up_device_class_init (UpDeviceClass *klass)
 							      G_PARAM_READWRITE));
 	/**
 	 * UpDevice:recall-notice:
+	 *
+	 * If the device may be recalled due to defect. NOTE: This property does
+	 * not mean the battery is broken, and just that the user should
+	 * _check_ with the vendor.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -989,6 +1062,8 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:recall-vendor:
 	 *
+	 * The vendor that is recalling the device.
+	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
@@ -999,6 +1074,8 @@ up_device_class_init (UpDeviceClass *klass)
 							      G_PARAM_READWRITE));
 	/**
 	 * UpDevice:recall-url:
+	 *
+	 * The vendors internet link for the recalled device.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -1012,9 +1089,9 @@ up_device_class_init (UpDeviceClass *klass)
 	g_type_class_add_private (klass, sizeof (UpDevicePrivate));
 }
 
-/**
+/*
  * up_device_init:
- **/
+ */
 static void
 up_device_init (UpDevice *device)
 {
@@ -1024,9 +1101,9 @@ up_device_init (UpDevice *device)
 	device->priv->proxy_props = NULL;
 }
 
-/**
+/*
  * up_device_finalize:
- **/
+ */
 static void
 up_device_finalize (GObject *object)
 {
@@ -1053,6 +1130,8 @@ up_device_finalize (GObject *object)
 
 /**
  * up_device_new:
+ *
+ * Creates a new #UpDevice object.
  *
  * Return value: a new UpDevice object.
  *

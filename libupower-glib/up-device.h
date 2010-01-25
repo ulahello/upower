@@ -40,7 +40,7 @@ G_BEGIN_DECLS
 #define UP_DEVICE_ERROR		(up_device_error_quark ())
 #define UP_DEVICE_TYPE_ERROR	(up_device_error_get_type ())
 
-typedef struct UpDevicePrivate UpDevicePrivate;
+typedef struct _UpDevicePrivate UpDevicePrivate;
 
 typedef struct
 {
@@ -75,14 +75,6 @@ gboolean	 up_device_refresh_sync			(UpDevice		*device,
 							 GError			**error);
 gboolean	 up_device_set_object_path_sync		(UpDevice		*device,
 							 const gchar		*object_path,
-							 GError			**error);
-GPtrArray	*up_device_get_history_sync		(UpDevice		*device,
-							 const gchar		*type,
-							 guint			 timespec,
-							 guint			 resolution,
-							 GError			**error);
-GPtrArray	*up_device_get_statistics_sync		(UpDevice		*device,
-							 const gchar		*type,
 							 GError			**error);
 
 /* accessors */

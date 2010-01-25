@@ -47,12 +47,6 @@ libupower_glib_la_CFLAGS =					\
 EXTRA_DIST =							\
 	up-client.h						\
 	up-device.h						\
-	up-enum.h						\
-	up-history-item.h					\
-	up-qos-item.h						\
-	up-stats-item.h						\
-	up-wakeup-item.h					\
-	up-wakeups.h						\
 	up-version.h.in
 
 CLEANFILES = $(BUILT_SOURCES)

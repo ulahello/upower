@@ -19,6 +19,16 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:upower
+ * @short_description: Client objects for accessing UPower
+ *
+ * These objects allow client programs to trivially get details about the power
+ * state, and about devices on the system.
+ *
+ * See also: #UpClient, #UpDevice
+ */
+
 #ifndef __UPOWER_H__
 #define __UPOWER_H__
 

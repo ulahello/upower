@@ -19,6 +19,16 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:up-client
+ * @short_description: Main client object for accessing the UPower daemon
+ *
+ * A helper GObject to use for accessing UPower information, and to be notified
+ * when it is changed.
+ *
+ * See also: #UpDevice
+ */
+
 #include "config.h"
 
 #include <stdlib.h>
@@ -35,7 +45,12 @@ static void	up_client_finalize	(GObject	*object);
 
 #define UP_CLIENT_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_CLIENT, UpClientPrivate))
 
-struct UpClientPrivate
+/**
+ * UpClientPrivate:
+ *
+ * Private #UpClient data
+ **/
+struct _UpClientPrivate
 {
 	DBusGConnection		*bus;
 	DBusGProxy		*proxy;
@@ -76,9 +91,9 @@ static gpointer up_client_object = NULL;
 
 G_DEFINE_TYPE (UpClient, up_client, G_TYPE_OBJECT)
 
-/**
+/*
  * up_client_get_device:
- **/
+ */
 static UpDevice *
 up_client_get_device (UpClient *client, const gchar *object_path)
 {
@@ -111,9 +126,9 @@ up_client_get_devices (UpClient *client)
 	return g_ptr_array_ref (client->priv->array);
 }
 
-/**
+/*
  * up_client_get_devices_private:
- **/
+ */
 static GPtrArray *
 up_client_get_devices_private (UpClient *client, GError **error)
 {
@@ -139,8 +154,8 @@ up_client_get_devices_private (UpClient *client, GError **error)
 
 /**
  * up_client_suspend_sync:
- * @client : a #UpClient instance.
- * @error  : a #GError.
+ * @client: a #UpClient instance.
+ * @error: a #GError, or %NULL.
  *
  * Puts the computer into a low power state, but state is not preserved if the
  * power is lost.
@@ -182,8 +197,8 @@ out:
 
 /**
  * up_client_hibernate_sync:
- * @client : a #UpClient instance.
- * @error  : a #GError.
+ * @client: a #UpClient instance.
+ * @error: a #GError.
  *
  * Puts the computer into a low power state, where state is preserved if the
  * power is lost.
@@ -223,6 +238,14 @@ out:
 
 /**
  * up_client_get_properties_sync:
+ * @client: a #UpClient instance.
+ * @error: a #GError, or %NULL.
+ *
+ * Get all the properties from UPower daemon.
+ *
+ * Return value: %TRUE for success, else %FALSE.
+ *
+ * Since: 0.9.0
  **/
 gboolean
 up_client_get_properties_sync (UpClient *client, GError **error)
@@ -331,9 +354,9 @@ out:
 
 /**
  * up_client_get_daemon_version:
- * @client : a #UpClient instance.
+ * @client: a #UpClient instance.
  *
- * Get DeviceKit-power daemon version.
+ * Get UPower daemon version.
  *
  * Return value: string containing the daemon version, e.g. 008
  *
@@ -349,7 +372,7 @@ up_client_get_daemon_version (UpClient *client)
 
 /**
  * up_client_get_can_hibernate:
- * @client : a #UpClient instance.
+ * @client: a #UpClient instance.
  *
  * Get whether the system is able to hibernate.
  *
@@ -367,7 +390,7 @@ up_client_get_can_hibernate (UpClient *client)
 
 /**
  * up_client_get_lid_is_closed:
- * @client : a #UpClient instance.
+ * @client: a #UpClient instance.
  *
  * Get whether the laptop lid is closed.
  *
@@ -383,7 +406,7 @@ up_client_get_lid_is_closed (UpClient *client)
 
 /**
  * up_client_get_can_suspend:
- * @client : a #UpClient instance.
+ * @client: a #UpClient instance.
  *
  * Get whether the system is able to suspend.
  *
@@ -401,7 +424,7 @@ up_client_get_can_suspend (UpClient *client)
 
 /**
  * up_client_get_on_battery:
- * @client : a #UpClient instance.
+ * @client: a #UpClient instance.
  *
  * Get whether the system is running on battery power.
  *
@@ -419,7 +442,7 @@ up_client_get_on_battery (UpClient *client)
 
 /**
  * up_client_get_on_low_battery:
- * @client : a #UpClient instance.
+ * @client: a #UpClient instance.
  *
  * Get whether the system is running on low battery power.
  *
@@ -435,9 +458,9 @@ up_client_get_on_low_battery (UpClient *client)
 	return client->priv->on_low_battery;
 }
 
-/**
+/*
  * up_client_add:
- **/
+ */
 static void
 up_client_add (UpClient *client, const gchar *object_path)
 {
@@ -457,18 +480,18 @@ out:
 	g_object_unref (device);
 }
 
-/**
+/*
  * up_client_added_cb:
- **/
+ */
 static void
 up_device_added_cb (DBusGProxy *proxy, const gchar *object_path, UpClient *client)
 {
 	up_client_add (client, object_path);
 }
 
-/**
+/*
  * up_client_changed_cb:
- **/
+ */
 static void
 up_device_changed_cb (DBusGProxy *proxy, const gchar *object_path, UpClient *client)
 {
@@ -478,9 +501,9 @@ up_device_changed_cb (DBusGProxy *proxy, const gchar *object_path, UpClient *cli
 		g_signal_emit (client, signals [UP_CLIENT_DEVICE_CHANGED], 0, device);
 }
 
-/**
+/*
  * up_client_removed_cb:
- **/
+ */
 static void
 up_device_removed_cb (DBusGProxy *proxy, const gchar *object_path, UpClient *client)
 {
@@ -492,9 +515,9 @@ up_device_removed_cb (DBusGProxy *proxy, const gchar *object_path, UpClient *cli
 	}
 }
 
-/**
+/*
  * up_client_changed_cb:
- **/
+ */
 static void
 up_client_changed_cb (DBusGProxy *proxy, UpClient *client)
 {
@@ -541,10 +564,10 @@ up_client_get_property (GObject *object,
 	}
 }
 
-/**
+/*
  * up_client_class_init:
  * @klass: The UpClientClass
- **/
+ */
 static void
 up_client_class_init (UpClientClass *klass)
 {
@@ -652,24 +675,62 @@ up_client_class_init (UpClientClass *klass)
 							       FALSE,
 							       G_PARAM_READABLE));
 
+	/**
+	 * UpClient::device-added:
+	 * @client: the #UpClient instance that emitted the signal
+	 * @device: the #UpDevice that was added.
+	 *
+	 * The ::device-added signal is emitted when a power device is added.
+	 *
+	 * Since: 0.9.0
+	 **/
 	signals [UP_CLIENT_DEVICE_ADDED] =
 		g_signal_new ("device-added",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpClientClass, device_added),
-			      NULL, NULL, g_cclosure_marshal_VOID__POINTER,
-			      G_TYPE_NONE, 1, G_TYPE_POINTER);
+			      NULL, NULL, g_cclosure_marshal_VOID__OBJECT,
+			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
+
+	/**
+	 * UpClient::device-removed:
+	 * @client: the #UpClient instance that emitted the signal
+	 * @device: the #UpDevice that was removed.
+	 *
+	 * The ::device-added signal is emitted when a power device is removed.
+	 *
+	 * Since: 0.9.0
+	 **/
 	signals [UP_CLIENT_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpClientClass, device_removed),
-			      NULL, NULL, g_cclosure_marshal_VOID__POINTER,
-			      G_TYPE_NONE, 1, G_TYPE_POINTER);
+			      NULL, NULL, g_cclosure_marshal_VOID__OBJECT,
+			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
+
+	/**
+	 * UpClient::device-changed:
+	 * @client: the #UpClient instance that emitted the signal
+	 * @device: the #UpDevice that was changed.
+	 *
+	 * The ::device-changed signal is emitted when a power device is changed.
+	 *
+	 * Since: 0.9.0
+	 **/
 	signals [UP_CLIENT_DEVICE_CHANGED] =
 		g_signal_new ("device-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpClientClass, device_changed),
-			      NULL, NULL, g_cclosure_marshal_VOID__POINTER,
-			      G_TYPE_NONE, 1, G_TYPE_POINTER);
+			      NULL, NULL, g_cclosure_marshal_VOID__OBJECT,
+			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
+
+	/**
+	 * UpClient::changed:
+	 * @client: the #UpDevice instance that emitted the signal
+	 *
+	 * The ::changed signal is emitted when properties may have changed.
+	 *
+	 * Since: 0.9.0
+	 **/
 	signals [UP_CLIENT_CHANGED] =
 		g_signal_new ("changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
@@ -682,6 +743,14 @@ up_client_class_init (UpClientClass *klass)
 
 /**
  * up_client_enumerate_devices_sync:
+ * @client: a #UpClient instance.
+ * @error: a #GError, or %NULL.
+ *
+ * Enumerates all the devices from the daemon.
+ *
+ * Return value: %TRUE for success, else %FALSE.
+ *
+ * Since: 0.9.0
  **/
 gboolean
 up_client_enumerate_devices_sync (UpClient *client, GError **error)
@@ -705,10 +774,10 @@ out:
 	return ret;
 }
 
-/**
+/*
  * up_client_init:
  * @client: This class instance
- **/
+ */
 static void
 up_client_init (UpClient *client)
 {
@@ -764,9 +833,9 @@ out:
 	return;
 }
 
-/**
+/*
  * up_client_finalize:
- **/
+ */
 static void
 up_client_finalize (GObject *object)
 {
@@ -794,6 +863,8 @@ up_client_finalize (GObject *object)
 
 /**
  * up_client_new:
+ *
+ * Creates a new #UpClient object.
  *
  * Return value: a new UpClient object.
  *

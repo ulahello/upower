@@ -12,4 +12,5 @@ html
 tmpl
 version.xml
 xml
+.libs
 

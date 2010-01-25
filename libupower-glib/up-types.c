@@ -19,6 +19,16 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:up-types
+ * @short_description: Types used by UPower and libupower-glib
+ *
+ * These helper functions provide a way to marshal enumerated values to
+ * text and back again.
+ *
+ * See also: #UpClient, #UpDevice
+ */
+
 #include "config.h"
 
 #include <glib.h>

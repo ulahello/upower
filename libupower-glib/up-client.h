@@ -40,7 +40,7 @@ G_BEGIN_DECLS
 #define UP_CLIENT_ERROR			(up_client_error_quark ())
 #define UP_CLIENT_TYPE_ERROR		(up_client_error_get_type ())
 
-typedef struct UpClientPrivate UpClientPrivate;
+typedef struct _UpClientPrivate UpClientPrivate;
 
 typedef struct
 {

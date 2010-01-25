@@ -12,18 +12,22 @@ AC_CONFIG_SRCDIR(src)
 AM_INIT_AUTOMAKE([1.9 tar-ustar dist-bzip2])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR([m4])
-AM_MAINTAINER_MODE
-AC_CONFIG_MACRO_DIR([m4])
 
 GOBJECT_INTROSPECTION_CHECK([0.6.7])
 
 # enable nice build output on automake1.11
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
-# use this in dkp-version.h
+# use this in up-version.h
+UP_MAJOR_VERSION=up_major_version
+UP_MINOR_VERSION=up_minor_version
+UP_MICRO_VERSION=up_micro_version
 AC_SUBST(VERSION)
+AC_SUBST(UP_MAJOR_VERSION)
+AC_SUBST(UP_MINOR_VERSION)
+AC_SUBST(UP_MICRO_VERSION)
 
-# libtool versioning - this applies to devkit-power-gobject
+# libtool versioning - this applies to libupower-glib
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
 #
@@ -208,7 +212,7 @@ if test "x$GCC" = "xyes"; then
 fi
 
 IT_PROG_INTLTOOL([0.40.0])
-GETTEXT_PACKAGE=DeviceKit-power
+GETTEXT_PACKAGE=UPower
 AC_SUBST([GETTEXT_PACKAGE])
 AM_GLIB_GNU_GETTEXT
 AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
@@ -237,8 +241,8 @@ po/Makefile.in
 
 dnl ==========================================================================
 echo "
-               DeviceKit-power $VERSION
-             =======================
+                 UPower $VERSION
+             =========================
 
         prefix:                     ${prefix}
         libdir:                     ${libdir}

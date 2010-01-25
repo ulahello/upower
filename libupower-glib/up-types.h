@@ -30,6 +30,11 @@
 
 G_BEGIN_DECLS
 
+/**
+ * UpDeviceType:
+ *
+ * The device type.
+ **/
 typedef enum {
 	UP_DEVICE_TYPE_UNKNOWN,
 	UP_DEVICE_TYPE_LINE_POWER,
@@ -43,6 +48,11 @@ typedef enum {
 	UP_DEVICE_TYPE_LAST
 } UpDeviceType;
 
+/**
+ * UpDeviceState:
+ *
+ * The device state.
+ **/
 typedef enum {
 	UP_DEVICE_STATE_UNKNOWN,
 	UP_DEVICE_STATE_CHARGING,
@@ -54,6 +64,11 @@ typedef enum {
 	UP_DEVICE_STATE_LAST
 } UpDeviceState;
 
+/**
+ * UpDeviceTechnology:
+ *
+ * The device technology.
+ **/
 typedef enum {
 	UP_DEVICE_TECHNOLOGY_UNKNOWN,
 	UP_DEVICE_TECHNOLOGY_LITHIUM_ION,
@@ -65,6 +80,11 @@ typedef enum {
 	UP_DEVICE_TECHNOLOGY_LAST
 } UpDeviceTechnology;
 
+/**
+ * UpQosType:
+ *
+ * The type of QOS request.
+ **/
 typedef enum {
 	UP_QOS_TYPE_UNKNOWN,
 	UP_QOS_TYPE_NETWORK,

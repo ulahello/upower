@@ -1,4 +1,4 @@
-# Italian translation for DeviceKit-power
+# Italian translation for UPower
 # Copyright (C) 2009 The Free Software Foundation, Inc
 # This file is distributed under the same license as the PolicyKit package.
 # Luca Ferretti <elle.uca@libero.it>, 2009.
@@ -6,7 +6,7 @@
 # Milo Casagrande <milo@ubuntu.com>, 2009.
 msgid ""
 msgstr ""
-"Project-Id-Version: DeviceKit-power 011\n"
+"Project-Id-Version: UPower 011\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-08-24 13:05+0200\n"
 "PO-Revision-Date: 2009-08-26 21:05+0200\n"

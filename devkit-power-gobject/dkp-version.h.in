@@ -32,8 +32,6 @@
 
 /* check whether a the version is above the compile time version.
  */
-#define DKP_CHECK_VERSION(ver) \
-	(DKP_COMPILE_VERSION > (ver) || \
-	 (DKP_COMPILE_VERSION == (ver)))
+#define DKP_CHECK_VERSION(ver)				(1)
 
 #endif /* __DKP_VERSION_H */
