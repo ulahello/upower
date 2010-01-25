@@ -2,9 +2,9 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = devkit-power-gobject src doc tools policy po $(UDEV_RULES)
+SUBDIRS = devkit-power-gobject libupower-glib src doc tools policy po $(UDEV_RULES)
 
-DIST_SUBDIRS = devkit-power-gobject src doc tools policy po rules
+DIST_SUBDIRS = devkit-power-gobject libupower-glib src doc tools policy po rules
 
 # Creating ChangeLog from git log (taken from cairo/Makefile.am):
 ChangeLog: $(srcdir)/ChangeLog
@@ -31,7 +31,7 @@ snapshot:
 	$(MAKE) dist distdir=$(PACKAGE)-$(VERSION)-`date +"%Y%m%d"`
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = devkit-power-gobject.pc
+pkgconfig_DATA = devkit-power-gobject.pc upower-glib.pc
 
 # xsltproc barfs on 'make distcheck'; disable for now
 DISTCHECK_CONFIGURE_FLAGS=--disable-man-pages --enable-gtk-doc --enable-introspection

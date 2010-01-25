@@ -15,7 +15,7 @@ DOC_MAIN_SGML_FILE=upower-docs.xml
 SCAN_OPTIONS=--ignore-headers=config.h
 
 # The directory containing the source code. Relative to $(srcdir)
-DOC_SOURCE_DIR=../policy
+DOC_SOURCE_DIR=../libupower-glib
 
 # Used for dependencies
 HFILE_GLOB=
