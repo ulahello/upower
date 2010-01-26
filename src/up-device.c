@@ -65,7 +65,7 @@ struct UpDevicePrivate
 	gboolean		 is_rechargeable;
 	gboolean		 has_history;
 	gboolean		 has_statistics;
-	UpDeviceType		 type;
+	UpDeviceKind		 type;
 	UpDeviceState		 state;
 	UpDeviceTechnology	 technology;
 	gdouble			 capacity;		/* percent */
@@ -433,11 +433,11 @@ up_device_get_id (UpDevice *device)
 	gchar *id = NULL;
 
 	/* line power */
-	if (device->priv->type == UP_DEVICE_TYPE_LINE_POWER) {
+	if (device->priv->type == UP_DEVICE_KIND_LINE_POWER) {
 		goto out;
 
 	/* batteries */
-	} else if (device->priv->type == UP_DEVICE_TYPE_BATTERY) {
+	} else if (device->priv->type == UP_DEVICE_KIND_BATTERY) {
 		/* we don't have an ID if we are not present */
 		if (!device->priv->is_present)
 			goto out;
@@ -795,7 +795,7 @@ up_device_compute_object_path (UpDevice *device)
 	const gchar *type;
 	guint i;
 
-	type = up_device_type_to_text (device->priv->type);
+	type = up_device_kind_to_text (device->priv->type);
 	native_path = device->priv->native_path;
 	basename = g_path_get_basename (native_path);
 	id = g_strjoin ("_", type, basename, NULL);
@@ -1047,9 +1047,9 @@ up_device_class_init (UpDeviceClass *klass)
 					 PROP_TYPE,
 					 g_param_spec_uint ("type",
 							    NULL, NULL,
-							    UP_DEVICE_TYPE_UNKNOWN,
-							    UP_DEVICE_TYPE_LAST,
-							    UP_DEVICE_TYPE_UNKNOWN,
+							    UP_DEVICE_KIND_UNKNOWN,
+							    UP_DEVICE_KIND_LAST,
+							    UP_DEVICE_KIND_UNKNOWN,
 							    G_PARAM_READWRITE));
 	/**
 	 * UpDevice:state:

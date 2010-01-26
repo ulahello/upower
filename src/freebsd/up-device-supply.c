@@ -130,7 +130,7 @@ up_device_supply_acline_coldplug (UpDevice *device)
 	g_object_set (device,
 		      "online", FALSE,
 		      "power-supply", TRUE,
-		      "type", UP_DEVICE_TYPE_LINE_POWER,
+		      "type", UP_DEVICE_KIND_LINE_POWER,
 		      NULL);
 
 	ret = up_device_supply_acline_set_properties (device);
@@ -146,7 +146,7 @@ up_device_supply_battery_coldplug (UpDevice *device, UpAcpiNative *native)
 {
 	gboolean ret;
 
-	g_object_set (device, "type", UP_DEVICE_TYPE_BATTERY, NULL);
+	g_object_set (device, "type", UP_DEVICE_KIND_BATTERY, NULL);
 	ret = up_device_supply_battery_set_properties (device, native);
 
 	return ret;
@@ -386,15 +386,15 @@ up_device_supply_refresh (UpDevice *device)
 {
 	GObject *object;
 	GTimeVal timeval;
-	UpDeviceType type;
+	UpDeviceKind type;
 	gboolean ret;
 
 	g_object_get (device, "type", &type, NULL);
 	switch (type) {
-		case UP_DEVICE_TYPE_LINE_POWER:
+		case UP_DEVICE_KIND_LINE_POWER:
 			ret = up_device_supply_acline_set_properties (device);
 			break;
-		case UP_DEVICE_TYPE_BATTERY:
+		case UP_DEVICE_KIND_BATTERY:
 			object = up_device_get_native (device);
 			ret = up_device_supply_battery_set_properties (device, UP_ACPI_NATIVE (object));
 			break;
@@ -417,7 +417,7 @@ up_device_supply_refresh (UpDevice *device)
 static gboolean
 up_device_supply_get_on_battery (UpDevice *device, gboolean *on_battery)
 {
-	UpDeviceType type;
+	UpDeviceKind type;
 	UpDeviceState state;
 	gboolean is_present;
 
@@ -429,7 +429,7 @@ up_device_supply_get_on_battery (UpDevice *device, gboolean *on_battery)
 		      "is-present", &is_present,
 		      NULL);
 
-	if (type != UP_DEVICE_TYPE_BATTERY)
+	if (type != UP_DEVICE_KIND_BATTERY)
 		return FALSE;
 	if (state == UP_DEVICE_STATE_UNKNOWN)
 		return FALSE;
@@ -472,7 +472,7 @@ up_device_supply_get_low_battery (UpDevice *device, gboolean *low_battery)
 static gboolean
 up_device_supply_get_online (UpDevice *device, gboolean *online)
 {
-	UpDeviceType type;
+	UpDeviceKind type;
 	gboolean online_tmp;
 
 	g_return_val_if_fail (online != NULL, FALSE);
@@ -482,7 +482,7 @@ up_device_supply_get_online (UpDevice *device, gboolean *online)
 		      "online", &online_tmp,
 		      NULL);
 
-	if (type != UP_DEVICE_TYPE_LINE_POWER)
+	if (type != UP_DEVICE_KIND_LINE_POWER)
 		return FALSE;
 
 	*online = online_tmp;

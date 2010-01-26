@@ -31,22 +31,22 @@
 G_BEGIN_DECLS
 
 /**
- * UpDeviceType:
+ * UpDeviceKind:
  *
  * The device type.
  **/
 typedef enum {
-	UP_DEVICE_TYPE_UNKNOWN,
-	UP_DEVICE_TYPE_LINE_POWER,
-	UP_DEVICE_TYPE_BATTERY,
-	UP_DEVICE_TYPE_UPS,
-	UP_DEVICE_TYPE_MONITOR,
-	UP_DEVICE_TYPE_MOUSE,
-	UP_DEVICE_TYPE_KEYBOARD,
-	UP_DEVICE_TYPE_PDA,
-	UP_DEVICE_TYPE_PHONE,
-	UP_DEVICE_TYPE_LAST
-} UpDeviceType;
+	UP_DEVICE_KIND_UNKNOWN,
+	UP_DEVICE_KIND_LINE_POWER,
+	UP_DEVICE_KIND_BATTERY,
+	UP_DEVICE_KIND_UPS,
+	UP_DEVICE_KIND_MONITOR,
+	UP_DEVICE_KIND_MOUSE,
+	UP_DEVICE_KIND_KEYBOARD,
+	UP_DEVICE_KIND_PDA,
+	UP_DEVICE_KIND_PHONE,
+	UP_DEVICE_KIND_LAST
+} UpDeviceKind;
 
 /**
  * UpDeviceState:
@@ -92,10 +92,10 @@ typedef enum {
 	UP_QOS_TYPE_LAST
 } UpQosType;
 
-const gchar	*up_device_type_to_string		(UpDeviceType		 type_enum);
+const gchar	*up_device_kind_to_string		(UpDeviceKind		 type_enum);
 const gchar	*up_device_state_to_string		(UpDeviceState		 state_enum);
 const gchar	*up_device_technology_to_string		(UpDeviceTechnology	 technology_enum);
-UpDeviceType	 up_device_type_from_string		(const gchar		*type);
+UpDeviceKind	 up_device_kind_from_string		(const gchar		*type);
 UpDeviceState	 up_device_state_from_string		(const gchar		*state);
 UpDeviceTechnology up_device_technology_from_string	(const gchar		*technology);
 const gchar	*up_qos_type_to_string			(UpQosType		 type);

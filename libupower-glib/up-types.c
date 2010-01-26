@@ -36,41 +36,41 @@
 #include "up-types.h"
 
 /**
- * up_device_type_to_string:
+ * up_device_kind_to_string:
  *
- * Converts a #UpDeviceType to a string.
+ * Converts a #UpDeviceKind to a string.
  *
  * Return value: identifier string
  *
  * Since: 0.9.0
  **/
 const gchar *
-up_device_type_to_string (UpDeviceType type_enum)
+up_device_kind_to_string (UpDeviceKind type_enum)
 {
 	const gchar *type = NULL;
 	switch (type_enum) {
-	case UP_DEVICE_TYPE_LINE_POWER:
+	case UP_DEVICE_KIND_LINE_POWER:
 		type = "line-power";
 		break;
-	case UP_DEVICE_TYPE_BATTERY:
+	case UP_DEVICE_KIND_BATTERY:
 		type = "battery";
 		break;
-	case UP_DEVICE_TYPE_UPS:
+	case UP_DEVICE_KIND_UPS:
 		type = "ups";
 		break;
-	case UP_DEVICE_TYPE_MONITOR:
+	case UP_DEVICE_KIND_MONITOR:
 		type = "monitor";
 		break;
-	case UP_DEVICE_TYPE_MOUSE:
+	case UP_DEVICE_KIND_MOUSE:
 		type = "mouse";
 		break;
-	case UP_DEVICE_TYPE_KEYBOARD:
+	case UP_DEVICE_KIND_KEYBOARD:
 		type = "keyboard";
 		break;
-	case UP_DEVICE_TYPE_PDA:
+	case UP_DEVICE_KIND_PDA:
 		type = "pda";
 		break;
-	case UP_DEVICE_TYPE_PHONE:
+	case UP_DEVICE_KIND_PHONE:
 		type = "phone";
 		break;
 	default:
@@ -81,36 +81,36 @@ up_device_type_to_string (UpDeviceType type_enum)
 }
 
 /**
- * up_device_type_from_string:
+ * up_device_kind_from_string:
  *
- * Converts a string to a #UpDeviceType.
+ * Converts a string to a #UpDeviceKind.
  *
  * Return value: enumerated value
  *
  * Since: 0.9.0
  **/
-UpDeviceType
-up_device_type_from_string (const gchar *type)
+UpDeviceKind
+up_device_kind_from_string (const gchar *type)
 {
 	if (type == NULL)
-		return UP_DEVICE_TYPE_UNKNOWN;
+		return UP_DEVICE_KIND_UNKNOWN;
 	if (g_strcmp0 (type, "line-power") == 0)
-		return UP_DEVICE_TYPE_LINE_POWER;
+		return UP_DEVICE_KIND_LINE_POWER;
 	if (g_strcmp0 (type, "battery") == 0)
-		return UP_DEVICE_TYPE_BATTERY;
+		return UP_DEVICE_KIND_BATTERY;
 	if (g_strcmp0 (type, "ups") == 0)
-		return UP_DEVICE_TYPE_UPS;
+		return UP_DEVICE_KIND_UPS;
 	if (g_strcmp0 (type, "monitor") == 0)
-		return UP_DEVICE_TYPE_MONITOR;
+		return UP_DEVICE_KIND_MONITOR;
 	if (g_strcmp0 (type, "mouse") == 0)
-		return UP_DEVICE_TYPE_MOUSE;
+		return UP_DEVICE_KIND_MOUSE;
 	if (g_strcmp0 (type, "keyboard") == 0)
-		return UP_DEVICE_TYPE_KEYBOARD;
+		return UP_DEVICE_KIND_KEYBOARD;
 	if (g_strcmp0 (type, "pda") == 0)
-		return UP_DEVICE_TYPE_PDA;
+		return UP_DEVICE_KIND_PDA;
 	if (g_strcmp0 (type, "phone") == 0)
-		return UP_DEVICE_TYPE_PHONE;
-	return UP_DEVICE_TYPE_UNKNOWN;
+		return UP_DEVICE_KIND_PHONE;
+	return UP_DEVICE_KIND_UNKNOWN;
 }
 
 /**

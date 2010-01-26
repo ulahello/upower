@@ -347,7 +347,7 @@ up_device_hid_coldplug (UpDevice *device)
 
 	/* hardcode some values */
 	g_object_set (device,
-		      "type", UP_DEVICE_TYPE_UPS,
+		      "type", UP_DEVICE_KIND_UPS,
 		      "is-rechargeable", TRUE,
 		      "power-supply", TRUE,
 		      "is-present", TRUE,

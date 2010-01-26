@@ -166,7 +166,7 @@ up_backend_init (UpBackend *backend)
 		      "vendor", "hughsie",
 		      "model", "BAT1",
 		      "serial", "0001",
-		      "type", UP_DEVICE_TYPE_BATTERY,
+		      "type", UP_DEVICE_KIND_BATTERY,
 		      "online", FALSE,
 		      "power-supply", TRUE,
 		      "is-present", TRUE,

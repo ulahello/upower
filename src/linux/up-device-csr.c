@@ -146,9 +146,9 @@ up_device_csr_coldplug (UpDevice *device)
 
 	/* which one? */
 	if (g_strcmp0 (type, "mouse") == 0)
-		g_object_set (device, "type", UP_DEVICE_TYPE_MOUSE, NULL);
+		g_object_set (device, "type", UP_DEVICE_KIND_MOUSE, NULL);
 	else if (g_strcmp0 (type, "keyboard") == 0)
-		g_object_set (device, "type", UP_DEVICE_TYPE_KEYBOARD, NULL);
+		g_object_set (device, "type", UP_DEVICE_KIND_KEYBOARD, NULL);
 	else {
 		egg_debug ("not a recognised csr device");
 		goto out;

@@ -330,12 +330,12 @@ up_daemon_get_on_battery_local (UpDaemon *daemon)
  * up_daemon_get_number_devices_of_type:
  **/
 guint
-up_daemon_get_number_devices_of_type (UpDaemon *daemon, UpDeviceType type)
+up_daemon_get_number_devices_of_type (UpDaemon *daemon, UpDeviceKind type)
 {
 	guint i;
 	UpDevice *device;
 	GPtrArray *array;
-	UpDeviceType type_tmp;
+	UpDeviceKind type_tmp;
 	guint count = 0;
 
 	/* ask each device */
@@ -445,7 +445,7 @@ up_daemon_refresh_battery_devices (UpDaemon *daemon)
 	guint i;
 	GPtrArray *array;
 	UpDevice *device;
-	UpDeviceType type;
+	UpDeviceKind type;
 
 	/* refresh all devices in array */
 	array = up_device_list_get_array (daemon->priv->power_devices);
@@ -455,7 +455,7 @@ up_daemon_refresh_battery_devices (UpDaemon *daemon)
 		g_object_get (device,
 			      "type", &type,
 			      NULL);
-		if (type == UP_DEVICE_TYPE_BATTERY)
+		if (type == UP_DEVICE_KIND_BATTERY)
 			up_device_refresh_internal (device);
 	}
 	g_ptr_array_unref (array);
@@ -742,7 +742,7 @@ static void
 up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 {
 	const gchar *object_path;
-	UpDeviceType type;
+	UpDeviceKind type;
 	gboolean ret;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
@@ -752,7 +752,7 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 	g_object_get (device,
 		      "type", &type,
 		      NULL);
-	if (type == UP_DEVICE_TYPE_LINE_POWER) {
+	if (type == UP_DEVICE_KIND_LINE_POWER) {
 		/* refresh now, and again in a little while */
 		up_daemon_refresh_battery_devices (daemon);
 		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
@@ -791,7 +791,7 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 static void
 up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device, UpDaemon *daemon)
 {
-	UpDeviceType type;
+	UpDeviceKind type;
 	const gchar *object_path;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
@@ -809,7 +809,7 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
 	g_object_get (device,
 		      "type", &type,
 		      NULL);
-	if (type == UP_DEVICE_TYPE_BATTERY)
+	if (type == UP_DEVICE_KIND_BATTERY)
 		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */
@@ -832,7 +832,7 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
 static void
 up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *device, UpDaemon *daemon)
 {
-	UpDeviceType type;
+	UpDeviceKind type;
 	const gchar *object_path;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
@@ -846,7 +846,7 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 	g_object_get (device,
 		      "type", &type,
 		      NULL);
-	if (type == UP_DEVICE_TYPE_BATTERY)
+	if (type == UP_DEVICE_KIND_BATTERY)
 		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */

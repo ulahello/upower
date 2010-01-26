@@ -128,7 +128,7 @@ static gboolean
 up_device_supply_get_on_battery (UpDevice *device, gboolean *on_battery)
 {
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
-	UpDeviceType type;
+	UpDeviceKind type;
 	UpDeviceState state;
 	gboolean is_present;
 
@@ -141,7 +141,7 @@ up_device_supply_get_on_battery (UpDevice *device, gboolean *on_battery)
 		      "is-present", &is_present,
 		      NULL);
 
-	if (type != UP_DEVICE_TYPE_BATTERY)
+	if (type != UP_DEVICE_KIND_BATTERY)
 		return FALSE;
 	if (state == UP_DEVICE_STATE_UNKNOWN)
 		return FALSE;
@@ -189,7 +189,7 @@ static gboolean
 up_device_supply_get_online (UpDevice *device, gboolean *online)
 {
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
-	UpDeviceType type;
+	UpDeviceKind type;
 	gboolean online_tmp;
 
 	g_return_val_if_fail (UP_IS_DEVICE_SUPPLY (supply), FALSE);
@@ -200,7 +200,7 @@ up_device_supply_get_online (UpDevice *device, gboolean *online)
 		      "online", &online_tmp,
 		      NULL);
 
-	if (type != UP_DEVICE_TYPE_LINE_POWER)
+	if (type != UP_DEVICE_KIND_LINE_POWER)
 		return FALSE;
 
 	*online = online_tmp;
@@ -600,7 +600,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 			      NULL);
 
 		/* only guess when we have more than one battery devices */
-		battery_count = up_daemon_get_number_devices_of_type (daemon, UP_DEVICE_TYPE_BATTERY);
+		battery_count = up_daemon_get_number_devices_of_type (daemon, UP_DEVICE_KIND_BATTERY);
 
 		/* try to find a suitable icon depending on AC state */
 		if (battery_count > 1) {
@@ -718,7 +718,7 @@ up_device_supply_coldplug (UpDevice *device)
 	GUdevDevice *native;
 	const gchar *native_path;
 	gchar *device_type = NULL;
-	UpDeviceType type = UP_DEVICE_TYPE_UNKNOWN;
+	UpDeviceKind type = UP_DEVICE_KIND_UNKNOWN;
 
 	up_device_supply_reset_values (supply);
 
@@ -734,21 +734,21 @@ up_device_supply_coldplug (UpDevice *device)
 	device_type = up_device_supply_get_string (native_path, "type");
 	if (device_type != NULL) {
 		if (g_ascii_strcasecmp (device_type, "mains") == 0) {
-			type = UP_DEVICE_TYPE_LINE_POWER;
+			type = UP_DEVICE_KIND_LINE_POWER;
 		} else if (g_ascii_strcasecmp (device_type, "battery") == 0) {
-			type = UP_DEVICE_TYPE_BATTERY;
+			type = UP_DEVICE_KIND_BATTERY;
 		} else {
 			egg_warning ("did not recognise type %s, please report", device_type);
 		}
 	}
 
 	/* if reading the device type did not work, use the previous method */
-	if (type == UP_DEVICE_TYPE_UNKNOWN) {
+	if (type == UP_DEVICE_KIND_UNKNOWN) {
 		if (sysfs_file_exists (native_path, "online")) {
-			type = UP_DEVICE_TYPE_LINE_POWER;
+			type = UP_DEVICE_KIND_LINE_POWER;
 		} else {
 			/* this is a good guess as UPS and CSR are not in the kernel */
-			type = UP_DEVICE_TYPE_BATTERY;
+			type = UP_DEVICE_KIND_BATTERY;
 		}
 	}
 
@@ -807,7 +807,7 @@ up_device_supply_refresh (UpDevice *device)
 	gboolean ret;
 	GTimeVal timeval;
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
-	UpDeviceType type;
+	UpDeviceKind type;
 
 	if (supply->priv->poll_timer_id > 0) {
 		g_source_remove (supply->priv->poll_timer_id);
@@ -816,10 +816,10 @@ up_device_supply_refresh (UpDevice *device)
 
 	g_object_get (device, "type", &type, NULL);
 	switch (type) {
-	case UP_DEVICE_TYPE_LINE_POWER:
+	case UP_DEVICE_KIND_LINE_POWER:
 		ret = up_device_supply_refresh_line_power (supply);
 		break;
-	case UP_DEVICE_TYPE_BATTERY:
+	case UP_DEVICE_KIND_BATTERY:
 		ret = up_device_supply_refresh_battery (supply);
 
 		/* Seems that we don't get change uevents from the

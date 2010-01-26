@@ -363,7 +363,7 @@ up_device_wup_coldplug (UpDevice *device)
 	/* hardcode some values */
 	native_path = g_udev_device_get_sysfs_path (native);
 	g_object_set (device,
-		      "type", UP_DEVICE_TYPE_MONITOR,
+		      "type", UP_DEVICE_KIND_MONITOR,
 		      "is-rechargeable", FALSE,
 		      "power-supply", FALSE,
 		      "is-present", FALSE,

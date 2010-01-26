@@ -69,7 +69,7 @@ struct _UpDevicePrivate
 	gboolean		 is_rechargeable;
 	gboolean		 has_history;
 	gboolean		 has_statistics;
-	UpDeviceType		 type;
+	UpDeviceKind		 kind;
 	UpDeviceState		 state;
 	UpDeviceTechnology	 technology;
 	gdouble			 capacity;		/* percent */
@@ -100,7 +100,7 @@ enum {
 	PROP_IS_RECHARGEABLE,
 	PROP_HAS_HISTORY,
 	PROP_HAS_STATISTICS,
-	PROP_TYPE,
+	PROP_KIND,
 	PROP_STATE,
 	PROP_TECHNOLOGY,
 	PROP_CAPACITY,
@@ -174,7 +174,7 @@ up_device_collect_props_cb (const char *key, const GValue *value, UpDevice *devi
 	} else if (g_strcmp0 (key, "UpdateTime") == 0) {
 		device->priv->update_time = g_value_get_uint64 (value);
 	} else if (g_strcmp0 (key, "Type") == 0) {
-		device->priv->type = g_value_get_uint (value);
+		device->priv->kind = g_value_get_uint (value);
 	} else if (g_strcmp0 (key, "Online") == 0) {
 		device->priv->online = g_value_get_boolean (value);
 	} else if (g_strcmp0 (key, "HasHistory") == 0) {
@@ -408,39 +408,39 @@ up_device_to_text (UpDevice *device)
 	g_string_printf (string, "  updated:              %s (%d seconds ago)\n", time_buf, (int) (time (NULL) - device->priv->update_time));
 	g_string_printf (string, "  has history:          %s\n", up_device_bool_to_string (device->priv->has_history));
 	g_string_printf (string, "  has statistics:       %s\n", up_device_bool_to_string (device->priv->has_statistics));
-	g_string_printf (string, "  %s\n", up_device_type_to_string (device->priv->type));
+	g_string_printf (string, "  %s\n", up_device_kind_to_string (device->priv->kind));
 
-	if (device->priv->type == UP_DEVICE_TYPE_BATTERY ||
-	    device->priv->type == UP_DEVICE_TYPE_MOUSE ||
-	    device->priv->type == UP_DEVICE_TYPE_KEYBOARD ||
-	    device->priv->type == UP_DEVICE_TYPE_UPS)
+	if (device->priv->kind == UP_DEVICE_KIND_BATTERY ||
+	    device->priv->kind == UP_DEVICE_KIND_MOUSE ||
+	    device->priv->kind == UP_DEVICE_KIND_KEYBOARD ||
+	    device->priv->kind == UP_DEVICE_KIND_UPS)
 		g_string_printf (string, "    present:             %s\n", up_device_bool_to_string (device->priv->is_present));
-	if (device->priv->type == UP_DEVICE_TYPE_BATTERY ||
-	    device->priv->type == UP_DEVICE_TYPE_MOUSE ||
-	    device->priv->type == UP_DEVICE_TYPE_KEYBOARD)
+	if (device->priv->kind == UP_DEVICE_KIND_BATTERY ||
+	    device->priv->kind == UP_DEVICE_KIND_MOUSE ||
+	    device->priv->kind == UP_DEVICE_KIND_KEYBOARD)
 		g_string_printf (string, "    rechargeable:        %s\n", up_device_bool_to_string (device->priv->is_rechargeable));
-	if (device->priv->type == UP_DEVICE_TYPE_BATTERY ||
-	    device->priv->type == UP_DEVICE_TYPE_MOUSE ||
-	    device->priv->type == UP_DEVICE_TYPE_KEYBOARD ||
-	    device->priv->type == UP_DEVICE_TYPE_UPS)
+	if (device->priv->kind == UP_DEVICE_KIND_BATTERY ||
+	    device->priv->kind == UP_DEVICE_KIND_MOUSE ||
+	    device->priv->kind == UP_DEVICE_KIND_KEYBOARD ||
+	    device->priv->kind == UP_DEVICE_KIND_UPS)
 		g_string_printf (string, "    state:               %s\n", up_device_state_to_string (device->priv->state));
-	if (device->priv->type == UP_DEVICE_TYPE_BATTERY) {
+	if (device->priv->kind == UP_DEVICE_KIND_BATTERY) {
 		g_string_printf (string, "    energy:              %g Wh\n", device->priv->energy);
 		g_string_printf (string, "    energy-empty:        %g Wh\n", device->priv->energy_empty);
 		g_string_printf (string, "    energy-full:         %g Wh\n", device->priv->energy_full);
 		g_string_printf (string, "    energy-full-design:  %g Wh\n", device->priv->energy_full_design);
 	}
-	if (device->priv->type == UP_DEVICE_TYPE_BATTERY ||
-	    device->priv->type == UP_DEVICE_TYPE_MONITOR)
+	if (device->priv->kind == UP_DEVICE_KIND_BATTERY ||
+	    device->priv->kind == UP_DEVICE_KIND_MONITOR)
 		g_string_printf (string, "    energy-rate:         %g W\n", device->priv->energy_rate);
-	if (device->priv->type == UP_DEVICE_TYPE_UPS ||
-	    device->priv->type == UP_DEVICE_TYPE_BATTERY ||
-	    device->priv->type == UP_DEVICE_TYPE_MONITOR) {
+	if (device->priv->kind == UP_DEVICE_KIND_UPS ||
+	    device->priv->kind == UP_DEVICE_KIND_BATTERY ||
+	    device->priv->kind == UP_DEVICE_KIND_MONITOR) {
 		if (device->priv->voltage > 0)
 			g_string_printf (string, "    voltage:             %g V\n", device->priv->voltage);
 	}
-	if (device->priv->type == UP_DEVICE_TYPE_BATTERY ||
-	    device->priv->type == UP_DEVICE_TYPE_UPS) {
+	if (device->priv->kind == UP_DEVICE_KIND_BATTERY ||
+	    device->priv->kind == UP_DEVICE_KIND_UPS) {
 		if (device->priv->time_to_full > 0) {
 			time_str = up_device_to_text_time_to_string (device->priv->time_to_full);
 			g_string_printf (string, "    time to full:        %s\n", time_str);
@@ -452,22 +452,22 @@ up_device_to_text (UpDevice *device)
 			g_free (time_str);
 		}
 	}
-	if (device->priv->type == UP_DEVICE_TYPE_BATTERY ||
-	    device->priv->type == UP_DEVICE_TYPE_MOUSE ||
-	    device->priv->type == UP_DEVICE_TYPE_KEYBOARD ||
-	    device->priv->type == UP_DEVICE_TYPE_UPS)
+	if (device->priv->kind == UP_DEVICE_KIND_BATTERY ||
+	    device->priv->kind == UP_DEVICE_KIND_MOUSE ||
+	    device->priv->kind == UP_DEVICE_KIND_KEYBOARD ||
+	    device->priv->kind == UP_DEVICE_KIND_UPS)
 		g_string_printf (string, "    percentage:          %g%%\n", device->priv->percentage);
-	if (device->priv->type == UP_DEVICE_TYPE_BATTERY) {
+	if (device->priv->kind == UP_DEVICE_KIND_BATTERY) {
 		if (device->priv->capacity > 0)
 			g_string_printf (string, "    capacity:            %g%%\n", device->priv->capacity);
 	}
-	if (device->priv->type == UP_DEVICE_TYPE_BATTERY) {
+	if (device->priv->kind == UP_DEVICE_KIND_BATTERY) {
 		if (device->priv->technology != UP_DEVICE_TECHNOLOGY_UNKNOWN)
 			g_string_printf (string, "    technology:          %s\n", up_device_technology_to_string (device->priv->technology));
 	}
-	if (device->priv->type == UP_DEVICE_TYPE_LINE_POWER)
+	if (device->priv->kind == UP_DEVICE_KIND_LINE_POWER)
 		g_string_printf (string, "    online:             %s\n", up_device_bool_to_string (device->priv->online));
-	if (device->priv->type == UP_DEVICE_TYPE_BATTERY) {
+	if (device->priv->kind == UP_DEVICE_KIND_BATTERY) {
 		if (device->priv->recall_notice) {
 			g_string_printf (string, "    recall vendor:       %s\n", device->priv->recall_vendor);
 			g_string_printf (string, "    recall url:          %s\n", device->priv->recall_url);
@@ -536,8 +536,8 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 	case PROP_UPDATE_TIME:
 		device->priv->update_time = g_value_get_uint64 (value);
 		break;
-	case PROP_TYPE:
-		device->priv->type = g_value_get_uint (value);
+	case PROP_KIND:
+		device->priv->kind = g_value_get_uint (value);
 		break;
 	case PROP_POWER_SUPPLY:
 		device->priv->power_supply = g_value_get_boolean (value);
@@ -652,8 +652,8 @@ up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 	case PROP_HAS_STATISTICS:
 		g_value_set_boolean (value, device->priv->has_statistics);
 		break;
-	case PROP_TYPE:
-		g_value_set_uint (value, device->priv->type);
+	case PROP_KIND:
+		g_value_set_uint (value, device->priv->kind);
 		break;
 	case PROP_STATE:
 		g_value_set_uint (value, device->priv->state);
@@ -878,19 +878,19 @@ up_device_class_init (UpDeviceClass *klass)
 							       FALSE,
 							       G_PARAM_READWRITE));
 	/**
-	 * UpDevice:type:
+	 * UpDevice:kind:
 	 *
-	 * The device type, e.g. %UP_DEVICE_TYPE_KEYBOARD.
+	 * The device kind, e.g. %UP_DEVICE_KIND_KEYBOARD.
 	 *
 	 * Since: 0.9.0
 	 **/
 	g_object_class_install_property (object_class,
-					 PROP_TYPE,
-					 g_param_spec_uint ("type",
+					 PROP_KIND,
+					 g_param_spec_uint ("kind",
 							    NULL, NULL,
-							    UP_DEVICE_TYPE_UNKNOWN,
-							    UP_DEVICE_TYPE_LAST,
-							    UP_DEVICE_TYPE_UNKNOWN,
+							    UP_DEVICE_KIND_UNKNOWN,
+							    UP_DEVICE_KIND_LAST,
+							    UP_DEVICE_KIND_UNKNOWN,
 							    G_PARAM_READWRITE));
 	/**
 	 * UpDevice:state:
