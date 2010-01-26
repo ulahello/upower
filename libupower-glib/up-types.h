@@ -86,10 +86,10 @@ typedef enum {
  * The type of QOS request.
  **/
 typedef enum {
-	UP_QOS_TYPE_UNKNOWN,
-	UP_QOS_TYPE_NETWORK,
-	UP_QOS_TYPE_CPU_DMA,
-	UP_QOS_TYPE_LAST
+	UP_QOS_KIND_UNKNOWN,
+	UP_QOS_KIND_NETWORK,
+	UP_QOS_KIND_CPU_DMA,
+	UP_QOS_KIND_LAST
 } UpQosKind;
 
 const gchar	*up_device_kind_to_string		(UpDeviceKind		 type_enum);

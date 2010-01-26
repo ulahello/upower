@@ -19,6 +19,16 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:up-qos-item
+ * @short_description: Helper object representing one item of QOS data.
+ *
+ * This object represents one item of data which may be returned from the
+ * daemon in response to a query.
+ *
+ * See also: #UpDevice, #UpClient
+ */
+
 #include "config.h"
 
 #include <glib.h>
@@ -545,7 +555,7 @@ up_qos_item_class_init (UpQosItemClass *klass)
 	g_object_class_install_property (object_class,
 					 PROP_TYPE,
 					 g_param_spec_uint ("type", NULL, NULL,
-							    0, G_MAXUINT, UP_QOS_TYPE_UNKNOWN,
+							    0, G_MAXUINT, UP_QOS_KIND_UNKNOWN,
 							    G_PARAM_READWRITE));
 	/**
 	 * UpQosItem:value:
@@ -577,7 +587,7 @@ up_qos_item_init (UpQosItem *qos_item)
 	qos_item->priv->cookie = 0;
 	qos_item->priv->timespec = 0;
 	qos_item->priv->persistent = FALSE;
-	qos_item->priv->type = UP_QOS_TYPE_UNKNOWN;
+	qos_item->priv->type = UP_QOS_KIND_UNKNOWN;
 	qos_item->priv->value = 0;
 }
 

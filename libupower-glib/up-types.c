@@ -261,9 +261,9 @@ up_device_technology_from_string (const gchar *technology)
 const gchar *
 up_qos_kind_to_string (UpQosKind type)
 {
-	if (type == UP_QOS_TYPE_NETWORK)
+	if (type == UP_QOS_KIND_NETWORK)
 		return "network";
-	if (type == UP_QOS_TYPE_CPU_DMA)
+	if (type == UP_QOS_KIND_CPU_DMA)
 		return "cpu_dma";
 	return NULL;
 }
@@ -281,9 +281,9 @@ UpQosKind
 up_qos_kind_from_string (const gchar *type)
 {
 	if (g_strcmp0 (type, "network") == 0)
-		return UP_QOS_TYPE_NETWORK;
+		return UP_QOS_KIND_NETWORK;
 	if (g_strcmp0 (type, "cpu_dma") == 0)
-		return UP_QOS_TYPE_CPU_DMA;
-	return UP_QOS_TYPE_UNKNOWN;
+		return UP_QOS_KIND_CPU_DMA;
+	return UP_QOS_KIND_UNKNOWN;
 }
 

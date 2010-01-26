@@ -19,6 +19,16 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:up-wakeup-item
+ * @short_description: Helper object representing one item of wakeup data.
+ *
+ * This object represents one item of data which may be returned from the
+ * daemon in response to a query.
+ *
+ * See also: #UpDevice, #UpClient
+ */
+
 #include "config.h"
 
 #include <glib.h>
