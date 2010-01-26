@@ -250,16 +250,16 @@ up_device_technology_from_string (const gchar *technology)
 }
 
 /**
- * up_qos_type_to_string:
+ * up_qos_kind_to_string:
  *
- * Converts a #UpQosType to a string.
+ * Converts a #UpQosKind to a string.
  *
  * Return value: identifier string
  *
  * Since: 0.9.0
  **/
 const gchar *
-up_qos_type_to_string (UpQosType type)
+up_qos_kind_to_string (UpQosKind type)
 {
 	if (type == UP_QOS_TYPE_NETWORK)
 		return "network";
@@ -269,16 +269,16 @@ up_qos_type_to_string (UpQosType type)
 }
 
 /**
- * up_qos_type_from_string:
+ * up_qos_kind_from_string:
  *
- * Converts a string to a #UpQosType.
+ * Converts a string to a #UpQosKind.
  *
  * Return value: enumerated value
  *
  * Since: 0.9.0
  **/
-UpQosType
-up_qos_type_from_string (const gchar *type)
+UpQosKind
+up_qos_kind_from_string (const gchar *type)
 {
 	if (g_strcmp0 (type, "network") == 0)
 		return UP_QOS_TYPE_NETWORK;

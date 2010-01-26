@@ -41,8 +41,8 @@ typedef struct
 } DkpWakeupsObj;
 
 typedef DkpWakeupsObj UpWakeupsObj;
-#define up_wakeups_obj_free	dkp_wakeups_obj_free
-#define up_wakeups_obj_new	dkp_wakeups_obj_new
+#define up_wakeup_item_free	dkp_wakeups_obj_free
+#define up_wakeup_item_new	dkp_wakeups_obj_new
 
 DkpWakeupsObj	*dkp_wakeups_obj_new		(void);
 void		 dkp_wakeups_obj_free		(DkpWakeupsObj		*obj);

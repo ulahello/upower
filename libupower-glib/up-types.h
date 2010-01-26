@@ -81,7 +81,7 @@ typedef enum {
 } UpDeviceTechnology;
 
 /**
- * UpQosType:
+ * UpQosKind:
  *
  * The type of QOS request.
  **/
@@ -90,7 +90,7 @@ typedef enum {
 	UP_QOS_TYPE_NETWORK,
 	UP_QOS_TYPE_CPU_DMA,
 	UP_QOS_TYPE_LAST
-} UpQosType;
+} UpQosKind;
 
 const gchar	*up_device_kind_to_string		(UpDeviceKind		 type_enum);
 const gchar	*up_device_state_to_string		(UpDeviceState		 state_enum);
@@ -98,8 +98,8 @@ const gchar	*up_device_technology_to_string		(UpDeviceTechnology	 technology_enu
 UpDeviceKind	 up_device_kind_from_string		(const gchar		*type);
 UpDeviceState	 up_device_state_from_string		(const gchar		*state);
 UpDeviceTechnology up_device_technology_from_string	(const gchar		*technology);
-const gchar	*up_qos_type_to_string			(UpQosType		 type);
-UpQosType	 up_qos_type_from_string		(const gchar		*type);
+const gchar	*up_qos_kind_to_string			(UpQosKind		 type);
+UpQosKind	 up_qos_kind_from_string		(const gchar		*type);
 
 G_END_DECLS
 
