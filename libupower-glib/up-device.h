@@ -76,6 +76,14 @@ gboolean	 up_device_refresh_sync			(UpDevice		*device,
 gboolean	 up_device_set_object_path_sync		(UpDevice		*device,
 							 const gchar		*object_path,
 							 GError			**error);
+GPtrArray	*up_device_get_history_sync		(UpDevice		*device,
+							 const gchar		*type,
+							 guint			 timespec,
+							 guint			 resolution,
+							 GError			**error);
+GPtrArray	*up_device_get_statistics_sync		(UpDevice		*device,
+							 const gchar		*type,
+							 GError			**error);
 
 /* accessors */
 const gchar	*up_device_get_object_path		(UpDevice		*device);

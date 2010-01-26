@@ -38,6 +38,8 @@
 #include <string.h>
 
 #include "up-device.h"
+#include "up-stats-item.h"
+#include "up-history-item.h"
 
 static void	up_device_class_init	(UpDeviceClass	*klass);
 static void	up_device_init		(UpDevice	*device);
@@ -341,6 +343,33 @@ up_device_get_object_path (UpDevice *device)
 }
 
 /*
+ * up_device_to_text_history:
+ */
+static void
+up_device_to_text_history (UpDevice *device, GString *string, const gchar *type)
+{
+	guint i;
+	GPtrArray *array;
+	UpHistoryItem *item;
+
+	/* get a fair chunk of data */
+	array = up_device_get_history_sync (device, type, 120, 10, NULL);
+	if (array == NULL)
+		return;
+
+	/* pretty print */
+	g_string_printf (string, "  History (%s):\n", type);
+	for (i=0; i<array->len; i++) {
+		item = (UpHistoryItem *) g_ptr_array_index (array, i);
+		g_string_printf (string, "    %i\t%.3f\t%s\n",
+				 up_history_item_get_time (item),
+				 up_history_item_get_value (item),
+				 up_device_state_to_string (up_history_item_get_state (item)));
+	}
+	g_ptr_array_unref (array);
+}
+
+/**
  * up_device_bool_to_string:
  */
 static const gchar *
@@ -474,6 +503,12 @@ up_device_to_text (UpDevice *device)
 		}
 	}
 
+	/* if we can, get history */
+	if (device->priv->has_history) {
+		up_device_to_text_history (device, string, "charge");
+		up_device_to_text_history (device, string, "rate");
+	}
+
 	return g_string_free (string, FALSE);
 }
 
@@ -506,6 +541,161 @@ up_device_refresh_sync (UpDevice *device, GError **error)
 	}
 out:
 	return ret;
+}
+
+/**
+ * up_device_get_history_sync:
+ *
+ * Gets the device history.
+ *
+ * Return value: an array of #UpHistoryItem's, else #NULL and @error is used
+ *
+ * Since: 0.9.0
+ **/
+GPtrArray *
+up_device_get_history_sync (UpDevice *device, const gchar *type, guint timespec, guint resolution, GError **error)
+{
+	GError *error_local = NULL;
+	GType g_type_gvalue_array;
+	GPtrArray *gvalue_ptr_array = NULL;
+	GValueArray *gva;
+	GValue *gv;
+	guint i;
+	UpHistoryItem *item;
+	GPtrArray *array = NULL;
+	gboolean ret;
+
+	g_return_val_if_fail (UP_IS_DEVICE (device), NULL);
+	g_return_val_if_fail (device->priv->proxy_device != NULL, NULL);
+
+	g_type_gvalue_array = dbus_g_type_get_collection ("GPtrArray",
+					dbus_g_type_get_struct("GValueArray",
+						G_TYPE_UINT,
+						G_TYPE_DOUBLE,
+						G_TYPE_UINT,
+						G_TYPE_INVALID));
+
+	/* get compound data */
+	ret = dbus_g_proxy_call (device->priv->proxy_device, "GetHistory", &error_local,
+				 G_TYPE_STRING, type,
+				 G_TYPE_UINT, timespec,
+				 G_TYPE_UINT, resolution,
+				 G_TYPE_INVALID,
+				 g_type_gvalue_array, &gvalue_ptr_array,
+				 G_TYPE_INVALID);
+	if (!ret) {
+		g_set_error (error, 1, 0, "GetHistory(%s,%i) on %s failed: %s", type, timespec,
+			   device->priv->object_path, error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* no data */
+	if (gvalue_ptr_array->len == 0) {
+		g_set_error_literal (error, 1, 0, "no data");
+		goto out;
+	}
+
+	/* convert */
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+
+	for (i=0; i<gvalue_ptr_array->len; i++) {
+		gva = (GValueArray *) g_ptr_array_index (gvalue_ptr_array, i);
+		item = up_history_item_new ();
+		/* 0 */
+		gv = g_value_array_get_nth (gva, 0);
+		up_history_item_set_time (item, g_value_get_uint (gv));
+		g_value_unset (gv);
+		/* 1 */
+		gv = g_value_array_get_nth (gva, 1);
+		up_history_item_set_value (item, g_value_get_double (gv));
+		g_value_unset (gv);
+		/* 2 */
+		gv = g_value_array_get_nth (gva, 2);
+		up_history_item_set_state (item, g_value_get_uint (gv));
+		g_value_unset (gv);
+		g_ptr_array_add (array, item);
+		g_value_array_free (gva);
+	}
+
+out:
+	if (gvalue_ptr_array != NULL)
+		g_ptr_array_free (gvalue_ptr_array, TRUE);
+	return array;
+}
+
+/**
+ * up_device_get_statistics_sync:
+ *
+ * Gets the device current statistics.
+ *
+ * Return value: an array of #UpStatsItem's, else #NULL and @error is used
+ *
+ * Since: 0.9.0
+ **/
+GPtrArray *
+up_device_get_statistics_sync (UpDevice *device, const gchar *type, GError **error)
+{
+	GError *error_local = NULL;
+	GType g_type_gvalue_array;
+	GPtrArray *gvalue_ptr_array = NULL;
+	GValueArray *gva;
+	GValue *gv;
+	guint i;
+	UpStatsItem *item;
+	GPtrArray *array = NULL;
+	gboolean ret;
+
+	g_return_val_if_fail (UP_IS_DEVICE (device), NULL);
+	g_return_val_if_fail (device->priv->proxy_device != NULL, NULL);
+
+	g_type_gvalue_array = dbus_g_type_get_collection ("GPtrArray",
+					dbus_g_type_get_struct("GValueArray",
+						G_TYPE_DOUBLE,
+						G_TYPE_DOUBLE,
+						G_TYPE_INVALID));
+
+	/* get compound data */
+	ret = dbus_g_proxy_call (device->priv->proxy_device, "GetStatistics", &error_local,
+				 G_TYPE_STRING, type,
+				 G_TYPE_INVALID,
+				 g_type_gvalue_array, &gvalue_ptr_array,
+				 G_TYPE_INVALID);
+	if (!ret) {
+		g_set_error (error, 1, 0, "GetStatistics(%s) on %s failed: %s", type,
+				      device->priv->object_path, error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* no data */
+	if (gvalue_ptr_array->len == 0) {
+		g_set_error_literal (error, 1, 0, "no data");
+		goto out;
+	}
+
+	/* convert */
+	array = g_ptr_array_new ();
+
+	for (i=0; i<gvalue_ptr_array->len; i++) {
+		gva = (GValueArray *) g_ptr_array_index (gvalue_ptr_array, i);
+		item = up_stats_item_new ();
+		/* 0 */
+		gv = g_value_array_get_nth (gva, 0);
+		up_stats_item_set_value (item, g_value_get_double (gv));
+		g_value_unset (gv);
+		/* 1 */
+		gv = g_value_array_get_nth (gva, 1);
+		up_stats_item_set_accuracy (item, g_value_get_double (gv));
+		g_value_unset (gv);
+		/* 2 */
+		g_ptr_array_add (array, item);
+		g_value_array_free (gva);
+	}
+out:
+	if (gvalue_ptr_array != NULL)
+		g_ptr_array_free (gvalue_ptr_array, TRUE);
+	return array;
 }
 
 /*
