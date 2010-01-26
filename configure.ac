@@ -6,11 +6,11 @@ m4_define([up_micro_version], [0])
 m4_define([up_version],
           [up_major_version.up_minor_version.up_micro_version])
 
-AC_PREREQ(2.62)
-AC_INIT(UPower, [up_version], [richard@hughsie.com], [UPower])
+AC_PREREQ(2.65)
+AC_INIT([UPower],[up_version],[richard@hughsie.com],[UPower])
 AC_CONFIG_SRCDIR(src)
 AM_INIT_AUTOMAKE([1.9 tar-ustar dist-bzip2])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
 GOBJECT_INTROSPECTION_CHECK([0.6.7])
@@ -42,11 +42,11 @@ AC_SUBST(LT_CURRENT)
 AC_SUBST(LT_REVISION)
 AC_SUBST(LT_AGE)
 
-AC_ISC_POSIX
+AC_SEARCH_LIBS([strerror],[cposix])
 AC_PROG_CC
-AM_PROG_CC_STDC
+
 AC_HEADER_STDC
-AM_PROG_LIBTOOL
+LT_INIT
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
 AC_SYS_LARGEFILE
@@ -98,8 +98,7 @@ else
 	default_strict=no
 fi
 
-AC_ARG_ENABLE(strict, AC_HELP_STRING([--enable-strict],
-		[Enable strict compilation options]), enable_strict=$enableval,
+AC_ARG_ENABLE(strict, AS_HELP_STRING([--enable-strict],[Enable strict compilation options]), enable_strict=$enableval,
 		enable_strict=$default_strict)
 if test x$enable_strict != xno; then
 	if test "$GCC" = "yes"; then
@@ -217,7 +216,7 @@ AC_SUBST([GETTEXT_PACKAGE])
 AM_GLIB_GNU_GETTEXT
 AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
 Makefile
 devkit-power-gobject.pc
 upower-glib.pc
@@ -238,6 +237,7 @@ libupower-glib/Makefile
 libupower-glib/up-version.h
 po/Makefile.in
 ])
+AC_OUTPUT
 
 dnl ==========================================================================
 echo "
