@@ -113,6 +113,7 @@ up_client_get_device (UpClient *client, const gchar *object_path)
 
 /**
  * up_client_get_devices:
+ * @client: a #UpClient instance.
  *
  * Get a copy of the device objects.
  *

@@ -260,6 +260,9 @@ up_device_changed_cb (DBusGProxy *proxy, UpDevice *device)
 
 /**
  * up_device_set_object_path_sync:
+ * @device: a #UpDevice instance.
+ * @object_path: The UPower object path.
+ * @error: a #GError, or %NULL.
  *
  * Sets the object path of the object and fills up initial properties.
  *
@@ -328,6 +331,7 @@ out:
 
 /**
  * up_device_get_object_path:
+ * @device: a #UpDevice instance.
  *
  * Gets the object path for the device.
  *
@@ -369,7 +373,7 @@ up_device_to_text_history (UpDevice *device, GString *string, const gchar *type)
 	g_ptr_array_unref (array);
 }
 
-/**
+/*
  * up_device_bool_to_string:
  */
 static const gchar *
@@ -402,6 +406,7 @@ up_device_to_text_time_to_string (gint seconds)
 
 /**
  * up_device_to_text:
+ * @device: a #UpDevice instance.
  *
  * Converts the device to a string description.
  *
@@ -514,6 +519,8 @@ up_device_to_text (UpDevice *device)
 
 /**
  * up_device_refresh_sync:
+ * @device: a #UpDevice instance.
+ * @error: a #GError, or %NULL.
  *
  * Refreshes properties on the device.
  * This function is normally not required.
@@ -545,6 +552,11 @@ out:
 
 /**
  * up_device_get_history_sync:
+ * @device: a #UpDevice instance.
+ * @type: The type of history, known values are "rate" and "charge".
+ * @timespec: the amount of time to look back into time.
+ * @resolution: the resolution of data.
+ * @error: a #GError, or %NULL.
  *
  * Gets the device history.
  *
@@ -626,6 +638,9 @@ out:
 
 /**
  * up_device_get_statistics_sync:
+ * @device: a #UpDevice instance.
+ * @type: the type of statistics.
+ * @error: a #GError, or %NULL.
  *
  * Gets the device current statistics.
  *
