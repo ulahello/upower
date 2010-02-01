@@ -1,3 +1,35 @@
+Version 0.9.0
+~~~~~~~~~~~
+Released: 2010-02-01
+
+NOTES:
+ - The DBus service and interfaces have been renamed
+ - The devkit-power-gobject library is still API and ABI stable
+ - The libupower library co-installs with devkit-power-gobject for now
+ - The version has changed to 0.9.0 from 015. You'll need to use an epoch in
+   your distro package if you're not renaming the package from DeviceKit-power
+   to UPower. See the sample Fedora spec if you need a template.
+
+Translations:
+ - Add Swedish translation (Daniel Nylander)
+ - Added Italian translation (Luca Ferretti)
+ - Add Polish translation (Piotr Drąg)
+
+New Features:
+ - Add initial GObject introspection support (Richard Hughes)
+
+Bugfixes:
+ - Use a fallback for the capability bit when checking the lid status. Fixes #25041 (Richard Hughes)
+ - Rename the DBus service from org.freedesktop.DeviceKit.Power to org.freedesktop.UPower (Richard Hughes)
+ - Rename the PolicyKit rules from org.freedesktop.devicekit.power to org.freedesktop.upower (Richard Hughes)
+ - Make the client tool be called upower, but maintain a symlink to devkit-power (Richard Hughes)
+ - Rename the man pages and rename the main daemon binary name (Richard Hughes)
+ - Change the version number to 0.9.0 and tarball name to UPower (Richard Hughes)
+ - Version-lock the devkit-power-gobject version to 015, not 0.9.0 (Richard Hughes)
+ - Make DkpClient a singleton to avoid some weird race conditions (Richard Hughes)
+ - Add libupower so applications can switch away from devkit-power-gobject (Richard Hughes)
+ - Update the Free Software Foundation address (Richard Hughes)
+
 Version 014
 ~~~~~~~~~~~
 Released: 2010-01-08

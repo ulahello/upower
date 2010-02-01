@@ -1,20 +1,22 @@
-DeviceKit-power Release Notes
+UPower Release Notes
 
-1. Write NEWS entries for DeviceKit-power in the same format as usual.
+1. Write NEWS entries for UPower in the same format as usual.
 
-git shortlog DeviceKit-power-014.. | grep -i -v trivial | grep -v Merge > NEWS.new
+git shortlog UPOWER_0_9_999.. | grep -i -v trivial | grep -v Merge > NEWS.new
 
-Version 0xx
+Version 0.9.xxxx
 ~~~~~~~~~~~
 Released: 2010-xx-xx
 
+Translations:
 New Features:
 Bugfixes:
 
-2. Commit changes in DeviceKit-power git:
+2. Commit changes to git:
 
-git commit -a -m "Released DeviceKit-power 015"
-git tag -a -f -m "Released DeviceKit-power 015" DeviceKit-power-015
+git commit -a -m "Released UPower 0.9.0"
+git tag -s -f -m "Released UPower 0.9.0" UPOWER_0_9_0
+<wait>
 git push --tags
 git push
 
