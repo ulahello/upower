@@ -40,10 +40,10 @@ static GMainLoop *loop;
 static gboolean opt_monitor_detail = FALSE;
 
 /**
- * dkp_tool_get_timestamp:
+ * up_tool_get_timestamp:
  **/
 static gchar *
-dkp_tool_get_timestamp (void)
+up_tool_get_timestamp (void)
 {
 	gchar *str_time;
 	gchar *timestamp;
@@ -62,57 +62,61 @@ dkp_tool_get_timestamp (void)
 }
 
 /**
- * dkp_tool_device_added_cb:
+ * up_tool_device_added_cb:
  **/
 static void
-dkp_tool_device_added_cb (DkpClient *client, const DkpDevice *device, gpointer user_data)
+up_tool_device_added_cb (UpClient *client, UpDevice *device, gpointer user_data)
 {
 	gchar *timestamp;
-	timestamp = dkp_tool_get_timestamp ();
-	g_print ("[%s]\tdevice added:     %s\n", timestamp, dkp_device_get_object_path (device));
+	gchar *text = NULL;
+	timestamp = up_tool_get_timestamp ();
+	g_print ("[%s]\tdevice added:     %s\n", timestamp, up_device_get_object_path (device));
 	if (opt_monitor_detail) {
-		dkp_device_print (device);
-		g_print ("\n");
+		text = up_device_to_text (device);
+		g_print ("%s\n", text);
 	}
 	g_free (timestamp);
+	g_free (text);
 }
 
 /**
- * dkp_tool_device_changed_cb:
+ * up_tool_device_changed_cb:
  **/
 static void
-dkp_tool_device_changed_cb (DkpClient *client, const DkpDevice *device, gpointer user_data)
+up_tool_device_changed_cb (UpClient *client, UpDevice *device, gpointer user_data)
 {
 	gchar *timestamp;
-	timestamp = dkp_tool_get_timestamp ();
-	g_print ("[%s]\tdevice changed:     %s\n", timestamp, dkp_device_get_object_path (device));
+	gchar *text = NULL;
+	timestamp = up_tool_get_timestamp ();
+	g_print ("[%s]\tdevice changed:     %s\n", timestamp, up_device_get_object_path (device));
 	if (opt_monitor_detail) {
 		/* TODO: would be nice to just show the diff */
-		dkp_device_print (device);
-		g_print ("\n");
+		text = up_device_to_text (device);
+		g_print ("%s\n", text);
 	}
 	g_free (timestamp);
+	g_free (text);
 }
 
 /**
- * dkp_tool_device_removed_cb:
+ * up_tool_device_removed_cb:
  **/
 static void
-dkp_tool_device_removed_cb (DkpClient *client, const DkpDevice *device, gpointer user_data)
+up_tool_device_removed_cb (UpClient *client, UpDevice *device, gpointer user_data)
 {
 	gchar *timestamp;
-	timestamp = dkp_tool_get_timestamp ();
-	g_print ("[%s]\tdevice removed:   %s\n", timestamp, dkp_device_get_object_path (device));
+	timestamp = up_tool_get_timestamp ();
+	g_print ("[%s]\tdevice removed:   %s\n", timestamp, up_device_get_object_path (device));
 	if (opt_monitor_detail)
 		g_print ("\n");
 	g_free (timestamp);
 }
 
 /**
- * dkp_client_print:
+ * up_client_print:
  **/
 static void
-dkp_client_print (DkpClient *client)
+up_client_print (UpClient *client)
 {
 	gchar *daemon_version;
 	gboolean can_suspend;
@@ -144,33 +148,33 @@ dkp_client_print (DkpClient *client)
 }
 
 /**
- * dkp_tool_changed_cb:
+ * up_tool_changed_cb:
  **/
 static void
-dkp_tool_changed_cb (DkpClient *client, gpointer user_data)
+up_tool_changed_cb (UpClient *client, gpointer user_data)
 {
 	gchar *timestamp;
-	timestamp = dkp_tool_get_timestamp ();
+	timestamp = up_tool_get_timestamp ();
 	g_print ("[%s]\tdaemon changed:\n", timestamp);
 	if (opt_monitor_detail) {
-		dkp_client_print (client);
+		up_client_print (client);
 		g_print ("\n");
 	}
 	g_free (timestamp);
 }
 
 /**
- * dkp_tool_do_monitor:
+ * up_tool_do_monitor:
  **/
 static gboolean
-dkp_tool_do_monitor (DkpClient *client)
+up_tool_do_monitor (UpClient *client)
 {
 	g_print ("Monitoring activity from the power daemon. Press Ctrl+C to cancel.\n");
 
-	g_signal_connect (client, "device-added", G_CALLBACK (dkp_tool_device_added_cb), NULL);
-	g_signal_connect (client, "device-removed", G_CALLBACK (dkp_tool_device_removed_cb), NULL);
-	g_signal_connect (client, "device-changed", G_CALLBACK (dkp_tool_device_changed_cb), NULL);
-	g_signal_connect (client, "changed", G_CALLBACK (dkp_tool_changed_cb), NULL);
+	g_signal_connect (client, "device-added", G_CALLBACK (up_tool_device_added_cb), NULL);
+	g_signal_connect (client, "device-removed", G_CALLBACK (up_tool_device_removed_cb), NULL);
+	g_signal_connect (client, "device-changed", G_CALLBACK (up_tool_device_changed_cb), NULL);
+	g_signal_connect (client, "changed", G_CALLBACK (up_tool_changed_cb), NULL);
 
 	g_main_loop_run (loop);
 
@@ -178,43 +182,56 @@ dkp_tool_do_monitor (DkpClient *client)
 }
 
 /**
- * dkp_tool_show_wakeups:
+ * up_tool_print_wakeup_item:
+ **/
+static void
+up_tool_print_wakeup_item (UpWakeupItem *item)
+{
+	g_print ("userspace:%i id:%i, interrupts:%.1f, cmdline:%s, details:%s\n",
+		 up_wakeup_item_get_is_userspace (item),
+		 up_wakeup_item_get_id (item),
+		 up_wakeup_item_get_value (item),
+		 up_wakeup_item_get_cmdline (item),
+		 up_wakeup_item_get_details (item));
+}
+
+/**
+ * up_tool_show_wakeups:
  **/
 static gboolean
-dkp_tool_show_wakeups (void)
+up_tool_show_wakeups (void)
 {
 	guint i;
 	gboolean ret;
-	DkpWakeups *wakeups;
-	DkpWakeupsObj *obj;
+	UpWakeups *wakeups;
+	UpWakeupItem *item;
 	guint total;
 	GPtrArray *array;
 
 	/* create new object */
-	wakeups = dkp_wakeups_new ();
+	wakeups = up_wakeups_new ();
 
 	/* do we have support? */
-	ret = dkp_wakeups_has_capability (wakeups);
+	ret = up_wakeups_has_capability_sync (wakeups);
 	if (!ret) {
 		g_print ("No wakeup capability\n");
 		goto out;
 	}
 
 	/* get total */
-	total = dkp_wakeups_get_total (wakeups, NULL);
+	total = up_wakeups_get_total_sync (wakeups, NULL);
 	g_print ("Total wakeups per minute: %i\n", total);
 
 	/* get data */
-	array = dkp_wakeups_get_data (wakeups, NULL);
+	array = up_wakeups_get_data_sync (wakeups, NULL);
 	if (array == NULL)
 		goto out;
 	g_print ("Wakeup sources:\n");
 	for (i=0; i<array->len; i++) {
-		obj = g_ptr_array_index (array, i);
-		dkp_wakeups_obj_print (obj);
+		item = g_ptr_array_index (array, i);
+		up_tool_print_wakeup_item (item);
 	}
-	g_ptr_array_foreach (array, (GFunc) dkp_wakeups_obj_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 out:
 	g_object_unref (wakeups);
 	return ret;
@@ -237,9 +254,10 @@ main (int argc, char **argv)
 	gboolean opt_version = FALSE;
 	gboolean ret;
 	GError *error = NULL;
+	gchar *text = NULL;
 
-	DkpClient *client;
-	DkpDevice *device;
+	UpClient *client;
+	UpDevice *device;
 
 	const GOptionEntry entries[] = {
 		{ "enumerate", 'e', 0, G_OPTION_ARG_NONE, &opt_enumerate, _("Enumerate objects paths for devices"), NULL },
@@ -261,7 +279,7 @@ main (int argc, char **argv)
 	g_option_context_free (context);
 
 	loop = g_main_loop_new (NULL, FALSE);
-	client = dkp_client_new ();
+	client = up_client_new ();
 
 	if (opt_version) {
 		gchar *daemon_version;
@@ -278,53 +296,56 @@ main (int argc, char **argv)
 
 	/* wakeups */
 	if (opt_wakeups) {
-		dkp_tool_show_wakeups ();
+		up_tool_show_wakeups ();
 		retval = EXIT_SUCCESS;
 		goto out;
 	}
 
 	if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
-		devices = dkp_client_enumerate_devices (client, &error);
-		if (devices == NULL) {
+		ret = up_client_enumerate_devices_sync (client, &error);
+		if (!ret) {
 			egg_warning ("failed to enumerate: %s", error->message);
 			goto out;
 		}
+		devices = up_client_get_devices (client);
 		for (i=0; i < devices->len; i++) {
-			device = (DkpDevice*) g_ptr_array_index (devices, i);
+			device = (UpDevice*) g_ptr_array_index (devices, i);
 			if (opt_enumerate) {
-				g_print ("%s\n", dkp_device_get_object_path (device));
+				g_print ("%s\n", up_device_get_object_path (device));
 			} else {
-				g_print ("Device: %s\n", dkp_device_get_object_path (device));
-				dkp_device_print (device);
-				g_print ("\n");
+				g_print ("Device: %s\n", up_device_get_object_path (device));
+				text = up_device_to_text (device);
+				g_print ("%s\n", text);
+				g_free (text);
 			}
 		}
-		g_ptr_array_foreach (devices, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (devices, TRUE);
+		g_ptr_array_unref (devices);
 		if (opt_dump) {
 			g_print ("Daemon:\n");
-			dkp_client_print (client);
+			up_client_print (client);
 		}
 		retval = EXIT_SUCCESS;
 		goto out;
 	}
 
 	if (opt_monitor || opt_monitor_detail) {
-		if (!dkp_tool_do_monitor (client))
+		if (!up_tool_do_monitor (client))
 			goto out;
 		retval = EXIT_SUCCESS;
 		goto out;
 	}
 
 	if (opt_show_info != NULL) {
-		device = dkp_device_new ();
-		ret = dkp_device_set_object_path (device, opt_show_info, &error);
+		device = up_device_new ();
+		ret = up_device_set_object_path_sync (device, opt_show_info, &error);
 		if (!ret) {
 			g_print ("failed to set path: %s\n", error->message);
 			g_error_free (error);
 		} else {
-			dkp_device_print (device);
+			text = up_device_to_text (device);
+			g_print ("%s\n", text);
+			g_free (text);
 		}
 		g_object_unref (device);
 		retval = EXIT_SUCCESS;
