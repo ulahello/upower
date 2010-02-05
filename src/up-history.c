@@ -382,7 +382,7 @@ up_history_get_filename (UpHistory *history, const gchar *type)
 	gchar *filename;
 
 	filename = g_strdup_printf ("history-%s-%s.dat", type, history->priv->id);
-	path = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "DeviceKit-power", filename, NULL);
+	path = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", filename, NULL);
 	g_free (filename);
 	return path;
 }

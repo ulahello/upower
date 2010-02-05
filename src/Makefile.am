@@ -175,7 +175,7 @@ $(dbusconf_DATA): $(dbusconf_in_files) Makefile
 
 install-data-hook:
 	if test -w $(DESTDIR)$(prefix)/; then \
-		mkdir -p $(DESTDIR)$(localstatedir)/lib/DeviceKit-power; \
+		mkdir -p $(DESTDIR)$(localstatedir)/lib/upower; \
 	fi
 
 install-exec-hook:
