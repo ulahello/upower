@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/time.h>
 #include <glib.h>
 #include <glib/gi18n-lib.h>
 
