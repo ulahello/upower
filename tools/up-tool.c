@@ -273,7 +273,7 @@ main (int argc, char **argv)
 
 	g_type_init ();
 
-	context = g_option_context_new ("DeviceKit-power tool");
+	context = g_option_context_new ("UPower tool");
 	g_option_context_add_main_entries (context, entries, NULL);
 	g_option_context_add_group (context, egg_debug_get_option_group ());
 	g_option_context_parse (context, &argc, &argv, NULL);
@@ -287,8 +287,8 @@ main (int argc, char **argv)
 		g_object_get (client,
 			      "daemon-version", &daemon_version,
 			      NULL);
-		g_print ("DeviceKit-power client version %s\n"
-			 "DeviceKit-power daemon version %s\n",
+		g_print ("UPower client version %s\n"
+			 "UPower daemon version %s\n",
 			 PACKAGE_VERSION, daemon_version);
 		g_free (daemon_version);
 		retval = 0;
