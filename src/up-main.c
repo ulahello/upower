@@ -146,7 +146,7 @@ main (gint argc, gchar **argv)
 
 	g_type_init ();
 
-	context = g_option_context_new ("DeviceKit Power Daemon");
+	context = g_option_context_new ("upower daemon");
 	g_option_context_add_main_entries (context, options, NULL);
 	g_option_context_add_group (context, egg_debug_get_option_group ());
 	g_option_context_parse (context, &argc, &argv, NULL);
