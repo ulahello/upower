@@ -2,10 +2,6 @@
 
 INCLUDES = \
 	-DUP_COMPILATION					\
-	-DEGG_LOG_FILE=\""$(UP_LOG_DIR)/DeviceKit-power"\"	\
-	-DEGG_VERBOSE="\"DKP_VERBOSE\""				\
-	-DEGG_LOGGING="\"DKP_LOGGING\""				\
-	-DEGG_CONSOLE="\"DKP_CONSOLE\""				\
 	-I$(top_srcdir)						\
 	-I$(top_srcdir)/devkit-power-gobject			\
 	$(DBUS_GLIB_CFLAGS)					\
