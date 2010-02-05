@@ -156,6 +156,7 @@ up_client_get_devices_private (UpClient *client, GError **error)
 /**
  * up_client_suspend_sync:
  * @client: a #UpClient instance.
+ * @cancellable: a #GCancellable or %NULL
  * @error: a #GError, or %NULL.
  *
  * Puts the computer into a low power state, but state is not preserved if the
@@ -168,7 +169,7 @@ up_client_get_devices_private (UpClient *client, GError **error)
  * Since: 0.9.0
  **/
 gboolean
-up_client_suspend_sync (UpClient *client, GError **error)
+up_client_suspend_sync (UpClient *client, GCancellable *cancellable, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -199,6 +200,7 @@ out:
 /**
  * up_client_hibernate_sync:
  * @client: a #UpClient instance.
+ * @cancellable: a #GCancellable or %NULL
  * @error: a #GError.
  *
  * Puts the computer into a low power state, where state is preserved if the
@@ -209,7 +211,7 @@ out:
  * Since: 0.9.0
  **/
 gboolean
-up_client_hibernate_sync (UpClient *client, GError **error)
+up_client_hibernate_sync (UpClient *client, GCancellable *cancellable, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -240,6 +242,7 @@ out:
 /**
  * up_client_get_properties_sync:
  * @client: a #UpClient instance.
+ * @cancellable: a #GCancellable or %NULL
  * @error: a #GError, or %NULL.
  *
  * Get all the properties from UPower daemon.
@@ -249,7 +252,7 @@ out:
  * Since: 0.9.0
  **/
 gboolean
-up_client_get_properties_sync (UpClient *client, GError **error)
+up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GError **error)
 {
 	gboolean ret = TRUE;
 	GHashTable *props;
@@ -367,7 +370,7 @@ const gchar *
 up_client_get_daemon_version (UpClient *client)
 {
 	g_return_val_if_fail (UP_IS_CLIENT (client), NULL);
-	up_client_get_properties_sync (client, NULL);
+	up_client_get_properties_sync (client, NULL, NULL);
 	return client->priv->daemon_version;
 }
 
@@ -385,7 +388,7 @@ gboolean
 up_client_get_can_hibernate (UpClient *client)
 {
 	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
-	up_client_get_properties_sync (client, NULL);
+	up_client_get_properties_sync (client, NULL, NULL);
 	return client->priv->can_hibernate;
 }
 
@@ -401,7 +404,7 @@ gboolean
 up_client_get_lid_is_closed (UpClient *client)
 {
 	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
-	up_client_get_properties_sync (client, NULL);
+	up_client_get_properties_sync (client, NULL, NULL);
 	return client->priv->lid_is_closed;
 }
 
@@ -419,7 +422,7 @@ gboolean
 up_client_get_can_suspend (UpClient *client)
 {
 	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
-	up_client_get_properties_sync (client, NULL);
+	up_client_get_properties_sync (client, NULL, NULL);
 	return client->priv->can_suspend;
 }
 
@@ -437,7 +440,7 @@ gboolean
 up_client_get_on_battery (UpClient *client)
 {
 	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
-	up_client_get_properties_sync (client, NULL);
+	up_client_get_properties_sync (client, NULL, NULL);
 	return client->priv->on_battery;
 }
 
@@ -455,7 +458,7 @@ gboolean
 up_client_get_on_low_battery (UpClient *client)
 {
 	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
-	up_client_get_properties_sync (client, NULL);
+	up_client_get_properties_sync (client, NULL, NULL);
 	return client->priv->on_low_battery;
 }
 
@@ -470,7 +473,7 @@ up_client_add (UpClient *client, const gchar *object_path)
 
 	/* create new device */
 	device = up_device_new ();
-	ret = up_device_set_object_path_sync (device, object_path, NULL);
+	ret = up_device_set_object_path_sync (device, object_path, NULL, NULL);
 	if (!ret)
 		goto out;
 
@@ -535,7 +538,7 @@ up_client_get_property (GObject *object,
 	UpClient *client;
 	client = UP_CLIENT (object);
 
-	up_client_get_properties_sync (client, NULL);
+	up_client_get_properties_sync (client, NULL, NULL);
 
 	switch (prop_id) {
 	case PROP_DAEMON_VERSION:
@@ -754,7 +757,7 @@ up_client_class_init (UpClientClass *klass)
  * Since: 0.9.0
  **/
 gboolean
-up_client_enumerate_devices_sync (UpClient *client, GError **error)
+up_client_enumerate_devices_sync (UpClient *client, GCancellable *cancellable, GError **error)
 {
 	const gchar *object_path;
 	GPtrArray *devices;

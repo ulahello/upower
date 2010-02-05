@@ -27,7 +27,9 @@
 #define __UP_DEVICE_H
 
 #include <glib-object.h>
-#include <up-types.h>
+#include <gio/gio.h>
+
+#include <libupower-glib/up-types.h>
 
 G_BEGIN_DECLS
 
@@ -72,17 +74,21 @@ gchar		*up_device_to_text			(UpDevice		*device);
 
 /* sync versions */
 gboolean	 up_device_refresh_sync			(UpDevice		*device,
+							 GCancellable		*cancellable,
 							 GError			**error);
 gboolean	 up_device_set_object_path_sync		(UpDevice		*device,
 							 const gchar		*object_path,
+							 GCancellable		*cancellable,
 							 GError			**error);
 GPtrArray	*up_device_get_history_sync		(UpDevice		*device,
 							 const gchar		*type,
 							 guint			 timespec,
 							 guint			 resolution,
+							 GCancellable		*cancellable,
 							 GError			**error);
 GPtrArray	*up_device_get_statistics_sync		(UpDevice		*device,
 							 const gchar		*type,
+							 GCancellable		*cancellable,
 							 GError			**error);
 
 /* accessors */

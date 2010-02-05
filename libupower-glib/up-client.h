@@ -27,6 +27,8 @@
 #define __UP_CLIENT_H
 
 #include <glib-object.h>
+#include <gio/gio.h>
+
 #include <libupower-glib/up-device.h>
 
 G_BEGIN_DECLS
@@ -76,12 +78,16 @@ UpClient	*up_client_new				(void);
 
 /* sync versions */
 gboolean	 up_client_get_properties_sync		(UpClient		*client,
+							 GCancellable		*cancellable,
 							 GError			**error);
 gboolean	 up_client_enumerate_devices_sync	(UpClient		*client,
+							 GCancellable		*cancellable,
 							 GError			**error);
 gboolean	 up_client_suspend_sync			(UpClient		*client,
+							 GCancellable		*cancellable,
 							 GError			**error);
 gboolean	 up_client_hibernate_sync		(UpClient		*client,
+							 GCancellable		*cancellable,
 							 GError			**error);
 
 /* accessors */

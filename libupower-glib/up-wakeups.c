@@ -56,6 +56,8 @@ G_DEFINE_TYPE (UpWakeups, up_wakeups, G_TYPE_OBJECT)
 /**
  * up_wakeups_get_total_sync:
  * @wakeups: a #UpWakeups instance.
+ * @cancellable: a #GCancellable or %NULL
+ * @error: a #GError, or %NULL.
  *
  * Gets the the total number of wakeups per second from the daemon.
  *
@@ -64,7 +66,7 @@ G_DEFINE_TYPE (UpWakeups, up_wakeups, G_TYPE_OBJECT)
  * Since: 0.9.1
  **/
 guint
-up_wakeups_get_total_sync (UpWakeups *wakeups, GError **error)
+up_wakeups_get_total_sync (UpWakeups *wakeups, GCancellable *cancellable, GError **error)
 {
 	guint total = 0;
 	gboolean ret;
@@ -88,6 +90,8 @@ up_wakeups_get_total_sync (UpWakeups *wakeups, GError **error)
 /**
  * up_wakeups_get_data_sync:
  * @wakeups: a #UpWakeups instance.
+ * @cancellable: a #GCancellable or %NULL
+ * @error: a #GError, or %NULL.
  *
  * Gets the wakeups data from the daemon.
  *
@@ -96,7 +100,7 @@ up_wakeups_get_total_sync (UpWakeups *wakeups, GError **error)
  * Since: 0.9.1
  **/
 GPtrArray *
-up_wakeups_get_data_sync (UpWakeups *wakeups, GError **error)
+up_wakeups_get_data_sync (UpWakeups *wakeups, GCancellable *cancellable, GError **error)
 {
 	GError *error_local = NULL;
 	GType g_type_gvalue_array;
@@ -221,7 +225,27 @@ out:
 }
 
 /**
- * up_wakeups_has_capability_sync:
+ * up_wakeups_get_properties_sync:
+ * @wakeups: a #UpWakeups instance.
+ * @cancellable: a #GCancellable or %NULL
+ * @error: a #GError, or %NULL.
+ *
+ * Gets properties from the daemon about wakeup data.
+ *
+ * Return value: %TRUE if supported
+ *
+ * Since: 0.9.1
+ **/
+gboolean
+up_wakeups_get_properties_sync (UpWakeups *wakeups, GCancellable *cancellable, GError **error)
+{
+	g_return_val_if_fail (UP_IS_WAKEUPS (wakeups), FALSE);
+	up_wakeups_ensure_properties (wakeups);
+	return TRUE;
+}
+
+/**
+ * up_wakeups_get_has_capability:
  * @wakeups: a #UpWakeups instance.
  *
  * Returns if the daemon supports getting the wakeup data.
@@ -231,7 +255,7 @@ out:
  * Since: 0.9.1
  **/
 gboolean
-up_wakeups_has_capability_sync (UpWakeups *wakeups)
+up_wakeups_get_has_capability (UpWakeups *wakeups)
 {
 	g_return_val_if_fail (UP_IS_WAKEUPS (wakeups), FALSE);
 	up_wakeups_ensure_properties (wakeups);

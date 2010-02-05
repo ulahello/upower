@@ -212,18 +212,18 @@ up_tool_show_wakeups (void)
 	wakeups = up_wakeups_new ();
 
 	/* do we have support? */
-	ret = up_wakeups_has_capability_sync (wakeups);
+	ret = up_wakeups_get_has_capability (wakeups);
 	if (!ret) {
 		g_print ("No wakeup capability\n");
 		goto out;
 	}
 
 	/* get total */
-	total = up_wakeups_get_total_sync (wakeups, NULL);
+	total = up_wakeups_get_total_sync (wakeups, NULL, NULL);
 	g_print ("Total wakeups per minute: %i\n", total);
 
 	/* get data */
-	array = up_wakeups_get_data_sync (wakeups, NULL);
+	array = up_wakeups_get_data_sync (wakeups, NULL, NULL);
 	if (array == NULL)
 		goto out;
 	g_print ("Wakeup sources:\n");
@@ -303,7 +303,7 @@ main (int argc, char **argv)
 
 	if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
-		ret = up_client_enumerate_devices_sync (client, &error);
+		ret = up_client_enumerate_devices_sync (client, NULL, &error);
 		if (!ret) {
 			egg_warning ("failed to enumerate: %s", error->message);
 			goto out;
@@ -338,7 +338,7 @@ main (int argc, char **argv)
 
 	if (opt_show_info != NULL) {
 		device = up_device_new ();
-		ret = up_device_set_object_path_sync (device, opt_show_info, &error);
+		ret = up_device_set_object_path_sync (device, opt_show_info, NULL, &error);
 		if (!ret) {
 			g_print ("failed to set path: %s\n", error->message);
 			g_error_free (error);

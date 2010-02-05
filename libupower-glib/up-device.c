@@ -262,6 +262,7 @@ up_device_changed_cb (DBusGProxy *proxy, UpDevice *device)
  * up_device_set_object_path_sync:
  * @device: a #UpDevice instance.
  * @object_path: The UPower object path.
+ * @cancellable: a #GCancellable or %NULL
  * @error: a #GError, or %NULL.
  *
  * Sets the object path of the object and fills up initial properties.
@@ -271,7 +272,7 @@ up_device_changed_cb (DBusGProxy *proxy, UpDevice *device)
  * Since: 0.9.0
  **/
 gboolean
-up_device_set_object_path_sync (UpDevice *device, const gchar *object_path, GError **error)
+up_device_set_object_path_sync (UpDevice *device, const gchar *object_path, GCancellable *cancellable, GError **error)
 {
 	GError *error_local = NULL;
 	gboolean ret = FALSE;
@@ -357,7 +358,7 @@ up_device_to_text_history (UpDevice *device, GString *string, const gchar *type)
 	UpHistoryItem *item;
 
 	/* get a fair chunk of data */
-	array = up_device_get_history_sync (device, type, 120, 10, NULL);
+	array = up_device_get_history_sync (device, type, 120, 10, NULL, NULL);
 	if (array == NULL)
 		return;
 
@@ -520,6 +521,7 @@ up_device_to_text (UpDevice *device)
 /**
  * up_device_refresh_sync:
  * @device: a #UpDevice instance.
+ * @cancellable: a #GCancellable or %NULL
  * @error: a #GError, or %NULL.
  *
  * Refreshes properties on the device.
@@ -530,7 +532,7 @@ up_device_to_text (UpDevice *device)
  * Since: 0.9.0
  **/
 gboolean
-up_device_refresh_sync (UpDevice *device, GError **error)
+up_device_refresh_sync (UpDevice *device, GCancellable *cancellable, GError **error)
 {
 	GError *error_local = NULL;
 	gboolean ret;
@@ -556,6 +558,7 @@ out:
  * @type: The type of history, known values are "rate" and "charge".
  * @timespec: the amount of time to look back into time.
  * @resolution: the resolution of data.
+ * @cancellable: a #GCancellable or %NULL
  * @error: a #GError, or %NULL.
  *
  * Gets the device history.
@@ -565,7 +568,7 @@ out:
  * Since: 0.9.0
  **/
 GPtrArray *
-up_device_get_history_sync (UpDevice *device, const gchar *type, guint timespec, guint resolution, GError **error)
+up_device_get_history_sync (UpDevice *device, const gchar *type, guint timespec, guint resolution, GCancellable *cancellable, GError **error)
 {
 	GError *error_local = NULL;
 	GType g_type_gvalue_array;
@@ -640,6 +643,7 @@ out:
  * up_device_get_statistics_sync:
  * @device: a #UpDevice instance.
  * @type: the type of statistics.
+ * @cancellable: a #GCancellable or %NULL
  * @error: a #GError, or %NULL.
  *
  * Gets the device current statistics.
@@ -649,7 +653,7 @@ out:
  * Since: 0.9.0
  **/
 GPtrArray *
-up_device_get_statistics_sync (UpDevice *device, const gchar *type, GError **error)
+up_device_get_statistics_sync (UpDevice *device, const gchar *type, GCancellable *cancellable, GError **error)
 {
 	GError *error_local = NULL;
 	GType g_type_gvalue_array;

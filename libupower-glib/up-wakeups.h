@@ -27,6 +27,8 @@
 #define __UP_WAKEUPS_H
 
 #include <glib-object.h>
+#include <gio/gio.h>
+
 #include <libupower-glib/up-types.h>
 #include <libupower-glib/up-device.h>
 #include <libupower-glib/up-wakeup-item.h>
@@ -60,11 +62,20 @@ typedef struct
 
 GType		 up_wakeups_get_type			(void);
 UpWakeups	*up_wakeups_new				(void);
+
+/* sync versions */
 guint		 up_wakeups_get_total_sync		(UpWakeups		*wakeups,
+							 GCancellable		*cancellable,
 							 GError			**error);
 GPtrArray	*up_wakeups_get_data_sync		(UpWakeups		*wakeups,
+							 GCancellable		*cancellable,
 							 GError			**error);
-gboolean	 up_wakeups_has_capability_sync		(UpWakeups		*wakeups);
+gboolean	 up_wakeups_get_properties_sync		(UpWakeups		*wakeups,
+							 GCancellable		*cancellable,
+							 GError			**error);
+
+/* accessors */
+gboolean	 up_wakeups_get_has_capability		(UpWakeups		*wakeups);
 
 G_END_DECLS
 
