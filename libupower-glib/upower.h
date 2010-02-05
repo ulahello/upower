@@ -42,6 +42,7 @@
 #include <libupower-glib/up-history-item.h>
 #include <libupower-glib/up-stats-item.h>
 #include <libupower-glib/up-wakeup-item.h>
+#include <libupower-glib/up-wakeups.h>
 
 #undef __UPOWER_H_INSIDE__
 

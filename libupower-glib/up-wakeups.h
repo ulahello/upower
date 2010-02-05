@@ -27,9 +27,9 @@
 #define __UP_WAKEUPS_H
 
 #include <glib-object.h>
-#include <libupower/up-types.h>
-#include <libupower/up-device.h>
-#include <libupower/up-wakeup-item.h>
+#include <libupower-glib/up-types.h>
+#include <libupower-glib/up-device.h>
+#include <libupower-glib/up-wakeup-item.h>
 
 G_BEGIN_DECLS
 

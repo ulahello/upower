@@ -55,6 +55,13 @@ G_DEFINE_TYPE (UpWakeups, up_wakeups, G_TYPE_OBJECT)
 
 /**
  * up_wakeups_get_total_sync:
+ * @wakeups: a #UpWakeups instance.
+ *
+ * Gets the the total number of wakeups per second from the daemon.
+ *
+ * Return value: number of wakeups per second.
+ *
+ * Since: 0.9.1
  **/
 guint
 up_wakeups_get_total_sync (UpWakeups *wakeups, GError **error)
@@ -80,8 +87,13 @@ up_wakeups_get_total_sync (UpWakeups *wakeups, GError **error)
 
 /**
  * up_wakeups_get_data_sync:
+ * @wakeups: a #UpWakeups instance.
  *
- * Returns an array of %UpWakeupItem's
+ * Gets the wakeups data from the daemon.
+ *
+ * Return value: an array of %UpWakeupItem's
+ *
+ * Since: 0.9.1
  **/
 GPtrArray *
 up_wakeups_get_data_sync (UpWakeups *wakeups, GError **error)
@@ -125,9 +137,9 @@ up_wakeups_get_data_sync (UpWakeups *wakeups, GError **error)
 		goto out;
 
 	/* convert */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0; i<gvalue_ptr_array->len; i++) {
-		gva = (GValueArray *) g_ptr_array_index (gvalue_ptr_array, i));
+		gva = (GValueArray *) g_ptr_array_index (gvalue_ptr_array, i);
 		item = up_wakeup_item_new ();
 
 		/* 0 */
@@ -142,7 +154,7 @@ up_wakeups_get_data_sync (UpWakeups *wakeups, GError **error)
 
 		/* 2 */
 		gv = g_value_array_get_nth (gva, 2);
-		up_wakeup_item_set_value (item, g_value_get_double (gv);
+		up_wakeup_item_set_value (item, g_value_get_double (gv));
 		g_value_unset (gv);
 
 		/* 3 */
@@ -210,6 +222,13 @@ out:
 
 /**
  * up_wakeups_has_capability_sync:
+ * @wakeups: a #UpWakeups instance.
+ *
+ * Returns if the daemon supports getting the wakeup data.
+ *
+ * Return value: %TRUE if supported
+ *
+ * Since: 0.9.1
  **/
 gboolean
 up_wakeups_has_capability_sync (UpWakeups *wakeups)
@@ -239,7 +258,6 @@ up_wakeups_data_changed_cb (DBusGProxy *proxy, UpWakeups *wakeups)
 
 /**
  * up_wakeups_class_init:
- * @klass: The UpWakeupsClass
  **/
 static void
 up_wakeups_class_init (UpWakeupsClass *klass)
@@ -265,7 +283,6 @@ up_wakeups_class_init (UpWakeupsClass *klass)
 
 /**
  * up_wakeups_init:
- * @wakeups: This class instance
  **/
 static void
 up_wakeups_init (UpWakeups *wakeups)
@@ -317,7 +334,6 @@ out:
 
 /**
  * up_wakeups_finalize:
- * @object: The object to finalize
  **/
 static void
 up_wakeups_finalize (GObject *object)
@@ -338,7 +354,11 @@ up_wakeups_finalize (GObject *object)
 /**
  * up_wakeups_new:
  *
- * Return value: a new UpWakeups object.
+ * Gets a new object to allow querying the wakeups data from the server.
+ *
+ * Return value: the a new @UpWakeups object.
+ *
+ * Since: 0.9.1
  **/
 UpWakeups *
 up_wakeups_new (void)
