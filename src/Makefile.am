@@ -150,9 +150,10 @@ up_self_test_LDADD =						\
 	dummy/libupshared.la					\
 	$(GLIB_LIBS)						\
 	$(GIO_CFLAGS)						\
-	$(SELFTEST_LIBS)					\
+	$(DBUS_GLIB_LIBS)					\
 	$(DEVKIT_POWER_LIBS)					\
-	$(POLKIT_LIBS)
+	$(POLKIT_LIBS)						\
+	$(UPOWER_LIBS)
 
 up_self_test_CFLAGS = -DEGG_TEST $(AM_CFLAGS) $(WARNINGFLAGS_C)
 
