@@ -40,6 +40,7 @@
 #include "up-polkit.h"
 #include "up-qos-obj.h"
 #include "up-qos-glue.h"
+#include "up-types.h"
 
 static void     up_qos_finalize   (GObject	*object);
 
@@ -121,7 +122,7 @@ up_qos_generate_cookie (UpQos *qos)
  * up_qos_get_lowest:
  **/
 static gint
-up_qos_get_lowest (UpQos *qos, UpQosType type)
+up_qos_get_lowest (UpQos *qos, UpQosKind type)
 {
 	guint i;
 	gint lowest = G_MAXINT;
@@ -153,7 +154,7 @@ up_qos_get_lowest (UpQos *qos, UpQosType type)
  * up_qos_latency_write:
  **/
 static gboolean
-up_qos_latency_write (UpQos *qos, UpQosType type, gint value)
+up_qos_latency_write (UpQos *qos, UpQosKind type, gint value)
 {
 	gchar *text = NULL;
 	gint retval;
@@ -187,7 +188,7 @@ out:
  * up_qos_latency_perhaps_changed:
  **/
 static gboolean
-up_qos_latency_perhaps_changed (UpQos *qos, UpQosType type)
+up_qos_latency_perhaps_changed (UpQos *qos, UpQosKind type)
 {
 	gint lowest;
 	gint *last;
@@ -206,7 +207,7 @@ up_qos_latency_perhaps_changed (UpQos *qos, UpQosType type)
 	up_qos_latency_write (qos, type, lowest);
 
 	/* emit signal */
-	g_signal_emit (qos, signals [LATENCY_CHANGED], 0, up_qos_type_to_text (type), lowest);
+	g_signal_emit (qos, signals [LATENCY_CHANGED], 0, up_qos_kind_to_string (type), lowest);
 	*last = lowest;
 	return TRUE;
 }
@@ -252,10 +253,10 @@ up_qos_request_latency (UpQos *qos, const gchar *type_text, gint value, gboolean
 	gint pid;
 	PolkitSubject *subject = NULL;
 	gboolean retval;
-	UpQosType type;
+	UpQosKind type;
 
 	/* get correct data */
-	type = up_qos_type_from_text (type_text);
+	type = up_qos_kind_from_string (type_text);
 	if (type == UP_QOS_KIND_UNKNOWN) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		dbus_g_method_return_error (context, error);
@@ -407,10 +408,10 @@ out:
 gboolean
 up_qos_get_latency (UpQos *qos, const gchar *type_text, gint *value, GError **error)
 {
-	UpQosType type;
+	UpQosKind type;
 
 	/* get correct data */
-	type = up_qos_type_from_text (type_text);
+	type = up_qos_kind_from_string (type_text);
 	if (type == UP_QOS_KIND_UNKNOWN) {
 		g_set_error (error, UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		return FALSE;
@@ -427,11 +428,11 @@ up_qos_get_latency (UpQos *qos, const gchar *type_text, gint *value, GError **er
 void
 up_qos_set_minimum_latency (UpQos *qos, const gchar *type_text, gint value, DBusGMethodInvocation *context)
 {
-	UpQosType type;
+	UpQosKind type;
 	GError *error;
 
 	/* type valid? */
-	type = up_qos_type_from_text (type_text);
+	type = up_qos_kind_from_string (type_text);
 	if (type == UP_QOS_KIND_UNKNOWN) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		dbus_g_method_return_error (context, error);
@@ -471,7 +472,7 @@ up_qos_get_latency_requests (UpQos *qos, GPtrArray **requests, GError **error)
 					3, obj->cmdline,
 					4, 0, //obj->timespec,
 					5, obj->persistent,
-					6, up_qos_type_to_text (obj->type),
+					6, up_qos_kind_to_string (obj->type),
 					7, obj->value,
 					G_MAXUINT);
 		g_ptr_array_add (*requests, g_value_get_boxed (&elem));

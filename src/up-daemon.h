@@ -25,7 +25,7 @@
 #include <polkit/polkit.h>
 #include <dbus/dbus-glib.h>
 
-#include "up-enum.h"
+#include "up-types.h"
 #include "up-device-list.h"
 
 G_BEGIN_DECLS

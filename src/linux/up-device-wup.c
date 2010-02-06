@@ -44,7 +44,7 @@
 #include "sysfs-utils.h"
 #include "egg-debug.h"
 
-#include "up-enum.h"
+#include "up-types.h"
 #include "up-device-wup.h"
 
 #define UP_DEVICE_WUP_REFRESH_TIMEOUT			10 /* seconds */

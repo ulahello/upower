@@ -795,7 +795,7 @@ up_device_compute_object_path (UpDevice *device)
 	const gchar *type;
 	guint i;
 
-	type = up_device_kind_to_text (device->priv->type);
+	type = up_device_kind_to_string (device->priv->type);
 	native_path = device->priv->native_path;
 	basename = g_path_get_basename (native_path);
 	id = g_strjoin ("_", type, basename, NULL);

@@ -24,7 +24,7 @@
 
 #include <glib-object.h>
 
-#include "up-enum.h"
+#include "up-types.h"
 
 G_BEGIN_DECLS
 

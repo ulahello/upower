@@ -67,7 +67,6 @@ libdevkit_power_gobject_la_CFLAGS =				\
 EXTRA_DIST =							\
 	up-client.h						\
 	up-device.h						\
-	up-enum.h						\
 	up-history-obj.h					\
 	up-qos-obj.h						\
 	up-stats-obj.h						\

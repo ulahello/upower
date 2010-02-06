@@ -36,7 +36,7 @@
 #include "sysfs-utils.h"
 #include "egg-debug.h"
 
-#include "up-enum.h"
+#include "up-types.h"
 #include "up-device-supply.h"
 
 #define UP_DEVICE_SUPPLY_REFRESH_TIMEOUT	30	/* seconds */
@@ -626,7 +626,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 
 		/* print what we did */
 		egg_debug ("guessing battery state '%s' using global on-battery:%i",
-			   up_device_state_to_text (state), on_battery);
+			   up_device_state_to_string (state), on_battery);
 
 		g_object_unref (daemon);
 	}

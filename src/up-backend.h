@@ -24,7 +24,7 @@
 
 #include <glib-object.h>
 
-#include "up-enum.h"
+#include "up-types.h"
 #include "up-device.h"
 #include "up-daemon.h"
 

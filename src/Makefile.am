@@ -25,6 +25,7 @@ INCLUDES = \
 	$(GLIB_CFLAGS)
 
 DEVKIT_POWER_LIBS = $(top_builddir)/devkit-power-gobject/libdevkit-power-gobject.la
+UPOWER_LIBS = $(top_builddir)/libupower-glib/libupower-glib.la
 
 BUILT_SOURCES =							\
 	up-daemon-glue.h					\
@@ -93,7 +94,8 @@ upowerd_LDADD =							\
 	$(USB_LIBS)						\
 	$(GIO_LIBS)						\
 	$(DBUS_GLIB_LIBS)					\
-	$(POLKIT_LIBS)
+	$(POLKIT_LIBS)						\
+	$(UPOWER_LIBS)
 
 if BACKEND_TYPE_DUMMY
 upowerd_LDADD += 						\

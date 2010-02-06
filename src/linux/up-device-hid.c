@@ -50,7 +50,7 @@
 #include "sysfs-utils.h"
 #include "egg-debug.h"
 
-#include "up-enum.h"
+#include "up-types.h"
 #include "up-device-hid.h"
 
 #define UP_DEVICE_HID_REFRESH_TIMEOUT			30l

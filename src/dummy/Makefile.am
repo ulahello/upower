@@ -5,6 +5,7 @@ INCLUDES = \
 	-DUP_COMPILATION					\
 	-DEGG_TEST						\
 	-I$(top_srcdir)/devkit-power-gobject			\
+	-I$(top_srcdir)/libupower-glib				\
 	$(DBUS_GLIB_CFLAGS)					\
 	$(POLKIT_CFLAGS)					\
 	$(GLIB_CFLAGS)

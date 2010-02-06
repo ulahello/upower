@@ -37,7 +37,7 @@
 #include "sysfs-utils.h"
 #include "egg-debug.h"
 
-#include "up-enum.h"
+#include "up-types.h"
 #include "up-device-csr.h"
 
 #define UP_DEVICE_CSR_REFRESH_TIMEOUT		30L
