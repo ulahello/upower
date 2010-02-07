@@ -509,7 +509,6 @@ up_daemon_suspend (UpDaemon *daemon, DBusGMethodInvocation *context)
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
 				     "No kernel support");
-		g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
@@ -557,7 +556,6 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
 				     "No kernel support");
-		g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
@@ -567,7 +565,6 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
 				     "Not enough swap space");
-		g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
@@ -577,7 +574,6 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
 				     "Swap space is encrypted");
-		g_error_free (error_local);
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
