@@ -240,6 +240,48 @@ out:
 }
 
 /**
+ * up_client_about_to_sleep_sync:
+ * @client: a #UpClient instance.
+ * @cancellable: a #GCancellable or %NULL
+ * @error: a #GError, or %NULL.
+ *
+ * Tells UPower that we are soon to reqest either Suspend() or Hibernate()
+ * and that session and system components should be notified of this.
+ *
+ * Return value: TRUE if system suspended okay, FALSE other wise.
+ *
+ * Since: 0.9.1
+ **/
+gboolean
+up_client_about_to_sleep_sync (UpClient *client, GCancellable *cancellable, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+
+	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
+	g_return_val_if_fail (client->priv->proxy != NULL, FALSE);
+
+	ret = dbus_g_proxy_call (client->priv->proxy, "AboutToSleep", &error_local,
+				 G_TYPE_INVALID, G_TYPE_INVALID);
+	if (!ret) {
+		/* DBus might time out, which is okay */
+		if (g_error_matches (error_local, DBUS_GERROR, DBUS_GERROR_NO_REPLY)) {
+			g_debug ("DBUS timed out, but recovering");
+			ret = TRUE;
+			goto out;
+		}
+
+		/* an actual error */
+		g_warning ("Couldn't sent that we were about to sleep: %s", error_local->message);
+		g_set_error (error, 1, 0, "%s", error_local->message);
+	}
+out:
+	if (error_local != NULL)
+		g_error_free (error_local);
+	return ret;
+}
+
+/**
  * up_client_get_properties_sync:
  * @client: a #UpClient instance.
  * @cancellable: a #GCancellable or %NULL

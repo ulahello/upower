@@ -110,6 +110,66 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
         </doc:description>
       </doc:doc>
     </signal>
+
+    <!-- ************************************************************ -->
+
+    <signal name="Sleeping">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            This signal is sent when the session is about to be suspended or
+            hibernated.
+            Session and system programs have one second to do anything required
+            before the sleep action is taken (such as sending out Avahi or
+            Jabber messages).
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </signal>
+
+    <!-- ************************************************************ -->
+
+    <signal name="Resuming">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            This signal is sent when the session has just returned from
+            Suspend() or Hibernate().
+            Session and system programs can then do anything required (such as
+            sending out Avahi or Jabber messages).
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </signal>
+
+    <!-- ************************************************************ -->
+
+    <method name="AboutToSleep">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            This method tells UPower that the Suspend() or Hibernate() method
+            is about to be called.
+            This allows UPower to emit the Suspending signal whilst
+            session activities are happening that have to be done before the
+            suspend process is started.
+          </doc:para>
+          <doc:para>
+            This method would typically be called by the session power
+            management daemon, before it locks the screen and waits for the
+            screen to fade to black.
+            The session power management component would then call Suspend() or
+            Hibernate() when these syncronous tasks have completed.
+          </doc:para>
+          <doc:para>
+            If this method is not called than nothing bad will happen and
+            Suspend() or Hibernate() will block for the required second.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </method>
+
     <!-- ************************************************************ -->
 
     <method name="Suspend">
@@ -119,6 +179,15 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
           <doc:para>
             Suspends the computer into a low power state.
             System state is not preserved if the power is lost.
+          </doc:para>
+          <doc:para>
+            If AboutToRequestSleep() has not been called then UPower will send
+            the Sleeping() signal and block for one second.
+          </doc:para>
+          <doc:para>
+            If AboutToRequestSleep() has been called less than one second
+            before this method is called then UPower will block for the
+            remaining time to complete one second of delay.
           </doc:para>
         </doc:description>
       </doc:doc>
@@ -133,6 +202,15 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
           <doc:para>
             Hibernates the computer into a low power state.
             System state is preserved if the power is lost.
+          </doc:para>
+          <doc:para>
+            If AboutToRequestSleep() has not been called then UPower will send
+            the Sleeping() signal and block for one second.
+          </doc:para>
+          <doc:para>
+            If AboutToRequestSleep() has been called less than one second
+            before this method is called then UPower will block for the
+            remaining time to complete one second of delay.
           </doc:para>
         </doc:description>
       </doc:doc>

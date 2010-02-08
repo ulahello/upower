@@ -62,6 +62,8 @@ enum
 	SIGNAL_DEVICE_REMOVED,
 	SIGNAL_DEVICE_CHANGED,
 	SIGNAL_CHANGED,
+	SIGNAL_SLEEPING,
+	SIGNAL_RESUMING,
 	SIGNAL_LAST,
 };
 
@@ -85,6 +87,8 @@ struct UpDaemonPrivate
 	gboolean		 during_coldplug;
 	guint			 battery_poll_id;
 	guint			 battery_poll_count;
+	GTimer			*about_to_sleep_timer;
+	guint			 about_to_sleep_id;
 };
 
 static void	up_daemon_finalize		(GObject	*object);
@@ -492,17 +496,134 @@ up_daemon_enumerate_devices (UpDaemon *daemon, DBusGMethodInvocation *context)
 }
 
 /**
+ * up_daemon_about_to_sleep:
+ **/
+gboolean
+up_daemon_about_to_sleep (UpDaemon *daemon, DBusGMethodInvocation *context)
+{
+	PolkitSubject *subject = NULL;
+	GError *error;
+
+	egg_debug ("emitting sleeping");
+	g_signal_emit (daemon, signals[SIGNAL_SLEEPING], 0);
+	g_timer_start (daemon->priv->about_to_sleep_timer);
+
+	/* already requested */
+	if (daemon->priv->about_to_sleep_id != 0) {
+		error = g_error_new (UP_DAEMON_ERROR,
+				     UP_DAEMON_ERROR_GENERAL,
+				     "Sleep has already been requested and is pending");
+		dbus_g_method_return_error (context, error);
+		goto out;
+	}
+
+	subject = up_polkit_get_subject (daemon->priv->polkit, context);
+	if (subject == NULL)
+		goto out;
+
+	/* TODO: use another PolicyKit context? */
+	if (!up_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.upower.suspend", context))
+		goto out;
+
+	dbus_g_method_return (context, NULL);
+out:
+	if (subject != NULL)
+		g_object_unref (subject);
+	return TRUE;
+}
+
+/* temp object for deferred callback */
+typedef struct {
+	UpDaemon		*daemon;
+	DBusGMethodInvocation	*context;
+	gchar			*command;
+} UpDaemonDeferredSleep;
+
+/**
+ * up_daemon_deferred_sleep_cb:
+ **/
+static gboolean
+up_daemon_deferred_sleep_cb (UpDaemonDeferredSleep *sleep)
+{
+	GError *error;
+	GError *error_local = NULL;
+	gchar *stdout = NULL;
+	gchar *stderr = NULL;
+	gboolean ret;
+	UpDaemon *daemon = sleep->daemon;
+
+	/* run the command */
+	ret = g_spawn_command_line_sync (sleep->command, &stdout, &stderr, NULL, &error_local);
+	if (!ret) {
+		error = g_error_new (UP_DAEMON_ERROR,
+				     UP_DAEMON_ERROR_GENERAL,
+				     "Failed to spawn: %s, stdout:%s, stderr:%s", error_local->message, stdout, stderr);
+		g_error_free (error_local);
+		dbus_g_method_return_error (sleep->context, error);
+		goto out;
+	}
+
+	/* emit signal for session components */
+	egg_debug ("emitting resuming");
+	g_signal_emit (daemon, signals[SIGNAL_RESUMING], 0);
+
+	/* reset the about-to-sleep logic */
+	g_timer_reset (daemon->priv->about_to_sleep_timer);
+	g_timer_stop (daemon->priv->about_to_sleep_timer);
+
+	/* actually return from the DBus call now */
+	dbus_g_method_return (sleep->context, NULL);
+
+out:
+	/* clear timer */
+	daemon->priv->about_to_sleep_id = 0;
+
+	g_free (stdout);
+	g_free (stderr);
+
+	/* delete temp object */
+	g_object_unref (sleep->daemon);
+	g_free (sleep->command);
+	g_free (sleep);
+
+	return FALSE;
+}
+
+/**
+ * up_daemon_deferred_sleep:
+ **/
+static void
+up_daemon_deferred_sleep (UpDaemon *daemon, const gchar *command, DBusGMethodInvocation *context)
+{
+	UpDaemonDeferredSleep *sleep;
+	gfloat elapsed;
+
+	/* create callback object */
+	sleep = g_new0 (UpDaemonDeferredSleep, 1);
+	sleep->daemon = g_object_ref (daemon);
+	sleep->context = context;
+	sleep->command = g_strdup (command);
+
+	/* about to sleep */
+	elapsed = g_timer_elapsed (daemon->priv->about_to_sleep_timer, NULL);
+	egg_debug ("between AboutToSleep() and %s was %fs", sleep->command, elapsed);
+	if (elapsed < 1.0f) {
+		/* we have to wait for a little bit */
+		daemon->priv->about_to_sleep_id = g_timeout_add (1000 - (elapsed * 1000), (GSourceFunc) up_daemon_deferred_sleep_cb, sleep);
+	} else {
+		/* we can do this straight away */
+		daemon->priv->about_to_sleep_id = g_idle_add ((GSourceFunc) up_daemon_deferred_sleep_cb, sleep);
+	}
+}
+
+/**
  * up_daemon_suspend:
  **/
 gboolean
 up_daemon_suspend (UpDaemon *daemon, DBusGMethodInvocation *context)
 {
-	gboolean ret;
 	GError *error;
-	GError *error_local = NULL;
 	PolkitSubject *subject = NULL;
-	gchar *stdout = NULL;
-	gchar *stderr = NULL;
 
 	/* no kernel support */
 	if (!daemon->priv->kernel_can_suspend) {
@@ -520,19 +641,18 @@ up_daemon_suspend (UpDaemon *daemon, DBusGMethodInvocation *context)
 	if (!up_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.upower.suspend", context))
 		goto out;
 
-	ret = g_spawn_command_line_sync ("/usr/sbin/pm-suspend", &stdout, &stderr, NULL, &error_local);
-	if (!ret) {
+	/* already requested */
+	if (daemon->priv->about_to_sleep_id != 0) {
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
-				     "Failed to spawn: %s, stdout:%s, stderr:%s", error_local->message, stdout, stderr);
-		g_error_free (error_local);
+				     "Sleep has already been requested and is pending");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
-	dbus_g_method_return (context, NULL);
+
+	/* do this deferred action */
+	up_daemon_deferred_sleep (daemon, "/usr/sbin/pm-suspend", context);
 out:
-	g_free (stdout);
-	g_free (stderr);
 	if (subject != NULL)
 		g_object_unref (subject);
 	return TRUE;
@@ -544,12 +664,8 @@ out:
 gboolean
 up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 {
-	gboolean ret;
 	GError *error;
-	GError *error_local = NULL;
 	PolkitSubject *subject = NULL;
-	gchar *stdout = NULL;
-	gchar *stderr = NULL;
 
 	/* no kernel support */
 	if (!daemon->priv->kernel_can_hibernate) {
@@ -585,19 +701,18 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 	if (!up_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.upower.hibernate", context))
 		goto out;
 
-	ret = g_spawn_command_line_sync ("/usr/sbin/pm-hibernate", &stdout, &stderr, NULL, &error_local);
-	if (!ret) {
+	/* already requested */
+	if (daemon->priv->about_to_sleep_id != 0) {
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
-				     "Failed to spawn: %s, stdout:%s, stderr:%s", error_local->message, stdout, stderr);
-		g_error_free (error_local);
+				     "Sleep has already been requested and is pending");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
-	dbus_g_method_return (context, NULL);
+
+	/* do this deferred action */
+	up_daemon_deferred_sleep (daemon, "/usr/sbin/pm-hibernate", context);
 out:
-	g_free (stdout);
-	g_free (stderr);
 	if (subject != NULL)
 		g_object_unref (subject);
 	return TRUE;
@@ -899,12 +1014,17 @@ up_daemon_init (UpDaemon *daemon)
 	daemon->priv->during_coldplug = FALSE;
 	daemon->priv->battery_poll_id = 0;
 	daemon->priv->battery_poll_count = 0;
+	daemon->priv->about_to_sleep_id = 0;
 
 	daemon->priv->backend = up_backend_new ();
 	g_signal_connect (daemon->priv->backend, "device-added",
 			  G_CALLBACK (up_daemon_device_added_cb), daemon);
 	g_signal_connect (daemon->priv->backend, "device-removed",
 			  G_CALLBACK (up_daemon_device_removed_cb), daemon);
+
+	/* use a timer for the about-to-sleep logic */
+	daemon->priv->about_to_sleep_timer = g_timer_new ();
+	g_timer_stop (daemon->priv->about_to_sleep_timer);
 
 	/* watch when these properties change */
 	g_signal_connect (daemon, "notify::lid-is-present",
@@ -1080,6 +1200,21 @@ up_daemon_class_init (UpDaemonClass *klass)
 			      g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
 
+	signals[SIGNAL_SLEEPING] =
+		g_signal_new ("sleeping",
+			      G_OBJECT_CLASS_TYPE (klass),
+			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
+			      0, NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
+
+	signals[SIGNAL_RESUMING] =
+		g_signal_new ("resuming",
+			      G_OBJECT_CLASS_TYPE (klass),
+			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
+			      0, NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
 
 	g_object_class_install_property (object_class,
 					 PROP_DAEMON_VERSION,
@@ -1167,6 +1302,7 @@ up_daemon_finalize (GObject *object)
 	g_object_unref (daemon->priv->power_devices);
 	g_object_unref (daemon->priv->polkit);
 	g_object_unref (daemon->priv->backend);
+	g_timer_destroy (daemon->priv->about_to_sleep_timer);
 
 	G_OBJECT_CLASS (up_daemon_parent_class)->finalize (object);
 }

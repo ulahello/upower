@@ -86,6 +86,9 @@ gboolean	 up_client_enumerate_devices_sync	(UpClient		*client,
 gboolean	 up_client_suspend_sync			(UpClient		*client,
 							 GCancellable		*cancellable,
 							 GError			**error);
+gboolean	 up_client_about_to_sleep_sync		(UpClient		*client,
+							 GCancellable		*cancellable,
+							 GError			**error);
 gboolean	 up_client_hibernate_sync		(UpClient		*client,
 							 GCancellable		*cancellable,
 							 GError			**error);
