@@ -97,6 +97,35 @@ out:
 }
 
 /**
+ * up_polkit_is_allowed:
+ **/
+gboolean
+up_polkit_is_allowed (UpPolkit *polkit, PolkitSubject *subject, const gchar *action_id, DBusGMethodInvocation *context)
+{
+	gboolean ret = FALSE;
+	GError *error;
+	GError *error_local;
+	PolkitAuthorizationResult *result;
+
+	/* check auth */
+	result = polkit_authority_check_authorization_sync (polkit->priv->authority, subject, action_id, NULL, POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE, NULL, &error_local);
+	if (result == NULL) {
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "failed to check authorisation: %s", error_local->message);
+		dbus_g_method_return_error (context, error);
+		g_error_free (error_local);
+		g_error_free (error);
+		goto out;
+	}
+
+	ret = polkit_authorization_result_get_is_authorized (result) ||
+	      polkit_authorization_result_get_is_challenge (result);
+out:
+	if (result != NULL)
+		g_object_unref (result);
+	return ret;
+}
+
+/**
  * up_polkit_get_uid:
  **/
 gboolean
