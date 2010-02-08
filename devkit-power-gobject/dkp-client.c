@@ -232,6 +232,7 @@ static void
 dkp_client_ensure_properties (DkpClient *client)
 {
 	gboolean ret;
+	gboolean allowed = FALSE;
 	GError *error;
 	GHashTable *props;
 	GValue *value;
@@ -267,7 +268,13 @@ dkp_client_ensure_properties (DkpClient *client)
 		g_warning ("No 'CanSuspend' property");
 		goto out;
 	}
-	ret = g_value_get_boolean (value);
+
+	ret = dbus_g_proxy_call (client->priv->proxy, "SuspendAllowed", &error,
+	        G_TYPE_INVALID, G_TYPE_BOOLEAN, &allowed, G_TYPE_INVALID);
+	if (!ret)
+	        goto out;
+
+	ret = g_value_get_boolean (value) && allowed;
 	if (ret != client->priv->can_suspend) {
 		client->priv->can_suspend = ret;
 		g_object_notify (G_OBJECT(client), "can-suspend");
@@ -278,7 +285,12 @@ dkp_client_ensure_properties (DkpClient *client)
 		g_warning ("No 'CanHibernate' property");
 		goto out;
 	}
-	ret = g_value_get_boolean (value);
+	ret = dbus_g_proxy_call (client->priv->proxy, "HibernateAllowed", &error,
+	        G_TYPE_INVALID, G_TYPE_BOOLEAN, &allowed, G_TYPE_INVALID);
+	if (!ret)
+	        goto out;
+
+	ret = g_value_get_boolean (value) && allowed;
 	if (ret != client->priv->can_hibernate) {
 		client->priv->can_hibernate = ret;
 		g_object_notify (G_OBJECT(client), "can-hibernate");
