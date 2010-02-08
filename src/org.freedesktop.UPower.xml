@@ -195,6 +195,23 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
 
     <!-- ************************************************************ -->
 
+    <method name="SuspendAllowed">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="allowed" direction="out" type="b">
+        <doc:doc><doc:summary>TRUE if allowed, otherwise FALSE</doc:summary></doc:doc>
+      </arg>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Check if the caller has (or can get) the PolicyKit privilege to call
+            <doc:ref type="method" to="Power.Suspend">Suspend</doc:ref>.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </method>
+
+    <!-- ************************************************************ -->
+
     <method name="Hibernate">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
       <doc:doc>
@@ -216,6 +233,22 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
       </doc:doc>
     </method>
 
+    <!-- ************************************************************ -->
+
+    <method name="HibernateAllowed">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="allowed" direction="out" type="b">
+        <doc:doc><doc:summary>TRUE if allowed, otherwise FALSE</doc:summary></doc:doc>
+      </arg>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Check if the caller has (or can get) the PolicyKit privilege to call
+            <doc:ref type="method" to="Power.Hibernate">Hibernate</doc:ref>.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </method>
 
     <!-- ************************************************************ -->
 

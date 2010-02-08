@@ -85,7 +85,11 @@ gboolean	 up_daemon_suspend		(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
 gboolean	 up_daemon_about_to_sleep	(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
+gboolean	 up_daemon_suspend_allowed	(UpDaemon		*daemon,
+						 DBusGMethodInvocation	*context);
 gboolean	 up_daemon_hibernate		(UpDaemon		*daemon,
+						 DBusGMethodInvocation	*context);
+gboolean	 up_daemon_hibernate_allowed	(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
 gboolean	 up_daemon_can_suspend		(UpDaemon		*daemon,
 						 gboolean		 interactive,

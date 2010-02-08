@@ -659,6 +659,29 @@ out:
 }
 
 /**
+ * up_daemon_suspend_allowed:
+ **/
+gboolean
+up_daemon_suspend_allowed (UpDaemon *daemon, DBusGMethodInvocation *context)
+{
+	gboolean ret;
+	GError *error;
+	PolkitSubject *subject = NULL;
+
+	subject = up_polkit_get_subject (daemon->priv->polkit, context);
+	if (subject == NULL)
+		goto out;
+
+	ret = up_polkit_is_allowed (daemon->priv->polkit, subject, "org.freedesktop.upower.suspend", context);
+	dbus_g_method_return (context, ret);
+
+out:
+	if (subject != NULL)
+		g_object_unref (subject);
+	return TRUE;
+}
+
+/**
  * up_daemon_hibernate:
  **/
 gboolean
@@ -712,6 +735,29 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 
 	/* do this deferred action */
 	up_daemon_deferred_sleep (daemon, "/usr/sbin/pm-hibernate", context);
+out:
+	if (subject != NULL)
+		g_object_unref (subject);
+	return TRUE;
+}
+
+/**
+ * up_daemon_hibernate_allowed:
+ **/
+gboolean
+up_daemon_hibernate_allowed (UpDaemon *daemon, DBusGMethodInvocation *context)
+{
+	gboolean ret;
+	GError *error;
+	PolkitSubject *subject = NULL;
+
+	subject = up_polkit_get_subject (daemon->priv->polkit, context);
+	if (subject == NULL)
+		goto out;
+
+	ret = up_polkit_is_allowed (daemon->priv->polkit, subject, "org.freedesktop.upower.hibernate", context);
+	dbus_g_method_return (context, ret);
+
 out:
 	if (subject != NULL)
 		g_object_unref (subject);
