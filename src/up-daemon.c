@@ -665,7 +665,6 @@ gboolean
 up_daemon_suspend_allowed (UpDaemon *daemon, DBusGMethodInvocation *context)
 {
 	gboolean ret;
-	GError *error;
 	PolkitSubject *subject = NULL;
 
 	subject = up_polkit_get_subject (daemon->priv->polkit, context);
@@ -748,7 +747,6 @@ gboolean
 up_daemon_hibernate_allowed (UpDaemon *daemon, DBusGMethodInvocation *context)
 {
 	gboolean ret;
-	GError *error;
 	PolkitSubject *subject = NULL;
 
 	subject = up_polkit_get_subject (daemon->priv->polkit, context);
