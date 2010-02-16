@@ -16,7 +16,7 @@ INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
 lib_LTLIBRARIES =						\
 	libupower-glib.la
 
-libupower_glib_includedir = $(includedir)/upower-glib
+libupower_glib_includedir = $(includedir)/libupower-glib
 libupower_glib_include_HEADERS =				\
 	upower.h						\
 	up-version.h						\
