@@ -42,7 +42,7 @@
 
 #include "egg-debug.h"
 
-#include "up-enum.h"
+#include "up-types.h"
 #include "up-device-supply.h"
 
 #define UP_ACPIDEV			"/dev/acpi"
