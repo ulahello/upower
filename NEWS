@@ -1,3 +1,28 @@
+Version 0.9.1
+~~~~~~~~~~~
+Released: 2010-03-03
+
+New Features:
+ - Add a new method and two new signals to inform userspace of the pending suspend and the resume event (Richard Hughes)
+ - Add {Suspend,Hibernate}Allowed D-Bus methods (Martin Pitt)
+ - Add up_polkit_is_allowed() function (Martin Pitt)
+ - Check PolicyKit in client's can_{suspend,hibernate} properties (Martin Pitt)
+ - Don't ship an introspection file for devkit-power-gobject, it's soon to be obsolete (Richard Hughes)
+ - Install the introspection data to the correct location (Richard Hughes)
+ - Make the upower client tool use libupower-glib, rather than devit-power-gobject (Richard Hughes)
+ - Use GCancellable in libupower-glib so we can eventually get to GIO async methods (Richard Hughes)
+
+Bugfixes:
+ - Ensure we return all lines of the UpDevice when we call up_device_to_string() (Richard Hughes)
+ - Fix libupower-glib include dir and pkgconfig (Martin Pitt)
+ - Fix up autogen.sh after the configure.ac modernisation (Michael Biebl)
+ - Fix up the FreeBSD backend compile (Michael Biebl)
+ - Fix up the include directory in the pkgconfig file (Richard Hughes)
+ - Make sure the tests link against all necessary libraries (Michael Biebl)
+ - Move the history files to /var/lib/upower (Michael Biebl)
+ - Update help and g_option_context_new to upower (Michael Biebl)
+ - Use the new project name in g_option_context_new (Michael Biebl)
+
 Version 0.9.0
 ~~~~~~~~~~~
 Released: 2010-02-01
