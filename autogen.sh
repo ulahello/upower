@@ -1,6 +1,8 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
+ACLOCAL_FLAGS="-I m4"
+
 touch ChangeLog
 
 srcdir=`dirname $0`
@@ -32,11 +34,11 @@ DIE=0
 }
 
 (gtkdocize --flavour no-tmpl) < /dev/null > /dev/null 2>&1 || {
-	echo
-	echo "You must have gtk-doc installed to compile $PROJECT."
-	echo "Install the appropriate package for your distribution,"
-	echo "or get the source tarball at http://ftp.gnome.org/pub/GNOME/sources/gtk-doc/"
-	DIE=1
+  echo
+  echo "You must have gtk-doc installed to compile $PROJECT."
+  echo "Install the appropriate package for your distribution,"
+  echo "or get the source tarball at http://ftp.gnome.org/pub/GNOME/sources/gtk-doc/"
+  DIE=1
 }
 
 (automake --version) < /dev/null > /dev/null 2>&1 || {
@@ -73,26 +75,32 @@ xlc )
   am_opt=--include-deps;;
 esac
 
-      aclocalinclude="$ACLOCAL_FLAGS"
+aclocalinclude="$ACLOCAL_FLAGS"
 
-      if grep "^LT_INIT" configure.ac >/dev/null; then
-	if test -z "$NO_LIBTOOLIZE" ; then 
-	  echo "Running libtoolize..."
-	  libtoolize --force --copy
-	fi
-      fi
-      echo "Running aclocal $aclocalinclude ..."
-      aclocal $aclocalinclude
-      if grep "^AC_CONFIG_HEADERS" configure.ac >/dev/null; then
-	echo "Running autoheader..."
-	autoheader
-      fi
-      echo "Running automake --add-missing --gnu -Wno-portability $am_opt ..."
-      automake --add-missing --gnu -Wno-portability $am_opt
-      echo "Running autoconf ..."
-      autoconf
+if grep "^LT_INIT" configure.ac >/dev/null; then
+  if test -z "$NO_LIBTOOLIZE" ; then
+    echo "Running libtoolize..."
+    libtoolize --force --copy
+  fi
+fi
 
-intltoolize --copy --force --automake                  || exit 1
+echo "Running intltoolize ..."
+intltoolize --copy --force --automake
+
+echo "Running aclocal $aclocalinclude ..."
+aclocal $aclocalinclude
+
+if grep "^AC_CONFIG_HEADERS" configure.ac >/dev/null; then
+  echo "Running autoheader..."
+  autoheader
+fi
+
+echo "Running automake --add-missing --gnu -Wno-portability $am_opt ..."
+automake --add-missing --gnu -Wno-portability $am_opt
+
+echo "Running autoconf ..."
+autoconf
+
 
 conf_flags="--enable-maintainer-mode --enable-gtk-doc"
 
