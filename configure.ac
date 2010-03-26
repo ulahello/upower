@@ -263,4 +263,5 @@ echo "
         Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building api docs:          ${enable_gtk_doc}
         Building man pages:         ${enable_man_pages}
+        Building unit tests:        ${enable_tests}
 "
