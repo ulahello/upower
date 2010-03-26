@@ -95,7 +95,8 @@ upowerd_LDADD =							\
 	$(GIO_LIBS)						\
 	$(DBUS_GLIB_LIBS)					\
 	$(POLKIT_LIBS)						\
-	$(UPOWER_LIBS)
+	$(UPOWER_LIBS)						\
+	$(DEVKIT_POWER_LIBS)
 
 if BACKEND_TYPE_DUMMY
 upowerd_LDADD += 						\
@@ -104,15 +105,13 @@ endif
 
 if BACKEND_TYPE_FREEBSD
 upowerd_LDADD +=						\
-	freebsd/libupshared.la					\
-	$(DEVKIT_POWER_LIBS)
+	freebsd/libupshared.la
 endif
 
 if BACKEND_TYPE_LINUX
 upowerd_LDADD += 						\
 	linux/libupshared.la					\
-	$(GUDEV_LIBS)						\
-	$(DEVKIT_POWER_LIBS)
+	$(GUDEV_LIBS)
 endif
 
 upowerd_CFLAGS =						\

@@ -3,7 +3,6 @@
 INCLUDES = \
 	-I$(top_builddir)/src -I$(top_srcdir)/src		\
 	-DUP_COMPILATION					\
-	-I$(top_srcdir)/devkit-power-gobject			\
 	-I$(top_srcdir)/libupower-glib				\
 	$(DBUS_GLIB_CFLAGS)					\
 	$(POLKIT_CFLAGS)					\
