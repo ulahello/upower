@@ -484,7 +484,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 				     energy_full, energy_full_design);
 
 		/* some systems don't have this */
-		if (energy_full < 0.01) {
+		if (energy_full < 0.01 && energy_full_design > 0.01) {
 			egg_warning ("correcting energy_full (%f) using energy_full_design (%f)",
 				     energy_full, energy_full_design);
 			energy_full = energy_full_design;
