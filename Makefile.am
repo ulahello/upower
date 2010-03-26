@@ -2,9 +2,11 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = devkit-power-gobject libupower-glib src doc tools policy po $(UDEV_RULES)
+SUBDIRS = devkit-power-gobject libupower-glib src doc tools policy po
 
-DIST_SUBDIRS = devkit-power-gobject libupower-glib src doc tools policy po rules
+if BACKEND_TYPE_LINUX
+SUBDIRS += rules
+endif
 
 # Creating ChangeLog from git log (taken from cairo/Makefile.am):
 ChangeLog: $(srcdir)/ChangeLog
