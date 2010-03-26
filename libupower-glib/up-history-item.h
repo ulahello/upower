@@ -60,9 +60,13 @@ void		 up_history_item_set_value		(UpHistoryItem		*history_item,
 guint		 up_history_item_get_time		(UpHistoryItem		*history_item);
 void		 up_history_item_set_time		(UpHistoryItem		*history_item,
 							 guint			 time);
+void		 up_history_item_set_time_to_present	(UpHistoryItem		*history_item);
 UpDeviceState	 up_history_item_get_state		(UpHistoryItem		*history_item);
 void		 up_history_item_set_state		(UpHistoryItem		*history_item,
 							 UpDeviceState		 state);
+gchar		*up_history_item_to_string		(UpHistoryItem		*history_item);
+gboolean	 up_history_item_set_from_string	(UpHistoryItem		*history_item,
+							 const gchar		*text);
 
 G_END_DECLS
 

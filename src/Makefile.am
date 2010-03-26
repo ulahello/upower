@@ -14,9 +14,8 @@ INCLUDES = \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT			\
 	-DG_UDEV_API_IS_SUBJECT_TO_CHANGE			\
 	-DUP_COMPILATION					\
-	-DUP_DISABLE_DEPRECATED				\
+	-DUP_DISABLE_DEPRECATED					\
 	-I$(top_srcdir)/libupower-glib				\
-	-I$(top_srcdir)/devkit-power-gobject			\
 	-I$(top_srcdir)						\
 	$(GIO_CFLAGS)						\
 	$(DBUS_GLIB_CFLAGS)					\
@@ -24,7 +23,6 @@ INCLUDES = \
 	$(POLKIT_CFLAGS)					\
 	$(GLIB_CFLAGS)
 
-DEVKIT_POWER_LIBS = $(top_builddir)/devkit-power-gobject/libdevkit-power-gobject.la
 UPOWER_LIBS = $(top_builddir)/libupower-glib/libupower-glib.la
 
 BUILT_SOURCES =							\
@@ -95,8 +93,7 @@ upowerd_LDADD =							\
 	$(GIO_LIBS)						\
 	$(DBUS_GLIB_LIBS)					\
 	$(POLKIT_LIBS)						\
-	$(UPOWER_LIBS)						\
-	$(DEVKIT_POWER_LIBS)
+	$(UPOWER_LIBS)
 
 if BACKEND_TYPE_DUMMY
 upowerd_LDADD += 						\
@@ -152,7 +149,6 @@ up_self_test_LDADD =						\
 	$(GLIB_LIBS)						\
 	$(GIO_CFLAGS)						\
 	$(DBUS_GLIB_LIBS)					\
-	$(DEVKIT_POWER_LIBS)					\
 	$(POLKIT_LIBS)						\
 	$(UPOWER_LIBS)
 

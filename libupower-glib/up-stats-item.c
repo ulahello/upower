@@ -96,6 +96,12 @@ void
 up_stats_item_set_accuracy (UpStatsItem *stats_item, gdouble accuracy)
 {
 	g_return_if_fail (UP_IS_STATS_ITEM (stats_item));
+
+	/* constrain */
+	if (accuracy < 0.0f)
+		accuracy = 0.0f;
+	else if (accuracy > 100.0f)
+		accuracy = 100.0f;
 	stats_item->priv->accuracy = accuracy;
 	g_object_notify (G_OBJECT(stats_item), "accuracy");
 }

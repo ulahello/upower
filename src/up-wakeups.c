@@ -33,7 +33,7 @@
 #include "up-daemon.h"
 #include "up-marshal.h"
 #include "up-wakeups-glue.h"
-#include "up-wakeups-obj.h"
+#include "up-wakeup-item.h"
 
 static void     up_wakeups_finalize   (GObject		*object);
 static gboolean	up_wakeups_timerstats_enable (UpWakeups *wakeups);
@@ -109,14 +109,18 @@ out:
 }
 
 /**
- * up_wakeups_data_obj_compare:
+ * up_wakeups_data_item_compare:
  **/
 static gint
-up_wakeups_data_obj_compare (const UpWakeupsObj **obj1, const UpWakeupsObj **obj2)
+up_wakeups_data_item_compare (UpWakeupItem **item1, UpWakeupItem **item2)
 {
-	if ((*obj1)->value > (*obj2)->value)
+	gdouble val1;
+	gdouble val2;
+	val1 = up_wakeup_item_get_value (*item1);
+	val2 = up_wakeup_item_get_value (*item2);
+	if (val1 > val2)
 		return -1;
-	if ((*obj1)->value < (*obj2)->value)
+	if (val1 < val2)
 		return 1;
 	return -0;
 }
@@ -124,22 +128,22 @@ up_wakeups_data_obj_compare (const UpWakeupsObj **obj1, const UpWakeupsObj **obj
 /**
  * up_wakeups_data_get_or_create:
  **/
-static UpWakeupsObj *
+static UpWakeupItem *
 up_wakeups_data_get_or_create (UpWakeups *wakeups, guint id)
 {
 	guint i;
-	UpWakeupsObj *obj;
+	UpWakeupItem *item;
 
 	for (i=0; i<wakeups->priv->data->len; i++) {
-		obj = g_ptr_array_index (wakeups->priv->data, i);
-		if (obj->id == id)
+		item = g_ptr_array_index (wakeups->priv->data, i);
+		if (up_wakeup_item_get_id (item) == id)
 			goto out;
 	}
-	obj = up_wakeups_obj_new ();
-	obj->id = id;
-	g_ptr_array_add (wakeups->priv->data, obj);
+	item = up_wakeup_item_new ();
+	up_wakeup_item_set_id (item, id);
+	g_ptr_array_add (wakeups->priv->data, item);
 out:
-	return obj;
+	return item;
 }
 
 /**
@@ -150,11 +154,11 @@ up_wakeups_data_get_total (UpWakeups *wakeups)
 {
 	guint i;
 	gfloat total = 0;
-	UpWakeupsObj *obj;
+	UpWakeupItem *item;
 
 	for (i=0; i<wakeups->priv->data->len; i++) {
-		obj = g_ptr_array_index (wakeups->priv->data, i);
-		total += obj->value;
+		item = g_ptr_array_index (wakeups->priv->data, i);
+		total += up_wakeup_item_get_value (item);
 	}
 	return (guint) total;
 }
@@ -197,7 +201,7 @@ up_wakeups_get_data (UpWakeups *wakeups, GPtrArray **data, GError **error)
 {
 	guint i;
 	GPtrArray *array;
-	UpWakeupsObj *obj;
+	UpWakeupItem *item;
 
 	/* no capability */
 	if (!wakeups->priv->has_capability) {
@@ -209,24 +213,24 @@ up_wakeups_get_data (UpWakeups *wakeups, GPtrArray **data, GError **error)
 	up_wakeups_timerstats_enable (wakeups);
 
 	/* sort data */
-	g_ptr_array_sort (wakeups->priv->data, (GCompareFunc) up_wakeups_data_obj_compare);
+	g_ptr_array_sort (wakeups->priv->data, (GCompareFunc) up_wakeups_data_item_compare);
 
 	*data = g_ptr_array_new ();
 	array = wakeups->priv->data;
 	for (i=0; i<array->len; i++) {
 		GValue elem = {0};
 
-		obj = g_ptr_array_index (array, i);
-		if (obj->value < UP_WAKEUPS_SMALLEST_VALUE)
+		item = g_ptr_array_index (array, i);
+		if (up_wakeup_item_get_value (item) < UP_WAKEUPS_SMALLEST_VALUE)
 			continue;
 		g_value_init (&elem, UP_WAKEUPS_REQUESTS_STRUCT_TYPE);
 		g_value_take_boxed (&elem, dbus_g_type_specialized_construct (UP_WAKEUPS_REQUESTS_STRUCT_TYPE));
 		dbus_g_type_struct_set (&elem,
-					0, obj->is_userspace,
-					1, obj->id,
-					2, obj->value,
-					3, obj->cmdline,
-					4, obj->details,
+					0, up_wakeup_item_get_is_userspace (item),
+					1, up_wakeup_item_get_id (item),
+					2, up_wakeup_item_get_value (item),
+					3, up_wakeup_item_get_cmdline (item),
+					4, up_wakeup_item_get_details (item),
 					G_MAXUINT);
 		g_ptr_array_add (*data, g_value_get_boxed (&elem));
 	}
@@ -341,15 +345,15 @@ up_wakeups_poll_kernel_cb (UpWakeups *wakeups)
 	guint irq;
 	guint interrupts;
 	GPtrArray *sections;
-	UpWakeupsObj *obj;
+	UpWakeupItem *item;
 
 	egg_debug ("event");
 
 	/* set all kernel data objs to zero */
 	for (i=0; i<wakeups->priv->data->len; i++) {
-		obj = g_ptr_array_index (wakeups->priv->data, i);
-		if (!obj->is_userspace)
-			obj->value = 0.0f;
+		item = g_ptr_array_index (wakeups->priv->data, i);
+		if (!up_wakeup_item_get_is_userspace (item))
+			up_wakeup_item_set_value (item, 0.0f);
 	}
 
 	/* get the data */
@@ -415,8 +419,8 @@ up_wakeups_poll_kernel_cb (UpWakeups *wakeups)
 		found = g_ptr_array_index (sections, cpus+1);
 
 		/* save in database */
-		obj = up_wakeups_data_get_or_create (wakeups, irq);
-		if (obj->details == NULL) {
+		item = up_wakeups_data_get_or_create (wakeups, irq);
+		if (up_wakeup_item_get_details (item) == NULL) {
 
 			/* remove the interrupt type */
 			found2 = strstr (found, "IO-APIC-fasteoi");
@@ -425,19 +429,19 @@ up_wakeups_poll_kernel_cb (UpWakeups *wakeups)
 			found2 = strstr (found, "IO-APIC-edge");
 			if (found2 != NULL)
 				found = g_strchug ((gchar*)found2+14);
-			obj->details = g_strdup (found);
+			up_wakeup_item_set_details (item, found);
 
 			/* we special */
 			if (special_ipi)
-				obj->cmdline = g_strdup ("kernel-ipi");
+				up_wakeup_item_set_cmdline (item, "kernel-ipi");
 			else
-				obj->cmdline = g_strdup ("interrupt");
-			obj->is_userspace = FALSE;
+				up_wakeup_item_set_cmdline (item, "interrupt");
+			up_wakeup_item_set_is_userspace (item, FALSE);
 		}
 		/* we report this in minutes, not seconds */
-		if (obj->old > 0)
-			obj->value = (interrupts - obj->old) / (gfloat) UP_WAKEUPS_POLL_INTERVAL_KERNEL;
-		obj->old = interrupts;
+		if (up_wakeup_item_get_old (item) > 0)
+			up_wakeup_item_set_value (item, (interrupts - up_wakeup_item_get_old (item)) / (gfloat) UP_WAKEUPS_POLL_INTERVAL_KERNEL);
+		up_wakeup_item_set_old (item, interrupts);
 skip:
 		g_ptr_array_unref (sections);
 	}
@@ -462,7 +466,7 @@ up_wakeups_poll_userspace_cb (UpWakeups *wakeups)
 	gchar *data = NULL;
 	gchar **lines = NULL;
 	const gchar *string;
-	UpWakeupsObj *obj;
+	UpWakeupItem *item;
 	GPtrArray *sections;
 	guint pid;
 	guint interrupts;
@@ -472,9 +476,9 @@ up_wakeups_poll_userspace_cb (UpWakeups *wakeups)
 
 	/* set all userspace data objs to zero */
 	for (i=0; i<wakeups->priv->data->len; i++) {
-		obj = g_ptr_array_index (wakeups->priv->data, i);
-		if (obj->is_userspace)
-			obj->value = 0.0f;
+		item = g_ptr_array_index (wakeups->priv->data, i);
+		if (up_wakeup_item_get_is_userspace (item))
+			up_wakeup_item_set_value (item, 0.0f);
 	}
 
 	/* get the data */
@@ -533,27 +537,28 @@ up_wakeups_poll_userspace_cb (UpWakeups *wakeups)
 		/* get details */
 
 		/* save in database */
-		obj = up_wakeups_data_get_or_create (wakeups, pid);
-		if (obj->details == NULL) {
+		item = up_wakeups_data_get_or_create (wakeups, pid);
+		if (up_wakeup_item_get_details (item) == NULL) {
 			/* get process name (truncated) */
 			string = g_ptr_array_index (sections, 2);
 			if (strcmp (string, "insmod") == 0 ||
 			    strcmp (string, "modprobe") == 0 ||
 			    strcmp (string, "swapper") == 0) {
-				obj->cmdline = g_strdup (string);
-				obj->is_userspace = FALSE;
+				up_wakeup_item_set_cmdline (item, string);
+				up_wakeup_item_set_is_userspace (item, FALSE);
 			} else {
 				/* try to get a better command line */
-				obj->cmdline = up_wakeups_get_cmdline (pid);
-				if (obj->cmdline == NULL || obj->cmdline[0] == '\0')
-					obj->cmdline = g_strdup (string);
-				obj->is_userspace = TRUE;
+				up_wakeup_item_set_cmdline (item, up_wakeups_get_cmdline (pid));
+				if (up_wakeup_item_get_cmdline (item) == NULL ||
+				    up_wakeup_item_get_cmdline (item)[0] == '\0')
+					up_wakeup_item_set_cmdline (item, string);
+				up_wakeup_item_set_is_userspace (item, TRUE);
 			}
 			string = g_ptr_array_index (sections, 3);
-			obj->details = g_strdup (string);
+			up_wakeup_item_set_details (item, string);
 		}
 		/* we report this in minutes, not seconds */
-		obj->value = (gfloat) interrupts / interval;
+		up_wakeup_item_set_value (item, (gfloat) interrupts / interval);
 skip:
 		g_ptr_array_unref (sections);
 
@@ -717,7 +722,7 @@ up_wakeups_init (UpWakeups *wakeups)
 	GError *error = NULL;
 
 	wakeups->priv = UP_WAKEUPS_GET_PRIVATE (wakeups);
-	wakeups->priv->data = g_ptr_array_new_with_free_func ((GDestroyNotify) up_wakeups_obj_free);
+	wakeups->priv->data = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	wakeups->priv->total_old = 0;
 	wakeups->priv->total_ave = 0;
 	wakeups->priv->poll_userspace_id = 0;

@@ -37,8 +37,8 @@
 #include "up-native.h"
 #include "up-device.h"
 #include "up-history.h"
-#include "up-history-obj.h"
-#include "up-stats-obj.h"
+#include "up-history-item.h"
+#include "up-stats-item.h"
 #include "up-marshal.h"
 #include "up-device-glue.h"
 
@@ -596,7 +596,7 @@ up_device_get_statistics (UpDevice *device, const gchar *type, DBusGMethodInvoca
 	GError *error;
 	GPtrArray *array = NULL;
 	GPtrArray *complex;
-	const UpStatsObj *obj;
+	UpStatsItem *item;
 	GValue *value;
 	guint i;
 
@@ -633,11 +633,13 @@ up_device_get_statistics (UpDevice *device, const gchar *type, DBusGMethodInvoca
 	/* copy data to dbus struct */
 	complex = g_ptr_array_sized_new (array->len);
 	for (i=0; i<array->len; i++) {
-		obj = (const UpStatsObj *) g_ptr_array_index (array, i);
+		item = (UpStatsItem *) g_ptr_array_index (array, i);
 		value = g_new0 (GValue, 1);
 		g_value_init (value, UP_DBUS_STRUCT_DOUBLE_DOUBLE);
 		g_value_take_boxed (value, dbus_g_type_specialized_construct (UP_DBUS_STRUCT_DOUBLE_DOUBLE));
-		dbus_g_type_struct_set (value, 0, obj->value, 1, obj->accuracy, -1);
+		dbus_g_type_struct_set (value,
+					0, up_stats_item_get_value (item),
+					1, up_stats_item_get_accuracy (item), -1);
 		g_ptr_array_add (complex, g_value_get_boxed (value));
 		g_free (value);
 	}
@@ -658,7 +660,7 @@ up_device_get_history (UpDevice *device, const gchar *type_string, guint timespa
 	GError *error;
 	GPtrArray *array = NULL;
 	GPtrArray *complex;
-	const UpHistoryObj *obj;
+	UpHistoryItem *item;
 	GValue *value;
 	guint i;
 	UpHistoryType type = UP_HISTORY_TYPE_UNKNOWN;
@@ -697,20 +699,22 @@ up_device_get_history (UpDevice *device, const gchar *type_string, guint timespa
 	/* copy data to dbus struct */
 	complex = g_ptr_array_sized_new (array->len);
 	for (i=0; i<array->len; i++) {
-		obj = (const UpHistoryObj *) g_ptr_array_index (array, i);
+		item = (UpHistoryItem *) g_ptr_array_index (array, i);
 		value = g_new0 (GValue, 1);
 		g_value_init (value, UP_DBUS_STRUCT_UINT_DOUBLE_UINT);
 		g_value_take_boxed (value, dbus_g_type_specialized_construct (UP_DBUS_STRUCT_UINT_DOUBLE_UINT));
-		dbus_g_type_struct_set (value, 0, obj->time, 1, obj->value, 2, obj->state, -1);
+		dbus_g_type_struct_set (value,
+					0, up_history_item_get_time (item),
+					1, up_history_item_get_value (item),
+					2, up_history_item_get_state (item), -1);
 		g_ptr_array_add (complex, g_value_get_boxed (value));
 		g_free (value);
 	}
 
 	dbus_g_method_return (context, complex);
 out:
-	if (array != NULL) {
+	if (array != NULL)
 		g_ptr_array_unref (array);
-	}
 	return TRUE;
 }
 

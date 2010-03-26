@@ -32,6 +32,7 @@
 #include "config.h"
 
 #include <glib.h>
+#include <stdlib.h>
 
 #include "up-history-item.h"
 
@@ -108,6 +109,26 @@ up_history_item_set_time (UpHistoryItem *history_item, guint time)
 }
 
 /**
+ * up_history_item_set_time_to_present:
+ * @history_item: #UpHistoryItem
+ *
+ * Sets the item time to the present value.
+ *
+ * Since: 0.9.1
+ **/
+void
+up_history_item_set_time_to_present (UpHistoryItem *history_item)
+{
+	GTimeVal timeval;
+
+	g_return_if_fail (UP_IS_HISTORY_ITEM (history_item));
+
+	g_get_current_time (&timeval);
+	history_item->priv->time = timeval.tv_sec;
+	g_object_notify (G_OBJECT(history_item), "time");
+}
+
+/**
  * up_history_item_get_time:
  * @history_item: #UpHistoryItem
  *
@@ -152,6 +173,62 @@ up_history_item_get_state (UpHistoryItem *history_item)
 {
 	g_return_val_if_fail (UP_IS_HISTORY_ITEM (history_item), G_MAXUINT);
 	return history_item->priv->state;
+}
+
+/**
+ * up_history_item_to_string:
+ * @history_item: #UpHistoryItem
+ *
+ * Converts the history item to a string representation.
+ *
+ * Since: 0.9.1
+ **/
+gchar *
+up_history_item_to_string (UpHistoryItem *history_item)
+{
+	g_return_val_if_fail (UP_IS_HISTORY_ITEM (history_item), NULL);
+	return g_strdup_printf ("%i\t%.3f\t%s",
+				history_item->priv->time,
+				history_item->priv->value,
+				up_device_state_to_string (history_item->priv->state));
+}
+
+/**
+ * up_history_item_set_from_string:
+ * @history_item: #UpHistoryItem
+ *
+ * Converts the history item to a string representation.
+ *
+ * Since: 0.9.1
+ **/
+gboolean
+up_history_item_set_from_string (UpHistoryItem *history_item, const gchar *text)
+{
+	gchar **parts = NULL;
+	guint length;
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (UP_IS_HISTORY_ITEM (history_item), FALSE);
+	g_return_val_if_fail (text != NULL, FALSE);
+
+	/* split by tab */
+	parts = g_strsplit (text, "\t", 0);
+	length = g_strv_length (parts);
+	if (length != 3) {
+		g_warning ("invalid string: '%s'", text);
+		goto out;
+	}
+
+	/* parse */
+	up_history_item_set_time (history_item, atoi (parts[0]));
+	up_history_item_set_value (history_item, atof (parts[1]));
+	up_history_item_set_state (history_item, up_device_state_from_string (parts[2]));
+
+	/* success */
+	ret = TRUE;
+out:
+	g_strfreev (parts);
+	return ret;
 }
 
 /**

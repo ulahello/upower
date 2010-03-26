@@ -29,8 +29,8 @@
 
 #include "egg-debug.h"
 #include "up-history.h"
-#include "up-stats-obj.h"
-#include "up-history-obj.h"
+#include "up-stats-item.h"
+#include "up-history-item.h"
 
 static void	up_history_finalize	(GObject		*object);
 
@@ -65,9 +65,9 @@ G_DEFINE_TYPE (UpHistory, up_history, G_TYPE_OBJECT)
  * up_history_array_copy_cb:
  **/
 static void
-up_history_array_copy_cb (const UpHistoryObj *obj, GPtrArray *dest)
+up_history_array_copy_cb (UpHistoryItem *item, GPtrArray *dest)
 {
-	g_ptr_array_add (dest, up_history_obj_copy (obj));
+	g_ptr_array_add (dest, g_object_ref (item));
 }
 
 /**
@@ -106,8 +106,8 @@ up_history_array_copy_cb (const UpHistoryObj *obj, GPtrArray *dest)
 static GPtrArray *
 up_history_array_limit_resolution (GPtrArray *array, guint max_num)
 {
-	const UpHistoryObj *obj;
-	UpHistoryObj *nobj;
+	UpHistoryItem *item;
+	UpHistoryItem *item_new;
 	gfloat division;
 	guint length;
 	gint i;
@@ -121,7 +121,7 @@ up_history_array_limit_resolution (GPtrArray *array, guint max_num)
 	guint step = 1;
 	gfloat preset;
 
-	new = g_ptr_array_new_with_free_func ((GDestroyNotify) up_history_obj_free);
+	new = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	egg_debug ("length of array (before) %i", array->len);
 
 	/* check length */
@@ -135,10 +135,10 @@ up_history_array_limit_resolution (GPtrArray *array, guint max_num)
 	}
 
 	/* last element */
-	obj = (const UpHistoryObj *) g_ptr_array_index (array, length-1);
-	last = obj->time;
-	obj = (const UpHistoryObj *) g_ptr_array_index (array, 0);
-	first = obj->time;
+	item = (UpHistoryItem *) g_ptr_array_index (array, length-1);
+	last = up_history_item_get_time (item);
+	item = (UpHistoryItem *) g_ptr_array_index (array, 0);
+	first = up_history_item_get_time (item);
 
 	division = (first - last) / (gfloat) max_num;
 	egg_debug ("Using a x division of %f (first=%i,last=%i)", division, first, last);
@@ -147,36 +147,38 @@ up_history_array_limit_resolution (GPtrArray *array, guint max_num)
 	 * division algorithm so we don't keep diluting the previous
 	 * data with a conventional 1-in-x type algorithm. */
 	for (i=length-1; i>=0; i--) {
-		obj = (const UpHistoryObj *) g_ptr_array_index (array, i);
+		item = (UpHistoryItem *) g_ptr_array_index (array, i);
 		preset = last + (division * (gfloat) step);
 
 		/* if state changed or we went over the preset do a new point */
-		if (count > 0 && (obj->time > preset || obj->state != state)) {
-			nobj = up_history_obj_new ();
-			nobj->time = time_s / count;
-			nobj->value = value / count;
-			nobj->state = state;
-			g_ptr_array_add (new, nobj);
+		if (count > 0 &&
+		    (up_history_item_get_time (item) > preset ||
+		     up_history_item_get_state (item) != state)) {
+			item_new = up_history_item_new ();
+			up_history_item_set_time (item_new, time_s / count);
+			up_history_item_set_value (item_new, value / count);
+			up_history_item_set_state (item_new, state);
+			g_ptr_array_add (new, item_new);
 
 			step++;
-			time_s = obj->time;
-			value = obj->value;
-			state = obj->state;
+			time_s = up_history_item_get_time (item);
+			value = up_history_item_get_value (item);
+			state = up_history_item_get_state (item);
 			count = 1;
 		} else {
 			count++;
-			time_s += obj->time;
-			value += obj->value;
+			time_s += up_history_item_get_time (item);
+			value += up_history_item_get_value (item);
 		}
 	}
 
 	/* only add if nonzero */
 	if (count > 0) {
-		nobj = up_history_obj_new ();
-		nobj->time = time_s / count;
-		nobj->value = value / count;
-		nobj->state = state;
-		g_ptr_array_add (new, nobj);
+		item_new = up_history_item_new ();
+		up_history_item_set_time (item_new, time_s / count);
+		up_history_item_set_value (item_new, value / count);
+		up_history_item_set_state (item_new, state);
+		g_ptr_array_add (new, item_new);
 	}
 
 	/* check length */
@@ -192,7 +194,7 @@ static GPtrArray *
 up_history_copy_array_timespan (const GPtrArray *array, guint timespan)
 {
 	guint i;
-	const UpHistoryObj *obj;
+	UpHistoryItem *item;
 	GPtrArray *array_new;
 	GTimeVal timeval;
 
@@ -203,13 +205,14 @@ up_history_copy_array_timespan (const GPtrArray *array, guint timespan)
 	/* new data */
 	array_new = g_ptr_array_new ();
 	g_get_current_time (&timeval);
+	egg_debug ("limiting data to last %i seconds", timespan);
 
 	/* treat the timespan like a range, and search backwards */
 	timespan *= 0.95f;
 	for (i=array->len-1; i>0; i--) {
-		obj = (const UpHistoryObj *) g_ptr_array_index (array, i);
-		if (timeval.tv_sec - obj->time < timespan)
-			g_ptr_array_add (array_new, up_history_obj_copy (obj));
+		item = (UpHistoryItem *) g_ptr_array_index (array, i);
+		if (timeval.tv_sec - up_history_item_get_time (item) < timespan)
+			g_ptr_array_add (array_new, g_object_ref (item));
 	}
 
 	return array_new;
@@ -266,10 +269,10 @@ up_history_get_profile_data (UpHistory *history, gboolean charging)
 	gfloat average = 0.0f;
 	guint bin;
 	guint oldbin = 999;
-	const UpHistoryObj *obj_last = NULL;
-	const UpHistoryObj *obj;
-	const UpHistoryObj *obj_old = NULL;
-	UpStatsObj *stats;
+	UpHistoryItem *item_last = NULL;
+	UpHistoryItem *item;
+	UpHistoryItem *item_old = NULL;
+	UpStatsItem *stats;
 	GPtrArray *array;
 	GPtrArray *data;
 	guint time_s;
@@ -281,20 +284,21 @@ up_history_get_profile_data (UpHistory *history, gboolean charging)
 	/* create 100 item list and set to zero */
 	data = g_ptr_array_new ();
 	for (i=0; i<101; i++) {
-		stats = up_stats_obj_create (0.0f, 0.0f);
+		stats = up_stats_item_new ();
 		g_ptr_array_add (data, stats);
 	}
 
 	array = history->priv->data_charge;
 	for (i=0; i<array->len; i++) {
-		obj = (const UpHistoryObj *) g_ptr_array_index (array, i);
-		if (obj_last == NULL || obj->state != obj_last->state) {
-			obj_old = NULL;
+		item = (UpHistoryItem *) g_ptr_array_index (array, i);
+		if (item_last == NULL ||
+		    up_history_item_get_state (item) != up_history_item_get_state (item_last)) {
+			item_old = NULL;
 			goto cont;
 		}
 
 		/* round to the nearest int */
-		bin = rint (obj->value);
+		bin = rint (up_history_item_get_value (item));
 
 		/* ensure bin is in range */
 		if (bin >= data->len)
@@ -303,45 +307,45 @@ up_history_get_profile_data (UpHistory *history, gboolean charging)
 		/* different */
 		if (oldbin != bin) {
 			oldbin = bin;
-			if (obj_old != NULL) {
+			if (item_old != NULL) {
 				/* not enough or too much difference */
-				value = fabs (obj->value - obj_old->value);
+				value = fabs (up_history_item_get_value (item) - up_history_item_get_value (item_old));
 				if (value < 0.01f) {
-					obj_old = NULL;
+					item_old = NULL;
 					goto cont;
 				}
 				if (value > 3.0f) {
-					obj_old = NULL;
+					item_old = NULL;
 					goto cont;
 				}
 
-				time_s = obj->time - obj_old->time;
+				time_s = up_history_item_get_time (item) - up_history_item_get_time (item_old);
 				/* use the accuracy field as a counter for now */
-				if ((charging && obj->state == UP_DEVICE_STATE_CHARGING) ||
-				    (!charging && obj->state == UP_DEVICE_STATE_DISCHARGING)) {
-					stats = (UpStatsObj *) g_ptr_array_index (data, bin);
-					stats->value += time_s;
-					stats->accuracy++;
+				if ((charging && up_history_item_get_state (item) == UP_DEVICE_STATE_CHARGING) ||
+				    (!charging && up_history_item_get_state (item) == UP_DEVICE_STATE_DISCHARGING)) {
+					stats = (UpStatsItem *) g_ptr_array_index (data, bin);
+					up_stats_item_set_value (stats, up_stats_item_get_value (stats) + time_s);
+					up_stats_item_set_accuracy (stats, up_stats_item_get_accuracy (stats) + 1);
 				}
 			}
-			obj_old = obj;
+			item_old = item;
 		}
 cont:
-		obj_last = obj;
+		item_last = item;
 	}
 
 	/* divide the value by the number of samples to make the average */
 	for (i=0; i<101; i++) {
-		stats = (UpStatsObj *) g_ptr_array_index (data, i);
-		if (stats->accuracy != 0)
-			stats->value = stats->value / stats->accuracy;
+		stats = (UpStatsItem *) g_ptr_array_index (data, i);
+		if (up_stats_item_get_accuracy (stats) != 0)
+			up_stats_item_set_value (stats, up_stats_item_get_value (stats) / up_stats_item_get_accuracy (stats));
 	}
 
 	/* find non-zero accuracy values for the average */
 	for (i=0; i<101; i++) {
-		stats = (UpStatsObj *) g_ptr_array_index (data, i);
-		if (stats->accuracy > 0) {
-			total_value += stats->value;
+		stats = (UpStatsItem *) g_ptr_array_index (data, i);
+		if (up_stats_item_get_accuracy (stats) > 0) {
+			total_value += up_stats_item_get_value (stats);
 			non_zero_accuracy++;
 		}
 	}
@@ -354,19 +358,17 @@ cont:
 	/* make the values a factor of 0, so that 1.0 is twice the
 	 * average, and -1.0 is half the average */
 	for (i=0; i<101; i++) {
-		stats = (UpStatsObj *) g_ptr_array_index (data, i);
-		if (stats->accuracy > 0)
-			stats->value = (stats->value - average) / average;
+		stats = (UpStatsItem *) g_ptr_array_index (data, i);
+		if (up_stats_item_get_accuracy (stats) > 0)
+			up_stats_item_set_value (stats, (up_stats_item_get_value (stats) - average) / average);
 		else
-			stats->value = 0.0f;
+			up_stats_item_set_value (stats, 0.0f);
 	}
 
 	/* accuracy is a percentage scale, where each cycle = 20% */
 	for (i=0; i<101; i++) {
-		stats = (UpStatsObj *) g_ptr_array_index (data, i);
-		stats->accuracy *= 20;
-		if (stats->accuracy > 100.0f)
-			stats->accuracy = 100.0f;
+		stats = (UpStatsItem *) g_ptr_array_index (data, i);
+		up_stats_item_set_accuracy (stats, up_stats_item_get_accuracy (stats) * 20.0f);
 	}
 
 	return data;
@@ -398,7 +400,7 @@ static gboolean
 up_history_array_to_file (GPtrArray *list, const gchar *filename)
 {
 	guint i;
-	const UpHistoryObj *obj;
+	UpHistoryItem *item;
 	gchar *part;
 	GString *string;
 	gboolean ret = TRUE;
@@ -407,8 +409,8 @@ up_history_array_to_file (GPtrArray *list, const gchar *filename)
 	/* generate data */
 	string = g_string_new ("");
 	for (i=0; i<list->len; i++) {
-		obj = g_ptr_array_index (list, i);
-		part = up_history_obj_to_string (obj);
+		item = g_ptr_array_index (list, i);
+		part = up_history_item_to_string (item);
 		if (part == NULL) {
 			ret = FALSE;
 			break;
@@ -454,7 +456,7 @@ up_history_array_from_file (GPtrArray *list, const gchar *filename)
 	gchar **parts = NULL;
 	guint i;
 	guint length;
-	UpHistoryObj *obj;
+	UpHistoryItem *item;
 
 	/* do we exist */
 	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
@@ -482,9 +484,10 @@ up_history_array_from_file (GPtrArray *list, const gchar *filename)
 	/* add valid entries */
 	egg_debug ("loading %i items of data from %s", length, filename);
 	for (i=0; i<length-1; i++) {
-		obj = up_history_obj_from_string (parts[i]);
-		if (obj != NULL)
-			g_ptr_array_add (list, obj);
+		item = up_history_item_new ();
+		ret = up_history_item_set_from_string (item, parts[i]);
+		if (ret)
+			g_ptr_array_add (list, item);
 	}
 
 out:
@@ -548,7 +551,7 @@ static gboolean
 up_history_is_low_power (UpHistory *history)
 {
 	guint length;
-	const UpHistoryObj *obj;
+	UpHistoryItem *item;
 
 	/* current status is always up to date */
 	if (history->priv->state != UP_DEVICE_STATE_DISCHARGING)
@@ -560,12 +563,12 @@ up_history_is_low_power (UpHistory *history)
 		return FALSE;
 
 	/* get the last saved charge object */
-	obj = (const UpHistoryObj *) g_ptr_array_index (history->priv->data_charge, length-1);
-	if (obj->state != UP_DEVICE_STATE_DISCHARGING)
+	item = (UpHistoryItem *) g_ptr_array_index (history->priv->data_charge, length-1);
+	if (up_history_item_get_state (item) != UP_DEVICE_STATE_DISCHARGING)
 		return FALSE;
 
 	/* high enough */
-	if (obj->value > 10)
+	if (up_history_item_get_value (item) > 10)
 		return FALSE;
 
 	/* we are low power */
@@ -609,7 +612,7 @@ static gboolean
 up_history_load_data (UpHistory *history)
 {
 	gchar *filename;
-	UpHistoryObj *obj;
+	UpHistoryItem *item;
 
 	/* load rate history from disk */
 	filename = up_history_get_filename (history, "rate");
@@ -632,12 +635,13 @@ up_history_load_data (UpHistory *history)
 	g_free (filename);
 
 	/* save a marker so we don't use incomplete percentages */
-	obj = up_history_obj_create (0, UP_DEVICE_STATE_UNKNOWN);
-	g_ptr_array_add (history->priv->data_rate, up_history_obj_copy (obj));
-	g_ptr_array_add (history->priv->data_charge, up_history_obj_copy (obj));
-	g_ptr_array_add (history->priv->data_time_full, up_history_obj_copy (obj));
-	g_ptr_array_add (history->priv->data_time_empty, up_history_obj_copy (obj));
-	up_history_obj_free (obj);
+	item = up_history_item_new ();
+	up_history_item_set_time_to_present (item);
+	g_ptr_array_add (history->priv->data_rate, g_object_ref (item));
+	g_ptr_array_add (history->priv->data_charge, g_object_ref (item));
+	g_ptr_array_add (history->priv->data_time_full, g_object_ref (item));
+	g_ptr_array_add (history->priv->data_time_empty, g_object_ref (item));
+	g_object_unref (item);
 	up_history_schedule_save (history);
 
 	return TRUE;
@@ -685,7 +689,7 @@ up_history_set_state (UpHistory *history, UpDeviceState state)
 gboolean
 up_history_set_charge_data (UpHistory *history, gdouble percentage)
 {
-	UpHistoryObj *obj;
+	UpHistoryItem *item;
 
 	g_return_val_if_fail (UP_IS_HISTORY (history), FALSE);
 
@@ -697,8 +701,11 @@ up_history_set_charge_data (UpHistory *history, gdouble percentage)
 		return FALSE;
 
 	/* add to array and schedule save file */
-	obj = up_history_obj_create (percentage, history->priv->state);
-	g_ptr_array_add (history->priv->data_charge, obj);
+	item = up_history_item_new ();
+	up_history_item_set_time_to_present (item);
+	up_history_item_set_value (item, percentage);
+	up_history_item_set_state (item, history->priv->state);
+	g_ptr_array_add (history->priv->data_charge, item);
 	up_history_schedule_save (history);
 
 	/* save last value */
@@ -713,7 +720,7 @@ up_history_set_charge_data (UpHistory *history, gdouble percentage)
 gboolean
 up_history_set_rate_data (UpHistory *history, gdouble rate)
 {
-	UpHistoryObj *obj;
+	UpHistoryItem *item;
 
 	g_return_val_if_fail (UP_IS_HISTORY (history), FALSE);
 
@@ -725,8 +732,11 @@ up_history_set_rate_data (UpHistory *history, gdouble rate)
 		return FALSE;
 
 	/* add to array and schedule save file */
-	obj = up_history_obj_create (rate, history->priv->state);
-	g_ptr_array_add (history->priv->data_rate, obj);
+	item = up_history_item_new ();
+	up_history_item_set_time_to_present (item);
+	up_history_item_set_value (item, rate);
+	up_history_item_set_state (item, history->priv->state);
+	g_ptr_array_add (history->priv->data_rate, item);
 	up_history_schedule_save (history);
 
 	/* save last value */
@@ -741,7 +751,7 @@ up_history_set_rate_data (UpHistory *history, gdouble rate)
 gboolean
 up_history_set_time_full_data (UpHistory *history, gint64 time_s)
 {
-	UpHistoryObj *obj;
+	UpHistoryItem *item;
 
 	g_return_val_if_fail (UP_IS_HISTORY (history), FALSE);
 
@@ -755,8 +765,11 @@ up_history_set_time_full_data (UpHistory *history, gint64 time_s)
 		return FALSE;
 
 	/* add to array and schedule save file */
-	obj = up_history_obj_create ((gdouble) time_s, history->priv->state);
-	g_ptr_array_add (history->priv->data_time_full, obj);
+	item = up_history_item_new ();
+	up_history_item_set_time_to_present (item);
+	up_history_item_set_value (item, (gdouble) time_s);
+	up_history_item_set_state (item, history->priv->state);
+	g_ptr_array_add (history->priv->data_time_full, item);
 	up_history_schedule_save (history);
 
 	/* save last value */
@@ -771,7 +784,7 @@ up_history_set_time_full_data (UpHistory *history, gint64 time_s)
 gboolean
 up_history_set_time_empty_data (UpHistory *history, gint64 time_s)
 {
-	UpHistoryObj *obj;
+	UpHistoryItem *item;
 
 	g_return_val_if_fail (UP_IS_HISTORY (history), FALSE);
 
@@ -785,8 +798,11 @@ up_history_set_time_empty_data (UpHistory *history, gint64 time_s)
 		return FALSE;
 
 	/* add to array and schedule save file */
-	obj = up_history_obj_create ((gdouble) time_s, history->priv->state);
-	g_ptr_array_add (history->priv->data_time_empty, obj);
+	item = up_history_item_new ();
+	up_history_item_set_time_to_present (item);
+	up_history_item_set_value (item, (gdouble) time_s);
+	up_history_item_set_state (item, history->priv->state);
+	g_ptr_array_add (history->priv->data_time_empty, item);
 	up_history_schedule_save (history);
 
 	/* save last value */
@@ -819,10 +835,10 @@ up_history_init (UpHistory *history)
 	history->priv->rate_last = 0;
 	history->priv->percentage_last = 0;
 	history->priv->state = UP_DEVICE_STATE_UNKNOWN;
-	history->priv->data_rate = g_ptr_array_new_with_free_func ((GDestroyNotify) up_history_obj_free);
-	history->priv->data_charge = g_ptr_array_new_with_free_func ((GDestroyNotify) up_history_obj_free);
-	history->priv->data_time_full = g_ptr_array_new_with_free_func ((GDestroyNotify) up_history_obj_free);
-	history->priv->data_time_empty = g_ptr_array_new_with_free_func ((GDestroyNotify) up_history_obj_free);
+	history->priv->data_rate = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	history->priv->data_charge = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	history->priv->data_time_full = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	history->priv->data_time_empty = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	history->priv->save_id = 0;
 }
 

@@ -38,7 +38,7 @@
 #include "up-marshal.h"
 #include "up-daemon.h"
 #include "up-polkit.h"
-#include "up-qos-obj.h"
+#include "up-qos-item.h"
 #include "up-qos-glue.h"
 #include "up-types.h"
 
@@ -81,19 +81,19 @@ G_DEFINE_TYPE (UpQos, up_qos, G_TYPE_OBJECT)
 /**
  * up_qos_find_from_cookie:
  **/
-static UpQosObj *
+static UpQosItem *
 up_qos_find_from_cookie (UpQos *qos, guint32 cookie)
 {
 	guint i;
 	GPtrArray *data;
-	UpQosObj *obj;
+	UpQosItem *item;
 
 	/* search list */
 	data = qos->priv->data;
 	for (i=0; i<data->len; i++) {
-		obj = g_ptr_array_index (data, i);
-		if (obj->cookie == cookie)
-			return obj;
+		item = g_ptr_array_index (data, i);
+		if (up_qos_item_get_cookie (item) == cookie)
+			return item;
 	}
 
 	/* nothing found */
@@ -127,14 +127,16 @@ up_qos_get_lowest (UpQos *qos, UpQosKind type)
 	guint i;
 	gint lowest = G_MAXINT;
 	GPtrArray *data;
-	UpQosObj *obj;
+	UpQosItem *item;
 
 	/* find lowest */
 	data = qos->priv->data;
 	for (i=0; i<data->len; i++) {
-		obj = g_ptr_array_index (data, i);
-		if (obj->type == type && obj->value > 0 && obj->value < lowest)
-			lowest = obj->value;
+		item = g_ptr_array_index (data, i);
+		if (up_qos_item_get_kind (item) == type &&
+		    up_qos_item_get_value (item) > 0 &&
+		    up_qos_item_get_value (item) < lowest)
+			lowest = up_qos_item_get_value (item);
 	}
 
 	/* over-ride */
@@ -244,7 +246,7 @@ out:
 void
 up_qos_request_latency (UpQos *qos, const gchar *type_text, gint value, gboolean persistent, DBusGMethodInvocation *context)
 {
-	UpQosObj *obj;
+	UpQosItem *item;
 	gchar *sender = NULL;
 	const gchar *auth;
 	gchar *cmdline = NULL;
@@ -309,25 +311,28 @@ up_qos_request_latency (UpQos *qos, const gchar *type_text, gint value, gboolean
 	}
 
 	/* seems okay, add to list */
-	obj = g_new (UpQosObj, 1);
-	obj->cookie = up_qos_generate_cookie (qos);
-	obj->sender = g_strdup (sender);
-	obj->value = value;
-	obj->uid = uid;
-	obj->pid = pid;
-	obj->cmdline = g_strdup (cmdline);
-	obj->persistent = persistent;
-	obj->type = type;
-	g_ptr_array_add (qos->priv->data, obj);
+	item = up_qos_item_new ();
+	up_qos_item_set_cookie (item, up_qos_generate_cookie (qos));
+	up_qos_item_set_sender (item, sender);
+	up_qos_item_set_value (item,  value);
+	up_qos_item_set_uid (item, uid);
+	up_qos_item_set_pid (item, pid);
+	up_qos_item_set_cmdline (item, cmdline);
+	up_qos_item_set_persistent (item, persistent);
+	up_qos_item_set_kind (item, type);
+	g_ptr_array_add (qos->priv->data, item);
 
 	egg_debug ("Recieved Qos from '%s' (%i:%i)' saving as #%i",
-		   obj->sender, obj->value, obj->persistent, obj->cookie);
+		   up_qos_item_get_sender (item),
+		   up_qos_item_get_value (item),
+		   up_qos_item_get_persistent (item),
+		   up_qos_item_get_cookie (item));
 
 	/* TODO: if persistent add to datadase */
 
 	/* only emit event on the first one */
 	up_qos_latency_perhaps_changed (qos, type);
-	dbus_g_method_return (context, obj->cookie);
+	dbus_g_method_return (context, up_qos_item_get_cookie (item));
 out:
 	if (subject != NULL)
 		g_object_unref (subject);
@@ -336,32 +341,21 @@ out:
 }
 
 /**
- * up_qos_free_data_obj:
- **/
-static void
-up_qos_free_data_obj (UpQosObj *obj)
-{
-	g_free (obj->cmdline);
-	g_free (obj->sender);
-	g_free (obj);
-}
-
-/**
  * up_qos_cancel_request:
  *
- * Removes a cookie and associated data from the UpQosObj struct.
+ * Removes a cookie and associated data from the UpQosItem struct.
  **/
 void
 up_qos_cancel_request (UpQos *qos, guint cookie, DBusGMethodInvocation *context)
 {
-	UpQosObj *obj;
+	UpQosItem *item;
 	GError *error;
 	gchar *sender = NULL;
 	PolkitSubject *subject = NULL;
 
 	/* find the correct cookie */
-	obj = up_qos_find_from_cookie (qos, cookie);
-	if (obj == NULL) {
+	item = up_qos_find_from_cookie (qos, cookie);
+	if (item == NULL) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL,
 				     "Cannot find request for #%i", cookie);
 		dbus_g_method_return_error (context, error);
@@ -377,7 +371,7 @@ up_qos_cancel_request (UpQos *qos, guint cookie, DBusGMethodInvocation *context)
 	}
 
 	/* are we not the sender? */
-	if (g_strcmp0 (sender, obj->sender) != 0) {
+	if (g_strcmp0 (sender, up_qos_item_get_sender (item)) != 0) {
 		subject = up_polkit_get_subject (qos->priv->polkit, context);
 		if (subject == NULL)
 			goto out;
@@ -388,8 +382,8 @@ up_qos_cancel_request (UpQos *qos, guint cookie, DBusGMethodInvocation *context)
 	egg_debug ("Clear #%i", cookie);
 
 	/* remove object from list */
-	g_ptr_array_remove (qos->priv->data, obj);
-	up_qos_latency_perhaps_changed (qos, obj->type);
+	g_ptr_array_remove (qos->priv->data, item);
+	up_qos_latency_perhaps_changed (qos, up_qos_item_get_kind (item));
 
 	/* TODO: if persistent remove from datadase */
 
@@ -455,25 +449,25 @@ up_qos_get_latency_requests (UpQos *qos, GPtrArray **requests, GError **error)
 {
 	guint i;
 	GPtrArray *data;
-	UpQosObj *obj;
+	UpQosItem *item;
 
 	*requests = g_ptr_array_new ();
 	data = qos->priv->data;
 	for (i=0; i<data->len; i++) {
 		GValue elem = {0};
 
-		obj = g_ptr_array_index (data, i);
+		item = g_ptr_array_index (data, i);
 		g_value_init (&elem, UP_QOS_REQUESTS_STRUCT_TYPE);
 		g_value_take_boxed (&elem, dbus_g_type_specialized_construct (UP_QOS_REQUESTS_STRUCT_TYPE));
 		dbus_g_type_struct_set (&elem,
-					0, obj->cookie,
-					1, obj->uid,
-					2, obj->pid,
-					3, obj->cmdline,
-					4, 0, //obj->timespec,
-					5, obj->persistent,
-					6, up_qos_kind_to_string (obj->type),
-					7, obj->value,
+					0, up_qos_item_get_cookie (item),
+					1, up_qos_item_get_uid (item),
+					2, up_qos_item_get_pid (item),
+					3, up_qos_item_get_cmdline (item),
+					4, 0, //up_qos_item_get_timespec (item),
+					5, up_qos_item_get_persistent (item),
+					6, up_qos_kind_to_string (up_qos_item_get_kind (item)),
+					7, up_qos_item_get_value (item),
 					G_MAXUINT);
 		g_ptr_array_add (*requests, g_value_get_boxed (&elem));
 	}
@@ -494,16 +488,16 @@ up_qos_remove_dbus (UpQos *qos, const gchar *sender)
 {
 	guint i;
 	GPtrArray *data;
-	UpQosObj *obj;
+	UpQosItem *item;
 
 	/* remove *any* senders that match the sender */
 	data = qos->priv->data;
 	for (i=0; i<data->len; i++) {
-		obj = g_ptr_array_index (data, i);
-		if (strcmp (obj->sender, sender) == 0) {
+		item = g_ptr_array_index (data, i);
+		if (strcmp (up_qos_item_get_sender (item), sender) == 0) {
 			egg_debug ("Auto-revoked idle qos on %s", sender);
-			g_ptr_array_remove (qos->priv->data, obj);
-			up_qos_latency_perhaps_changed (qos, obj->type);
+			g_ptr_array_remove (qos->priv->data, item);
+			up_qos_latency_perhaps_changed (qos, up_qos_item_get_kind (item));
 		}
 	}
 }
@@ -557,7 +551,7 @@ up_qos_init (UpQos *qos)
 
 	qos->priv = UP_QOS_GET_PRIVATE (qos);
 	qos->priv->polkit = up_polkit_new ();
-	qos->priv->data = g_ptr_array_new_with_free_func ((GDestroyNotify) up_qos_free_data_obj);
+	qos->priv->data = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	/* TODO: need to load persistent values */
 
 	/* setup lowest */
