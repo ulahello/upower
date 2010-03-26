@@ -148,7 +148,7 @@ up_self_test_SOURCES =						\
 
 up_self_test_LDADD =						\
 	-lm							\
-	dummy/libupshared.la					\
+	dummy/libuptest.la					\
 	$(GLIB_LIBS)						\
 	$(GIO_CFLAGS)						\
 	$(DBUS_GLIB_LIBS)					\
