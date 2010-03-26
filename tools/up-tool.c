@@ -331,6 +331,11 @@ main (int argc, char **argv)
 	}
 
 	if (opt_monitor || opt_monitor_detail) {
+		ret = up_client_enumerate_devices_sync (client, NULL, &error);
+		if (!ret) {
+			egg_warning ("failed to enumerate: %s", error->message);
+			goto out;
+		}
 		if (!up_tool_do_monitor (client))
 			goto out;
 		retval = EXIT_SUCCESS;
