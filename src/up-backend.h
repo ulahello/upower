@@ -70,6 +70,7 @@ gboolean	 up_backend_coldplug			(UpBackend	*backend,
 gboolean	 up_backend_kernel_can_suspend		(UpBackend	*backend);
 gboolean	 up_backend_kernel_can_hibernate	(UpBackend	*backend);
 gboolean	 up_backend_has_encrypted_swap		(UpBackend	*backend);
+gfloat		 up_backend_get_used_swap		(UpBackend	*backend);
 
 G_END_DECLS
 

@@ -351,6 +351,7 @@ up_backend_has_encrypted_swap (UpBackend *backend)
 	return FALSE;
 }
 
+/* Return value: a percentage value */
 gfloat
 up_backend_get_used_swap (UpBackend *backend)
 {

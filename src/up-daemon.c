@@ -108,66 +108,6 @@ G_DEFINE_TYPE (UpDaemon, up_daemon, G_TYPE_OBJECT)
 #define UP_DAEMON_POLL_BATTERY_NUMBER_TIMES		5
 
 /**
- * up_daemon_check_swap_space:
- **/
-static gfloat
-up_daemon_check_swap_space (UpDaemon *daemon)
-{
-	gchar *contents = NULL;
-	gchar **lines = NULL;
-	GError *error = NULL;
-	gchar **tokens;
-	gboolean ret;
-	guint active = 0;
-	guint swap_free = 0;
-	guint swap_total = 0;
-	guint len;
-	guint i;
-	gfloat percentage = 0.0f;
-	const gchar *filename = "/proc/meminfo";
-
-	/* get memory data */
-	ret = g_file_get_contents (filename, &contents, NULL, &error);
-	if (!ret) {
-		egg_warning ("failed to open %s: %s", filename, error->message);
-		g_error_free (error);
-		goto out;
-	}
-
-	/* process each line */
-	lines = g_strsplit (contents, "\n", -1);
-	for (i=1; lines[i] != NULL; i++) {
-		tokens = g_strsplit_set (lines[i], ": ", -1);
-		len = g_strv_length (tokens);
-		if (len > 3) {
-			if (g_strcmp0 (tokens[0], "SwapFree") == 0)
-				swap_free = atoi (tokens[len-2]);
-			if (g_strcmp0 (tokens[0], "SwapTotal") == 0)
-				swap_total = atoi (tokens[len-2]);
-			else if (g_strcmp0 (tokens[0], "Active") == 0)
-				active = atoi (tokens[len-2]);
-		}
-		g_strfreev (tokens);
-	}
-
-	/* first check if we even have swap, if not consider all swap space used */
-	if (swap_total == 0) {
-		egg_debug ("no swap space found");
-		percentage = 100.0f;
-		goto out;
-	}
-
-	/* work out how close to the line we are */
-	if (swap_free > 0 && active > 0)
-		percentage = (active * 100) / swap_free;
-	egg_debug ("total swap available %i kb, active memory %i kb (%.1f%%)", swap_free, active, percentage);
-out:
-	g_free (contents);
-	g_strfreev (lines);
-	return percentage;
-}
-
-/**
  * up_daemon_get_on_battery_local:
  *
  * As soon as _any_ battery goes discharging, this is true
@@ -952,7 +892,7 @@ up_daemon_init (UpDaemon *daemon)
 
 	/* do we have enough swap? */
 	if (daemon->priv->kernel_can_hibernate) {
-		waterline = up_daemon_check_swap_space (daemon);
+		waterline = up_backend_get_used_swap (daemon->priv->backend);
 		if (waterline < UP_DAEMON_SWAP_WATERLINE)
 			daemon->priv->hibernate_has_swap_space = TRUE;
 		else
