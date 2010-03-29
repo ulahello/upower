@@ -108,33 +108,6 @@ G_DEFINE_TYPE (UpDaemon, up_daemon, G_TYPE_OBJECT)
 #define UP_DAEMON_POLL_BATTERY_NUMBER_TIMES		5
 
 /**
- * up_daemon_check_sleep_states:
- **/
-static gboolean
-up_daemon_check_sleep_states (UpDaemon *daemon)
-{
-	gchar *contents = NULL;
-	GError *error = NULL;
-	gboolean ret;
-	const gchar *filename = "/sys/power/state";
-
-	/* see what kernel can do */
-	ret = g_file_get_contents (filename, &contents, NULL, &error);
-	if (!ret) {
-		egg_warning ("failed to open %s: %s", filename, error->message);
-		g_error_free (error);
-		goto out;
-	}
-
-	/* does the kernel advertise this */
-	daemon->priv->kernel_can_suspend = (g_strstr_len (contents, -1, "mem") != NULL);
-	daemon->priv->kernel_can_hibernate = (g_strstr_len (contents, -1, "disk") != NULL);
-out:
-	g_free (contents);
-	return ret;
-}
-
-/**
  * up_daemon_check_encrypted_swap:
  *
  * user@local:~$ cat /proc/swaps
@@ -1081,7 +1054,8 @@ up_daemon_init (UpDaemon *daemon)
 			  G_CALLBACK (up_daemon_properties_changed_cb), daemon);
 
 	/* check if we have support */
-	up_daemon_check_sleep_states (daemon);
+	daemon->priv->kernel_can_suspend = up_backend_kernel_can_suspend (daemon->priv->backend);
+	daemon->priv->kernel_can_hibernate = up_backend_kernel_can_hibernate (daemon->priv->backend);
 
 	/* do we have enough swap? */
 	if (daemon->priv->kernel_can_hibernate) {

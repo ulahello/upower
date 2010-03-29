@@ -327,19 +327,19 @@ up_backend_get_hibernate_command (UpBackend *backend)
 }
 
 /**
- * up_backend_can_suspend:
+ * up_backend_kernel_can_suspend:
  **/
 gboolean
-up_backend_can_suspend (UpBackend *backend)
+up_backend_kernel_can_suspend (UpBackend *backend)
 {
 	return up_backend_supports_sleep_state ("S3");
 }
 
 /**
- * up_backend_can_hibernate:
+ * up_backend_kernel_can_hibernate:
  **/
 gboolean
-up_backend_can_hibernate (UpBackend *backend)
+up_backend_kernel_can_hibernate (UpBackend *backend)
 {
 	return up_backend_supports_sleep_state ("S4");
 }

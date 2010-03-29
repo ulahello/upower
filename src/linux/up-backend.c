@@ -308,6 +308,51 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 }
 
 /**
+ * up_backend_supports_sleep_state:
+ **/
+static gboolean
+up_backend_supports_sleep_state (const gchar *state)
+{
+	gchar *contents = NULL;
+	GError *error = NULL;
+	gboolean ret;
+	const gchar *filename = "/sys/power/state";
+
+	/* see what kernel can do */
+	ret = g_file_get_contents (filename, &contents, NULL, &error);
+	if (!ret) {
+		egg_warning ("failed to open %s: %s", filename, error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* does the kernel advertise this */
+	ret = (g_strstr_len (contents, -1, state) != NULL);
+out:
+	g_free (contents);
+	return ret;
+}
+
+
+/**
+ * up_backend_kernel_can_suspend:
+ **/
+gboolean
+up_backend_kernel_can_suspend (UpBackend *backend)
+{
+	return up_backend_supports_sleep_state ("mem");
+}
+
+/**
+ * up_backend_kernel_can_hibernate:
+ **/
+gboolean
+up_backend_kernel_can_hibernate (UpBackend *backend)
+{
+	return up_backend_supports_sleep_state ("disk");
+}
+
+/**
  * up_backend_class_init:
  * @klass: The UpBackendClass
  **/
