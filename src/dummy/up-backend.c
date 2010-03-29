@@ -231,6 +231,62 @@ up_backend_new (void)
 	return UP_BACKEND (backend);
 }
 
+/**
+ * up_backend_kernel_can_suspend:
+ **/
+gboolean
+up_backend_kernel_can_suspend (UpBackend *backend)
+{
+	return FALSE;
+}
+
+/**
+ * up_backend_kernel_can_hibernate:
+ **/
+gboolean
+up_backend_kernel_can_hibernate (UpBackend *backend)
+{
+	return FALSE;
+}
+
+/**
+ * up_backend_has_encrypted_swap:
+ **/
+gboolean
+up_backend_has_encrypted_swap (UpBackend *backend)
+{
+	return FALSE;
+}
+
+/**
+ * up_backend_get_used_swap:
+ *
+ * Return value: a percentage value
+ **/
+gfloat
+up_backend_get_used_swap (UpBackend *backend)
+{
+	return 0.0;
+}
+
+/**
+ * up_backend_get_suspend_command:
+ **/
+const gchar *
+up_backend_get_suspend_command (UpBackend *backend)
+{
+	return "/bin/true";
+}
+
+/**
+ * up_backend_get_hibernate_command:
+ **/
+const gchar *
+up_backend_get_hibernate_command (UpBackend *backend)
+{
+	return "/bin/true";
+}
+
 /***************************************************************************
  ***                          MAKE CHECK TESTS                           ***
  ***************************************************************************/
