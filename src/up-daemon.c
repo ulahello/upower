@@ -430,6 +430,7 @@ up_daemon_suspend (UpDaemon *daemon, DBusGMethodInvocation *context)
 {
 	GError *error;
 	PolkitSubject *subject = NULL;
+	const gchar *command;
 
 	/* no kernel support */
 	if (!daemon->priv->kernel_can_suspend) {
@@ -457,7 +458,8 @@ up_daemon_suspend (UpDaemon *daemon, DBusGMethodInvocation *context)
 	}
 
 	/* do this deferred action */
-	up_daemon_deferred_sleep (daemon, "/usr/sbin/pm-suspend", context);
+	command = up_backend_get_suspend_command (daemon->priv->backend);
+	up_daemon_deferred_sleep (daemon, command, context);
 out:
 	if (subject != NULL)
 		g_object_unref (subject);
@@ -494,6 +496,7 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 {
 	GError *error;
 	PolkitSubject *subject = NULL;
+	const gchar *command;
 
 	/* no kernel support */
 	if (!daemon->priv->kernel_can_hibernate) {
@@ -539,7 +542,8 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 	}
 
 	/* do this deferred action */
-	up_daemon_deferred_sleep (daemon, "/usr/sbin/pm-hibernate", context);
+	command = up_backend_get_hibernate_command (daemon->priv->backend);
+	up_daemon_deferred_sleep (daemon, command, context);
 out:
 	if (subject != NULL)
 		g_object_unref (subject);

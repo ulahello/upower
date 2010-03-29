@@ -71,6 +71,8 @@ gboolean	 up_backend_kernel_can_suspend		(UpBackend	*backend);
 gboolean	 up_backend_kernel_can_hibernate	(UpBackend	*backend);
 gboolean	 up_backend_has_encrypted_swap		(UpBackend	*backend);
 gfloat		 up_backend_get_used_swap		(UpBackend	*backend);
+const gchar	*up_backend_get_suspend_command		(UpBackend	*backend);
+const gchar	*up_backend_get_hibernate_command	(UpBackend	*backend);
 
 G_END_DECLS
 

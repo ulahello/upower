@@ -301,7 +301,7 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 /**
  * up_backend_get_powersave_command:
  **/
-gchar *
+const gchar *
 up_backend_get_powersave_command (UpBackend *backend, gboolean powersave)
 {
 	/* XXX: Do we want to use powerd here? */
@@ -311,19 +311,19 @@ up_backend_get_powersave_command (UpBackend *backend, gboolean powersave)
 /**
  * up_backend_get_suspend_command:
  **/
-gchar *
+const gchar *
 up_backend_get_suspend_command (UpBackend *backend)
 {
-	return g_strdup (UP_BACKEND_SUSPEND_COMMAND);
+	return UP_BACKEND_SUSPEND_COMMAND;
 }
 
 /**
  * up_backend_get_hibernate_command:
  **/
-gchar *
+const gchar *
 up_backend_get_hibernate_command (UpBackend *backend)
 {
-	return g_strdup (UP_BACKEND_HIBERNATE_COMMAND);
+	return UP_BACKEND_HIBERNATE_COMMAND;
 }
 
 /**

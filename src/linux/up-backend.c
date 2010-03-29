@@ -68,6 +68,9 @@ G_DEFINE_TYPE (UpBackend, up_backend, G_TYPE_OBJECT)
 static gboolean up_backend_device_add (UpBackend *backend, GUdevDevice *native);
 static void up_backend_device_remove (UpBackend *backend, GUdevDevice *native);
 
+#define UP_BACKEND_SUSPEND_COMMAND	"/usr/sbin/pm-suspend"
+#define UP_BACKEND_HIBERNATE_COMMAND	"/usr/sbin/pm-hibernate"
+
 /**
  * up_backend_device_new:
  **/
@@ -519,6 +522,24 @@ out:
 	g_free (contents);
 	g_strfreev (lines);
 	return percentage;
+}
+
+/**
+ * up_backend_get_suspend_command:
+ **/
+const gchar *
+up_backend_get_suspend_command (UpBackend *backend)
+{
+	return UP_BACKEND_SUSPEND_COMMAND;
+}
+
+/**
+ * up_backend_get_hibernate_command:
+ **/
+const gchar *
+up_backend_get_hibernate_command (UpBackend *backend)
+{
+	return UP_BACKEND_HIBERNATE_COMMAND;
 }
 
 /**
