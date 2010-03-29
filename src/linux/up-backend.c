@@ -353,6 +353,113 @@ up_backend_kernel_can_hibernate (UpBackend *backend)
 }
 
 /**
+ * up_backend_has_encrypted_swap:
+ *
+ * user@local:~$ cat /proc/swaps
+ * Filename                                Type            Size    Used    Priority
+ * /dev/mapper/cryptswap1                  partition       4803392 35872   -1
+ *
+ * user@local:~$ cat /etc/crypttab
+ * # <target name> <source device>         <key file>      <options>
+ * cryptswap1 /dev/sda5 /dev/urandom swap,cipher=aes-cbc-essiv:sha256
+ *
+ * Loop over the swap partitions in /proc/swaps, looking for matches in /etc/crypttab
+ **/
+gboolean
+up_backend_has_encrypted_swap (UpBackend *backend)
+{
+	gchar *contents_swaps = NULL;
+	gchar *contents_crypttab = NULL;
+	gchar **lines_swaps = NULL;
+	gchar **lines_crypttab = NULL;
+	GError *error = NULL;
+	gboolean ret;
+	gboolean encrypted_swap = FALSE;
+	const gchar *filename_swaps = "/proc/swaps";
+	const gchar *filename_crypttab = "/etc/crypttab";
+	GPtrArray *devices = NULL;
+	gchar *device;
+	guint i, j;
+
+	/* get swaps data */
+	ret = g_file_get_contents (filename_swaps, &contents_swaps, NULL, &error);
+	if (!ret) {
+		egg_warning ("failed to open %s: %s", filename_swaps, error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* get crypttab data */
+	ret = g_file_get_contents (filename_crypttab, &contents_crypttab, NULL, &error);
+	if (!ret) {
+		egg_warning ("failed to open %s: %s", filename_crypttab, error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* split both into lines */
+	lines_swaps = g_strsplit (contents_swaps, "\n", -1);
+	lines_crypttab = g_strsplit (contents_crypttab, "\n", -1);
+
+	/* get valid swap devices */
+	devices = g_ptr_array_new_with_free_func (g_free);
+	for (i=0; lines_swaps[i] != NULL; i++) {
+
+		/* is a device? */
+		if (lines_swaps[i][0] != '/')
+			continue;
+
+		/* only look at first parameter */
+		g_strdelimit (lines_swaps[i], "\t ", '\0');
+
+		/* add base device to list */
+		device = g_path_get_basename (lines_swaps[i]);
+		egg_debug ("adding swap device: %s", device);
+		g_ptr_array_add (devices, device);
+	}
+
+	/* no swap devices? */
+	if (devices->len == 0) {
+		egg_debug ("no swap devices");
+		goto out;
+	}
+
+	/* find matches in crypttab */
+	for (i=0; lines_crypttab[i] != NULL; i++) {
+
+		/* ignore invalid lines */
+		if (lines_crypttab[i][0] == '#' ||
+		    lines_crypttab[i][0] == '\n' ||
+		    lines_crypttab[i][0] == '\t' ||
+		    lines_crypttab[i][0] == '\0')
+			continue;
+
+		/* only look at first parameter */
+		g_strdelimit (lines_crypttab[i], "\t ", '\0');
+
+		/* is a swap device? */
+		for (j=0; j<devices->len; j++) {
+			device = g_ptr_array_index (devices, j);
+			if (g_strcmp0 (device, lines_crypttab[i]) == 0) {
+				egg_debug ("swap device %s is encrypted (so cannot hibernate)", device);
+				encrypted_swap = TRUE;
+				goto out;
+			}
+			egg_debug ("swap device %s is not encrypted (allows hibernate)", device);
+		}
+	}
+
+out:
+	if (devices != NULL)
+		g_ptr_array_unref (devices);
+	g_free (contents_swaps);
+	g_free (contents_crypttab);
+	g_strfreev (lines_swaps);
+	g_strfreev (lines_crypttab);
+	return encrypted_swap;
+}
+
+/**
  * up_backend_class_init:
  * @klass: The UpBackendClass
  **/
