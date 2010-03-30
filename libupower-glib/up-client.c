@@ -458,6 +458,8 @@ up_client_get_can_hibernate (UpClient *client)
  * Get whether the laptop lid is closed.
  *
  * Return value: %TRUE if lid is closed or %FALSE otherwise.
+ *
+ * Since: 0.9.0
  */
 gboolean
 up_client_get_lid_is_closed (UpClient *client)
@@ -465,6 +467,24 @@ up_client_get_lid_is_closed (UpClient *client)
 	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
 	up_client_get_properties_sync (client, NULL, NULL);
 	return client->priv->lid_is_closed;
+}
+
+/**
+ * up_client_get_lid_is_present:
+ * @client: a #UpClient instance.
+ *
+ * Get whether a laptop lid is present on this machine.
+ *
+ * Return value: %TRUE if the machine has a laptop lid
+ *
+ * Since: 0.9.2
+ */
+gboolean
+up_client_get_lid_is_present (UpClient *client)
+{
+	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
+	up_client_get_properties_sync (client, NULL, NULL);
+	return client->priv->lid_is_present;
 }
 
 /**
