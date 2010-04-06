@@ -1,5 +1,28 @@
+Version 0.9.2
+~~~~~~~~~~~~~
+Released: 2010-04-06
+
+New Features:
+ - Add a missing accessor: up_client_get_lid_is_present() (Richard Hughes)
+ - Change the tarball name to be all lower case to match udisks and udev (Richard Hughes)
+ - Convert the daemon to using objects from libupower-glib, not devkit-power-gobject (Richard Hughes)
+ - Do not allow client programs to enumerate the device list more than once (Richard Hughes)
+ - Get the encrypted swap status from the backend, rather than hardcoding Linux specifics (Richard Hughes)
+ - Get the kernel sleep capabilities from the backend, rather than hardcoding Linux specifics (Richard Hughes)
+ - Get the suspend and hibernate commands from the backend, rather than hardcoding Linux specifics (Richard Hughes)
+ - Get the swap size from the backend, rather than hardcoding Linux specifics (Richard Hughes)
+ - Show in ./configure summary if unit tests have been enabled or not (Michael Biebl)
+
+Bugfixes:
+ - Do not warn what we are correcting energy-full when there is no data to copy (Richard Hughes)
+ - Ensure we enumerate devices before we start monitoring them (Richard Hughes)
+ - Fixes to the autogen.sh script (Michael Biebl)
+ - Make dummy backend usable for architectures without a native backend (Michael Biebl)
+ - Remove libdevkit-power-gobject dependency from backends (Michael Biebl)
+ - Simplify udev subdirectory handling (Michael Biebl)
+
 Version 0.9.1
-~~~~~~~~~~~
+~~~~~~~~~~~~~
 Released: 2010-03-03
 
 New Features:
