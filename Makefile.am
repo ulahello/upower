@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = devkit-power-gobject libupower-glib src doc tools policy po
+SUBDIRS = etc devkit-power-gobject libupower-glib src doc tools policy po
 
 if BACKEND_TYPE_LINUX
 SUBDIRS += rules

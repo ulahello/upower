@@ -89,6 +89,8 @@ struct UpDaemonPrivate
 	guint			 battery_poll_count;
 	GTimer			*about_to_sleep_timer;
 	guint			 about_to_sleep_id;
+	guint			 conf_sleep_timeout;
+	gboolean		 conf_allow_hibernate_encrypted_swap;
 };
 
 static void	up_daemon_finalize		(GObject	*object);
@@ -309,13 +311,14 @@ up_daemon_about_to_sleep (UpDaemon *daemon, DBusGMethodInvocation *context)
 {
 	PolkitSubject *subject = NULL;
 	GError *error;
+	UpDaemonPrivate *priv = daemon->priv;
 
 	egg_debug ("emitting sleeping");
 	g_signal_emit (daemon, signals[SIGNAL_SLEEPING], 0);
-	g_timer_start (daemon->priv->about_to_sleep_timer);
+	g_timer_start (priv->about_to_sleep_timer);
 
 	/* already requested */
-	if (daemon->priv->about_to_sleep_id != 0) {
+	if (priv->about_to_sleep_id != 0) {
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
 				     "Sleep has already been requested and is pending");
@@ -323,12 +326,12 @@ up_daemon_about_to_sleep (UpDaemon *daemon, DBusGMethodInvocation *context)
 		goto out;
 	}
 
-	subject = up_polkit_get_subject (daemon->priv->polkit, context);
+	subject = up_polkit_get_subject (priv->polkit, context);
 	if (subject == NULL)
 		goto out;
 
 	/* TODO: use another PolicyKit context? */
-	if (!up_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.upower.suspend", context))
+	if (!up_polkit_check_auth (priv->polkit, subject, "org.freedesktop.upower.suspend", context))
 		goto out;
 
 	dbus_g_method_return (context, NULL);
@@ -357,6 +360,7 @@ up_daemon_deferred_sleep_cb (UpDaemonDeferredSleep *sleep)
 	gchar *stderr = NULL;
 	gboolean ret;
 	UpDaemon *daemon = sleep->daemon;
+	UpDaemonPrivate *priv = daemon->priv;
 
 	/* run the command */
 	ret = g_spawn_command_line_sync (sleep->command, &stdout, &stderr, NULL, &error_local);
@@ -374,15 +378,15 @@ up_daemon_deferred_sleep_cb (UpDaemonDeferredSleep *sleep)
 	g_signal_emit (daemon, signals[SIGNAL_RESUMING], 0);
 
 	/* reset the about-to-sleep logic */
-	g_timer_reset (daemon->priv->about_to_sleep_timer);
-	g_timer_stop (daemon->priv->about_to_sleep_timer);
+	g_timer_reset (priv->about_to_sleep_timer);
+	g_timer_stop (priv->about_to_sleep_timer);
 
 	/* actually return from the DBus call now */
 	dbus_g_method_return (sleep->context, NULL);
 
 out:
 	/* clear timer */
-	daemon->priv->about_to_sleep_id = 0;
+	priv->about_to_sleep_id = 0;
 
 	g_free (stdout);
 	g_free (stderr);
@@ -402,6 +406,7 @@ static void
 up_daemon_deferred_sleep (UpDaemon *daemon, const gchar *command, DBusGMethodInvocation *context)
 {
 	UpDaemonDeferredSleep *sleep;
+	UpDaemonPrivate *priv = daemon->priv;
 	gfloat elapsed;
 
 	/* create callback object */
@@ -411,14 +416,15 @@ up_daemon_deferred_sleep (UpDaemon *daemon, const gchar *command, DBusGMethodInv
 	sleep->command = g_strdup (command);
 
 	/* about to sleep */
-	elapsed = g_timer_elapsed (daemon->priv->about_to_sleep_timer, NULL);
-	egg_debug ("between AboutToSleep() and %s was %fs", sleep->command, elapsed);
-	if (elapsed < 1.0f) {
+	elapsed = 1000.0f * g_timer_elapsed (priv->about_to_sleep_timer, NULL);
+	egg_debug ("between AboutToSleep() and %s was %fms", sleep->command, elapsed);
+	if (elapsed < priv->conf_sleep_timeout) {
 		/* we have to wait for a little bit */
-		daemon->priv->about_to_sleep_id = g_timeout_add (1000 - (elapsed * 1000), (GSourceFunc) up_daemon_deferred_sleep_cb, sleep);
+		priv->about_to_sleep_id = g_timeout_add (priv->conf_sleep_timeout - elapsed,
+								 (GSourceFunc) up_daemon_deferred_sleep_cb, sleep);
 	} else {
 		/* we can do this straight away */
-		daemon->priv->about_to_sleep_id = g_idle_add ((GSourceFunc) up_daemon_deferred_sleep_cb, sleep);
+		priv->about_to_sleep_id = g_idle_add ((GSourceFunc) up_daemon_deferred_sleep_cb, sleep);
 	}
 }
 
@@ -431,9 +437,10 @@ up_daemon_suspend (UpDaemon *daemon, DBusGMethodInvocation *context)
 	GError *error;
 	PolkitSubject *subject = NULL;
 	const gchar *command;
+	UpDaemonPrivate *priv = daemon->priv;
 
 	/* no kernel support */
-	if (!daemon->priv->kernel_can_suspend) {
+	if (!priv->kernel_can_suspend) {
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
 				     "No kernel support");
@@ -441,15 +448,15 @@ up_daemon_suspend (UpDaemon *daemon, DBusGMethodInvocation *context)
 		goto out;
 	}
 
-	subject = up_polkit_get_subject (daemon->priv->polkit, context);
+	subject = up_polkit_get_subject (priv->polkit, context);
 	if (subject == NULL)
 		goto out;
 
-	if (!up_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.upower.suspend", context))
+	if (!up_polkit_check_auth (priv->polkit, subject, "org.freedesktop.upower.suspend", context))
 		goto out;
 
 	/* already requested */
-	if (daemon->priv->about_to_sleep_id != 0) {
+	if (priv->about_to_sleep_id != 0) {
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
 				     "Sleep has already been requested and is pending");
@@ -458,7 +465,7 @@ up_daemon_suspend (UpDaemon *daemon, DBusGMethodInvocation *context)
 	}
 
 	/* do this deferred action */
-	command = up_backend_get_suspend_command (daemon->priv->backend);
+	command = up_backend_get_suspend_command (priv->backend);
 	up_daemon_deferred_sleep (daemon, command, context);
 out:
 	if (subject != NULL)
@@ -474,12 +481,13 @@ up_daemon_suspend_allowed (UpDaemon *daemon, DBusGMethodInvocation *context)
 {
 	gboolean ret;
 	PolkitSubject *subject = NULL;
+	UpDaemonPrivate *priv = daemon->priv;
 
-	subject = up_polkit_get_subject (daemon->priv->polkit, context);
+	subject = up_polkit_get_subject (priv->polkit, context);
 	if (subject == NULL)
 		goto out;
 
-	ret = up_polkit_is_allowed (daemon->priv->polkit, subject, "org.freedesktop.upower.suspend", context);
+	ret = up_polkit_is_allowed (priv->polkit, subject, "org.freedesktop.upower.suspend", context);
 	dbus_g_method_return (context, ret);
 
 out:
@@ -497,9 +505,10 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 	GError *error;
 	PolkitSubject *subject = NULL;
 	const gchar *command;
+	UpDaemonPrivate *priv = daemon->priv;
 
 	/* no kernel support */
-	if (!daemon->priv->kernel_can_hibernate) {
+	if (!priv->kernel_can_hibernate) {
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
 				     "No kernel support");
@@ -508,7 +517,7 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 	}
 
 	/* enough swap? */
-	if (!daemon->priv->hibernate_has_swap_space) {
+	if (!priv->hibernate_has_swap_space) {
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
 				     "Not enough swap space");
@@ -516,24 +525,25 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 		goto out;
 	}
 
-	/* encrypted swap? */
-	if (daemon->priv->hibernate_has_encrypted_swap) {
+	/* encrypted swap and no override? */
+	if (priv->hibernate_has_encrypted_swap &&
+	    !priv->conf_allow_hibernate_encrypted_swap) {
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
-				     "Swap space is encrypted");
+				     "Swap space is encrypted, use AllowHibernateEncryptedSwap to override");
 		dbus_g_method_return_error (context, error);
 		goto out;
 	}
 
-	subject = up_polkit_get_subject (daemon->priv->polkit, context);
+	subject = up_polkit_get_subject (priv->polkit, context);
 	if (subject == NULL)
 		goto out;
 
-	if (!up_polkit_check_auth (daemon->priv->polkit, subject, "org.freedesktop.upower.hibernate", context))
+	if (!up_polkit_check_auth (priv->polkit, subject, "org.freedesktop.upower.hibernate", context))
 		goto out;
 
 	/* already requested */
-	if (daemon->priv->about_to_sleep_id != 0) {
+	if (priv->about_to_sleep_id != 0) {
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
 				     "Sleep has already been requested and is pending");
@@ -542,7 +552,7 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 	}
 
 	/* do this deferred action */
-	command = up_backend_get_hibernate_command (daemon->priv->backend);
+	command = up_backend_get_hibernate_command (priv->backend);
 	up_daemon_deferred_sleep (daemon, command, context);
 out:
 	if (subject != NULL)
@@ -558,12 +568,13 @@ up_daemon_hibernate_allowed (UpDaemon *daemon, DBusGMethodInvocation *context)
 {
 	gboolean ret;
 	PolkitSubject *subject = NULL;
+	UpDaemonPrivate *priv = daemon->priv;
 
-	subject = up_polkit_get_subject (daemon->priv->polkit, context);
+	subject = up_polkit_get_subject (priv->polkit, context);
 	if (subject == NULL)
 		goto out;
 
-	ret = up_polkit_is_allowed (daemon->priv->polkit, subject, "org.freedesktop.upower.hibernate", context);
+	ret = up_polkit_is_allowed (priv->polkit, subject, "org.freedesktop.upower.hibernate", context);
 	dbus_g_method_return (context, ret);
 
 out:
@@ -580,9 +591,10 @@ up_daemon_register_power_daemon (UpDaemon *daemon)
 {
 	GError *error = NULL;
 	gboolean ret = FALSE;
+	UpDaemonPrivate *priv = daemon->priv;
 
-	daemon->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
-	if (daemon->priv->connection == NULL) {
+	priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
+	if (priv->connection == NULL) {
 		if (error != NULL) {
 			g_critical ("error getting system bus: %s", error->message);
 			g_error_free (error);
@@ -591,13 +603,13 @@ up_daemon_register_power_daemon (UpDaemon *daemon)
 	}
 
 	/* connect to DBUS */
-	daemon->priv->proxy = dbus_g_proxy_new_for_name (daemon->priv->connection,
-							 DBUS_SERVICE_DBUS,
-							 DBUS_PATH_DBUS,
-							 DBUS_INTERFACE_DBUS);
+	priv->proxy = dbus_g_proxy_new_for_name (priv->connection,
+						 DBUS_SERVICE_DBUS,
+						 DBUS_PATH_DBUS,
+						 DBUS_INTERFACE_DBUS);
 
 	/* register GObject */
-	dbus_g_connection_register_g_object (daemon->priv->connection,
+	dbus_g_connection_register_g_object (priv->connection,
 					     "/org/freedesktop/UPower",
 					     G_OBJECT (daemon));
 
@@ -616,6 +628,7 @@ up_daemon_startup (UpDaemon *daemon)
 	gboolean ret;
 	gboolean on_battery;
 	gboolean on_low_battery;
+	UpDaemonPrivate *priv = daemon->priv;
 
 	/* register on bus */
 	ret = up_daemon_register_power_daemon (daemon);
@@ -627,10 +640,10 @@ up_daemon_startup (UpDaemon *daemon)
 	/* stop signals and callbacks */
 	egg_debug ("daemon now coldplug");
 	g_object_freeze_notify (G_OBJECT(daemon));
-	daemon->priv->during_coldplug = TRUE;
+	priv->during_coldplug = TRUE;
 
 	/* coldplug backend backend */
-	ret = up_backend_coldplug (daemon->priv->backend, daemon);
+	ret = up_backend_coldplug (priv->backend, daemon);
 	if (!ret) {
 		egg_warning ("failed to coldplug backend");
 		goto out;
@@ -647,11 +660,11 @@ up_daemon_startup (UpDaemon *daemon)
 
 	/* start signals and callbacks */
 	g_object_thaw_notify (G_OBJECT(daemon));
-	daemon->priv->during_coldplug = FALSE;
+	priv->during_coldplug = FALSE;
 	egg_debug ("daemon now not coldplug");
 
 	/* set pm-utils power policy */
-	up_daemon_set_pmutils_powersave (daemon, daemon->priv->on_battery);
+	up_daemon_set_pmutils_powersave (daemon, priv->on_battery);
 out:
 	return ret;
 }
@@ -671,13 +684,15 @@ up_daemon_get_device_list (UpDaemon *daemon)
 static gboolean
 up_daemon_refresh_battery_devices_cb (UpDaemon *daemon)
 {
+	UpDaemonPrivate *priv = daemon->priv;
+
 	/* no more left to do? */
-	if (daemon->priv->battery_poll_count-- == 0) {
-		daemon->priv->battery_poll_id = 0;
+	if (priv->battery_poll_count-- == 0) {
+		priv->battery_poll_id = 0;
 		return FALSE;
 	}
 
-	egg_debug ("doing the delayed refresh (%i)", daemon->priv->battery_poll_count);
+	egg_debug ("doing the delayed refresh (%i)", priv->battery_poll_count);
 	up_daemon_refresh_battery_devices (daemon);
 
 	/* keep going until none left to do */
@@ -690,12 +705,14 @@ up_daemon_refresh_battery_devices_cb (UpDaemon *daemon)
 static void
 up_daemon_poll_battery_devices_for_a_little_bit (UpDaemon *daemon)
 {
-	daemon->priv->battery_poll_count = UP_DAEMON_POLL_BATTERY_NUMBER_TIMES;
+	UpDaemonPrivate *priv = daemon->priv;
+
+	priv->battery_poll_count = UP_DAEMON_POLL_BATTERY_NUMBER_TIMES;
 
 	/* already polling */
-	if (daemon->priv->battery_poll_id != 0)
+	if (priv->battery_poll_id != 0)
 		return;
-	daemon->priv->battery_poll_id =
+	priv->battery_poll_id =
 		g_timeout_add_seconds (UP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
 				       (GSourceFunc) up_daemon_refresh_battery_devices_cb, daemon);
 }
@@ -709,6 +726,7 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 	const gchar *object_path;
 	UpDeviceKind type;
 	gboolean ret;
+	UpDaemonPrivate *priv = daemon->priv;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 	g_return_if_fail (UP_IS_DEVICE (device));
@@ -725,19 +743,19 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 
 	/* second, check if the on_battery and on_low_battery state has changed */
 	ret = (up_daemon_get_on_battery_local (daemon) && !up_daemon_get_on_ac_local (daemon));
-	if (ret != daemon->priv->on_battery) {
+	if (ret != priv->on_battery) {
 		g_object_set (daemon, "on-battery", ret, NULL);
 
 		/* set pm-utils power policy */
 		up_daemon_set_pmutils_powersave (daemon, ret);
 	}
 	ret = up_daemon_get_on_low_battery_local (daemon);
-	if (ret != daemon->priv->on_low_battery) {
+	if (ret != priv->on_low_battery) {
 		g_object_set (daemon, "on-low-battery", ret, NULL);
 	}
 
 	/* emit */
-	if (!daemon->priv->during_coldplug) {
+	if (!priv->during_coldplug) {
 		object_path = up_device_get_object_path (device);
 		egg_debug ("emitting device-changed: %s", object_path);
 
@@ -758,13 +776,14 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
 {
 	UpDeviceKind type;
 	const gchar *object_path;
+	UpDaemonPrivate *priv = daemon->priv;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 	g_return_if_fail (UP_IS_DEVICE (device));
 	g_return_if_fail (G_IS_OBJECT (native));
 
 	/* add to device list */
-	up_device_list_insert (daemon->priv->power_devices, native, G_OBJECT (device));
+	up_device_list_insert (priv->power_devices, native, G_OBJECT (device));
 
 	/* connect, so we get changes */
 	g_signal_connect (device, "changed",
@@ -778,9 +797,9 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
 		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */
-	if (!daemon->priv->during_coldplug) {
+	if (!priv->during_coldplug) {
 		object_path = up_device_get_object_path (device);
-		egg_debug ("emitting added: %s (during coldplug %i)", object_path, daemon->priv->during_coldplug);
+		egg_debug ("emitting added: %s (during coldplug %i)", object_path, priv->during_coldplug);
 
 		/* don't crash the session */
 		if (object_path == NULL) {
@@ -799,13 +818,14 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 {
 	UpDeviceKind type;
 	const gchar *object_path;
+	UpDaemonPrivate *priv = daemon->priv;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 	g_return_if_fail (UP_IS_DEVICE (device));
 	g_return_if_fail (G_IS_OBJECT (native));
 
 	/* remove from list */
-	up_device_list_remove (daemon->priv->power_devices, G_OBJECT(device));
+	up_device_list_remove (priv->power_devices, G_OBJECT(device));
 
 	/* refresh after a short delay */
 	g_object_get (device,
@@ -815,7 +835,7 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */
-	if (!daemon->priv->during_coldplug) {
+	if (!priv->during_coldplug) {
 		object_path = up_device_get_object_path (device);
 		egg_debug ("emitting device-removed: %s", object_path);
 
@@ -853,6 +873,9 @@ static void
 up_daemon_init (UpDaemon *daemon)
 {
 	gfloat waterline;
+	gboolean ret;
+	GError *error = NULL;
+	GKeyFile *file;
 
 	daemon->priv = UP_DAEMON_GET_PRIVATE (daemon);
 	daemon->priv->polkit = up_polkit_new ();
@@ -869,6 +892,22 @@ up_daemon_init (UpDaemon *daemon)
 	daemon->priv->battery_poll_id = 0;
 	daemon->priv->battery_poll_count = 0;
 	daemon->priv->about_to_sleep_id = 0;
+	daemon->priv->conf_sleep_timeout = 1000;
+	daemon->priv->conf_allow_hibernate_encrypted_swap = FALSE;
+
+	/* load some values from the config file */
+	file = g_key_file_new ();
+	ret = g_key_file_load_from_file (file, PACKAGE_SYSCONF_DIR "/UPower/UPower.conf", G_KEY_FILE_NONE, &error);
+	if (ret) {
+		daemon->priv->conf_sleep_timeout =
+			g_key_file_get_integer (file, "UPower", "SleepTimeout", NULL);
+		daemon->priv->conf_allow_hibernate_encrypted_swap =
+			g_key_file_get_boolean (file, "UPower", "AllowHibernateEncryptedSwap", NULL);
+	} else {
+		egg_warning ("failed to load config file: %s", error->message);
+		g_error_free (error);
+	}
+	g_key_file_free (file);
 
 	daemon->priv->backend = up_backend_new ();
 	g_signal_connect (daemon->priv->backend, "device-added",
@@ -948,31 +987,33 @@ up_daemon_error_get_type (void)
 static void
 up_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
 {
-	UpDaemon *daemon;
-	daemon = UP_DAEMON (object);
+	UpDaemon *daemon = UP_DAEMON (object);
+	UpDaemonPrivate *priv = daemon->priv;
+
 	switch (prop_id) {
 	case PROP_DAEMON_VERSION:
 		g_value_set_string (value, PACKAGE_VERSION);
 		break;
 	case PROP_CAN_SUSPEND:
-		g_value_set_boolean (value, daemon->priv->kernel_can_suspend);
+		g_value_set_boolean (value, priv->kernel_can_suspend);
 		break;
 	case PROP_CAN_HIBERNATE:
-		g_value_set_boolean (value, (daemon->priv->kernel_can_hibernate &&
-					     daemon->priv->hibernate_has_swap_space &&
-					     !daemon->priv->hibernate_has_encrypted_swap));
+		g_value_set_boolean (value, (priv->kernel_can_hibernate &&
+					     priv->hibernate_has_swap_space &&
+					     (!priv->hibernate_has_encrypted_swap ||
+					      priv->conf_allow_hibernate_encrypted_swap)));
 		break;
 	case PROP_ON_BATTERY:
-		g_value_set_boolean (value, daemon->priv->on_battery);
+		g_value_set_boolean (value, priv->on_battery);
 		break;
 	case PROP_ON_LOW_BATTERY:
-		g_value_set_boolean (value, daemon->priv->on_battery && daemon->priv->on_low_battery);
+		g_value_set_boolean (value, priv->on_battery && priv->on_low_battery);
 		break;
 	case PROP_LID_IS_CLOSED:
-		g_value_set_boolean (value, daemon->priv->lid_is_closed);
+		g_value_set_boolean (value, priv->lid_is_closed);
 		break;
 	case PROP_LID_IS_PRESENT:
-		g_value_set_boolean (value, daemon->priv->lid_is_present);
+		g_value_set_boolean (value, priv->lid_is_present);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -987,22 +1028,23 @@ static void
 up_daemon_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
 {
 	UpDaemon *daemon = UP_DAEMON (object);
+	UpDaemonPrivate *priv = daemon->priv;
 	switch (prop_id) {
 	case PROP_LID_IS_CLOSED:
-		daemon->priv->lid_is_closed = g_value_get_boolean (value);
-		egg_debug ("now lid_is_closed = %s", daemon->priv->lid_is_closed ? "yes" : "no");
+		priv->lid_is_closed = g_value_get_boolean (value);
+		egg_debug ("now lid_is_closed = %s", priv->lid_is_closed ? "yes" : "no");
 		break;
 	case PROP_LID_IS_PRESENT:
-		daemon->priv->lid_is_present = g_value_get_boolean (value);
-		egg_debug ("now lid_is_present = %s", daemon->priv->lid_is_present ? "yes" : "no");
+		priv->lid_is_present = g_value_get_boolean (value);
+		egg_debug ("now lid_is_present = %s", priv->lid_is_present ? "yes" : "no");
 		break;
 	case PROP_ON_BATTERY:
-		daemon->priv->on_battery = g_value_get_boolean (value);
-		egg_debug ("now on_battery = %s", daemon->priv->on_battery ? "yes" : "no");
+		priv->on_battery = g_value_get_boolean (value);
+		egg_debug ("now on_battery = %s", priv->on_battery ? "yes" : "no");
 		break;
 	case PROP_ON_LOW_BATTERY:
-		daemon->priv->on_low_battery = g_value_get_boolean (value);
-		egg_debug ("now on_low_battery = %s", daemon->priv->on_low_battery ? "yes" : "no");
+		priv->on_low_battery = g_value_get_boolean (value);
+		egg_debug ("now on_low_battery = %s", priv->on_low_battery ? "yes" : "no");
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1138,26 +1180,20 @@ up_daemon_class_init (UpDaemonClass *klass)
 static void
 up_daemon_finalize (GObject *object)
 {
-	UpDaemon *daemon;
+	UpDaemon *daemon = UP_DAEMON (object);
+	UpDaemonPrivate *priv = daemon->priv;
 
-	g_return_if_fail (object != NULL);
-	g_return_if_fail (UP_IS_DAEMON (object));
+	if (priv->battery_poll_id != 0)
+		g_source_remove (priv->battery_poll_id);
 
-	daemon = UP_DAEMON (object);
-
-	g_return_if_fail (daemon->priv != NULL);
-
-	if (daemon->priv->battery_poll_id != 0)
-		g_source_remove (daemon->priv->battery_poll_id);
-
-	if (daemon->priv->proxy != NULL)
-		g_object_unref (daemon->priv->proxy);
-	if (daemon->priv->connection != NULL)
-		dbus_g_connection_unref (daemon->priv->connection);
-	g_object_unref (daemon->priv->power_devices);
-	g_object_unref (daemon->priv->polkit);
-	g_object_unref (daemon->priv->backend);
-	g_timer_destroy (daemon->priv->about_to_sleep_timer);
+	if (priv->proxy != NULL)
+		g_object_unref (priv->proxy);
+	if (priv->connection != NULL)
+		dbus_g_connection_unref (priv->connection);
+	g_object_unref (priv->power_devices);
+	g_object_unref (priv->polkit);
+	g_object_unref (priv->backend);
+	g_timer_destroy (priv->about_to_sleep_timer);
 
 	G_OBJECT_CLASS (up_daemon_parent_class)->finalize (object);
 }

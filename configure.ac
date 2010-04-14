@@ -217,6 +217,7 @@ AC_CONFIG_FILES([
 Makefile
 devkit-power-gobject.pc
 upower-glib.pc
+etc/Makefile
 src/Makefile
 src/dummy/Makefile
 src/freebsd/Makefile
