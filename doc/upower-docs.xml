@@ -70,7 +70,7 @@
   </reference>
 
   <reference id="libupower-glib">
-    <title>libpackagekit GObjects</title>
+    <title>libupower-glib GObjects</title>
     <partintro>
       <para>
         This part documents GObjects used in libupower-glib.
