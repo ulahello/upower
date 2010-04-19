@@ -156,9 +156,8 @@ up_backend_acpi_devd_notify (UpBackend *backend, const gchar *system, const gcha
 			/* FALLTHROUGH */
 		}
 
-		is_closed = (data != NULL && !strcmp (data, "notify=0x00")) ?
-			TRUE : FALSE;
-		g_object_set (backend->priv->daemon, "lid-is-closed", is_closed, NULL);
+		is_closed = (data != NULL && !strcmp (data, "notify=0x00")) ? TRUE : FALSE;
+		up_daemon_set_lid_is_closed (backend->priv->daemon, is_closed);
 		goto out;
 	}
 
@@ -231,7 +230,7 @@ up_backend_lid_coldplug (UpBackend *backend)
 
 	lid_state = up_get_string_sysctl (NULL, "hw.acpi.lid_switch_state");
 	if (lid_state && strcmp (lid_state, "NONE")) {
-		g_object_set (backend->priv->daemon, "lid-is-present", TRUE, NULL);
+		up_daemon_set_lid_is_present (backend->priv->daemon, TRUE);
 	}
 	g_free (lid_state);
 }

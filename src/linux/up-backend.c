@@ -138,9 +138,7 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 		}
 
 		/* we now have a lid */
-		g_object_set (backend->priv->daemon,
-			      "lid-is-present", TRUE,
-			      NULL);
+		up_daemon_set_lid_is_present (backend->priv->daemon, TRUE);
 
 		/* not a power device */
 		up_device_list_insert (backend->priv->managed_devices, G_OBJECT (native), G_OBJECT (input));

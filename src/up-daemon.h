@@ -73,6 +73,14 @@ guint		 up_daemon_get_number_devices_of_type (UpDaemon	*daemon,
 						 UpDeviceKind		 type);
 UpDeviceList	*up_daemon_get_device_list	(UpDaemon		*daemon);
 gboolean	 up_daemon_startup		(UpDaemon		*daemon);
+void		 up_daemon_set_lid_is_closed	(UpDaemon		*daemon,
+						 gboolean		 lid_is_closed);
+void		 up_daemon_set_lid_is_present	(UpDaemon		*daemon,
+						 gboolean		 lid_is_present);
+void		 up_daemon_set_on_battery	(UpDaemon		*daemon,
+						 gboolean		 on_battery);
+void		 up_daemon_set_on_low_battery	(UpDaemon		*daemon,
+						 gboolean		 on_low_battery);
 
 /* exported */
 gboolean	 up_daemon_enumerate_devices	(UpDaemon		*daemon,

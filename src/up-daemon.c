@@ -653,10 +653,8 @@ up_daemon_startup (UpDaemon *daemon)
 	on_battery = (up_daemon_get_on_battery_local (daemon) &&
 		      !up_daemon_get_on_ac_local (daemon));
 	on_low_battery = up_daemon_get_on_low_battery_local (daemon);
-	g_object_set (daemon,
-		      "on-battery", on_battery,
-		      "on-low-battery", on_low_battery,
-		      NULL);
+	up_daemon_set_on_battery (daemon, on_battery);
+	up_daemon_set_on_low_battery (daemon, on_low_battery);
 
 	/* start signals and callbacks */
 	g_object_thaw_notify (G_OBJECT(daemon));
@@ -676,6 +674,50 @@ UpDeviceList *
 up_daemon_get_device_list (UpDaemon *daemon)
 {
 	return g_object_ref (daemon->priv->power_devices);
+}
+
+/**
+ * up_daemon_set_lid_is_closed:
+ **/
+void
+up_daemon_set_lid_is_closed (UpDaemon *daemon, gboolean lid_is_closed)
+{
+	UpDaemonPrivate *priv = daemon->priv;
+	egg_debug ("lid_is_closed = %s", priv->lid_is_closed ? "yes" : "no");
+	priv->lid_is_closed = lid_is_closed;
+}
+
+/**
+ * up_daemon_set_lid_is_present:
+ **/
+void
+up_daemon_set_lid_is_present (UpDaemon *daemon, gboolean lid_is_present)
+{
+	UpDaemonPrivate *priv = daemon->priv;
+	egg_debug ("lid_is_present = %s", priv->lid_is_present ? "yes" : "no");
+	priv->lid_is_present = lid_is_present;
+}
+
+/**
+ * up_daemon_set_on_battery:
+ **/
+void
+up_daemon_set_on_battery (UpDaemon *daemon, gboolean on_battery)
+{
+	UpDaemonPrivate *priv = daemon->priv;
+	egg_debug ("on_battery = %s", priv->on_battery ? "yes" : "no");
+	priv->on_battery = on_battery;
+}
+
+/**
+ * up_daemon_set_on_low_battery:
+ **/
+void
+up_daemon_set_on_low_battery (UpDaemon *daemon, gboolean on_low_battery)
+{
+	UpDaemonPrivate *priv = daemon->priv;
+	egg_debug ("on_low_battery = %s", priv->on_low_battery ? "yes" : "no");
+	priv->on_low_battery = on_low_battery;
 }
 
 /**
@@ -744,15 +786,14 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 	/* second, check if the on_battery and on_low_battery state has changed */
 	ret = (up_daemon_get_on_battery_local (daemon) && !up_daemon_get_on_ac_local (daemon));
 	if (ret != priv->on_battery) {
-		g_object_set (daemon, "on-battery", ret, NULL);
+		up_daemon_set_on_battery (daemon, ret);
 
 		/* set pm-utils power policy */
 		up_daemon_set_pmutils_powersave (daemon, ret);
 	}
 	ret = up_daemon_get_on_low_battery_local (daemon);
-	if (ret != priv->on_low_battery) {
-		g_object_set (daemon, "on-low-battery", ret, NULL);
-	}
+	if (ret != priv->on_low_battery)
+		up_daemon_set_on_low_battery (daemon, ret);
 
 	/* emit */
 	if (!priv->during_coldplug) {
@@ -1027,25 +1068,7 @@ up_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 static void
 up_daemon_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
 {
-	UpDaemon *daemon = UP_DAEMON (object);
-	UpDaemonPrivate *priv = daemon->priv;
 	switch (prop_id) {
-	case PROP_LID_IS_CLOSED:
-		priv->lid_is_closed = g_value_get_boolean (value);
-		egg_debug ("now lid_is_closed = %s", priv->lid_is_closed ? "yes" : "no");
-		break;
-	case PROP_LID_IS_PRESENT:
-		priv->lid_is_present = g_value_get_boolean (value);
-		egg_debug ("now lid_is_present = %s", priv->lid_is_present ? "yes" : "no");
-		break;
-	case PROP_ON_BATTERY:
-		priv->on_battery = g_value_get_boolean (value);
-		egg_debug ("now on_battery = %s", priv->on_battery ? "yes" : "no");
-		break;
-	case PROP_ON_LOW_BATTERY:
-		priv->on_low_battery = g_value_get_boolean (value);
-		egg_debug ("now on_low_battery = %s", priv->on_low_battery ? "yes" : "no");
-		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -1127,7 +1150,7 @@ up_daemon_class_init (UpDaemonClass *klass)
 							       "Is a laptop",
 							       "If this computer is probably a laptop",
 							       FALSE,
-							       G_PARAM_READWRITE));
+							       G_PARAM_READABLE));
 
 	g_object_class_install_property (object_class,
 					 PROP_CAN_SUSPEND,
@@ -1151,7 +1174,7 @@ up_daemon_class_init (UpDaemonClass *klass)
 							       "On Battery",
 							       "Whether the system is running on battery",
 							       FALSE,
-							       G_PARAM_READWRITE));
+							       G_PARAM_READABLE));
 
 	g_object_class_install_property (object_class,
 					 PROP_ON_LOW_BATTERY,
@@ -1159,7 +1182,7 @@ up_daemon_class_init (UpDaemonClass *klass)
 							       "On Low Battery",
 							       "Whether the system is running on battery and if the battery is critically low",
 							       FALSE,
-							       G_PARAM_READWRITE));
+							       G_PARAM_READABLE));
 
 	g_object_class_install_property (object_class,
 					 PROP_LID_IS_CLOSED,
@@ -1167,7 +1190,7 @@ up_daemon_class_init (UpDaemonClass *klass)
 							       "Laptop lid is closed",
 							       "If the laptop lid is closed",
 							       FALSE,
-							       G_PARAM_READWRITE));
+							       G_PARAM_READABLE));
 
 	dbus_g_object_type_install_info (UP_TYPE_DAEMON, &dbus_glib_up_daemon_object_info);
 

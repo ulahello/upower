@@ -152,9 +152,7 @@ up_input_event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 
 		/* are we set */
 		ret = test_bit (input->priv->event.code, bitmask);
-		g_object_set (input->priv->daemon,
-			      "lid-is-closed", ret,
-			      NULL);
+		up_daemon_set_lid_is_closed (input->priv->daemon, ret);
 	}
 out:
 	return TRUE;
@@ -258,9 +256,7 @@ up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
 
 	/* set if we are closed */
 	egg_debug ("using %s for lid event", native_path);
-	g_object_set (input->priv->daemon,
-		      "lid-is-closed", test_bit (SW_LID, bitmask),
-		      NULL);
+	up_daemon_set_lid_is_closed (input->priv->daemon, test_bit (SW_LID, bitmask));
 out:
 	g_free (path);
 	g_free (contents);
