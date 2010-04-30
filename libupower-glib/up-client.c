@@ -547,8 +547,16 @@ up_client_get_on_low_battery (UpClient *client)
 static void
 up_client_add (UpClient *client, const gchar *object_path)
 {
-	UpDevice *device;
+	UpDevice *device = NULL;
+	UpDevice *device_tmp;
 	gboolean ret;
+
+	/* check existing list for this object path */
+	device_tmp = up_client_get_device (client, object_path);
+	if (device_tmp != NULL) {
+		g_warning ("already added: %s", object_path);
+		goto out;
+	}
 
 	/* create new device */
 	device = up_device_new ();
@@ -560,7 +568,8 @@ up_client_add (UpClient *client, const gchar *object_path)
 	g_ptr_array_add (client->priv->array, g_object_ref (device));
 	g_signal_emit (client, signals [UP_CLIENT_DEVICE_ADDED], 0, device);
 out:
-	g_object_unref (device);
+	if (device != NULL)
+		g_object_unref (device);
 }
 
 /*
