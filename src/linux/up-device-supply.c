@@ -269,7 +269,7 @@ up_device_supply_convert_device_technology (const gchar *type)
 		return UP_DEVICE_TECHNOLOGY_LITHIUM_POLYMER;
 	if (g_ascii_strcasecmp (type, "nimh") == 0)
 		return UP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE;
-	if (g_ascii_strcasecmp (type, "lifo") == 0)
+	if (g_ascii_strcasecmp (type, "life") == 0)
 		return UP_DEVICE_TECHNOLOGY_LITHIUM_IRON_PHOSPHATE;
 	return UP_DEVICE_TECHNOLOGY_UNKNOWN;
 }
