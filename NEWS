@@ -1,3 +1,17 @@
+Version 0.9.3
+~~~~~~~~~~~
+Released: 2010-05-06
+
+New Features:
+ - Add a config file with SleepTimeout and AllowHibernateEncryptedSwap entries (Richard Hughes)
+
+Bugfixes:
+ - Fix c&p typo in documentation (Michael Biebl)
+ - The gettext package should match the tarball name (Richard Hughes)
+ - Provide UpDaemon with C setters rather than relying on GObject properties (Richard Hughes)
+ - Sanity check the device is not already in the list before adding (Richard Hughes)
+ - Fix recognition of lithium iron phosphate (LiFePO4) batteries (Sascha Silbe)
+
 Version 0.9.2
 ~~~~~~~~~~~~~
 Released: 2010-04-06
