@@ -313,10 +313,6 @@ up_daemon_about_to_sleep (UpDaemon *daemon, DBusGMethodInvocation *context)
 	GError *error;
 	UpDaemonPrivate *priv = daemon->priv;
 
-	egg_debug ("emitting sleeping");
-	g_signal_emit (daemon, signals[SIGNAL_SLEEPING], 0);
-	g_timer_start (priv->about_to_sleep_timer);
-
 	/* already requested */
 	if (priv->about_to_sleep_id != 0) {
 		error = g_error_new (UP_DAEMON_ERROR,
@@ -333,6 +329,10 @@ up_daemon_about_to_sleep (UpDaemon *daemon, DBusGMethodInvocation *context)
 	/* TODO: use another PolicyKit context? */
 	if (!up_polkit_check_auth (priv->polkit, subject, "org.freedesktop.upower.suspend", context))
 		goto out;
+
+	egg_debug ("emitting sleeping");
+	g_signal_emit (daemon, signals[SIGNAL_SLEEPING], 0);
+	g_timer_start (priv->about_to_sleep_timer);
 
 	dbus_g_method_return (context, NULL);
 out:
