@@ -696,7 +696,7 @@ void
 up_daemon_set_lid_is_closed (UpDaemon *daemon, gboolean lid_is_closed)
 {
 	UpDaemonPrivate *priv = daemon->priv;
-	egg_debug ("lid_is_closed = %s", priv->lid_is_closed ? "yes" : "no");
+	egg_debug ("lid_is_closed = %s", lid_is_closed ? "yes" : "no");
 	priv->lid_is_closed = lid_is_closed;
 	g_object_notify (G_OBJECT (daemon), "lid-is-closed");
 }
@@ -708,7 +708,7 @@ void
 up_daemon_set_lid_is_present (UpDaemon *daemon, gboolean lid_is_present)
 {
 	UpDaemonPrivate *priv = daemon->priv;
-	egg_debug ("lid_is_present = %s", priv->lid_is_present ? "yes" : "no");
+	egg_debug ("lid_is_present = %s", lid_is_present ? "yes" : "no");
 	priv->lid_is_present = lid_is_present;
 	g_object_notify (G_OBJECT (daemon), "lid-is-present");
 }
@@ -720,7 +720,7 @@ void
 up_daemon_set_on_battery (UpDaemon *daemon, gboolean on_battery)
 {
 	UpDaemonPrivate *priv = daemon->priv;
-	egg_debug ("on_battery = %s", priv->on_battery ? "yes" : "no");
+	egg_debug ("on_battery = %s", on_battery ? "yes" : "no");
 	priv->on_battery = on_battery;
 	g_object_notify (G_OBJECT (daemon), "on-battery");
 }
@@ -732,7 +732,7 @@ void
 up_daemon_set_on_low_battery (UpDaemon *daemon, gboolean on_low_battery)
 {
 	UpDaemonPrivate *priv = daemon->priv;
-	egg_debug ("on_low_battery = %s", priv->on_low_battery ? "yes" : "no");
+	egg_debug ("on_low_battery = %s", on_low_battery ? "yes" : "no");
 	priv->on_low_battery = on_low_battery;
 	g_object_notify (G_OBJECT (daemon), "on-low-battery");
 }
