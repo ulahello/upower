@@ -44,10 +44,14 @@
 #define UP_DEVICE_SUPPLY_UNKNOWN_RETRIES	30
 #define UP_DEVICE_SUPPLY_CHARGED_THRESHOLD	90.0f	/* % */
 
+#define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_CHARGE		TRUE
+#define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_ENERGY		FALSE
+
 struct UpDeviceSupplyPrivate
 {
 	guint			 poll_timer_id;
 	gboolean		 has_coldplug_values;
+	gboolean		 coldplug_units;
 	gdouble			 energy_old;
 	GTimeVal		 energy_old_timespec;
 	guint			 unknown_retries;
@@ -91,6 +95,7 @@ up_device_supply_reset_values (UpDeviceSupply *supply)
 	UpDevice *device = UP_DEVICE (supply);
 
 	supply->priv->has_coldplug_values = FALSE;
+	supply->priv->coldplug_units = UP_DEVICE_SUPPLY_COLDPLUG_UNITS_ENERGY;
 	supply->priv->energy_old = 0;
 	supply->priv->energy_old_timespec.tv_sec = 0;
 
@@ -371,6 +376,20 @@ up_device_supply_make_safe_string (gchar *text)
 	text[idx] = '\0';
 }
 
+static gboolean
+up_device_supply_units_changed (UpDeviceSupply *supply, const gchar *native_path)
+{
+	if (supply->priv->coldplug_units == UP_DEVICE_SUPPLY_COLDPLUG_UNITS_CHARGE)
+		if (sysfs_file_exists (native_path, "charge_now") ||
+		    sysfs_file_exists (native_path, "charge_avg"))
+			return FALSE;
+	if (supply->priv->coldplug_units == UP_DEVICE_SUPPLY_COLDPLUG_UNITS_ENERGY)
+		if (sysfs_file_exists (native_path, "energy_now") ||
+		    sysfs_file_exists (native_path, "energy_avg"))
+			return FALSE;
+	return TRUE;
+}
+
 /**
  * up_device_supply_refresh_battery:
  *
@@ -428,7 +447,8 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	voltage_design = up_device_supply_get_design_voltage (native_path);
 
 	/* initial values */
-	if (!supply->priv->has_coldplug_values) {
+	if (!supply->priv->has_coldplug_values ||
+	    up_device_supply_units_changed (supply, native_path)) {
 
 		/* when we add via sysfs power_supply class then we know this is true */
 		g_object_set (device, "power-supply", TRUE, NULL);
@@ -476,6 +496,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 			energy_full_design = sysfs_get_double (native_path, "charge_full_design") / 1000000.0;
 			energy_full *= voltage_design;
 			energy_full_design *= voltage_design;
+			supply->priv->coldplug_units = UP_DEVICE_SUPPLY_COLDPLUG_UNITS_CHARGE;
 		}
 
 		/* the last full should not be bigger than the design */
