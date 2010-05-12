@@ -1,3 +1,15 @@
+Version 0.9.4
+~~~~~~~~~~~
+Released: 2010-05-12
+
+New Features:
+ - Detect when the kernel changes the reported charge units. Fixes rh#587112 (Kyle McMartin)
+
+Bugfixes:
+ - Only emit ::Sleeping() after we've checked AboutToSleep (Richard Hughes)
+ - Ensure we send ::Sleeping() if clients do not call AboutToSleep (Richard Hughes)
+ - Ensure we sent ::notify signals when UpDaemon properties change (Richard Hughes)
+
 Version 0.9.3
 ~~~~~~~~~~~
 Released: 2010-05-06
