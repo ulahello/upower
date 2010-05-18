@@ -5,6 +5,7 @@ INCLUDES = \
 	-DUP_COMPILATION					\
 	-DG_UDEV_API_IS_SUBJECT_TO_CHANGE			\
 	-I$(top_srcdir)/libupower-glib				\
+	$(USB_CFLAGS)						\
 	$(GIO_CFLAGS)						\
 	$(DBUS_GLIB_CFLAGS)					\
 	$(GUDEV_CFLAGS)						\

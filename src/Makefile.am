@@ -108,6 +108,7 @@ endif
 if BACKEND_TYPE_LINUX
 upowerd_LDADD += 						\
 	linux/libupshared.la					\
+	$(USB_LIBS)						\
 	$(GUDEV_LIBS)
 endif
 

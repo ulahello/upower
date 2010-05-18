@@ -180,12 +180,7 @@ AC_SUBST(BACKEND, "$with_backend")
 # only need GUdev on linux
 if test x$with_backend = xlinux; then
 	PKG_CHECK_MODULES(GUDEV, [gudev-1.0 >= 001])
-	AC_SUBST(GUDEV_CFLAGS)
-	AC_SUBST(GUDEV_LIBS)
-
-	dnl Check libusb also
-	AC_CHECK_HEADERS(usb.h, , [AC_MSG_ERROR([Can't find usb.h. Please install libusb.])])
-	AC_CHECK_LIB([usb], [usb_find_devices], [], [AC_MSG_ERROR([Can't use libusb.])])
+	PKG_CHECK_MODULES(USB, [libusb-1.0 >= 1.0.0])
 fi
 
 # export to Makefile.am

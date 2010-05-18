@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2005-2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2005-2010 Richard Hughes <richard@hughsie.com>
  * Copyright (C) 2004 Sergey V. Udaltsov <svu@gnome.org>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@
 #include <glib/gi18n-lib.h>
 #include <glib-object.h>
 #include <gudev/gudev.h>
-#include <usb.h>
+#include <libusb.h>
 
 #include "sysfs-utils.h"
 #include "egg-debug.h"
@@ -43,14 +43,14 @@
 #define UP_DEVICE_CSR_REFRESH_TIMEOUT		30L
 
 /* Internal CSR registers */
-#define CSR_P6  			(buf[0])
-#define CSR_P0  			(buf[1])
-#define CSR_P4  			(buf[2])
-#define CSR_P5  			(buf[3])
-#define CSR_P8  			(buf[4])
-#define CSR_P9  			(buf[5])
-#define CSR_PB0 			(buf[6])
-#define CSR_PB1 			(buf[7])
+#define CSR_P6  			0
+#define CSR_P0  			1
+#define CSR_P4  			2
+#define CSR_P5  			3
+#define CSR_P8  			4
+#define CSR_P9  			5
+#define CSR_PB0 			6
+#define CSR_PB1 			7
 
 struct UpDeviceCsrPrivate
 {
@@ -59,7 +59,8 @@ struct UpDeviceCsrPrivate
 	guint			 bus_num;
 	guint			 dev_num;
 	gint			 raw_value;
-	struct usb_device	*device;
+	libusb_context		*ctx;
+	libusb_device		*device;
 };
 
 G_DEFINE_TYPE (UpDeviceCsr, up_device_csr, UP_TYPE_DEVICE)
@@ -85,40 +86,31 @@ up_device_csr_poll_cb (UpDeviceCsr *csr)
 /**
  * up_device_csr_find_device:
  **/
-static struct usb_device *
+static libusb_device *
 up_device_csr_find_device (UpDeviceCsr *csr)
 {
-	struct usb_bus *curr_bus;
-	struct usb_device *curr_device;
-	gchar *dir_name;
-	gchar *filename;
+	libusb_device *curr_device = NULL;
+	libusb_device **devices;
+	guint8 bus_num;
+	guint8 dev_num;
+	guint i;
 
-	dir_name = g_strdup_printf ("%03d", csr->priv->bus_num);
-	filename = g_strdup_printf ("%03d",csr->priv->dev_num);
-	egg_debug ("Looking for: [%s][%s]", dir_name, filename);
+	egg_debug ("Looking for: [%03d][%03d]", csr->priv->bus_num, csr->priv->dev_num);
 
-	for (curr_bus = usb_busses; curr_bus != NULL; curr_bus = curr_bus->next) {
-		/* egg_debug ("Checking bus: [%s]", curr_bus->dirname); */
-		if (g_ascii_strcasecmp (dir_name, curr_bus->dirname))
-			continue;
+	/* try to find the right device */
+	libusb_get_device_list (csr->priv->ctx, &devices);
+	for (i=0; devices[i] != NULL; i++) {
 
-		for (curr_device = curr_bus->devices; curr_device != NULL;
-		     curr_device = curr_device->next) {
-			/* egg_debug ("Checking port: [%s]", curr_device->filename); */
-			if (g_ascii_strcasecmp (filename, curr_device->filename))
-				continue;
-			egg_debug ("Matched device: [%s][%s][%04X:%04X]", curr_bus->dirname,
-				curr_device->filename,
-				curr_device->descriptor.idVendor,
-				curr_device->descriptor.idProduct);
-			goto out;
+		bus_num = libusb_get_bus_number (devices[i]);
+		dev_num = libusb_get_device_address (devices[i]);
+		if (bus_num == csr->priv->bus_num &&
+		    dev_num == csr->priv->dev_num) {
+			curr_device = libusb_ref_device (devices[i]);
+			break;
 		}
 	}
-	/* nothing found */
-	curr_device = NULL;
-out:
-	g_free (dir_name);
-	g_free (filename);
+
+	libusb_free_device_list (devices, TRUE);
 	return curr_device;
 }
 
@@ -221,45 +213,52 @@ up_device_csr_refresh (UpDevice *device)
 	gboolean ret = FALSE;
 	GTimeVal timeval;
 	UpDeviceCsr *csr = UP_DEVICE_CSR (device);
-	usb_dev_handle *handle = NULL;
-	char buf[80];
-	unsigned int addr;
+	libusb_device_handle *handle = NULL;
+	guint8 buf[80];
+	guint addr;
 	gdouble percentage;
-	guint written;
+	gint retval;
 
-	/* For dual receivers C502, C504 and C505, the mouse is the
-	 * second device and uses an addr of 1 in the value and index
-	 * fields' high byte */
-	addr = csr->priv->is_dual ? 1<<8 : 0;
-
+	/* ensure we still have a device */
 	if (csr->priv->device == NULL) {
 		egg_warning ("no device!");
 		goto out;
 	}
 
 	/* open USB device */
-	handle = usb_open (csr->priv->device);
-	if (handle == NULL) {
-		egg_warning ("could not open device");
+	retval = libusb_open (csr->priv->device, &handle);
+	if (retval < 0) {
+		egg_warning ("could not open device: %i", retval);
 		goto out;
 	}
 
+	/* For dual receivers C502, C504 and C505, the mouse is the
+	 * second device and uses an addr of 1 in the value and index
+	 * fields' high byte */
+	addr = csr->priv->is_dual ? 1<<8 : 0;
+
 	/* get the charge */
-	written = usb_control_msg (handle, 0xc0, 0x09, 0x03|addr, 0x00|addr, buf, 8, UP_DEVICE_CSR_REFRESH_TIMEOUT);
-	ret = (written == 8);
-	if (!ret) {
-		egg_warning ("failed to write to device, wrote %i bytes", written);
+	retval = libusb_control_transfer (handle, 0xc0, 0x09, 0x03|addr, 0x00|addr,
+					  buf, 8, UP_DEVICE_CSR_REFRESH_TIMEOUT);
+	if (retval < 0) {
+		egg_warning ("failed to write to device: %i", retval);
+		goto out;
+	}
+
+	/* ensure we wrote 8 bytes */
+	if (retval != 8) {
+		egg_warning ("failed to write to device, wrote %i bytes", retval);
 		goto out;
 	}
 
 	/* is a C504 receiver busy? */
-	if (CSR_P0 == 0x3b && CSR_P4 == 0) {
-		egg_debug ("receiver busy");
+	if (buf[CSR_P0] == 0x3b && buf[CSR_P4] == 0) {
+		egg_warning ("receiver busy");
 		goto out;
 	}
 
 	/* get battery status */
-	csr->priv->raw_value = CSR_P5 & 0x07;
+	csr->priv->raw_value = buf[CSR_P5] & 0x07;
 	egg_debug ("charge level: %d", csr->priv->raw_value);
 	if (csr->priv->raw_value != 0) {
 		percentage = (100.0 / 7.0) * csr->priv->raw_value;
@@ -270,9 +269,12 @@ up_device_csr_refresh (UpDevice *device)
 	/* reset time */
 	g_get_current_time (&timeval);
 	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
+
+	/* success */
+	ret = TRUE;
 out:
 	if (handle != NULL)
-		usb_close (handle);
+		libusb_close (handle);
 	return ret;
 }
 
@@ -282,15 +284,15 @@ out:
 static void
 up_device_csr_init (UpDeviceCsr *csr)
 {
+	gint retval;
 	csr->priv = UP_DEVICE_CSR_GET_PRIVATE (csr);
-
-	usb_init ();
-	usb_find_busses ();
-	usb_find_devices ();
 
 	csr->priv->is_dual = FALSE;
 	csr->priv->raw_value = -1;
 	csr->priv->poll_timer_id = 0;
+	retval = libusb_init (&csr->priv->ctx);
+	if (retval < 0)
+		egg_warning ("could not initialize libusb: %i", retval);
 }
 
 /**
@@ -307,6 +309,7 @@ up_device_csr_finalize (GObject *object)
 	csr = UP_DEVICE_CSR (object);
 	g_return_if_fail (csr->priv != NULL);
 
+	libusb_exit (csr->priv->ctx);
 	if (csr->priv->poll_timer_id > 0)
 		g_source_remove (csr->priv->poll_timer_id);
 
