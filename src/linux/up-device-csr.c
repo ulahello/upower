@@ -90,7 +90,7 @@ static libusb_device *
 up_device_csr_find_device (UpDeviceCsr *csr)
 {
 	libusb_device *curr_device = NULL;
-	libusb_device **devices;
+	libusb_device **devices = NULL;
 	guint8 bus_num;
 	guint8 dev_num;
 	guint i;
@@ -99,6 +99,10 @@ up_device_csr_find_device (UpDeviceCsr *csr)
 
 	/* try to find the right device */
 	libusb_get_device_list (csr->priv->ctx, &devices);
+	if (devices == NULL) {
+		egg_warning ("failed to get any devices");
+		goto out;
+	}
 	for (i=0; devices[i] != NULL; i++) {
 
 		bus_num = libusb_get_bus_number (devices[i]);
@@ -111,6 +115,7 @@ up_device_csr_find_device (UpDeviceCsr *csr)
 	}
 
 	libusb_free_device_list (devices, TRUE);
+out:
 	return curr_device;
 }
 
