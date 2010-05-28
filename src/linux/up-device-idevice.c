@@ -144,7 +144,8 @@ up_device_idevice_coldplug (UpDevice *device)
 		      NULL);
 
 	/* coldplug */
-	ret = up_device_idevice_refresh (device);
+	if (up_device_idevice_refresh (device) == FALSE)
+		goto out;
 
 	/* disconnect */
 	lockdownd_client_free (idevice->priv->client);
