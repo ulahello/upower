@@ -40,6 +40,9 @@
 #include "up-device-wup.h"
 #include "up-device-hid.h"
 #include "up-input.h"
+#ifdef HAVE_IDEVICE
+#include "up-device-idevice.h"
+#endif /* HAVE_IDEVICE */
 
 static void	up_backend_class_init	(UpBackendClass	*klass);
 static void	up_backend_init	(UpBackend		*backend);
@@ -109,6 +112,15 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 		device = NULL;
 
 	} else if (g_strcmp0 (subsys, "usb") == 0) {
+
+#ifdef HAVE_IDEVICE
+		/* see if this is an iDevice */
+		device = UP_DEVICE (up_device_idevice_new ());
+		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+		if (ret)
+			goto out;
+		g_object_unref (device);
+#endif /* HAVE_IDEVICE */
 
 		/* see if this is a CSR mouse or keyboard */
 		device = UP_DEVICE (up_device_csr_new ());

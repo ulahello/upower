@@ -109,7 +109,8 @@ if BACKEND_TYPE_LINUX
 upowerd_LDADD += 						\
 	linux/libupshared.la					\
 	$(USB_LIBS)						\
-	$(GUDEV_LIBS)
+	$(GUDEV_LIBS)						\
+	$(IDEVICE_LIBS)
 endif
 
 upowerd_CFLAGS =						\

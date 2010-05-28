@@ -178,10 +178,17 @@ AC_DEFINE_UNQUOTED(BACKEND, "$with_backend", [backend])
 AC_SUBST(BACKEND, "$with_backend")
 
 # only need GUdev on linux
+with_idevice=no
 if test x$with_backend = xlinux; then
 	PKG_CHECK_MODULES(GUDEV, [gudev-1.0 >= 001])
 	PKG_CHECK_MODULES(USB, [libusb-1.0 >= 1.0.0])
+	PKG_CHECK_MODULES(IDEVICE, libimobiledevice-1.0 >= 0.9.7, with_idevice=yes, with_idevice=no)
+	if test x$with_idevice = xyes; then
+		AC_DEFINE(HAVE_IDEVICE, 1, [Define to 1 if AFC is going to be built])
+	fi
 fi
+
+AM_CONDITIONAL(HAVE_IDEVICE, [test x$with_idevice = xyes])
 
 # export to Makefile.am
 AM_CONDITIONAL(BACKEND_TYPE_DUMMY, [test x$with_backend = xdummy])
@@ -253,6 +260,7 @@ echo "
         xsltproc:                   ${XSLTPROC}
 
         Backend:                    ${with_backend}
+        libimobiledevice support:   ${with_idevice}
         Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building api docs:          ${enable_gtk_doc}
         Building man pages:         ${enable_man_pages}
