@@ -82,12 +82,9 @@ up_device_idevice_coldplug (UpDevice *device)
 {
 	UpDeviceIdevice *idevice = UP_DEVICE_IDEVICE (device);
 	GUdevDevice *native;
-	gboolean ret = FALSE;
-	idevice_error_t retval;
 	const gchar *uuid;
 	const gchar *model;
-	plist_t dict = NULL;
-	plist_t node;
+	plist_t dict, node;
 	guint64 poll_seconds = 0;
 	idevice_t dev = NULL;
 	lockdownd_client_t client = NULL;
@@ -104,20 +101,22 @@ up_device_idevice_coldplug (UpDevice *device)
 		goto out;
 
 	/* Connect to the device */
-	retval = idevice_new (&dev, uuid);
-	if (retval != IDEVICE_E_SUCCESS)
+	if (idevice_new (&dev, uuid) != IDEVICE_E_SUCCESS)
 		goto out;
+
 	if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake (dev, &client, "upower"))
 		goto out;
 
 	/* Get the poll timeout */
 	if (lockdownd_get_value (client, "com.apple.mobile.iTunes", "BatteryPollInterval", &dict) != LOCKDOWN_E_SUCCESS)
 		goto out;
+
 	node = plist_dict_get_item (dict, "BatteryPollInterval");
 	if (node != NULL)
 		plist_get_uint_val (node, &poll_seconds);
 	if (poll_seconds == 0)
 		poll_seconds = UP_DEVICE_IDEVICE_DEFAULT_POLL_TIME;
+	plist_free (dict);
 
 	/* Set up struct */
 	idevice->priv->dev = dev;
@@ -133,7 +132,6 @@ up_device_idevice_coldplug (UpDevice *device)
 	}
 
 	/* hardcode some values */
-	//FIXME can we use the device name here?
 	g_object_set (device,
 		      "type", kind,
 		      "serial", uuid,
@@ -155,12 +153,15 @@ up_device_idevice_coldplug (UpDevice *device)
 	/* set up a poll */
 	idevice->priv->poll_timer_id = g_timeout_add_seconds (poll_seconds,
 							      (GSourceFunc) up_device_idevice_poll_cb, idevice);
+
+	return TRUE;
+
 out:
-	if (dict != NULL)
-		plist_free (dict);
 	if (client != NULL)
 		lockdownd_client_free (client);
-	return ret;
+	if (dev != NULL)
+		idevice_free (dev);
+	return FALSE;
 }
 
 /**
@@ -178,18 +179,18 @@ up_device_idevice_refresh (UpDevice *device)
 	guint64 percentage;
 	guint8 charging;
 	UpDeviceState state;
+	gboolean retval = FALSE;
 
 	/* Open a lockdown port, or re-use the one we have */
 	if (idevice->priv->client == NULL) {
 		if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake (idevice->priv->dev, &client, "upower"))
-			return FALSE;
+			goto out;
 	} else {
 		client = idevice->priv->client;
 	}
 
-	/* get values */
-	if (lockdownd_get_value (idevice->priv->client, "com.apple.mobile.battery", NULL, &dict) != LOCKDOWN_E_SUCCESS)
-		return FALSE;
+	if (lockdownd_get_value (client, "com.apple.mobile.battery", NULL, &dict) != LOCKDOWN_E_SUCCESS)
+		goto out;
 
 	/* get battery status */
 	node = plist_dict_get_item (dict, "BatteryCurrentCapacity");
@@ -222,7 +223,14 @@ up_device_idevice_refresh (UpDevice *device)
 	g_get_current_time (&timeval);
 	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
 
-	return TRUE;
+	retval = TRUE;
+
+out:
+	/* Only free it if we opened it */
+	if (idevice->priv->client == NULL && client != NULL)
+		lockdownd_client_free (client);
+
+	return retval;
 }
 
 /**
