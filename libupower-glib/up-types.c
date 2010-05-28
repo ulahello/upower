@@ -73,6 +73,12 @@ up_device_kind_to_string (UpDeviceKind type_enum)
 	case UP_DEVICE_KIND_PHONE:
 		type = "phone";
 		break;
+	case UP_DEVICE_KIND_MEDIA_PLAYER:
+		type = "media-player";
+		break;
+	case UP_DEVICE_KIND_TABLET:
+		type = "tablet";
+		break;
 	default:
 		type = "unknown";
 		break;
@@ -110,6 +116,10 @@ up_device_kind_from_string (const gchar *type)
 		return UP_DEVICE_KIND_PDA;
 	if (g_strcmp0 (type, "phone") == 0)
 		return UP_DEVICE_KIND_PHONE;
+	if (g_strcmp0 (type, "media-player") == 0)
+		return UP_DEVICE_KIND_MEDIA_PLAYER;
+	if (g_strcmp0 (type, "tablet") == 0)
+		return UP_DEVICE_KIND_TABLET;
 	return UP_DEVICE_KIND_UNKNOWN;
 }
 
