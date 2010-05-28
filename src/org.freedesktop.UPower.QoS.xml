@@ -9,7 +9,7 @@
       <doc:description>
         <doc:para>
           org.freedesktop.UPower.QoS is a DBus interface implimented
-          by DeviceKit-power.
+          by UPower.
           It allows applications to request latencies, for example a couple of seconds
           for an IM application, or a few hundred microseconds for a multiplayer game.
         </doc:para>

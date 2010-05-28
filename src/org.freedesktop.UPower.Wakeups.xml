@@ -9,7 +9,7 @@
       <doc:description>
         <doc:para>
           org.freedesktop.UPower.Wakeups is a DBus interface implimented
-          by DeviceKit-power.
+          by UPower.
           It allows applications to watch what applications and drivers are
           causing the wakeups on the system.
         </doc:para>

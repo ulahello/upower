@@ -3,11 +3,11 @@ SCM
 
  - anonymous checkouts
 
-   $ git clone git://git.freedesktop.org/git/DeviceKit/DeviceKit-power.git
+   $ git clone git://git.freedesktop.org/git/UPower.git
 
  - checkouts if you got an ssh account on fd.o (username@ is optional)
 
-   $ git clone ssh://[username@]git.freedesktop.org/git/DeviceKit/DeviceKit-power.git
+   $ git clone ssh://[username@]git.freedesktop.org/git/UPower.git
 
  - commit to local repository
 
