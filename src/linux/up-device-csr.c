@@ -94,13 +94,21 @@ up_device_csr_find_device (UpDeviceCsr *csr)
 	guint8 bus_num;
 	guint8 dev_num;
 	guint i;
+	ssize_t cnt;
 
 	egg_debug ("Looking for: [%03d][%03d]", csr->priv->bus_num, csr->priv->dev_num);
 
 	/* try to find the right device */
-	libusb_get_device_list (csr->priv->ctx, &devices);
+	cnt = libusb_get_device_list (csr->priv->ctx, &devices);
+	if (cnt < 0) {
+/*		need to depend on > libusb1-1.0.9 for libusb_strerror()
+		egg_warning ("failed to get device list: %s", libusb_strerror (cnt));
+ */
+		egg_warning ("failed to get device list: %i", cnt);
+		goto out;
+	}
 	if (devices == NULL) {
-		egg_warning ("failed to get any devices");
+		egg_warning ("failed to get device list");
 		goto out;
 	}
 	for (i=0; devices[i] != NULL; i++) {
