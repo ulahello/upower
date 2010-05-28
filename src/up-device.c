@@ -542,7 +542,6 @@ up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 	device->priv->native_path = g_strdup (native_path);
 
 	/* stop signals and callbacks */
-	egg_debug ("device now coldplug");
 	g_object_freeze_notify (G_OBJECT(device));
 	device->priv->during_coldplug = TRUE;
 
@@ -582,7 +581,6 @@ out:
 	/* start signals and callbacks */
 	g_object_thaw_notify (G_OBJECT(device));
 	device->priv->during_coldplug = FALSE;
-	egg_debug ("device now not coldplug");
 	g_free (id);
 	return ret;
 }
