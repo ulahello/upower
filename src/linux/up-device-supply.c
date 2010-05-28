@@ -412,7 +412,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	gdouble energy_full;
 	gdouble energy_full_design;
 	gdouble energy_rate;
-	gdouble capacity;
+	gdouble capacity = 100.0f;
 	gdouble percentage = 0.0f;
 	gdouble voltage;
 	guint64 time_to_empty;
