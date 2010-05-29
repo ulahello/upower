@@ -511,7 +511,7 @@ up_backend_get_used_swap (UpBackend *backend)
 				swap_free = atoi (tokens[len-2]);
 			if (g_strcmp0 (tokens[0], "SwapTotal") == 0)
 				swap_total = atoi (tokens[len-2]);
-			else if (g_strcmp0 (tokens[0], "Active") == 0)
+			else if (g_strcmp0 (tokens[0], "Active(anon)") == 0)
 				active = atoi (tokens[len-2]);
 		}
 		g_strfreev (tokens);
