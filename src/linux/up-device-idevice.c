@@ -126,7 +126,7 @@ up_device_idevice_coldplug (UpDevice *device)
 	model = g_udev_device_get_property (native, "ID_MODEL");
 	kind = UP_DEVICE_KIND_PHONE;
 	if (model != NULL && g_strstr_len (model, -1, "iPad")) {
-		kind = UP_DEVICE_KIND_TABLET;
+		kind = UP_DEVICE_KIND_COMPUTER;
 	} else if (model != NULL && g_strstr_len (model, -1, "iPod")) {
 		kind = UP_DEVICE_KIND_MEDIA_PLAYER;
 	}

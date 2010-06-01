@@ -79,6 +79,9 @@ up_device_kind_to_string (UpDeviceKind type_enum)
 	case UP_DEVICE_KIND_TABLET:
 		type = "tablet";
 		break;
+	case UP_DEVICE_KIND_COMPUTER:
+		type = "computer";
+		break;
 	default:
 		type = "unknown";
 		break;
