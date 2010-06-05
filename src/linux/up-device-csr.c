@@ -211,6 +211,9 @@ up_device_csr_coldplug (UpDevice *device)
 	csr->priv->poll_timer_id = g_timeout_add_seconds (UP_DEVICE_CSR_REFRESH_TIMEOUT,
 							  (GSourceFunc) up_device_csr_poll_cb, csr);
 
+#if GLIB_CHECK_VERSION(2,25,8)
+	g_source_set_name_by_id (csr->priv->poll_timer_id, "[UpDeviceCsr] poll");
+#endif
 out:
 	return ret;
 }

@@ -133,6 +133,7 @@ main (gint argc, gchar **argv)
 	gint retval = 1;
 	gboolean timed_exit = FALSE;
 	gboolean immediate_exit = FALSE;
+	guint timer_id = 0;
 
 	const GOptionEntry options[] = {
 		{ "timed-exit", '\0', 0, G_OPTION_ARG_NONE, &timed_exit,
@@ -191,8 +192,12 @@ main (gint argc, gchar **argv)
 	}
 
 	/* only timeout and close the mainloop if we have specified it on the command line */
-	if (timed_exit)
-		g_timeout_add_seconds (30, (GSourceFunc) up_main_timed_exit_cb, loop);
+	if (timed_exit) {
+		timer_id = g_timeout_add_seconds (30, (GSourceFunc) up_main_timed_exit_cb, loop);
+#if GLIB_CHECK_VERSION(2,25,8)
+		g_source_set_name_by_id (timer_id, "[UpMain] idle");
+#endif
+	}
 
 	/* immediatly exit */
 	if (immediate_exit)

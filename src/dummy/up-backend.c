@@ -88,6 +88,7 @@ static gboolean
 up_backend_add_cb (UpBackend *backend)
 {
 	gboolean ret;
+	guint timer_id;
 
 	/* coldplug */
 	ret = up_device_coldplug (backend->priv->device, backend->priv->daemon, backend->priv->native);
@@ -100,7 +101,10 @@ up_backend_add_cb (UpBackend *backend)
 	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, backend->priv->native, backend->priv->device);
 
 	/* setup poll */
-	g_timeout_add_seconds (2, (GSourceFunc) up_backend_changed_time_cb, backend);
+	timer_id = g_timeout_add_seconds (2, (GSourceFunc) up_backend_changed_time_cb, backend);
+#if GLIB_CHECK_VERSION(2,25,8)
+	g_source_set_name_by_id (timer_id, "[UpBackend] changed");
+#endif
 out:
 	return FALSE;
 }

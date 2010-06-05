@@ -432,6 +432,9 @@ up_device_wup_init (UpDeviceWup *wup)
 	wup->priv->fd = -1;
 	wup->priv->poll_timer_id = g_timeout_add_seconds (UP_DEVICE_WUP_REFRESH_TIMEOUT,
 							  (GSourceFunc) up_device_wup_poll_cb, wup);
+#if GLIB_CHECK_VERSION(2,25,8)
+	g_source_set_name_by_id (wup->priv->poll_timer_id, "[UpDeviceWup] poll");
+#endif
 }
 
 /**

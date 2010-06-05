@@ -633,7 +633,12 @@ up_wakeups_timerstats_enable (UpWakeups *wakeups)
 	/* reset timeout */
 	if (wakeups->priv->disable_id != 0)
 		g_source_remove (wakeups->priv->disable_id);
-	wakeups->priv->disable_id = g_timeout_add_seconds (UP_WAKEUPS_DISABLE_INTERVAL, (GSourceFunc) up_wakeups_disable_cb, wakeups);
+	wakeups->priv->disable_id =
+		g_timeout_add_seconds (UP_WAKEUPS_DISABLE_INTERVAL,
+				       (GSourceFunc) up_wakeups_disable_cb, wakeups);
+#if GLIB_CHECK_VERSION(2,25,8)
+	g_source_set_name_by_id (wakeups->priv->disable_id, "[UpWakeups] disable");
+#endif
 
 	/* already same state */
 	if (wakeups->priv->polling_enabled)
@@ -642,8 +647,18 @@ up_wakeups_timerstats_enable (UpWakeups *wakeups)
 	egg_debug ("enabling timer stats");
 
 	/* setup polls */
-	wakeups->priv->poll_kernel_id = g_timeout_add_seconds (UP_WAKEUPS_POLL_INTERVAL_KERNEL, (GSourceFunc) up_wakeups_poll_kernel_cb, wakeups);
-	wakeups->priv->poll_userspace_id = g_timeout_add_seconds (UP_WAKEUPS_POLL_INTERVAL_USERSPACE, (GSourceFunc) up_wakeups_poll_userspace_cb, wakeups);
+	wakeups->priv->poll_kernel_id =
+		g_timeout_add_seconds (UP_WAKEUPS_POLL_INTERVAL_KERNEL,
+				       (GSourceFunc) up_wakeups_poll_kernel_cb, wakeups);
+#if GLIB_CHECK_VERSION(2,25,8)
+	g_source_set_name_by_id (wakeups->priv->poll_kernel_id, "[UpWakeups] kernel");
+#endif
+	wakeups->priv->poll_userspace_id =
+		g_timeout_add_seconds (UP_WAKEUPS_POLL_INTERVAL_USERSPACE,
+				       (GSourceFunc) up_wakeups_poll_userspace_cb, wakeups);
+#if GLIB_CHECK_VERSION(2,25,8)
+	g_source_set_name_by_id (wakeups->priv->poll_userspace_id, "[UpWakeups] userspace");
+#endif
 
 	file = fopen (UP_WAKEUPS_SOURCE_USERSPACE, "w");
 	if (file == NULL)

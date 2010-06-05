@@ -425,6 +425,9 @@ up_daemon_deferred_sleep (UpDaemon *daemon, const gchar *command, DBusGMethodInv
 		g_signal_emit (daemon, signals[SIGNAL_SLEEPING], 0);
 		priv->about_to_sleep_id = g_timeout_add (priv->conf_sleep_timeout,
 							 (GSourceFunc) up_daemon_deferred_sleep_cb, sleep);
+#if GLIB_CHECK_VERSION(2,25,8)
+		g_source_set_name_by_id (priv->about_to_sleep_id, "[UpDaemon] about-to-sleep no signal");
+#endif
 		return;
 	}
 
@@ -435,9 +438,15 @@ up_daemon_deferred_sleep (UpDaemon *daemon, const gchar *command, DBusGMethodInv
 		/* we have to wait for the difference in time */
 		priv->about_to_sleep_id = g_timeout_add (priv->conf_sleep_timeout - elapsed,
 							 (GSourceFunc) up_daemon_deferred_sleep_cb, sleep);
+#if GLIB_CHECK_VERSION(2,25,8)
+		g_source_set_name_by_id (priv->about_to_sleep_id, "[UpDaemon] about-to-sleep less");
+#endif
 	} else {
 		/* we can do this straight away */
 		priv->about_to_sleep_id = g_idle_add ((GSourceFunc) up_daemon_deferred_sleep_cb, sleep);
+#if GLIB_CHECK_VERSION(2,25,8)
+		g_source_set_name_by_id (priv->about_to_sleep_id, "[UpDaemon] about-to-sleep more");
+#endif
 	}
 }
 
@@ -774,6 +783,9 @@ up_daemon_poll_battery_devices_for_a_little_bit (UpDaemon *daemon)
 	priv->battery_poll_id =
 		g_timeout_add_seconds (UP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
 				       (GSourceFunc) up_daemon_refresh_battery_devices_cb, daemon);
+#if GLIB_CHECK_VERSION(2,25,8)
+	g_source_set_name_by_id (priv->battery_poll_id, "[UpDaemon] poll batteries for AC event");
+#endif
 }
 
 /**
