@@ -888,30 +888,3 @@ up_history_new (void)
 	return UP_HISTORY (history);
 }
 
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-
-void
-up_history_test (gpointer user_data)
-{
-	EggTest *test = (EggTest *) user_data;
-	UpHistory *history;
-
-	if (!egg_test_start (test, "UpHistory"))
-		return;
-
-	/************************************************************/
-	egg_test_title (test, "get instance");
-	history = up_history_new ();
-	egg_test_assert (test, history != NULL);
-
-	/* unref */
-	g_object_unref (history);
-
-	egg_test_end (test);
-}
-#endif
-

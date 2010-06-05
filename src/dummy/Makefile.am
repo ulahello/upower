@@ -19,7 +19,7 @@ libupshared_la_SOURCES =					\
 	up-native.c						\
 	$(BUILT_SOURCES)
 
-if EGG_BUILD_TESTS
+if UP_BUILD_TESTS
 noinst_LTLIBRARIES += libuptest.la
 libuptest_la_CFLAGS = -DEGG_TEST
 libuptest_la_SOURCES = $(libupshared_la_SOURCES)

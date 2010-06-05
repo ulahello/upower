@@ -291,30 +291,3 @@ up_backend_get_hibernate_command (UpBackend *backend)
 	return "/bin/true";
 }
 
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-
-void
-up_backend_test (gpointer user_data)
-{
-	EggTest *test = (EggTest *) user_data;
-	UpBackend *backend;
-
-	if (!egg_test_start (test, "UpBackend"))
-		return;
-
-	/************************************************************/
-	egg_test_title (test, "get instance");
-	backend = up_backend_new ();
-	egg_test_assert (test, backend != NULL);
-
-	/* unref */
-	g_object_unref (backend);
-
-	egg_test_end (test);
-}
-#endif
-

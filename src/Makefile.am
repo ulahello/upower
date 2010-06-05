@@ -117,13 +117,12 @@ upowerd_CFLAGS =						\
 	$(WARNINGFLAGS_C)					\
 	$(NULL)
 
-if EGG_BUILD_TESTS
+if UP_BUILD_TESTS
+
 check_PROGRAMS =						\
 	up-self-test
 
 up_self_test_SOURCES =						\
-	egg-test.h						\
-	egg-test.c						\
 	egg-debug.c						\
 	egg-debug.h						\
 	up-self-test.c						\
@@ -154,9 +153,10 @@ up_self_test_LDADD =						\
 	$(POLKIT_LIBS)						\
 	$(UPOWER_LIBS)
 
-up_self_test_CFLAGS = -DEGG_TEST $(AM_CFLAGS) $(WARNINGFLAGS_C)
+up_self_test_CFLAGS = $(AM_CFLAGS) $(WARNINGFLAGS_C)
 
 TESTS = up-self-test
+
 endif
 
 servicedir       = $(datadir)/dbus-1/system-services

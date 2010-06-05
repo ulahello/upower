@@ -261,30 +261,3 @@ up_polkit_new (void)
 	return UP_POLKIT (up_polkit_object);
 }
 
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-
-void
-up_polkit_test (gpointer user_data)
-{
-	EggTest *test = (EggTest *) user_data;
-	UpPolkit *polkit;
-
-	if (!egg_test_start (test, "UpPolkit"))
-		return;
-
-	/************************************************************/
-	egg_test_title (test, "get instance");
-	polkit = up_polkit_new ();
-	egg_test_assert (test, polkit != NULL);
-
-	/* unref */
-	g_object_unref (polkit);
-
-	egg_test_end (test);
-}
-#endif
-

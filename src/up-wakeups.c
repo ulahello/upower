@@ -795,30 +795,3 @@ up_wakeups_new (void)
 	return UP_WAKEUPS (wakeups);
 }
 
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-
-void
-up_wakeups_test (gpointer user_data)
-{
-	EggTest *test = (EggTest *) user_data;
-	UpWakeups *wakeups;
-
-	if (!egg_test_start (test, "UpWakeups"))
-		return;
-
-	/************************************************************/
-	egg_test_title (test, "get instance");
-	wakeups = up_wakeups_new ();
-	egg_test_assert (test, wakeups != NULL);
-
-	/* unref */
-	g_object_unref (wakeups);
-
-	egg_test_end (test);
-}
-#endif
-

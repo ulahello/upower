@@ -38,27 +38,3 @@ up_native_get_native_path (GObject *object)
 	return "/sys/dummy";
 }
 
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-
-void
-up_native_test (gpointer user_data)
-{
-	EggTest *test = (EggTest *) user_data;
-	const gchar *path;
-
-	if (!egg_test_start (test, "UpNative"))
-		return;
-
-	/************************************************************/
-	egg_test_title (test, "get instance");
-	path = up_native_get_native_path (NULL);
-	egg_test_assert (test, (g_strcmp0 (path, "/sys/dummy") == 0));
-
-	egg_test_end (test);
-}
-#endif
-

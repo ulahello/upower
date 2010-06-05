@@ -1197,30 +1197,3 @@ up_device_new (void)
 	return device;
 }
 
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-
-void
-up_device_test (gpointer user_data)
-{
-	EggTest *test = (EggTest *) user_data;
-	UpDevice *device;
-
-	if (!egg_test_start (test, "UpDevice"))
-		return;
-
-	/************************************************************/
-	egg_test_title (test, "get instance");
-	device = up_device_new ();
-	egg_test_assert (test, device != NULL);
-
-	/* unref */
-	g_object_unref (device);
-
-	egg_test_end (test);
-}
-#endif
-

@@ -627,30 +627,3 @@ up_qos_new (void)
 	return UP_QOS (qos);
 }
 
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-
-void
-up_qos_test (gpointer user_data)
-{
-	EggTest *test = (EggTest *) user_data;
-	UpQos *qos;
-
-	if (!egg_test_start (test, "UpQos"))
-		return;
-
-	/************************************************************/
-	egg_test_title (test, "get instance");
-	qos = up_qos_new ();
-	egg_test_assert (test, qos != NULL);
-
-	/* unref */
-	g_object_unref (qos);
-
-	egg_test_end (test);
-}
-#endif
-

@@ -22,7 +22,6 @@
 #include "config.h"
 
 #include <glib-object.h>
-#include "egg-test.h"
 #include "egg-debug.h"
 
 #include "up-backend.h"
@@ -35,26 +34,149 @@
 #include "up-qos.h"
 #include "up-wakeups.h"
 
+static void
+up_test_native_func (void)
+{
+	const gchar *path;
+
+	path = up_native_get_native_path (NULL);
+	g_assert_cmpstr (path, ==, "/sys/dummy");
+}
+
+static void
+up_test_backend_func (void)
+{
+	UpBackend *backend;
+
+	backend = up_backend_new ();
+	g_assert (backend != NULL);
+
+	/* unref */
+	g_object_unref (backend);
+}
+
+static void
+up_test_daemon_func (void)
+{
+	UpDaemon *daemon;
+
+	daemon = up_daemon_new ();
+	g_assert (daemon != NULL);
+
+	/* unref */
+	g_object_unref (daemon);
+}
+
+static void
+up_test_device_func (void)
+{
+	UpDevice *device;
+
+	device = up_device_new ();
+	g_assert (device != NULL);
+
+	/* unref */
+	g_object_unref (device);
+}
+
+static void
+up_test_device_list_func (void)
+{
+	UpDeviceList *list;
+	GObject *native;
+	GObject *device;
+	GObject *found;
+	gboolean ret;
+
+	list = up_device_list_new ();
+	g_assert (list != NULL);
+
+	/* add device */
+	native = g_object_new (G_TYPE_OBJECT, NULL);
+	device = g_object_new (G_TYPE_OBJECT, NULL);
+	ret = up_device_list_insert (list, native, device);
+	g_assert (ret);
+
+	/* find device */
+	found = up_device_list_lookup (list, native);
+	g_assert (found != NULL);
+	g_object_unref (found);
+
+	/* remove device */
+	ret = up_device_list_remove (list, device);
+	g_assert (ret);
+
+	/* unref */
+	g_object_unref (native);
+	g_object_unref (device);
+	g_object_unref (list);
+}
+
+static void
+up_test_history_func (void)
+{
+	UpHistory *history;
+
+	history = up_history_new ();
+	g_assert (history != NULL);
+
+	/* unref */
+	g_object_unref (history);
+}
+
+static void
+up_test_polkit_func (void)
+{
+	UpPolkit *polkit;
+
+	polkit = up_polkit_new ();
+	g_assert (polkit != NULL);
+
+	/* unref */
+	g_object_unref (polkit);
+}
+
+static void
+up_test_qos_func (void)
+{
+	UpQos *qos;
+
+	qos = up_qos_new ();
+	g_assert (qos != NULL);
+
+	/* unref */
+	g_object_unref (qos);
+}
+
+static void
+up_test_wakeups_func (void)
+{
+	UpWakeups *wakeups;
+
+	wakeups = up_wakeups_new ();
+	g_assert (wakeups != NULL);
+
+	/* unref */
+	g_object_unref (wakeups);
+}
+
 int
 main (int argc, char **argv)
 {
-	EggTest *test;
-
 	g_type_init ();
-	test = egg_test_init ();
-	egg_debug_init (&argc, &argv);
+	g_test_init (&argc, &argv, NULL);
 
 	/* tests go here */
-	up_backend_test (test);
-	up_device_test (test);
-	up_device_list_test (test);
-	up_history_test (test);
-	up_native_test (test);
-	up_polkit_test (test);
-	up_qos_test (test);
-	up_wakeups_test (test);
-	up_daemon_test (test);
+	g_test_add_func ("/power/backend", up_test_backend_func);
+	g_test_add_func ("/power/device", up_test_device_func);
+	g_test_add_func ("/power/device_list", up_test_device_list_func);
+	g_test_add_func ("/power/history", up_test_history_func);
+	g_test_add_func ("/power/native", up_test_native_func);
+	g_test_add_func ("/power/polkit", up_test_polkit_func);
+	g_test_add_func ("/power/qos", up_test_qos_func);
+	g_test_add_func ("/power/wakeups", up_test_wakeups_func);
+	g_test_add_func ("/power/daemon", up_test_daemon_func);
 
-	return (egg_test_finish (test));
+	return g_test_run ();
 }
 
