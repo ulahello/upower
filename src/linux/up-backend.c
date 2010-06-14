@@ -322,30 +322,32 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 
 /**
  * up_backend_supports_sleep_state:
+ *
+ * use pm-is-supported to test for supported sleep states
  **/
 static gboolean
 up_backend_supports_sleep_state (const gchar *state)
 {
-	gchar *contents = NULL;
+	gboolean ret = FALSE;
+	gchar *command;
 	GError *error = NULL;
-	gboolean ret;
-	const gchar *filename = "/sys/power/state";
+	gint exit_status;
 
-	/* see what kernel can do */
-	ret = g_file_get_contents (filename, &contents, NULL, &error);
+	/* run script from pm-utils */
+	command = g_strdup_printf ("/usr/bin/pm-is-supported --%s", state);
+	egg_debug ("excuting command: %s", command);
+	ret = g_spawn_command_line_sync (command, NULL, NULL, &exit_status, &error);
 	if (!ret) {
-		egg_warning ("failed to open %s: %s", filename, error->message);
+		egg_warning ("failed to run script: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
-
-	/* does the kernel advertise this */
-	ret = (g_strstr_len (contents, -1, state) != NULL);
+	if (WIFEXITED(exit_status) && (WEXITSTATUS(exit_status) == EXIT_SUCCESS))
+		ret = TRUE;
 out:
-	g_free (contents);
+	g_free (command);
 	return ret;
 }
-
 
 /**
  * up_backend_kernel_can_suspend:
@@ -353,7 +355,7 @@ out:
 gboolean
 up_backend_kernel_can_suspend (UpBackend *backend)
 {
-	return up_backend_supports_sleep_state ("mem");
+	return up_backend_supports_sleep_state ("suspend");
 }
 
 /**
@@ -362,7 +364,7 @@ up_backend_kernel_can_suspend (UpBackend *backend)
 gboolean
 up_backend_kernel_can_hibernate (UpBackend *backend)
 {
-	return up_backend_supports_sleep_state ("disk");
+	return up_backend_supports_sleep_state ("hibernate");
 }
 
 /**
