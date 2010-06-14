@@ -104,7 +104,7 @@ up_device_csr_find_device (UpDeviceCsr *csr)
 /*		need to depend on > libusb1-1.0.9 for libusb_strerror()
 		egg_warning ("failed to get device list: %s", libusb_strerror (cnt));
  */
-		egg_warning ("failed to get device list: %i", cnt);
+		egg_warning ("failed to get device list: %d", (int)cnt);
 		goto out;
 	}
 	if (devices == NULL) {
