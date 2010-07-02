@@ -112,8 +112,8 @@ up_device_supply_reset_values (UpDevice *device)
 		      "energy-full-design", (gdouble) 0.0,
 		      "energy-rate", (gdouble) 0.0,
 		      "voltage", (gdouble) 0.0,
-		      "time-to-empty", (guint64) 0,
-		      "time-to-full", (guint64) 0,
+		      "time-to-empty", (gint64) 0,
+		      "time-to-full", (gint64) 0,
 		      "percentage", (gdouble) 0.0,
 		      "technology", UP_DEVICE_TECHNOLOGY_UNKNOWN,
 		      NULL);
@@ -162,7 +162,7 @@ up_device_supply_battery_set_properties (UpDevice *device, UpAcpiNative *native)
 	gdouble volt, dvolt, rate, lastfull, cap, dcap, lcap, capacity;
 	gboolean is_present;
 	gboolean ret = FALSE;
-	guint64 time_to_empty, time_to_full;
+	gint64 time_to_empty, time_to_full;
 	gchar *vendor, *model, *serial;
 	UpDeviceTechnology technology;
 	UpDeviceState state;
