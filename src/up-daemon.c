@@ -82,7 +82,6 @@ struct UpDaemonPrivate
 	gboolean		 lid_is_present;
 	gboolean		 kernel_can_suspend;
 	gboolean		 kernel_can_hibernate;
-	gboolean		 hibernate_has_swap_space;
 	gboolean		 hibernate_has_encrypted_swap;
 	gboolean		 during_coldplug;
 	gboolean		 sent_sleeping_signal;
@@ -522,6 +521,31 @@ out:
 	return TRUE;
 }
 
+/** 
+ * up_daemon_check_hibernate_swap:
+ *
+ * Check current memory usage whether we have enough swap space for
+ * hibernate.
+ **/
+static gboolean
+up_daemon_check_hibernate_swap (UpDaemon *daemon)
+{
+	gfloat waterline;
+
+	if (daemon->priv->kernel_can_hibernate) {
+		waterline = up_backend_get_used_swap (daemon->priv->backend);
+		if (waterline < UP_DAEMON_SWAP_WATERLINE) {
+			egg_debug ("enough swap to for hibernate");
+			return TRUE;
+		} else {
+			egg_debug ("not enough swap to hibernate");
+			return FALSE;
+		}
+	}
+
+	return FALSE;
+}
+
 /**
  * up_daemon_hibernate:
  **/
@@ -543,7 +567,7 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 	}
 
 	/* enough swap? */
-	if (!priv->hibernate_has_swap_space) {
+	if (!up_daemon_check_hibernate_swap (daemon)) {
 		error = g_error_new (UP_DAEMON_ERROR,
 				     UP_DAEMON_ERROR_GENERAL,
 				     "Not enough swap space");
@@ -946,7 +970,6 @@ up_daemon_properties_changed_cb (GObject *object, GParamSpec *pspec, UpDaemon *d
 static void
 up_daemon_init (UpDaemon *daemon)
 {
-	gfloat waterline;
 	gboolean ret;
 	GError *error = NULL;
 	GKeyFile *file;
@@ -957,7 +980,6 @@ up_daemon_init (UpDaemon *daemon)
 	daemon->priv->lid_is_closed = FALSE;
 	daemon->priv->kernel_can_suspend = FALSE;
 	daemon->priv->kernel_can_hibernate = FALSE;
-	daemon->priv->hibernate_has_swap_space = FALSE;
 	daemon->priv->hibernate_has_encrypted_swap = FALSE;
 	daemon->priv->power_devices = up_device_list_new ();
 	daemon->priv->on_battery = FALSE;
@@ -1007,15 +1029,6 @@ up_daemon_init (UpDaemon *daemon)
 	/* check if we have support */
 	daemon->priv->kernel_can_suspend = up_backend_kernel_can_suspend (daemon->priv->backend);
 	daemon->priv->kernel_can_hibernate = up_backend_kernel_can_hibernate (daemon->priv->backend);
-
-	/* do we have enough swap? */
-	if (daemon->priv->kernel_can_hibernate) {
-		waterline = up_backend_get_used_swap (daemon->priv->backend);
-		if (waterline < UP_DAEMON_SWAP_WATERLINE)
-			daemon->priv->hibernate_has_swap_space = TRUE;
-		else
-			egg_debug ("not enough swap to enable hibernate");
-	}
 
 	/* is the swap usable? */
 	if (daemon->priv->kernel_can_hibernate)
@@ -1074,7 +1087,7 @@ up_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 		break;
 	case PROP_CAN_HIBERNATE:
 		g_value_set_boolean (value, (priv->kernel_can_hibernate &&
-					     priv->hibernate_has_swap_space &&
+					     up_daemon_check_hibernate_swap (daemon) &&
 					     (!priv->hibernate_has_encrypted_swap ||
 					      priv->conf_allow_hibernate_encrypted_swap)));
 		break;
