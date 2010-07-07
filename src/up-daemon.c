@@ -224,19 +224,21 @@ up_daemon_get_on_ac_local (UpDaemon *daemon)
 }
 
 /**
- * up_daemon_set_pmutils_powersave:
- *
- * Uses pm-utils to run scripts in power.d
+ * up_daemon_set_powersave:
  **/
 static gboolean
-up_daemon_set_pmutils_powersave (UpDaemon *daemon, gboolean powersave)
+up_daemon_set_powersave (UpDaemon *daemon, gboolean powersave)
 {
-	gboolean ret;
-	gchar *command;
+	gboolean ret = FALSE;
+	const gchar *command;
 	GError *error = NULL;
 
-	/* run script from pm-utils */
-	command = g_strdup_printf ("/usr/sbin/pm-powersave %s", powersave ? "true" : "false");
+	/* run script */
+	command = up_backend_get_powersave_command (daemon->priv->backend, powersave);
+	if (command == NULL) {
+		egg_warning ("no powersave command set");
+		goto out;
+	}
 	egg_debug ("excuting command: %s", command);
 	ret = g_spawn_command_line_async (command, &error);
 	if (!ret) {
@@ -245,7 +247,6 @@ up_daemon_set_pmutils_powersave (UpDaemon *daemon, gboolean powersave)
 		goto out;
 	}
 out:
-	g_free (command);
 	return ret;
 }
 
@@ -683,8 +684,8 @@ up_daemon_startup (UpDaemon *daemon)
 	priv->during_coldplug = FALSE;
 	egg_debug ("daemon now not coldplug");
 
-	/* set pm-utils power policy */
-	up_daemon_set_pmutils_powersave (daemon, priv->on_battery);
+	/* set power policy */
+	up_daemon_set_powersave (daemon, priv->on_battery);
 out:
 	return ret;
 }
@@ -817,8 +818,8 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 	if (ret != priv->on_battery) {
 		up_daemon_set_on_battery (daemon, ret);
 
-		/* set pm-utils power policy */
-		up_daemon_set_pmutils_powersave (daemon, ret);
+		/* set power policy */
+		up_daemon_set_powersave (daemon, ret);
 	}
 	ret = up_daemon_get_on_low_battery_local (daemon);
 	if (ret != priv->on_low_battery)

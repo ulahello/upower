@@ -73,6 +73,8 @@ gboolean	 up_backend_has_encrypted_swap		(UpBackend	*backend);
 gfloat		 up_backend_get_used_swap		(UpBackend	*backend);
 const gchar	*up_backend_get_suspend_command		(UpBackend	*backend);
 const gchar	*up_backend_get_hibernate_command	(UpBackend	*backend);
+const gchar	*up_backend_get_powersave_command	(UpBackend	*backend,
+							 gboolean	 powersave);
 
 G_END_DECLS
 

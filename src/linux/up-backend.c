@@ -71,8 +71,10 @@ G_DEFINE_TYPE (UpBackend, up_backend, G_TYPE_OBJECT)
 static gboolean up_backend_device_add (UpBackend *backend, GUdevDevice *native);
 static void up_backend_device_remove (UpBackend *backend, GUdevDevice *native);
 
-#define UP_BACKEND_SUSPEND_COMMAND	"/usr/sbin/pm-suspend"
-#define UP_BACKEND_HIBERNATE_COMMAND	"/usr/sbin/pm-hibernate"
+#define UP_BACKEND_SUSPEND_COMMAND		"/usr/sbin/pm-suspend"
+#define UP_BACKEND_HIBERNATE_COMMAND		"/usr/sbin/pm-hibernate"
+#define UP_BACKEND_POWERSAVE_TRUE_COMMAND	"/usr/sbin/pm-powersave true"
+#define UP_BACKEND_POWERSAVE_FALSE_COMMAND	"/usr/sbin/pm-powersave false"
 
 /**
  * up_backend_device_new:
@@ -552,6 +554,17 @@ const gchar *
 up_backend_get_hibernate_command (UpBackend *backend)
 {
 	return UP_BACKEND_HIBERNATE_COMMAND;
+}
+
+/**
+ * up_backend_get_powersave_command:
+ **/
+const gchar *
+up_backend_get_powersave_command (UpBackend *backend, gboolean powersave)
+{
+	if (powersave)
+		return UP_BACKEND_POWERSAVE_TRUE_COMMAND;
+	return UP_BACKEND_POWERSAVE_FALSE_COMMAND;
 }
 
 /**
