@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <sys/wait.h>
 #include <glib/gi18n.h>
 #include <gio/gio.h>
 #include <gudev/gudev.h>
