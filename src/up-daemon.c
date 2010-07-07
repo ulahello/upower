@@ -105,9 +105,9 @@ G_DEFINE_TYPE (UpDaemon, up_daemon, G_TYPE_OBJECT)
 
 /* if using more memory compared to usable swap, disable hibernate */
 /* Native Linux suspend-to-disk does not use compression, and needs 2 KB of
- * page meta information for each MB of active memory. Add an extra .05% to
- * prevent rounding errors. */
-#define UP_DAEMON_SWAP_WATERLINE 			100.25f /* % */
+ * page meta information for each MB of active memory. Add some error margin
+ * here, though. */
+#define UP_DAEMON_SWAP_WATERLINE 			98f /* % */
 
 /* refresh all the devices after this much time when on-battery has changed */
 #define UP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY	1 /* seconds */

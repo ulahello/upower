@@ -480,7 +480,8 @@ out:
 /**
  * up_backend_get_used_swap:
  *
- * Return value: a percentage value
+ * Return value: a percentage value how much of the available swap memory would
+ * be taken by currently active memory
  **/
 gfloat
 up_backend_get_used_swap (UpBackend *backend)
