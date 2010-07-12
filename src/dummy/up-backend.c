@@ -291,3 +291,11 @@ up_backend_get_hibernate_command (UpBackend *backend)
 	return "/bin/true";
 }
 
+/**
+ * up_backend_get_powersave_command:
+ **/
+const gchar *
+up_backend_get_powersave_command (UpBackend *backend, gboolean powersave)
+{
+	return "/bin/true";
+}
