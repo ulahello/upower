@@ -1,3 +1,27 @@
+Version 0.9.5
+~~~~~~~~~~~
+Released: 2010-07-12
+
+New Features:
+ - Add battery query support for iDevices (Bastien Nocera)
+ - Assign names to our idle sources when using new versions of glib2 (Richard Hughes)
+ - Dynamic testing for enough hibernate swap (Martin Pitt)
+ - Port UPower to libusb1 to avoid unfixable crashes (Richard Hughes)
+ - Port to GTest (Richard Hughes)
+ - Get the powersave command from the backend rather than hardcoding Linux specifics (Richard Hughes)
+
+Bugfixes:
+ - Update the list of supported TrippLite HID Power Devices (Joseph Stockman)
+ - Fix a potential daemon crash. Fixes fd#27902 (Mariusz Ceier)
+ - Increase UP_DAEMON_SWAP_WATERLINE (Martin Pitt)
+ - Fix up a potential crasher in the CSR device code (Richard Hughes)
+ - When calculating used swap space, only use anonymous pages (Steven Walter)
+ - Use pm-is-supported to test if various sleep modes are supported (Victor Lowther)
+
+IMPORTANT NOTE:
+ - This is the last release with the deprecated devkit-power-gobject library
+   included. Users should have ported to libupower-glib months ago...
+
 Version 0.9.4
 ~~~~~~~~~~~
 Released: 2010-05-12
