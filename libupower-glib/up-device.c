@@ -450,7 +450,8 @@ up_device_to_text (UpDevice *device)
 	    device->priv->kind == UP_DEVICE_KIND_KEYBOARD ||
 	    device->priv->kind == UP_DEVICE_KIND_UPS)
 		g_string_append_printf (string, "    present:             %s\n", up_device_bool_to_string (device->priv->is_present));
-	if (device->priv->kind == UP_DEVICE_KIND_BATTERY ||
+	if (device->priv->kind == UP_DEVICE_KIND_PHONE ||
+	    device->priv->kind == UP_DEVICE_KIND_BATTERY ||
 	    device->priv->kind == UP_DEVICE_KIND_MOUSE ||
 	    device->priv->kind == UP_DEVICE_KIND_KEYBOARD)
 		g_string_append_printf (string, "    rechargeable:        %s\n", up_device_bool_to_string (device->priv->is_rechargeable));
@@ -490,6 +491,10 @@ up_device_to_text (UpDevice *device)
 	if (device->priv->kind == UP_DEVICE_KIND_BATTERY ||
 	    device->priv->kind == UP_DEVICE_KIND_MOUSE ||
 	    device->priv->kind == UP_DEVICE_KIND_KEYBOARD ||
+	    device->priv->kind == UP_DEVICE_KIND_PHONE ||
+	    device->priv->kind == UP_DEVICE_KIND_TABLET ||
+	    device->priv->kind == UP_DEVICE_KIND_COMPUTER ||
+	    device->priv->kind == UP_DEVICE_KIND_MEDIA_PLAYER ||
 	    device->priv->kind == UP_DEVICE_KIND_UPS)
 		g_string_append_printf (string, "    percentage:          %g%%\n", device->priv->percentage);
 	if (device->priv->kind == UP_DEVICE_KIND_BATTERY) {
