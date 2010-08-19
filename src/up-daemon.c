@@ -480,7 +480,7 @@ up_daemon_suspend (UpDaemon *daemon, DBusGMethodInvocation *context)
 	if (subject == NULL)
 		goto out;
 
-	if (!up_polkit_check_auth (priv->polkit, subject, "org.freedesktop.upower.suspend", NULL))
+	if (!up_polkit_check_auth (priv->polkit, subject, "org.freedesktop.upower.suspend", context))
 		goto out;
 
 	/* already requested */
@@ -511,21 +511,13 @@ up_daemon_suspend_allowed (UpDaemon *daemon, DBusGMethodInvocation *context)
 	gboolean ret;
 	PolkitSubject *subject = NULL;
 	UpDaemonPrivate *priv = daemon->priv;
-        GError *error;
 
 	subject = up_polkit_get_subject (priv->polkit, context);
 	if (subject == NULL)
 		goto out;
 
-        error = NULL;
-	ret = up_polkit_is_allowed (priv->polkit, subject, "org.freedesktop.upower.suspend", &error);
-        if (error) {
-                dbus_g_method_return_error (context, error);
-                g_error_free (error);
-        }
-        else {
-	        dbus_g_method_return (context, ret);
-        }
+	ret = up_polkit_is_allowed (priv->polkit, subject, "org.freedesktop.upower.suspend", context);
+	dbus_g_method_return (context, ret);
 
 out:
 	if (subject != NULL)
@@ -635,21 +627,13 @@ up_daemon_hibernate_allowed (UpDaemon *daemon, DBusGMethodInvocation *context)
 	gboolean ret;
 	PolkitSubject *subject = NULL;
 	UpDaemonPrivate *priv = daemon->priv;
-        GError *error;
 
 	subject = up_polkit_get_subject (priv->polkit, context);
 	if (subject == NULL)
 		goto out;
 
-        error = NULL;
-	ret = up_polkit_is_allowed (priv->polkit, subject, "org.freedesktop.upower.hibernate", &error);
-        if (error) {
-                dbus_g_method_return_error (context, error);
-                g_error_free (error);
-        }
-        else {
-	        dbus_g_method_return (context, ret);
-        }
+	ret = up_polkit_is_allowed (priv->polkit, subject, "org.freedesktop.upower.hibernate", context);
+	dbus_g_method_return (context, ret);
 
 out:
 	if (subject != NULL)
