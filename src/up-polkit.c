@@ -52,11 +52,18 @@ static gpointer up_polkit_object = NULL;
 PolkitSubject *
 up_polkit_get_subject (UpPolkit *polkit, DBusGMethodInvocation *context)
 {
+        GError *error;
 	const gchar *sender;
 	PolkitSubject *subject;
 
 	sender = dbus_g_method_get_sender (context);
 	subject = polkit_system_bus_name_new (sender);
+
+        if (subject == NULL) {
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "failed to get PolicyKit subject");
+                dbus_g_method_return_error (context, error);
+		g_error_free (error);
+        }
 
 	return subject;
 }
@@ -103,10 +110,9 @@ out:
  * up_polkit_is_allowed:
  **/
 gboolean
-up_polkit_is_allowed (UpPolkit *polkit, PolkitSubject *subject, const gchar *action_id, DBusGMethodInvocation *context)
+up_polkit_is_allowed (UpPolkit *polkit, PolkitSubject *subject, const gchar *action_id, GError **error)
 {
 	gboolean ret = FALSE;
-	GError *error;
 	GError *error_local = NULL;
 	PolkitAuthorizationResult *result;
 
@@ -116,10 +122,8 @@ up_polkit_is_allowed (UpPolkit *polkit, PolkitSubject *subject, const gchar *act
 							    POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE,
 							    NULL, &error_local);
 	if (result == NULL) {
-		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "failed to check authorisation: %s", error_local->message);
-		dbus_g_method_return_error (context, error);
+		g_set_error (error, UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "failed to check authorisation: %s", error_local->message);
 		g_error_free (error_local);
-		g_error_free (error);
 		goto out;
 	}
 
