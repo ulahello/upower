@@ -262,6 +262,7 @@ up_qos_request_latency (UpQos *qos, const gchar *type_text, gint value, gboolean
 	if (type == UP_QOS_KIND_UNKNOWN) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		dbus_g_method_return_error (context, error);
+		g_error_free (error);
 		goto out;
 	}
 
@@ -270,6 +271,7 @@ up_qos_request_latency (UpQos *qos, const gchar *type_text, gint value, gboolean
 	if (sender == NULL) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "no DBUS sender");
 		dbus_g_method_return_error (context, error);
+		g_error_free (error);
 		goto out;
 	}
 
@@ -291,6 +293,7 @@ up_qos_request_latency (UpQos *qos, const gchar *type_text, gint value, gboolean
 	if (!retval) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "cannot get UID");
 		dbus_g_method_return_error (context, error);
+		g_error_free (error);
 		goto out;
 	}
 
@@ -299,6 +302,7 @@ up_qos_request_latency (UpQos *qos, const gchar *type_text, gint value, gboolean
 	if (!retval) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "cannot get PID");
 		dbus_g_method_return_error (context, error);
+		g_error_free (error);
 		goto out;
 	}
 
@@ -307,6 +311,7 @@ up_qos_request_latency (UpQos *qos, const gchar *type_text, gint value, gboolean
 	if (cmdline == NULL) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "cannot get cmdline");
 		dbus_g_method_return_error (context, error);
+		g_error_free (error);
 		goto out;
 	}
 
@@ -359,6 +364,7 @@ up_qos_cancel_request (UpQos *qos, guint cookie, DBusGMethodInvocation *context)
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL,
 				     "Cannot find request for #%i", cookie);
 		dbus_g_method_return_error (context, error);
+		g_error_free (error);
 		goto out;
 	}
 
@@ -367,6 +373,7 @@ up_qos_cancel_request (UpQos *qos, guint cookie, DBusGMethodInvocation *context)
 	if (sender == NULL) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "no DBUS sender");
 		dbus_g_method_return_error (context, error);
+		g_error_free (error);
 		goto out;
 	}
 
@@ -430,6 +437,7 @@ up_qos_set_minimum_latency (UpQos *qos, const gchar *type_text, gint value, DBus
 	if (type == UP_QOS_KIND_UNKNOWN) {
 		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "type invalid: %s", type_text);
 		dbus_g_method_return_error (context, error);
+		g_error_free (error);
 		return;
 	}
 
