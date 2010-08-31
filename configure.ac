@@ -225,7 +225,6 @@ AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
 
 AC_CONFIG_FILES([
 Makefile
-devkit-power-gobject.pc
 upower-glib.pc
 etc/Makefile
 src/Makefile
@@ -239,8 +238,6 @@ doc/man/Makefile
 doc/dbus/Makefile
 policy/Makefile
 rules/Makefile
-devkit-power-gobject/Makefile
-devkit-power-gobject/dkp-version.h
 libupower-glib/Makefile
 libupower-glib/up-version.h
 po/Makefile.in
