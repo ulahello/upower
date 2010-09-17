@@ -22,6 +22,8 @@
 #include "config.h"
 
 #include <glib-object.h>
+#include <glib/gstdio.h>
+#include <up-history-item.h>
 #include "egg-debug.h"
 
 #include "up-backend.h"
@@ -113,15 +115,121 @@ up_test_device_list_func (void)
 }
 
 static void
+up_test_history_remove_temp_files (void)
+{
+	gchar *filename;
+	filename = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", "history-time-full-test.dat", NULL);
+	g_unlink (filename);
+	g_free (filename);
+	filename = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", "history-time-empty-test.dat", NULL);
+	g_unlink (filename);
+	g_free (filename);
+	filename = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", "history-charge-test.dat", NULL);
+	g_unlink (filename);
+	g_free (filename);
+	filename = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", "history-rate-test.dat", NULL);
+	g_unlink (filename);
+	g_free (filename);
+}
+
+static void
 up_test_history_func (void)
 {
 	UpHistory *history;
+	gboolean ret;
+	GPtrArray *array;
+	gchar *filename;
+	UpHistoryItem *item;
 
 	history = up_history_new ();
 	g_assert (history != NULL);
 
+	/* is this a distcheck with no writable root? */
+	if (g_strstr_len (PACKAGE_LOCALSTATE_DIR, -1, "_inst") != NULL)
+		goto distcheck_skip;
+
+	/* remove previous test files */
+	up_test_history_remove_temp_files ();
+
+	/* setup fresh environment */
+	ret = up_history_set_id (history, "test");
+	g_assert (ret);
+
+	/* get nonexistant data */
+	array = up_history_get_data (history, UP_HISTORY_TYPE_CHARGE, 10, 100);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 0);
+
+	/* setup some fake device */
+	up_history_set_state (history, UP_DEVICE_STATE_CHARGING);
+	up_history_set_charge_data (history, 90);
+	up_history_set_rate_data (history, 1.00f);
+	up_history_set_time_empty_data (history, 12345);
+	up_history_set_time_full_data (history, 54321);
+
+	/* sleep for a little bit */
+	g_usleep (3 * G_USEC_PER_SEC);
+	up_history_set_charge_data (history, 91);
+	up_history_set_rate_data (history, 1.01f);
+	up_history_set_time_empty_data (history, 12344);
+	up_history_set_time_full_data (history, 54320);
+
+	/* get data for last 10 seconds */
+	array = up_history_get_data (history, UP_HISTORY_TYPE_CHARGE, 10, 100);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 2);
+
+	/* get the first item, which should be the most recent */
+	item = g_ptr_array_index (array, 0);
+	g_assert (item != NULL);
+	g_assert_cmpint (up_history_item_get_value (item), ==, 91);
+	g_assert_cmpint (up_history_item_get_time (item), >, 1000000);
+	g_ptr_array_unref (array);
+
+	/* force a save to disk */
+	ret = up_history_save_data (history);
+	g_assert (ret);
+	g_object_unref (history);
+
+	/* ensure the file was created */
+	filename = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", "history-charge-test.dat", NULL);
+	g_assert (g_file_test (filename, G_FILE_TEST_EXISTS));
+	g_free (filename);
+
+	/* ensure we can load from disk */
+	history = up_history_new ();
+	up_history_set_id (history, "test");
+
+	/* get data for last 10 seconds */
+	array = up_history_get_data (history, UP_HISTORY_TYPE_CHARGE, 10, 100);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 3); /* we have inserted an unknown as the first entry */
+	item = g_ptr_array_index (array, 1);
+	g_assert (item != NULL);
+	g_assert_cmpint (up_history_item_get_value (item), ==, 91);
+	g_assert_cmpint (up_history_item_get_time (item), >, 1000000);
+	g_ptr_array_unref (array);
+
+	/* ensure old entries are purged */
+	up_history_set_max_data_age (history, 2);
+	g_usleep (2 * G_USEC_PER_SEC);
+	g_object_unref (history);
+
+	/* ensure only 2 points are returned */
+	history = up_history_new ();
+	up_history_set_id (history, "test");
+	array = up_history_get_data (history, UP_HISTORY_TYPE_CHARGE, 10, 100);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 2);
+	g_ptr_array_unref (array);
+
+distcheck_skip:
+
 	/* unref */
 	g_object_unref (history);
+
+	/* remove these test files */
+	up_test_history_remove_temp_files ();
 }
 
 static void
@@ -165,6 +273,7 @@ main (int argc, char **argv)
 {
 	g_type_init ();
 	g_test_init (&argc, &argv, NULL);
+	egg_debug_init (&argc, &argv);
 
 	/* tests go here */
 	g_test_add_func ("/power/backend", up_test_backend_func);

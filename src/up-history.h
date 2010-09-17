@@ -60,8 +60,7 @@ typedef enum {
 
 
 GType		 up_history_get_type			(void);
-UpHistory	*up_history_new			(void);
-void		 up_history_test			(gpointer	 user_data);
+UpHistory	*up_history_new				(void);
 
 GPtrArray	*up_history_get_data			(UpHistory		*history,
 							 UpHistoryType		 type,
@@ -79,8 +78,11 @@ gboolean	 up_history_set_rate_data		(UpHistory		*history,
 							 gdouble		 rate);
 gboolean	 up_history_set_time_full_data		(UpHistory		*history,
 							 gint64			 time);
-gboolean	 up_history_set_time_empty_data	(UpHistory		*history,
+gboolean	 up_history_set_time_empty_data		(UpHistory		*history,
 							 gint64			 time);
+void		 up_history_set_max_data_age		(UpHistory		*history,
+							 guint			 max_data_age);
+gboolean	 up_history_save_data			(UpHistory		*history);
 
 G_END_DECLS
 

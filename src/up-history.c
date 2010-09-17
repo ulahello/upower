@@ -36,7 +36,9 @@ static void	up_history_finalize	(GObject		*object);
 
 #define UP_HISTORY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_HISTORY, UpHistoryPrivate))
 
-#define UP_HISTORY_SAVE_INTERVAL	10*60 /* seconds */
+#define UP_HISTORY_FILE_HEADER		"PackageKit Profile"
+#define UP_HISTORY_SAVE_INTERVAL	(10*60)		/* seconds */
+#define UP_HISTORY_DEFAULT_MAX_DATA_AGE	(7*24*60*60)	/* seconds */
 
 struct UpHistoryPrivate
 {
@@ -51,6 +53,7 @@ struct UpHistoryPrivate
 	GPtrArray		*data_time_full;
 	GPtrArray		*data_time_empty;
 	guint			 save_id;
+	guint			 max_data_age;
 };
 
 enum {
@@ -59,7 +62,15 @@ enum {
 };
 
 G_DEFINE_TYPE (UpHistory, up_history, G_TYPE_OBJECT)
-#define UP_HISTORY_FILE_HEADER	"PackageKit Profile"
+
+/**
+ * up_history_set_max_data_age:
+ **/
+void
+up_history_set_max_data_age (UpHistory *history, guint max_data_age)
+{
+	history->priv->max_data_age = max_data_age;
+}
 
 /**
  * up_history_array_copy_cb:
@@ -397,7 +408,7 @@ up_history_get_filename (UpHistory *history, const gchar *type)
  * Saves a copy of the list to a file
  **/
 static gboolean
-up_history_array_to_file (GPtrArray *list, const gchar *filename)
+up_history_array_to_file (UpHistory *history, GPtrArray *list, const gchar *filename)
 {
 	guint i;
 	UpHistoryItem *item;
@@ -405,11 +416,24 @@ up_history_array_to_file (GPtrArray *list, const gchar *filename)
 	GString *string;
 	gboolean ret = TRUE;
 	GError *error = NULL;
+	GTimeVal time_now;
+	guint time_item;
+	guint cull_count = 0;
+
+	/* get current time */
+	g_get_current_time (&time_now);
 
 	/* generate data */
 	string = g_string_new ("");
 	for (i=0; i<list->len; i++) {
 		item = g_ptr_array_index (list, i);
+
+		/* only save entries for the last 24 hours */
+		time_item = up_history_item_get_time (item);
+		if (time_now.tv_sec - time_item > history->priv->max_data_age) {
+			cull_count++;
+			continue;
+		}
 		part = up_history_item_to_string (item);
 		if (part == NULL) {
 			ret = FALSE;
@@ -419,6 +443,9 @@ up_history_array_to_file (GPtrArray *list, const gchar *filename)
 		g_free (part);
 	}
 	part = g_string_free (string, FALSE);
+
+	/* how many did we kill? */
+	egg_debug ("culled %i of %i", cull_count, list->len);
 
 	/* we failed to convert to string */
 	if (!ret) {
@@ -499,38 +526,46 @@ out:
 /**
  * up_history_save_data:
  **/
-static gboolean
+gboolean
 up_history_save_data (UpHistory *history)
 {
-	gchar *filename;
+	gboolean ret = FALSE;
+	gchar *filename_rate = NULL;
+	gchar *filename_charge = NULL;
+	gchar *filename_time_full = NULL;
+	gchar *filename_time_empty = NULL;
 
 	/* we have an ID? */
 	if (history->priv->id == NULL) {
 		egg_warning ("no ID, cannot save");
-		return FALSE;
+		goto out;
 	}
 
-	/* save rate history to disk */
-	filename = up_history_get_filename (history, "rate");
-	up_history_array_to_file (history->priv->data_rate, filename);
-	g_free (filename);
+	/* get filenames */
+	filename_rate = up_history_get_filename (history, "rate");
+	filename_charge = up_history_get_filename (history, "charge");
+	filename_time_full = up_history_get_filename (history, "time-full");
+	filename_time_empty = up_history_get_filename (history, "time-empty");
 
-	/* save charge history to disk */
-	filename = up_history_get_filename (history, "charge");
-	up_history_array_to_file (history->priv->data_charge, filename);
-	g_free (filename);
-
-	/* save charge history to disk */
-	filename = up_history_get_filename (history, "time-full");
-	up_history_array_to_file (history->priv->data_time_full, filename);
-	g_free (filename);
-
-	/* save charge history to disk */
-	filename = up_history_get_filename (history, "time-empty");
-	up_history_array_to_file (history->priv->data_time_empty, filename);
-	g_free (filename);
-
-	return TRUE;
+	/* save to disk */
+	ret = up_history_array_to_file (history, history->priv->data_rate, filename_rate);
+	if (!ret)
+		goto out;
+	ret = up_history_array_to_file (history, history->priv->data_charge, filename_charge);
+	if (!ret)
+		goto out;
+	ret = up_history_array_to_file (history, history->priv->data_time_full, filename_time_full);
+	if (!ret)
+		goto out;
+	ret = up_history_array_to_file (history, history->priv->data_time_empty, filename_time_empty);
+	if (!ret)
+		goto out;
+out:
+	g_free (filename_rate);
+	g_free (filename_charge);
+	g_free (filename_time_full);
+	g_free (filename_time_empty);
+	return ret;
 }
 
 /**
@@ -842,6 +877,7 @@ up_history_init (UpHistory *history)
 	history->priv->data_time_full = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	history->priv->data_time_empty = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	history->priv->save_id = 0;
+	history->priv->max_data_age = UP_HISTORY_DEFAULT_MAX_DATA_AGE;
 }
 
 /**
