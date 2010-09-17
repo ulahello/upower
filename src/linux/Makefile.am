@@ -41,7 +41,7 @@ libupshared_la_SOURCES =					\
 	$(idevice_files)					\
 	$(BUILT_SOURCES)
 
-EXTRA_DIST = up-device-idevice.c up-device-idevice.h
+EXTRA_DIST = $(libupshared_la_SOURCES)
 
 libupshared_la_CFLAGS =					\
 	$(WARNINGFLAGS_C)
