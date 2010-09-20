@@ -376,11 +376,7 @@ up_device_wup_coldplug (UpDevice *device)
 
 	/* coldplug */
 	egg_debug ("coldplug");
-	up_device_wup_refresh (device);
-
-	/* hardcode true, as we'll retry later if busy */
-	ret = TRUE;
-
+	ret = up_device_wup_refresh (device);
 out:
 	return ret;
 }
