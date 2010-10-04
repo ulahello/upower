@@ -1,3 +1,22 @@
+Version 0.9.6
+~~~~~~~~~~~
+Released: 2010-10-04
+
+New Features:
+ - Remove devkit-power-gobject (Richard Hughes)
+
+Bugfixes:
+ - Allow explicitly disabling libimobiledevice support (Brett Witherspoon)
+ - Free GErrors after returning them (Matthias Clasen)
+ - Add missing D-Bus return in up_qos_cancel_request() (Matthias Clasen)
+ - Fix double D-BUS return in up_daemon_*_allowed (Matthias Clasen)
+ - Fix up_polkit_get_subject() D-BUS error return (Matthias Clasen)
+ - Ensure the new device types get valid descriptions in upower --dump (Richard Hughes)
+ - Fix compile with the latest PolicyKit release (Richard Hughes)
+ - Only save by default 7 days data to stop the log files becoming huge. Fixes rh#634228 (Richard Hughes)
+ - Do not continue to poll the serial port if there is no Watts Up Pro adaptor (Richard Hughes)
+ - Fix the build with new versions of gobject-introspection (Richard Hughes)
+
 Version 0.9.5
 ~~~~~~~~~~~
 Released: 2010-07-12
