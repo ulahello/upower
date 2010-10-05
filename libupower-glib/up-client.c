@@ -120,7 +120,7 @@ up_client_get_device (UpClient *client, const gchar *object_path)
  * You must have called up_client_enumerate_devices_sync() before calling this
  * function.
  *
- * Return value: an array of #UpDevice objects, free with g_ptr_array_unref()
+ * Return value: (transfer full): an array of #UpDevice objects, free with g_ptr_array_unref()
  *
  * Since: 0.9.0
  **/

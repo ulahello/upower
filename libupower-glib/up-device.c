@@ -568,7 +568,7 @@ out:
  *
  * Gets the device history.
  *
- * Return value: an array of #UpHistoryItem's, else #NULL and @error is used
+ * Return value: (transfer full): an array of #UpHistoryItem's, else #NULL and @error is used
  *
  * Since: 0.9.0
  **/
@@ -653,7 +653,7 @@ out:
  *
  * Gets the device current statistics.
  *
- * Return value: an array of #UpStatsItem's, else #NULL and @error is used
+ * Return value: (transfer full): an array of #UpStatsItem's, else #NULL and @error is used
  *
  * Since: 0.9.0
  **/

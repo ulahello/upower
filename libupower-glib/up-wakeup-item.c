@@ -66,7 +66,7 @@ G_DEFINE_TYPE (UpWakeupItem, up_wakeup_item, G_TYPE_OBJECT)
 
 /**
  * up_wakeup_item_get_is_userspace:
- * @history_item: #UpWakeupItem
+ * @wakeup_item: #UpWakeupItem
  *
  * Gets if the item is userspace.
  *
@@ -83,7 +83,7 @@ up_wakeup_item_get_is_userspace (UpWakeupItem *wakeup_item)
 
 /**
  * up_wakeup_item_set_is_userspace:
- * @history_item: #UpWakeupItem
+ * @wakeup_item: #UpWakeupItem
  * @is_userspace: the new value
  *
  * Sets if the item is userspace.
@@ -100,7 +100,7 @@ up_wakeup_item_set_is_userspace (UpWakeupItem *wakeup_item, gboolean is_userspac
 
 /**
  * up_wakeup_item_get_id:
- * @history_item: #UpWakeupItem
+ * @wakeup_item: #UpWakeupItem
  *
  * Gets the item id.
  *
@@ -117,7 +117,7 @@ up_wakeup_item_get_id (UpWakeupItem *wakeup_item)
 
 /**
  * up_wakeup_item_set_id:
- * @history_item: #UpWakeupItem
+ * @wakeup_item: #UpWakeupItem
  * @id: the new value
  *
  * Sets the item id.
@@ -134,7 +134,7 @@ up_wakeup_item_set_id (UpWakeupItem *wakeup_item, guint id)
 
 /**
  * up_wakeup_item_get_old:
- * @history_item: #UpWakeupItem
+ * @wakeup_item: #UpWakeupItem
  *
  * Gets the item old.
  *
@@ -151,7 +151,7 @@ up_wakeup_item_get_old (UpWakeupItem *wakeup_item)
 
 /**
  * up_wakeup_item_set_old:
- * @history_item: #UpWakeupItem
+ * @wakeup_item: #UpWakeupItem
  * @old: the new value
  *
  * Sets the item old.
@@ -168,7 +168,7 @@ up_wakeup_item_set_old (UpWakeupItem *wakeup_item, guint old)
 
 /**
  * up_wakeup_item_get_value:
- * @history_item: #UpWakeupItem
+ * @wakeup_item: #UpWakeupItem
  *
  * Gets the item value.
  *
@@ -185,7 +185,7 @@ up_wakeup_item_get_value (UpWakeupItem *wakeup_item)
 
 /**
  * up_wakeup_item_set_value:
- * @history_item: #UpWakeupItem
+ * @wakeup_item: #UpWakeupItem
  * @value: the new value
  *
  * Sets the item value.
@@ -202,7 +202,7 @@ up_wakeup_item_set_value (UpWakeupItem *wakeup_item, gdouble value)
 
 /**
  * up_wakeup_item_get_cmdline:
- * @history_item: #UpWakeupItem
+ * @wakeup_item: #UpWakeupItem
  *
  * Gets the item cmdline.
  *
@@ -219,7 +219,7 @@ up_wakeup_item_get_cmdline (UpWakeupItem *wakeup_item)
 
 /**
  * up_wakeup_item_set_cmdline:
- * @history_item: #UpWakeupItem
+ * @wakeup_item: #UpWakeupItem
  * @cmdline: the new value
  *
  * Sets the item cmdline.
@@ -237,7 +237,7 @@ up_wakeup_item_set_cmdline (UpWakeupItem *wakeup_item, const gchar *cmdline)
 
 /**
  * up_wakeup_item_get_details:
- * @history_item: #UpWakeupItem
+ * @wakeup_item: #UpWakeupItem
  *
  * Gets the item details.
  *
@@ -254,7 +254,7 @@ up_wakeup_item_get_details (UpWakeupItem *wakeup_item)
 
 /**
  * up_wakeup_item_set_details:
- * @history_item: #UpWakeupItem
+ * @wakeup_item: #UpWakeupItem
  * @details: the new value
  *
  * Sets the item details.
