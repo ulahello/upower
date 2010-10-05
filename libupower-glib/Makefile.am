@@ -60,14 +60,15 @@ EXTRA_DIST =							\
 CLEANFILES = $(BUILT_SOURCES)
 
 if HAVE_INTROSPECTION
-introspection_sources = $(libupower_glib_la_SOURCES)
+introspection_sources = $(libupower_glib_include_HEADERS) $(libupower_glib_la_SOURCES)
 
 UPowerGlib-1.0.gir: libupower-glib.la
 UPowerGlib_1_0_gir_INCLUDES = GObject-2.0 Gio-2.0
 UPowerGlib_1_0_gir_CFLAGS = $(INCLUDES)
-PackageKitGlib_1_0_gir_SCANNERFLAGS = --identifier-prefix=Up --warn-all --add-include-path=$(srcdir)
+UPowerGlib_1_0_gir_SCANNERFLAGS = --identifier-prefix=Up --symbol-prefix=up_ --warn-all --add-include-path=$(srcdir)
 UPowerGlib_1_0_gir_LIBS = libupower-glib.la
 UPowerGlib_1_0_gir_FILES = $(introspection_sources)
+UPowerGlib_1_0_gir_NAMESPACE = UPowerGlib
 INTROSPECTION_GIRS += UPowerGlib-1.0.gir
 
 girdir = $(datadir)/gir-1.0
