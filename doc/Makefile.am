@@ -61,6 +61,7 @@ content_files =  			    				\
 	dbus/org.freedesktop.UPower.ref.xml				\
 	dbus/org.freedesktop.UPower.Device.ref.xml			\
 	dbus/org.freedesktop.UPower.QoS.ref.xml				\
+	dbus/org.freedesktop.UPower.KbdBacklight.ref.xml		\
 	$(NULL)
 
 # Images to copy into HTML directory
