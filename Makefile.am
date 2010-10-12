@@ -36,7 +36,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = upower-glib.pc
 
 # xsltproc barfs on 'make distcheck'; disable for now
-DISTCHECK_CONFIGURE_FLAGS=--disable-man-pages --enable-gtk-doc --enable-introspection
+DISTCHECK_CONFIGURE_FLAGS=--disable-man-pages --enable-gtk-doc
 
 clean-local :
 	rm -f *~
