@@ -42,7 +42,6 @@
 #define UP_DEVICE_SUPPLY_REFRESH_TIMEOUT	30	/* seconds */
 #define UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT	2	/* seconds */
 #define UP_DEVICE_SUPPLY_UNKNOWN_RETRIES	30
-#define UP_DEVICE_SUPPLY_CHARGED_THRESHOLD	90.0f	/* % */
 
 #define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_CHARGE		TRUE
 #define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_ENERGY		FALSE
@@ -601,13 +600,6 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 			percentage = 0.0f;
 		if (percentage > 100.0f)
 			percentage = 100.0f;
-	}
-
-	/* some batteries stop charging much before 100% */
-	if (state == UP_DEVICE_STATE_UNKNOWN &&
-	    percentage > UP_DEVICE_SUPPLY_CHARGED_THRESHOLD) {
-		egg_debug ("fixing up unknown %f", percentage);
-		state = UP_DEVICE_STATE_FULLY_CHARGED;
 	}
 
 	/* the battery isn't charging or discharging, it's just
