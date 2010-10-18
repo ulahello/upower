@@ -182,6 +182,7 @@ up_kbd_backlight_find (UpKbdBacklight *kbd_backlight)
 	gboolean found = FALSE;
 	GDir *dir;
 	const gchar *filename;
+	gchar *end = NULL;
 	gchar *dir_path = NULL;
 	gchar *path_max = NULL;
 	gchar *path_now = NULL;
@@ -220,8 +221,8 @@ up_kbd_backlight_find (UpKbdBacklight *kbd_backlight)
 		g_error_free (error);
 		goto out;
 	}
-	kbd_backlight->priv->max_brightness = g_ascii_strtoull (buf_max, NULL, 10);
-	if (kbd_backlight->priv->max_brightness <= 0) {
+	kbd_backlight->priv->max_brightness = g_ascii_strtoull (buf_max, &end, 10);
+	if (kbd_backlight->priv->max_brightness == 0 && end == buf_max) {
 		egg_warning ("failed to convert max brightness: %s", buf_max);
 		goto out;
 	}
@@ -234,8 +235,8 @@ up_kbd_backlight_find (UpKbdBacklight *kbd_backlight)
 		g_error_free (error);
 		goto out;
 	}
-	kbd_backlight->priv->brightness = g_ascii_strtoull (buf_now, NULL, 10);
-	if (kbd_backlight->priv->brightness <= 0) {
+	kbd_backlight->priv->brightness = g_ascii_strtoull (buf_now, &end, 10);
+	if (kbd_backlight->priv->brightness == 0 && end == buf_now) {
 		egg_warning ("failed to convert brightness: %s", buf_now);
 		goto out;
 	}
