@@ -286,6 +286,12 @@ up_device_set_object_path_sync (UpDevice *device, const gchar *object_path, GCan
 	if (object_path == NULL)
 		return FALSE;
 
+	/* invalid */
+	if (object_path == NULL || object_path[0] != '/') {
+		g_set_error (error, 1, 0, "Object path %s invalid", object_path);
+		goto out;
+	}
+
 	/* connect to the bus */
 	device->priv->bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error_local);
 	if (device->priv->bus == NULL) {
