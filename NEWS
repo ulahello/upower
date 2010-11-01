@@ -1,3 +1,21 @@
+Version 0.9.7
+~~~~~~~~~~~~~
+Released: 2010-11-01
+
+Translations:
+ - Add French translation (Christoph Thompson)
+
+New Features:
+ - Add support for controlling leds keyboard backlights (Alex Murray)
+ - Port from EggDebug to the GLib built-in logging framework (Richard Hughes)
+
+Bugfixes:
+ - Fix building with gobject-introspection 0.9.10 (Edward Sheldrake)
+ - Fix up all the warnings when building with new versions of gobject-introspection (Richard Hughes)
+ - Keyboard backlight of zero is not an error (Alex Murray)
+ - libupower-glib: Reject invalid object paths to avoid asserting libdbus (Richard Hughes)
+ - Remove the UP_DEVICE_SUPPLY_CHARGED_THRESHOLD heuristic (Michal Schmidt)
+
 Version 0.9.6
 ~~~~~~~~~~~
 Released: 2010-10-04
