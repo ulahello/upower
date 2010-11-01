@@ -25,8 +25,6 @@
 #include <stdio.h>
 #include <glib.h>
 
-#include "egg-debug.h"
-
 #include "up-native.h"
 #include "up-device-list.h"
 
@@ -85,13 +83,13 @@ up_device_list_insert (UpDeviceList *list, GObject *native, GObject *device)
 
 	native_path = up_native_get_native_path (native);
 	if (native_path == NULL) {
-		egg_warning ("failed to get native path");
+		g_warning ("failed to get native path");
 		return FALSE;
 	}
 	g_hash_table_insert (list->priv->map_native_path_to_device,
 			     g_strdup (native_path), g_object_ref (device));
 	g_ptr_array_add (list->priv->array, g_object_ref (device));
-	egg_debug ("added %s", native_path);
+	g_debug ("added %s", native_path);
 	return TRUE;
 }
 
@@ -102,7 +100,7 @@ static gboolean
 up_device_list_remove_cb (gpointer key, gpointer value, gpointer user_data)
 {
 	if (value == user_data) {
-		egg_debug ("removed %s", (char *) key);
+		g_debug ("removed %s", (char *) key);
 		return TRUE;
 	}
 	return FALSE;
@@ -124,7 +122,7 @@ up_device_list_remove (UpDeviceList *list, GObject *device)
 
 	/* we're removed the last instance? */
 	if (!G_IS_OBJECT (device)) {
-		egg_warning ("INTERNAL STATE CORRUPT: we've removed the last instance of %p", device);
+		g_warning ("INTERNAL STATE CORRUPT: we've removed the last instance of %p", device);
 		return FALSE;
 	}
 

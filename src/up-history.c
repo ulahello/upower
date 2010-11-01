@@ -27,7 +27,6 @@
 #include <glib/gi18n.h>
 #include <gio/gio.h>
 
-#include "egg-debug.h"
 #include "up-history.h"
 #include "up-stats-item.h"
 #include "up-history-item.h"
@@ -133,7 +132,7 @@ up_history_array_limit_resolution (GPtrArray *array, guint max_num)
 	gfloat preset;
 
 	new = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	egg_debug ("length of array (before) %i", array->len);
+	g_debug ("length of array (before) %i", array->len);
 
 	/* check length */
 	length = array->len;
@@ -152,7 +151,7 @@ up_history_array_limit_resolution (GPtrArray *array, guint max_num)
 	first = up_history_item_get_time (item);
 
 	division = (first - last) / (gfloat) max_num;
-	egg_debug ("Using a x division of %f (first=%i,last=%i)", division, first, last);
+	g_debug ("Using a x division of %f (first=%i,last=%i)", division, first, last);
 
 	/* Reduces the number of points to a pre-set level using a time
 	 * division algorithm so we don't keep diluting the previous
@@ -193,7 +192,7 @@ up_history_array_limit_resolution (GPtrArray *array, guint max_num)
 	}
 
 	/* check length */
-	egg_debug ("length of array (after) %i", new->len);
+	g_debug ("length of array (after) %i", new->len);
 out:
 	return new;
 }
@@ -216,7 +215,7 @@ up_history_copy_array_timespan (const GPtrArray *array, guint timespan)
 	/* new data */
 	array_new = g_ptr_array_new ();
 	g_get_current_time (&timeval);
-	egg_debug ("limiting data to last %i seconds", timespan);
+	g_debug ("limiting data to last %i seconds", timespan);
 
 	/* treat the timespan like a range, and search backwards */
 	timespan *= 0.95f;
@@ -364,7 +363,7 @@ cont:
 	/* average */
 	if (non_zero_accuracy != 0)
 		average = total_value / non_zero_accuracy;
-	egg_debug ("average is %f", average);
+	g_debug ("average is %f", average);
 
 	/* make the values a factor of 0, so that 1.0 is twice the
 	 * average, and -1.0 is half the average */
@@ -445,22 +444,22 @@ up_history_array_to_file (UpHistory *history, GPtrArray *list, const gchar *file
 	part = g_string_free (string, FALSE);
 
 	/* how many did we kill? */
-	egg_debug ("culled %i of %i", cull_count, list->len);
+	g_debug ("culled %i of %i", cull_count, list->len);
 
 	/* we failed to convert to string */
 	if (!ret) {
-		egg_warning ("failed to convert");
+		g_warning ("failed to convert");
 		goto out;
 	}
 
 	/* save to disk */
 	ret = g_file_set_contents (filename, part, -1, &error);
 	if (!ret) {
-		egg_warning ("failed to set data: %s", error->message);
+		g_warning ("failed to set data: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
-	egg_debug ("saved %s", filename);
+	g_debug ("saved %s", filename);
 
 out:
 	g_free (part);
@@ -488,14 +487,14 @@ up_history_array_from_file (GPtrArray *list, const gchar *filename)
 	/* do we exist */
 	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
 	if (!ret) {
-		egg_debug ("failed to get data from %s as file does not exist", filename);
+		g_debug ("failed to get data from %s as file does not exist", filename);
 		goto out;
 	}
 
 	/* get contents */
 	ret = g_file_get_contents (filename, &data, NULL, &error);
 	if (!ret) {
-		egg_warning ("failed to get data: %s", error->message);
+		g_warning ("failed to get data: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -504,12 +503,12 @@ up_history_array_from_file (GPtrArray *list, const gchar *filename)
 	parts = g_strsplit (data, "\n", 0);
 	length = g_strv_length (parts);
 	if (length == 0) {
-		egg_debug ("no data in %s", filename);
+		g_debug ("no data in %s", filename);
 		goto out;
 	}
 
 	/* add valid entries */
-	egg_debug ("loading %i items of data from %s", length, filename);
+	g_debug ("loading %i items of data from %s", length, filename);
 	for (i=0; i<length-1; i++) {
 		item = up_history_item_new ();
 		ret = up_history_item_set_from_string (item, parts[i]);
@@ -537,7 +536,7 @@ up_history_save_data (UpHistory *history)
 
 	/* we have an ID? */
 	if (history->priv->id == NULL) {
-		egg_warning ("no ID, cannot save");
+		g_warning ("no ID, cannot save");
 		goto out;
 	}
 
@@ -621,19 +620,19 @@ up_history_schedule_save (UpHistory *history)
 	/* if low power, then don't batch up save requests */
 	ret = up_history_is_low_power (history);
 	if (ret) {
-		egg_warning ("saving directly to disk as low power");
+		g_warning ("saving directly to disk as low power");
 		up_history_save_data (history);
 		return TRUE;
 	}
 
 	/* we already have one saved */
 	if (history->priv->save_id != 0) {
-		egg_debug ("deferring as others queued");
+		g_debug ("deferring as others queued");
 		return TRUE;
 	}
 
 	/* nothing scheduled, do new */
-	egg_debug ("saving in %i seconds", UP_HISTORY_SAVE_INTERVAL);
+	g_debug ("saving in %i seconds", UP_HISTORY_SAVE_INTERVAL);
 	history->priv->save_id = g_timeout_add_seconds (UP_HISTORY_SAVE_INTERVAL,
 							(GSourceFunc) up_history_schedule_save_cb, history);
 #if GLIB_CHECK_VERSION(2,25,8)
@@ -699,7 +698,7 @@ up_history_set_id (UpHistory *history, const gchar *id)
 	if (id == NULL)
 		return FALSE;
 
-	egg_debug ("using id: %s", id);
+	g_debug ("using id: %s", id);
 	history->priv->id = g_strdup (id);
 	/* load all previous data */
 	ret = up_history_load_data (history);

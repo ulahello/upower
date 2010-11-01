@@ -40,8 +40,6 @@
 #include "up-acpi-native.h"
 #include "up-util.h"
 
-#include "egg-debug.h"
-
 #include "up-types.h"
 #include "up-device-supply.h"
 
@@ -175,22 +173,22 @@ up_device_supply_battery_set_properties (UpDevice *device, UpAcpiNative *native)
 		up_acpi_native_get_unit (native);
 	fd = open (UP_ACPIDEV, O_RDONLY);
 	if (fd < 0) {
-		egg_warning ("unable to open %s: '%s'", UP_ACPIDEV, g_strerror (errno));
+		g_warning ("unable to open %s: '%s'", UP_ACPIDEV, g_strerror (errno));
 		return FALSE;
 	}
 
 	if (ioctl (fd, ACPIIO_BATT_GET_BIF, &battif) == -1) {
-		egg_warning ("ioctl ACPIIO_BATT_GET_BIF failed for battery %d: '%s'", battif.unit, g_strerror (errno));
+		g_warning ("ioctl ACPIIO_BATT_GET_BIF failed for battery %d: '%s'", battif.unit, g_strerror (errno));
 		goto end;
 	}
 
 	if (ioctl (fd, ACPIIO_BATT_GET_BST, &battst) == -1) {
-		egg_warning ("ioctl ACPIIO_BATT_GET_BST failed for battery %d: '%s'", battst.unit, g_strerror (errno));
+		g_warning ("ioctl ACPIIO_BATT_GET_BST failed for battery %d: '%s'", battst.unit, g_strerror (errno));
 		goto end;
 	}
 
 	if (ioctl (fd, ACPIIO_BATT_GET_BATTINFO, &battinfo) == -1) {
-		egg_warning ("ioctl ACPIIO_BATT_GET_BATTINFO failed for battery %d: '%s'", battinfo.unit, g_strerror (errno));
+		g_warning ("ioctl ACPIIO_BATT_GET_BATTINFO failed for battery %d: '%s'", battinfo.unit, g_strerror (errno));
 		goto end;
 	}
 
@@ -356,7 +354,7 @@ up_device_supply_coldplug (UpDevice *device)
 	native_path = up_acpi_native_get_path (native);
 	driver = up_acpi_native_get_driver (native);
 	if (native_path == NULL) {
-		egg_warning ("could not get native path for %p", device);
+		g_warning ("could not get native path for %p", device);
 		goto out;
 	}
 
@@ -370,7 +368,7 @@ up_device_supply_coldplug (UpDevice *device)
 		goto out;
 	}
 
-	egg_warning ("invalid device %s with driver %s", native_path, driver);
+	g_warning ("invalid device %s with driver %s", native_path, driver);
 
 out:
 	return ret;

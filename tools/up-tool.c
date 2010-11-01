@@ -35,8 +35,6 @@
 #include "up-device.h"
 #include "up-wakeups.h"
 
-#include "egg-debug.h"
-
 static GMainLoop *loop;
 static gboolean opt_monitor_detail = FALSE;
 
@@ -275,7 +273,6 @@ main (int argc, char **argv)
 
 	context = g_option_context_new ("UPower tool");
 	g_option_context_add_main_entries (context, entries, NULL);
-	g_option_context_add_group (context, egg_debug_get_option_group ());
 	g_option_context_parse (context, &argc, &argv, NULL);
 	g_option_context_free (context);
 
@@ -306,7 +303,7 @@ main (int argc, char **argv)
 		GPtrArray *devices;
 		ret = up_client_enumerate_devices_sync (client, NULL, &error);
 		if (!ret) {
-			egg_warning ("failed to enumerate: %s", error->message);
+			g_warning ("failed to enumerate: %s", error->message);
 			goto out;
 		}
 		devices = up_client_get_devices (client);
@@ -333,7 +330,7 @@ main (int argc, char **argv)
 	if (opt_monitor || opt_monitor_detail) {
 		ret = up_client_enumerate_devices_sync (client, NULL, &error);
 		if (!ret) {
-			egg_warning ("failed to enumerate: %s", error->message);
+			g_warning ("failed to enumerate: %s", error->message);
 			goto out;
 		}
 		if (!up_tool_do_monitor (client))

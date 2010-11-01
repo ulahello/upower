@@ -32,8 +32,6 @@
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
 
-#include "egg-debug.h"
-
 #include "up-polkit.h"
 #include "up-device-list.h"
 #include "up-device.h"
@@ -238,13 +236,13 @@ up_daemon_set_powersave (UpDaemon *daemon, gboolean powersave)
 	/* run script */
 	command = up_backend_get_powersave_command (daemon->priv->backend, powersave);
 	if (command == NULL) {
-		egg_warning ("no powersave command set");
+		g_warning ("no powersave command set");
 		goto out;
 	}
-	egg_debug ("excuting command: %s", command);
+	g_debug ("excuting command: %s", command);
 	ret = g_spawn_command_line_async (command, &error);
 	if (!ret) {
-		egg_warning ("failed to run script: %s", error->message);
+		g_warning ("failed to run script: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -336,7 +334,7 @@ up_daemon_about_to_sleep (UpDaemon *daemon, DBusGMethodInvocation *context)
 		goto out;
 
 	/* we've told the clients we're going down */
-	egg_debug ("emitting sleeping");
+	g_debug ("emitting sleeping");
 	g_signal_emit (daemon, signals[SIGNAL_SLEEPING], 0);
 	g_timer_start (priv->about_to_sleep_timer);
 	daemon->priv->sent_sleeping_signal = TRUE;
@@ -382,7 +380,7 @@ up_daemon_deferred_sleep_cb (UpDaemonDeferredSleep *sleep)
 	}
 
 	/* emit signal for session components */
-	egg_debug ("emitting resuming");
+	g_debug ("emitting resuming");
 	g_signal_emit (daemon, signals[SIGNAL_RESUMING], 0);
 
 	/* reset the about-to-sleep logic */
@@ -426,7 +424,7 @@ up_daemon_deferred_sleep (UpDaemon *daemon, const gchar *command, DBusGMethodInv
 
 	/* we didn't use AboutToSleep() so send the signal for clients now */
 	if (!priv->sent_sleeping_signal) {
-		egg_debug ("no AboutToSleep(), so emitting ::Sleeping()");
+		g_debug ("no AboutToSleep(), so emitting ::Sleeping()");
 		g_signal_emit (daemon, signals[SIGNAL_SLEEPING], 0);
 		priv->about_to_sleep_id = g_timeout_add (priv->conf_sleep_timeout,
 							 (GSourceFunc) up_daemon_deferred_sleep_cb, sleep);
@@ -438,7 +436,7 @@ up_daemon_deferred_sleep (UpDaemon *daemon, const gchar *command, DBusGMethodInv
 
 	/* about to sleep */
 	elapsed = 1000.0f * g_timer_elapsed (priv->about_to_sleep_timer, NULL);
-	egg_debug ("between AboutToSleep() and %s was %fms", sleep->command, elapsed);
+	g_debug ("between AboutToSleep() and %s was %fms", sleep->command, elapsed);
 	if (elapsed < priv->conf_sleep_timeout) {
 		/* we have to wait for the difference in time */
 		priv->about_to_sleep_id = g_timeout_add (priv->conf_sleep_timeout - elapsed,
@@ -547,10 +545,10 @@ up_daemon_check_hibernate_swap (UpDaemon *daemon)
 	if (daemon->priv->kernel_can_hibernate) {
 		waterline = up_backend_get_used_swap (daemon->priv->backend);
 		if (waterline < UP_DAEMON_SWAP_WATERLINE) {
-			egg_debug ("enough swap to for hibernate");
+			g_debug ("enough swap to for hibernate");
 			return TRUE;
 		} else {
-			egg_debug ("not enough swap to hibernate");
+			g_debug ("not enough swap to hibernate");
 			return FALSE;
 		}
 	}
@@ -707,19 +705,19 @@ up_daemon_startup (UpDaemon *daemon)
 	/* register on bus */
 	ret = up_daemon_register_power_daemon (daemon);
 	if (!ret) {
-		egg_warning ("failed to register");
+		g_warning ("failed to register");
 		goto out;
 	}
 
 	/* stop signals and callbacks */
-	egg_debug ("daemon now coldplug");
+	g_debug ("daemon now coldplug");
 	g_object_freeze_notify (G_OBJECT(daemon));
 	priv->during_coldplug = TRUE;
 
 	/* coldplug backend backend */
 	ret = up_backend_coldplug (priv->backend, daemon);
 	if (!ret) {
-		egg_warning ("failed to coldplug backend");
+		g_warning ("failed to coldplug backend");
 		goto out;
 	}
 
@@ -733,7 +731,7 @@ up_daemon_startup (UpDaemon *daemon)
 	/* start signals and callbacks */
 	g_object_thaw_notify (G_OBJECT(daemon));
 	priv->during_coldplug = FALSE;
-	egg_debug ("daemon now not coldplug");
+	g_debug ("daemon now not coldplug");
 
 	/* set power policy */
 	up_daemon_set_powersave (daemon, priv->on_battery);
@@ -757,7 +755,7 @@ void
 up_daemon_set_lid_is_closed (UpDaemon *daemon, gboolean lid_is_closed)
 {
 	UpDaemonPrivate *priv = daemon->priv;
-	egg_debug ("lid_is_closed = %s", lid_is_closed ? "yes" : "no");
+	g_debug ("lid_is_closed = %s", lid_is_closed ? "yes" : "no");
 	priv->lid_is_closed = lid_is_closed;
 	g_object_notify (G_OBJECT (daemon), "lid-is-closed");
 }
@@ -769,7 +767,7 @@ void
 up_daemon_set_lid_is_present (UpDaemon *daemon, gboolean lid_is_present)
 {
 	UpDaemonPrivate *priv = daemon->priv;
-	egg_debug ("lid_is_present = %s", lid_is_present ? "yes" : "no");
+	g_debug ("lid_is_present = %s", lid_is_present ? "yes" : "no");
 	priv->lid_is_present = lid_is_present;
 	g_object_notify (G_OBJECT (daemon), "lid-is-present");
 }
@@ -781,7 +779,7 @@ void
 up_daemon_set_on_battery (UpDaemon *daemon, gboolean on_battery)
 {
 	UpDaemonPrivate *priv = daemon->priv;
-	egg_debug ("on_battery = %s", on_battery ? "yes" : "no");
+	g_debug ("on_battery = %s", on_battery ? "yes" : "no");
 	priv->on_battery = on_battery;
 	g_object_notify (G_OBJECT (daemon), "on-battery");
 }
@@ -793,7 +791,7 @@ void
 up_daemon_set_on_low_battery (UpDaemon *daemon, gboolean on_low_battery)
 {
 	UpDaemonPrivate *priv = daemon->priv;
-	egg_debug ("on_low_battery = %s", on_low_battery ? "yes" : "no");
+	g_debug ("on_low_battery = %s", on_low_battery ? "yes" : "no");
 	priv->on_low_battery = on_low_battery;
 	g_object_notify (G_OBJECT (daemon), "on-low-battery");
 }
@@ -812,7 +810,7 @@ up_daemon_refresh_battery_devices_cb (UpDaemon *daemon)
 		return FALSE;
 	}
 
-	egg_debug ("doing the delayed refresh (%i)", priv->battery_poll_count);
+	g_debug ("doing the delayed refresh (%i)", priv->battery_poll_count);
 	up_daemon_refresh_battery_devices (daemon);
 
 	/* keep going until none left to do */
@@ -879,11 +877,11 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 	/* emit */
 	if (!priv->during_coldplug) {
 		object_path = up_device_get_object_path (device);
-		egg_debug ("emitting device-changed: %s", object_path);
+		g_debug ("emitting device-changed: %s", object_path);
 
 		/* don't crash the session */
 		if (object_path == NULL) {
-			egg_warning ("INTERNAL STATE CORRUPT: not sending NULL, device:%p", device);
+			g_warning ("INTERNAL STATE CORRUPT: not sending NULL, device:%p", device);
 			return;
 		}
 		g_signal_emit (daemon, signals[SIGNAL_DEVICE_CHANGED], 0, object_path);
@@ -921,11 +919,11 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
 	/* emit */
 	if (!priv->during_coldplug) {
 		object_path = up_device_get_object_path (device);
-		egg_debug ("emitting added: %s (during coldplug %i)", object_path, priv->during_coldplug);
+		g_debug ("emitting added: %s (during coldplug %i)", object_path, priv->during_coldplug);
 
 		/* don't crash the session */
 		if (object_path == NULL) {
-			egg_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
+			g_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
 			return;
 		}
 		g_signal_emit (daemon, signals[SIGNAL_DEVICE_ADDED], 0, object_path);
@@ -959,11 +957,11 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 	/* emit */
 	if (!priv->during_coldplug) {
 		object_path = up_device_get_object_path (device);
-		egg_debug ("emitting device-removed: %s", object_path);
+		g_debug ("emitting device-removed: %s", object_path);
 
 		/* don't crash the session */
 		if (object_path == NULL) {
-			egg_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
+			g_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
 			return;
 		}
 		g_signal_emit (daemon, signals[SIGNAL_DEVICE_REMOVED], 0, object_path);
@@ -983,7 +981,7 @@ up_daemon_properties_changed_cb (GObject *object, GParamSpec *pspec, UpDaemon *d
 
 	/* emit */
 	if (!daemon->priv->during_coldplug) {
-		egg_debug ("emitting changed");
+		g_debug ("emitting changed");
 		g_signal_emit (daemon, signals[SIGNAL_CHANGED], 0);
 	}
 }
@@ -1025,7 +1023,7 @@ up_daemon_init (UpDaemon *daemon)
 		daemon->priv->conf_allow_hibernate_encrypted_swap =
 			g_key_file_get_boolean (file, "UPower", "AllowHibernateEncryptedSwap", NULL);
 	} else {
-		egg_warning ("failed to load config file: %s", error->message);
+		g_warning ("failed to load config file: %s", error->message);
 		g_error_free (error);
 	}
 	g_key_file_free (file);

@@ -34,8 +34,6 @@
 #include <string.h>
 #include <dirent.h>
 
-#include "egg-debug.h"
-
 #include "up-kbd-backlight.h"
 #include "up-marshal.h"
 #include "up-daemon.h"
@@ -76,7 +74,7 @@ up_kbd_backlight_brightness_write (UpKbdBacklight *kbd_backlight, gint value)
 
 	/* write new values to backlight */
 	if (kbd_backlight->priv->fd < 0) {
-		egg_warning ("cannot write to kbd_backlight as file not open");
+		g_warning ("cannot write to kbd_backlight as file not open");
 		ret = FALSE;
 		goto out;
 	}
@@ -92,7 +90,7 @@ up_kbd_backlight_brightness_write (UpKbdBacklight *kbd_backlight, gint value)
 	lseek (kbd_backlight->priv->fd, 0, SEEK_SET);
 	retval = write (kbd_backlight->priv->fd, text, length);
 	if (retval != length) {
-		egg_warning ("writing '%s' to device failed", text);
+		g_warning ("writing '%s' to device failed", text);
 		ret = FALSE;
 		goto out;
 	}
@@ -141,7 +139,7 @@ up_kbd_backlight_set_brightness (UpKbdBacklight *kbd_backlight, gint value, GErr
 {
 	gboolean ret = FALSE;
 
-	egg_debug ("setting brightness to %i", value);
+	g_debug ("setting brightness to %i", value);
 	ret = up_kbd_backlight_brightness_write(kbd_backlight, value);
 
 	if (!ret) {
@@ -195,7 +193,7 @@ up_kbd_backlight_find (UpKbdBacklight *kbd_backlight)
 	/* open directory */
 	dir = g_dir_open ("/sys/class/leds", 0, &error);
 	if (dir == NULL) {
-		egg_warning ("failed to get directory: %s", error->message);
+		g_warning ("failed to get directory: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -217,13 +215,13 @@ up_kbd_backlight_find (UpKbdBacklight *kbd_backlight)
 	path_max = g_build_filename (dir_path, "max_brightness", NULL);
 	ret = g_file_get_contents (path_max, &buf_max, NULL, &error);
 	if (!ret) {
-		egg_warning ("failed to get max brightness: %s", error->message);
+		g_warning ("failed to get max brightness: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
 	kbd_backlight->priv->max_brightness = g_ascii_strtoull (buf_max, &end, 10);
 	if (kbd_backlight->priv->max_brightness == 0 && end == buf_max) {
-		egg_warning ("failed to convert max brightness: %s", buf_max);
+		g_warning ("failed to convert max brightness: %s", buf_max);
 		goto out;
 	}
 
@@ -231,13 +229,13 @@ up_kbd_backlight_find (UpKbdBacklight *kbd_backlight)
 	path_now = g_build_filename (dir_path, "brightness", NULL);
 	ret = g_file_get_contents (path_now, &buf_now, NULL, &error);
 	if (!ret) {
-		egg_warning ("failed to get brightness: %s", error->message);
+		g_warning ("failed to get brightness: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
 	kbd_backlight->priv->brightness = g_ascii_strtoull (buf_now, &end, 10);
 	if (kbd_backlight->priv->brightness == 0 && end == buf_now) {
-		egg_warning ("failed to convert brightness: %s", buf_now);
+		g_warning ("failed to convert brightness: %s", buf_now);
 		goto out;
 	}
 
@@ -271,13 +269,13 @@ up_kbd_backlight_init (UpKbdBacklight *kbd_backlight)
 
 	/* find a kbd backlight in sysfs */
 	if (!up_kbd_backlight_find (kbd_backlight)) {
-		egg_debug ("cannot find a keyboard backlight");
+		g_debug ("cannot find a keyboard backlight");
 		return;
 	}
 
 	kbd_backlight->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (error != NULL) {
-		egg_warning ("Cannot connect to bus: %s", error->message);
+		g_warning ("Cannot connect to bus: %s", error->message);
 		g_error_free (error);
 		return;
 	}

@@ -35,8 +35,6 @@
 #include <libusb.h>
 
 #include "sysfs-utils.h"
-#include "egg-debug.h"
-
 #include "up-types.h"
 #include "up-device-csr.h"
 
@@ -76,7 +74,7 @@ up_device_csr_poll_cb (UpDeviceCsr *csr)
 {
 	UpDevice *device = UP_DEVICE (csr);
 
-	egg_debug ("Polling: %s", up_device_get_object_path (device));
+	g_debug ("Polling: %s", up_device_get_object_path (device));
 	up_device_csr_refresh (device);
 
 	/* always continue polling */
@@ -96,19 +94,19 @@ up_device_csr_find_device (UpDeviceCsr *csr)
 	guint i;
 	ssize_t cnt;
 
-	egg_debug ("Looking for: [%03d][%03d]", csr->priv->bus_num, csr->priv->dev_num);
+	g_debug ("Looking for: [%03d][%03d]", csr->priv->bus_num, csr->priv->dev_num);
 
 	/* try to find the right device */
 	cnt = libusb_get_device_list (csr->priv->ctx, &devices);
 	if (cnt < 0) {
 /*		need to depend on > libusb1-1.0.9 for libusb_strerror()
-		egg_warning ("failed to get device list: %s", libusb_strerror (cnt));
+		g_warning ("failed to get device list: %s", libusb_strerror (cnt));
  */
-		egg_warning ("failed to get device list: %d", (int)cnt);
+		g_warning ("failed to get device list: %d", (int)cnt);
 		goto out;
 	}
 	if (devices == NULL) {
-		egg_warning ("failed to get device list");
+		g_warning ("failed to get device list");
 		goto out;
 	}
 	for (i=0; devices[i] != NULL; i++) {
@@ -155,7 +153,7 @@ up_device_csr_coldplug (UpDevice *device)
 	else if (g_strcmp0 (type, "keyboard") == 0)
 		g_object_set (device, "type", UP_DEVICE_KIND_KEYBOARD, NULL);
 	else {
-		egg_debug ("not a recognised csr device");
+		g_debug ("not a recognised csr device");
 		goto out;
 	}
 
@@ -166,14 +164,14 @@ up_device_csr_coldplug (UpDevice *device)
 
 	/* get correct bus numbers? */
 	if (csr->priv->bus_num == 0 || csr->priv->dev_num == 0) {
-		egg_warning ("unable to get bus or device numbers");
+		g_warning ("unable to get bus or device numbers");
 		goto out;
 	}
 
 	/* try to get the usb device */
 	csr->priv->device = up_device_csr_find_device (csr);
 	if (csr->priv->device == NULL) {
-		egg_debug ("failed to get device %p", csr);
+		g_debug ("failed to get device %p", csr);
 		goto out;
 	}
 
@@ -181,7 +179,7 @@ up_device_csr_coldplug (UpDevice *device)
 	ret = g_udev_device_has_property (native, "UPOWER_CSR_DUAL");
 	if (ret)
 		csr->priv->is_dual = g_udev_device_get_property_as_boolean (native, "UPOWER_CSR_DUAL");
-	egg_debug ("is_dual=%i", csr->priv->is_dual);
+	g_debug ("is_dual=%i", csr->priv->is_dual);
 
 	/* prefer UPOWER names */
 	vendor = g_udev_device_get_property (native, "UPOWER_VENDOR");
@@ -237,14 +235,14 @@ up_device_csr_refresh (UpDevice *device)
 
 	/* ensure we still have a device */
 	if (csr->priv->device == NULL) {
-		egg_warning ("no device!");
+		g_warning ("no device!");
 		goto out;
 	}
 
 	/* open USB device */
 	retval = libusb_open (csr->priv->device, &handle);
 	if (retval < 0) {
-		egg_warning ("could not open device: %i", retval);
+		g_warning ("could not open device: %i", retval);
 		goto out;
 	}
 
@@ -257,29 +255,29 @@ up_device_csr_refresh (UpDevice *device)
 	retval = libusb_control_transfer (handle, 0xc0, 0x09, 0x03|addr, 0x00|addr,
 					  buf, 8, UP_DEVICE_CSR_REFRESH_TIMEOUT);
 	if (retval < 0) {
-		egg_warning ("failed to write to device: %i", retval);
+		g_warning ("failed to write to device: %i", retval);
 		goto out;
 	}
 
 	/* ensure we wrote 8 bytes */
 	if (retval != 8) {
-		egg_warning ("failed to write to device, wrote %i bytes", retval);
+		g_warning ("failed to write to device, wrote %i bytes", retval);
 		goto out;
 	}
 
 	/* is a C504 receiver busy? */
 	if (buf[CSR_P0] == 0x3b && buf[CSR_P4] == 0) {
-		egg_warning ("receiver busy");
+		g_warning ("receiver busy");
 		goto out;
 	}
 
 	/* get battery status */
 	csr->priv->raw_value = buf[CSR_P5] & 0x07;
-	egg_debug ("charge level: %d", csr->priv->raw_value);
+	g_debug ("charge level: %d", csr->priv->raw_value);
 	if (csr->priv->raw_value != 0) {
 		percentage = (100.0 / 7.0) * csr->priv->raw_value;
 		g_object_set (device, "percentage", percentage, NULL);
-		egg_debug ("percentage=%f", percentage);
+		g_debug ("percentage=%f", percentage);
 	}
 
 	/* reset time */
@@ -308,7 +306,7 @@ up_device_csr_init (UpDeviceCsr *csr)
 	csr->priv->poll_timer_id = 0;
 	retval = libusb_init (&csr->priv->ctx);
 	if (retval < 0)
-		egg_warning ("could not initialize libusb: %i", retval);
+		g_warning ("could not initialize libusb: %i", retval);
 }
 
 /**

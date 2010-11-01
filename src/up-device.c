@@ -32,8 +32,6 @@
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
 
-#include "egg-debug.h"
-
 #include "up-native.h"
 #include "up-device.h"
 #include "up-history.h"
@@ -549,7 +547,7 @@ up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 	if (klass->coldplug != NULL) {
 		ret = klass->coldplug (device);
 		if (!ret) {
-			egg_debug ("failed to coldplug %s", device->priv->native_path);
+			g_debug ("failed to coldplug %s", device->priv->native_path);
 			goto out;
 		}
 	}
@@ -557,14 +555,14 @@ up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 	/* only put on the bus if we succeeded */
 	ret = up_device_register_device (device);
 	if (!ret) {
-		egg_warning ("failed to register device %s", device->priv->native_path);
+		g_warning ("failed to register device %s", device->priv->native_path);
 		goto out;
 	}
 
 	/* force a refresh, although failure isn't fatal */
 	ret = up_device_refresh_internal (device);
 	if (!ret) {
-		egg_debug ("failed to refresh %s", device->priv->native_path);
+		g_debug ("failed to refresh %s", device->priv->native_path);
 
 		/* TODO: refresh should really have seporate
 		 *       success _and_ changed parameters */
@@ -736,13 +734,13 @@ up_device_refresh_internal (UpDevice *device)
 	/* do the refresh */
 	ret = klass->refresh (device);
 	if (!ret) {
-		egg_debug ("no changes");
+		g_debug ("no changes");
 		goto out;
 	}
 
 	/* the first time, print all properties */
 	if (!device->priv->has_ever_refresh) {
-		egg_debug ("added native-path: %s\n", device->priv->native_path);
+		g_debug ("added native-path: %s\n", device->priv->native_path);
 		device->priv->has_ever_refresh = TRUE;
 		goto out;
 	}
@@ -828,13 +826,13 @@ up_device_register_device (UpDevice *device)
 	gboolean ret = TRUE;
 
 	device->priv->object_path = up_device_compute_object_path (device);
-	egg_debug ("object path = %s", device->priv->object_path);
+	g_debug ("object path = %s", device->priv->object_path);
 	dbus_g_connection_register_g_object (device->priv->system_bus_connection,
 					     device->priv->object_path, G_OBJECT (device));
 	device->priv->system_bus_proxy = dbus_g_proxy_new_for_name (device->priv->system_bus_connection,
 								    DBUS_SERVICE_DBUS, DBUS_PATH_DBUS, DBUS_INTERFACE_DBUS);
 	if (device->priv->system_bus_proxy == NULL) {
-		egg_warning ("proxy invalid");
+		g_warning ("proxy invalid");
 		ret = FALSE;
 	}
 	return ret;
@@ -861,7 +859,7 @@ up_device_perhaps_changed_cb (GObject *object, GParamSpec *pspec, UpDevice *devi
 
 	/*  The order here matters; we want Device::Changed() before
 	 *  the DeviceChanged() signal on the main object */
-	egg_debug ("emitting changed on %s", device->priv->native_path);
+	g_debug ("emitting changed on %s", device->priv->native_path);
 	g_signal_emit (device, signals[SIGNAL_CHANGED], 0);
 }
 
@@ -885,7 +883,7 @@ up_device_init (UpDevice *device)
 
 	device->priv->system_bus_connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (device->priv->system_bus_connection == NULL) {
-		egg_error ("error getting system bus: %s", error->message);
+		g_error ("error getting system bus: %s", error->message);
 		g_error_free (error);
 	}
 	g_signal_connect (device, "notify::update-time", G_CALLBACK (up_device_perhaps_changed_cb), device);

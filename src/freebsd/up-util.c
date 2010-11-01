@@ -29,8 +29,6 @@
 #include <sys/sysctl.h>
 #include <glib.h>
 
-#include "egg-debug.h"
-
 #include "up-util.h"
 
 gboolean
@@ -133,7 +131,7 @@ up_make_safe_string (const gchar *text)
 				ret[idx] = ret[i];
 			idx++;
 		} else {
-			egg_debug ("invalid char '%c'", ret[i]);
+			g_debug ("invalid char '%c'", ret[i]);
 		}
 	}
 

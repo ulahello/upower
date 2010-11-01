@@ -38,8 +38,6 @@
 #include "up-device-supply.h"
 #include "up-util.h"
 
-#include "egg-debug.h"
-
 #include "up-backend.h"
 #include "up-daemon.h"
 #include "up-marshal.h"
@@ -151,7 +149,7 @@ up_backend_acpi_devd_notify (UpBackend *backend, const gchar *system, const gcha
 		g_object_get (backend->priv->daemon,
 			      "lid-is-present", &is_present, NULL);
 		if (!is_present) {
-			egg_warning ("received lid event without a configured lid; cold-plugging one");
+			g_warning ("received lid event without a configured lid; cold-plugging one");
 			up_backend_lid_coldplug (backend);
 			/* FALLTHROUGH */
 		}
@@ -165,7 +163,7 @@ up_backend_acpi_devd_notify (UpBackend *backend, const gchar *system, const gcha
 		goto out;
 
 	if (object == NULL) {
-		egg_warning ("did not find existing %s device; cold-plugging a new one", subsystem);
+		g_warning ("did not find existing %s device; cold-plugging a new one", subsystem);
 		up_backend_create_new_device (backend, native);
 		goto out;
 	}
@@ -266,7 +264,7 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 			object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 			if (object != NULL) {
 				device = UP_DEVICE (object);
-				egg_warning ("treating add event as change event on %s", up_device_get_object_path (device));
+				g_warning ("treating add event as change event on %s", up_device_get_object_path (device));
 				up_device_refresh_internal (device);
 			} else {
 				up_backend_create_new_device (backend, native);
@@ -365,7 +363,7 @@ up_backend_get_used_swap (UpBackend *backend)
 
 	kd = kvm_openfiles (NULL, NULL, NULL, O_RDONLY, errbuf);
 	if (kd == NULL) {
-		egg_warning ("failed to open kvm: '%s'", errbuf);
+		g_warning ("failed to open kvm: '%s'", errbuf);
 		return 0.0f;
 	}
 
@@ -375,7 +373,7 @@ up_backend_get_used_swap (UpBackend *backend)
 		goto out;
 	}
 	if (nswdev < 0) {
-		egg_warning ("failed to get swap info: '%s'", kvm_geterr (kd));
+		g_warning ("failed to get swap info: '%s'", kvm_geterr (kd));
 		percent = 0.0f;
 		goto out;
 	}

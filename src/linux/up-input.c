@@ -40,8 +40,6 @@
 #include <gudev/gudev.h>
 
 #include "sysfs-utils.h"
-#include "egg-debug.h"
-
 #include "up-types.h"
 #include "up-daemon.h"
 #include "up-input.h"
@@ -120,33 +118,33 @@ up_input_event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 		/* not enough data */
 		if (input->priv->offset + read_bytes < sizeof (struct input_event)) {
 			input->priv->offset = input->priv->offset + read_bytes;
-			egg_debug ("incomplete read");
+			g_debug ("incomplete read");
 			goto out;
 		}
 
 		/* we have all the data */
 		input->priv->offset = 0;
 
-		egg_debug ("event.value=%d ; event.code=%d (0x%02x)",
+		g_debug ("event.value=%d ; event.code=%d (0x%02x)",
 			   input->priv->event.value,
 			   input->priv->event.code,
 			   input->priv->event.code);
 
 		/* switch? */
 		if (input->priv->event.type != EV_SW) {
-			egg_debug ("not a switch event");
+			g_debug ("not a switch event");
 			continue;
 		}
 
 		/* is not lid */
 		if (input->priv->event.code != SW_LID) {
-			egg_debug ("not a lid");
+			g_debug ("not a lid");
 			continue;
 		}
 
 		/* check switch state */
 		if (ioctl (g_io_channel_unix_get_fd(channel), EVIOCGSW(sizeof (bitmask)), bitmask) < 0) {
-			egg_debug ("ioctl EVIOCGSW failed");
+			g_debug ("ioctl EVIOCGSW failed");
 			continue;
 		}
 
@@ -180,11 +178,11 @@ up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
 	/* is a switch */
 	path = g_build_filename (native_path, "../capabilities/sw", NULL);
 	if (!g_file_test (path, G_FILE_TEST_EXISTS)) {
-		egg_debug ("not a switch [%s]", path);
+		g_debug ("not a switch [%s]", path);
 		g_free (path);
 		path = g_build_filename (native_path, "capabilities/sw", NULL);
 		if (!g_file_test (path, G_FILE_TEST_EXISTS)) {
-			egg_debug ("not a switch [%s]", path);
+			g_debug ("not a switch [%s]", path);
 			goto out;
 		}
 	}
@@ -192,7 +190,7 @@ up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
 	/* get caps */
 	ret = g_file_get_contents (path, &contents, NULL, &error);
 	if (!ret) {
-		egg_debug ("failed to get contents for [%s]: %s", path, error->message);
+		g_debug ("failed to get contents for [%s]: %s", path, error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -200,14 +198,14 @@ up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
 	/* convert to a bitmask */
 	num_bits = up_input_str_to_bitmask (contents, bitmask, sizeof (bitmask));
 	if (num_bits != 1) {
-		egg_debug ("not one bitmask entry for %s", native_path);
+		g_debug ("not one bitmask entry for %s", native_path);
 		ret = FALSE;
 		goto out;
 	}
 
 	/* is this a lid? */
 	if (!test_bit (SW_LID, bitmask)) {
-		egg_debug ("not a lid: %s", native_path);
+		g_debug ("not a lid: %s", native_path);
 		ret = FALSE;
 		goto out;
 	}
@@ -215,7 +213,7 @@ up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
 	/* get device file */
 	device_file = g_udev_device_get_device_file (d);
 	if (device_file == NULL || device_file[0] == '\0') {
-		egg_warning ("no device file");
+		g_warning ("no device file");
 		ret = FALSE;
 		goto out;
 	}
@@ -223,26 +221,26 @@ up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
 	/* open device file */
 	input->priv->eventfp = open (device_file, O_RDONLY | O_NONBLOCK);
 	if (input->priv->eventfp <= 0) {
-		egg_warning ("cannot open '%s': %s", device_file, strerror (errno));
+		g_warning ("cannot open '%s': %s", device_file, strerror (errno));
 		ret = FALSE;
 		goto out;
 	}
 
 	/* get initial state */
 	if (ioctl (input->priv->eventfp, EVIOCGSW(sizeof (bitmask)), bitmask) < 0) {
-		egg_warning ("ioctl EVIOCGSW on %s failed", native_path);
+		g_warning ("ioctl EVIOCGSW on %s failed", native_path);
 		ret = FALSE;
 		goto out;
 	}
 
 	/* create channel */
-	egg_debug ("watching %s (%i)", device_file, input->priv->eventfp);
+	g_debug ("watching %s (%i)", device_file, input->priv->eventfp);
 	input->priv->channel = g_io_channel_unix_new (input->priv->eventfp);
 
 	/* set binary encoding */
 	status = g_io_channel_set_encoding (input->priv->channel, NULL, &error);
 	if (status != G_IO_STATUS_NORMAL) {
-		egg_warning ("failed to set encoding: %s", error->message);
+		g_warning ("failed to set encoding: %s", error->message);
 		g_error_free (error);
 		ret = FALSE;
 		goto out;
@@ -255,7 +253,7 @@ up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
 	g_io_add_watch (input->priv->channel, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL, up_input_event_io, input);
 
 	/* set if we are closed */
-	egg_debug ("using %s for lid event", native_path);
+	g_debug ("using %s for lid event", native_path);
 	up_daemon_set_lid_is_closed (input->priv->daemon, test_bit (SW_LID, bitmask));
 out:
 	g_free (path);

@@ -15,6 +15,7 @@ INCLUDES = \
 	-DG_UDEV_API_IS_SUBJECT_TO_CHANGE			\
 	-DUP_COMPILATION					\
 	-DUP_DISABLE_DEPRECATED					\
+	-DG_LOG_DOMAIN=\"UPower\"				\
 	-I$(top_srcdir)/libupower-glib				\
 	-I$(top_srcdir)						\
 	$(GIO_CFLAGS)						\
@@ -66,8 +67,6 @@ dbusif_DATA =							\
 	org.freedesktop.UPower.Wakeups.xml
 
 upowerd_SOURCES =						\
-	egg-debug.c						\
-	egg-debug.h						\
 	up-polkit.h						\
 	up-polkit.c						\
 	up-daemon.h						\
@@ -91,7 +90,6 @@ upowerd_SOURCES =						\
 
 upowerd_CPPFLAGS =						\
 	-I$(top_srcdir)/src					\
-	-DG_LOG_DOMAIN=\"up-daemon\"				\
 	$(AM_CPPFLAGS)
 
 upowerd_LDADD =							\
@@ -130,8 +128,6 @@ check_PROGRAMS =						\
 	up-self-test
 
 up_self_test_SOURCES =						\
-	egg-debug.c						\
-	egg-debug.h						\
 	up-self-test.c						\
 	up-polkit.h						\
 	up-polkit.c						\

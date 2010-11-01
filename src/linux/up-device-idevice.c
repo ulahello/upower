@@ -38,8 +38,6 @@
 #include <plist/plist.h>
 
 #include "sysfs-utils.h"
-#include "egg-debug.h"
-
 #include "up-types.h"
 #include "up-device-idevice.h"
 
@@ -65,7 +63,7 @@ up_device_idevice_poll_cb (UpDeviceIdevice *idevice)
 {
 	UpDevice *device = UP_DEVICE (idevice);
 
-	egg_debug ("Polling: %s", up_device_get_object_path (device));
+	g_debug ("Polling: %s", up_device_get_object_path (device));
 	up_device_idevice_refresh (device);
 
 	/* always continue polling */
@@ -201,7 +199,7 @@ up_device_idevice_refresh (UpDevice *device)
 	plist_get_uint_val (node, &percentage);
 
 	g_object_set (device, "percentage", (double) percentage, NULL);
-	egg_debug ("percentage=%"G_GUINT64_FORMAT, percentage);
+	g_debug ("percentage=%"G_GUINT64_FORMAT, percentage);
 
 	/* get charging status */
 	node = plist_dict_get_item (dict, "BatteryIsCharging");
@@ -219,7 +217,7 @@ up_device_idevice_refresh (UpDevice *device)
 	g_object_set (device,
 		      "state", state,
 		      NULL);
-	egg_debug ("state=%s", up_device_state_to_string (state));
+	g_debug ("state=%s", up_device_state_to_string (state));
 
 	plist_free (dict);
 

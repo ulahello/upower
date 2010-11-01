@@ -27,8 +27,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "egg-debug.h"
-
 #include "up-wakeups.h"
 #include "up-daemon.h"
 #include "up-marshal.h"
@@ -99,7 +97,7 @@ up_wakeups_get_cmdline (guint pid)
 	filename = g_strdup_printf ("/proc/%i/cmdline", pid);
 	ret = g_file_get_contents (filename, &cmdline, NULL, &error);
 	if (!ret) {
-		egg_debug ("failed to get cmdline: %s", error->message);
+		g_debug ("failed to get cmdline: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -347,7 +345,7 @@ up_wakeups_poll_kernel_cb (UpWakeups *wakeups)
 	GPtrArray *sections;
 	UpWakeupItem *item;
 
-	egg_debug ("event");
+	g_debug ("event");
 
 	/* set all kernel data objs to zero */
 	for (i=0; i<wakeups->priv->data->len; i++) {
@@ -359,7 +357,7 @@ up_wakeups_poll_kernel_cb (UpWakeups *wakeups)
 	/* get the data */
 	ret = g_file_get_contents (UP_WAKEUPS_SOURCE_KERNEL, &data, NULL, &error);
 	if (!ret) {
-		egg_warning ("failed to get data: %s", error->message);
+		g_warning ("failed to get data: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -472,7 +470,7 @@ up_wakeups_poll_userspace_cb (UpWakeups *wakeups)
 	guint interrupts;
 	gfloat interval = 5.0f;
 
-	egg_debug ("event");
+	g_debug ("event");
 
 	/* set all userspace data objs to zero */
 	for (i=0; i<wakeups->priv->data->len; i++) {
@@ -484,7 +482,7 @@ up_wakeups_poll_userspace_cb (UpWakeups *wakeups)
 	/* get the data */
 	ret = g_file_get_contents (UP_WAKEUPS_SOURCE_USERSPACE, &data, NULL, &error);
 	if (!ret) {
-		egg_warning ("failed to get data: %s", error->message);
+		g_warning ("failed to get data: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -507,7 +505,7 @@ up_wakeups_poll_userspace_cb (UpWakeups *wakeups)
 		if (strstr (lines[i], "Sample period:") != NULL) {
 			string = g_ptr_array_index (sections, 2);
 			interval = atof (string);
-			egg_debug ("interval=%f", interval);
+			g_debug ("interval=%f", interval);
 			goto skip;
 		}
 
@@ -584,7 +582,7 @@ up_wakeups_timerstats_disable (UpWakeups *wakeups)
 	if (!wakeups->priv->polling_enabled)
 		return TRUE;
 
-	egg_debug ("disabling timer stats");
+	g_debug ("disabling timer stats");
 
 	/* clear polling */
 	if (wakeups->priv->poll_kernel_id != 0) {
@@ -615,7 +613,7 @@ up_wakeups_timerstats_disable (UpWakeups *wakeups)
 static gboolean
 up_wakeups_disable_cb (UpWakeups *wakeups)
 {
-	egg_debug ("disabling timer stats as we are idle");
+	g_debug ("disabling timer stats as we are idle");
 	up_wakeups_timerstats_disable (wakeups);
 
 	/* never repeat */
@@ -644,7 +642,7 @@ up_wakeups_timerstats_enable (UpWakeups *wakeups)
 	if (wakeups->priv->polling_enabled)
 		return TRUE;
 
-	egg_debug ("enabling timer stats");
+	g_debug ("enabling timer stats");
 
 	/* setup polls */
 	wakeups->priv->poll_kernel_id =
@@ -747,7 +745,7 @@ up_wakeups_init (UpWakeups *wakeups)
 
 	wakeups->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (error != NULL) {
-		egg_warning ("Cannot connect to bus: %s", error->message);
+		g_warning ("Cannot connect to bus: %s", error->message);
 		g_error_free (error);
 		return;
 	}

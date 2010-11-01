@@ -29,8 +29,6 @@
 #include <gio/gio.h>
 #include <gudev/gudev.h>
 
-#include "egg-debug.h"
-
 #include "up-backend.h"
 #include "up-daemon.h"
 #include "up-marshal.h"
@@ -163,7 +161,7 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 
 	} else {
 		native_path = g_udev_device_get_sysfs_path (native);
-		egg_warning ("native path %s (%s) ignoring", native_path, subsys);
+		g_warning ("native path %s (%s) ignoring", native_path, subsys);
 	}
 out:
 	return device;
@@ -182,7 +180,7 @@ up_backend_device_changed (UpBackend *backend, GUdevDevice *native)
 	/* first, check the device and add it if it doesn't exist */
 	object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 	if (object == NULL) {
-		egg_warning ("treating change event as add on %s", g_udev_device_get_sysfs_path (native));
+		g_warning ("treating change event as add on %s", g_udev_device_get_sysfs_path (native));
 		up_backend_device_add (backend, native);
 		goto out;
 	}
@@ -191,7 +189,7 @@ up_backend_device_changed (UpBackend *backend, GUdevDevice *native)
 	device = UP_DEVICE (object);
 	ret = up_device_refresh_internal (device);
 	if (!ret) {
-		egg_debug ("no changes on %s", up_device_get_object_path (device));
+		g_debug ("no changes on %s", up_device_get_object_path (device));
 		goto out;
 	}
 out:
@@ -214,7 +212,7 @@ up_backend_device_add (UpBackend *backend, GUdevDevice *native)
 	if (object != NULL) {
 		device = UP_DEVICE (object);
 		/* we already have the device; treat as change event */
-		egg_warning ("treating add event as change event on %s", up_device_get_object_path (device));
+		g_warning ("treating add event as change event on %s", up_device_get_object_path (device));
 		up_backend_device_changed (backend, native);
 		goto out;
 	}
@@ -246,13 +244,13 @@ up_backend_device_remove (UpBackend *backend, GUdevDevice *native)
 	/* does device exist in db? */
 	object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 	if (object == NULL) {
-		egg_debug ("ignoring remove event on %s", g_udev_device_get_sysfs_path (native));
+		g_debug ("ignoring remove event on %s", g_udev_device_get_sysfs_path (native));
 		goto out;
 	}
 
 	device = UP_DEVICE (object);
 	/* emit */
-	egg_debug ("emitting device-removed: %s", g_udev_device_get_sysfs_path (native));
+	g_debug ("emitting device-removed: %s", g_udev_device_get_sysfs_path (native));
 	g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, native, device);
 
 out:
@@ -270,16 +268,16 @@ up_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 	UpBackend *backend = UP_BACKEND (user_data);
 
 	if (g_strcmp0 (action, "add") == 0) {
-		egg_debug ("SYSFS add %s", g_udev_device_get_sysfs_path (device));
+		g_debug ("SYSFS add %s", g_udev_device_get_sysfs_path (device));
 		up_backend_device_add (backend, device);
 	} else if (g_strcmp0 (action, "remove") == 0) {
-		egg_debug ("SYSFS remove %s", g_udev_device_get_sysfs_path (device));
+		g_debug ("SYSFS remove %s", g_udev_device_get_sysfs_path (device));
 		up_backend_device_remove (backend, device);
 	} else if (g_strcmp0 (action, "change") == 0) {
-		egg_debug ("SYSFS change %s", g_udev_device_get_sysfs_path (device));
+		g_debug ("SYSFS change %s", g_udev_device_get_sysfs_path (device));
 		up_backend_device_changed (backend, device);
 	} else {
-		egg_warning ("unhandled action '%s' on %s", action, g_udev_device_get_sysfs_path (device));
+		g_warning ("unhandled action '%s' on %s", action, g_udev_device_get_sysfs_path (device));
 	}
 }
 
@@ -310,7 +308,7 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 
 	/* add all subsystems */
 	for (i=0; subsystems[i] != NULL; i++) {
-		egg_debug ("registering subsystem : %s", subsystems[i]);
+		g_debug ("registering subsystem : %s", subsystems[i]);
 		devices = g_udev_client_query_by_subsystem (backend->priv->gudev_client, subsystems[i]);
 		for (l = devices; l != NULL; l = l->next) {
 			native = l->data;
@@ -338,10 +336,10 @@ up_backend_supports_sleep_state (const gchar *state)
 
 	/* run script from pm-utils */
 	command = g_strdup_printf ("/usr/bin/pm-is-supported --%s", state);
-	egg_debug ("excuting command: %s", command);
+	g_debug ("excuting command: %s", command);
 	ret = g_spawn_command_line_sync (command, NULL, NULL, &exit_status, &error);
 	if (!ret) {
-		egg_warning ("failed to run script: %s", error->message);
+		g_warning ("failed to run script: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -402,7 +400,7 @@ up_backend_has_encrypted_swap (UpBackend *backend)
 	/* get swaps data */
 	ret = g_file_get_contents (filename_swaps, &contents_swaps, NULL, &error);
 	if (!ret) {
-		egg_warning ("failed to open %s: %s", filename_swaps, error->message);
+		g_warning ("failed to open %s: %s", filename_swaps, error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -410,7 +408,7 @@ up_backend_has_encrypted_swap (UpBackend *backend)
 	/* get crypttab data */
 	ret = g_file_get_contents (filename_crypttab, &contents_crypttab, NULL, &error);
 	if (!ret) {
-		egg_warning ("failed to open %s: %s", filename_crypttab, error->message);
+		g_warning ("failed to open %s: %s", filename_crypttab, error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -432,13 +430,13 @@ up_backend_has_encrypted_swap (UpBackend *backend)
 
 		/* add base device to list */
 		device = g_path_get_basename (lines_swaps[i]);
-		egg_debug ("adding swap device: %s", device);
+		g_debug ("adding swap device: %s", device);
 		g_ptr_array_add (devices, device);
 	}
 
 	/* no swap devices? */
 	if (devices->len == 0) {
-		egg_debug ("no swap devices");
+		g_debug ("no swap devices");
 		goto out;
 	}
 
@@ -459,11 +457,11 @@ up_backend_has_encrypted_swap (UpBackend *backend)
 		for (j=0; j<devices->len; j++) {
 			device = g_ptr_array_index (devices, j);
 			if (g_strcmp0 (device, lines_crypttab[i]) == 0) {
-				egg_debug ("swap device %s is encrypted (so cannot hibernate)", device);
+				g_debug ("swap device %s is encrypted (so cannot hibernate)", device);
 				encrypted_swap = TRUE;
 				goto out;
 			}
-			egg_debug ("swap device %s is not encrypted (allows hibernate)", device);
+			g_debug ("swap device %s is not encrypted (allows hibernate)", device);
 		}
 	}
 
@@ -502,7 +500,7 @@ up_backend_get_used_swap (UpBackend *backend)
 	/* get memory data */
 	ret = g_file_get_contents (filename, &contents, NULL, &error);
 	if (!ret) {
-		egg_warning ("failed to open %s: %s", filename, error->message);
+		g_warning ("failed to open %s: %s", filename, error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -525,7 +523,7 @@ up_backend_get_used_swap (UpBackend *backend)
 
 	/* first check if we even have swap, if not consider all swap space used */
 	if (swap_total == 0) {
-		egg_debug ("no swap space found");
+		g_debug ("no swap space found");
 		percentage = 100.0f;
 		goto out;
 	}
@@ -533,7 +531,7 @@ up_backend_get_used_swap (UpBackend *backend)
 	/* work out how close to the line we are */
 	if (swap_free > 0 && active > 0)
 		percentage = (active * 100) / swap_free;
-	egg_debug ("total swap available %i kb, active memory %i kb (%.1f%%)", swap_free, active, percentage);
+	g_debug ("total swap available %i kb, active memory %i kb (%.1f%%)", swap_free, active, percentage);
 out:
 	g_free (contents);
 	g_strfreev (lines);

@@ -2,6 +2,7 @@
 
 INCLUDES = \
 	-DUP_COMPILATION					\
+	-DG_LOG_DOMAIN=\"UPower\"				\
 	-I$(top_srcdir)						\
 	-I$(top_srcdir)/libupower-glib				\
 	$(DBUS_GLIB_CFLAGS)					\
@@ -13,8 +14,6 @@ UPOWER_LIBS = $(top_builddir)/libupower-glib/libupower-glib.la
 bin_PROGRAMS = upower
 
 upower_SOURCES = 					\
-	egg-debug.c					\
-	egg-debug.h					\
 	up-tool.c					\
 	$(BUILT_SOURCES)
 

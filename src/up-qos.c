@@ -32,8 +32,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "egg-debug.h"
-
 #include "up-qos.h"
 #include "up-marshal.h"
 #include "up-daemon.h"
@@ -141,7 +139,7 @@ up_qos_get_lowest (UpQos *qos, UpQosKind type)
 
 	/* over-ride */
 	if (lowest < qos->priv->minimum[type]) {
-		egg_debug ("minium override from %i to %i", lowest, qos->priv->minimum[type]);
+		g_debug ("minium override from %i to %i", lowest, qos->priv->minimum[type]);
 		lowest = qos->priv->minimum[type];
 	}
 
@@ -165,7 +163,7 @@ up_qos_latency_write (UpQos *qos, UpQosKind type, gint value)
 
 	/* write new values to pm-qos */
 	if (qos->priv->fd[type] < 0) {
-		egg_warning ("cannot write to pm-qos as file not open");
+		g_warning ("cannot write to pm-qos as file not open");
 		ret = FALSE;
 		goto out;
 	}
@@ -177,7 +175,7 @@ up_qos_latency_write (UpQos *qos, UpQosKind type, gint value)
 	/* write to device file */
 	retval = write (qos->priv->fd[type], text, length);
 	if (retval != length) {
-		egg_warning ("writing '%s' to device failed", text);
+		g_warning ("writing '%s' to device failed", text);
 		ret = FALSE;
 		goto out;
 	}
@@ -229,7 +227,7 @@ up_qos_get_cmdline (gint pid)
 	filename = g_strdup_printf ("/proc/%i/cmdline", pid);
 	ret = g_file_get_contents (filename, &cmdline, NULL, &error);
 	if (!ret) {
-		egg_warning ("failed to get cmdline: %s", error->message);
+		g_warning ("failed to get cmdline: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -327,7 +325,7 @@ up_qos_request_latency (UpQos *qos, const gchar *type_text, gint value, gboolean
 	up_qos_item_set_kind (item, type);
 	g_ptr_array_add (qos->priv->data, item);
 
-	egg_debug ("Recieved Qos from '%s' (%i:%i)' saving as #%i",
+	g_debug ("Recieved Qos from '%s' (%i:%i)' saving as #%i",
 		   up_qos_item_get_sender (item),
 		   up_qos_item_get_value (item),
 		   up_qos_item_get_persistent (item),
@@ -386,7 +384,7 @@ up_qos_cancel_request (UpQos *qos, guint cookie, DBusGMethodInvocation *context)
 			goto out;
 	}
 
-	egg_debug ("Clear #%i", cookie);
+	g_debug ("Clear #%i", cookie);
 
 	/* remove object from list */
 	g_ptr_array_remove (qos->priv->data, item);
@@ -443,7 +441,7 @@ up_qos_set_minimum_latency (UpQos *qos, const gchar *type_text, gint value, DBus
 		return;
 	}
 
-	egg_debug ("setting %s minimum to %i", type_text, value);
+	g_debug ("setting %s minimum to %i", type_text, value);
 	qos->priv->minimum[type] = value;
 
 	/* may have changed */
@@ -505,7 +503,7 @@ up_qos_remove_dbus (UpQos *qos, const gchar *sender)
 	for (i=0; i<data->len; i++) {
 		item = g_ptr_array_index (data, i);
 		if (strcmp (up_qos_item_get_sender (item), sender) == 0) {
-			egg_debug ("Auto-revoked idle qos on %s", sender);
+			g_debug ("Auto-revoked idle qos on %s", sender);
 			g_ptr_array_remove (qos->priv->data, item);
 			up_qos_latency_perhaps_changed (qos, up_qos_item_get_kind (item));
 		}
@@ -574,14 +572,14 @@ up_qos_init (UpQos *qos)
 
 	qos->priv->fd[UP_QOS_KIND_CPU_DMA] = open ("/dev/cpu_dma_latency", O_WRONLY);
 	if (qos->priv->fd[UP_QOS_KIND_CPU_DMA] < 0)
-		egg_warning ("cannot open cpu_dma device file");
+		g_debug ("cannot open cpu_dma device file");
 	qos->priv->fd[UP_QOS_KIND_NETWORK] = open ("/dev/network_latency", O_WRONLY);
 	if (qos->priv->fd[UP_QOS_KIND_NETWORK] < 0)
-		egg_warning ("cannot open network device file");
+		g_debug ("cannot open network device file");
 
 	qos->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (error != NULL) {
-		egg_warning ("Cannot connect to bus: %s", error->message);
+		g_warning ("Cannot connect to bus: %s", error->message);
 		g_error_free (error);
 		return;
 	}

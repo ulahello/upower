@@ -215,19 +215,19 @@ sysfs_resolve_link (const char *dir, const char *attribute)
 
 	full_path = g_build_filename (dir, attribute, NULL);
 
-	//egg_warning ("attribute='%s'", attribute);
-	//egg_warning ("full_path='%s'", full_path);
+	//g_warning ("attribute='%s'", attribute);
+	//g_warning ("full_path='%s'", full_path);
 	num = readlink (full_path, link_path, sizeof (link_path) - 1);
 	if (num != -1) {
 		char *absolute_path;
 
 		link_path[num] = '\0';
 
-		//egg_warning ("link_path='%s'", link_path);
+		//g_warning ("link_path='%s'", link_path);
 		absolute_path = g_build_filename (dir, link_path, NULL);
-		//egg_warning ("absolute_path='%s'", absolute_path);
+		//g_warning ("absolute_path='%s'", absolute_path);
 		if (realpath (absolute_path, resolved_path) != NULL) {
-			//egg_warning ("resolved_path='%s'", resolved_path);
+			//g_warning ("resolved_path='%s'", resolved_path);
 			found_it = TRUE;
 		}
 		g_free (absolute_path);

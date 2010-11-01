@@ -48,8 +48,6 @@
 #include <unistd.h>
 
 #include "sysfs-utils.h"
-#include "egg-debug.h"
-
 #include "up-types.h"
 #include "up-device-hid.h"
 
@@ -110,7 +108,7 @@ up_device_hid_is_ups (UpDeviceHid *hid)
 	/* get device info */
 	retval = ioctl (hid->priv->fd, HIDIOCGDEVINFO, &device_info);
 	if (retval < 0) {
-		egg_debug ("HIDIOCGDEVINFO failed: %s", strerror (errno));
+		g_debug ("HIDIOCGDEVINFO failed: %s", strerror (errno));
 		goto out;
 	}
 
@@ -134,7 +132,7 @@ up_device_hid_poll (UpDeviceHid *hid)
 {
 	UpDevice *device = UP_DEVICE (hid);
 
-	egg_debug ("Polling: %s", up_device_get_object_path (device));
+	g_debug ("Polling: %s", up_device_get_object_path (device));
 	up_device_hid_refresh (device);
 
 	/* always continue polling */
@@ -159,7 +157,7 @@ up_device_hid_get_string (UpDeviceHid *hid, int sindex)
 	if (ioctl (hid->priv->fd, HIDIOCGSTRING, &sdesc) < 0)
 		return "";
 
-	egg_debug ("value: '%s'", sdesc.value);
+	g_debug ("value: '%s'", sdesc.value);
 	return sdesc.value;
 }
 
@@ -321,22 +319,22 @@ up_device_hid_coldplug (UpDevice *device)
 	/* get the device file */
 	device_file = g_udev_device_get_device_file (native);
 	if (device_file == NULL) {
-		egg_debug ("could not get device file for HID device");
+		g_debug ("could not get device file for HID device");
 		goto out;
 	}
 
 	/* connect to the device */
-	egg_debug ("using device: %s", device_file);
+	g_debug ("using device: %s", device_file);
 	hid->priv->fd = open (device_file, O_RDONLY | O_NONBLOCK);
 	if (hid->priv->fd < 0) {
-		egg_debug ("cannot open device file %s", device_file);
+		g_debug ("cannot open device file %s", device_file);
 		goto out;
 	}
 
 	/* first check that we are an UPS */
 	ret = up_device_hid_is_ups (hid);
 	if (!ret) {
-		egg_debug ("not a HID device: %s", device_file);
+		g_debug ("not a HID device: %s", device_file);
 		goto out;
 	}
 
@@ -359,7 +357,7 @@ up_device_hid_coldplug (UpDevice *device)
 	/* coldplug everything */
 	ret = up_device_hid_get_all_data (hid);
 	if (!ret) {
-		egg_debug ("failed to coldplug: %s", device_file);
+		g_debug ("failed to coldplug: %s", device_file);
 		goto out;
 	}
 
@@ -390,14 +388,14 @@ up_device_hid_refresh (UpDevice *device)
 
 	/* it's okay if there's nothing as we are non-blocking */
 	if (rd == -1) {
-		egg_debug ("no data");
+		g_debug ("no data");
 		ret = FALSE;
 		goto out;
 	}
 
 	/* did we read enough data? */
 	if (rd < (int) sizeof (ev[0])) {
-		egg_warning ("incomplete read (%i<%i)", rd, (int) sizeof (ev[0]));
+		g_warning ("incomplete read (%i<%i)", rd, (int) sizeof (ev[0]));
 		goto out;
 	}
 

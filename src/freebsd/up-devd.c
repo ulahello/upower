@@ -30,8 +30,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#include "egg-debug.h"
-
 #include "up-backend.h"
 #include "up-backend-acpi.h"
 #include "up-devd.h"
@@ -148,7 +146,7 @@ up_devd_process_event (const gchar *event, gpointer user_data)
 
 	backend = UP_BACKEND(user_data);
 
-	egg_debug("received devd event: '%s'", event);
+	g_debug("received devd event: '%s'", event);
 
 	switch (event[0]) {
 	case UP_DEVD_EVENT_ADD:
@@ -180,7 +178,7 @@ up_devd_process_event (const gchar *event, gpointer user_data)
 	}
 
 malformed:
-	egg_warning("malformed devd event: %s", event);
+	g_warning("malformed devd event: %s", event);
 }
 
 static gboolean
@@ -221,7 +219,7 @@ up_devd_init (UpBackend *backend)
 
 	event_fd = socket(PF_UNIX, SOCK_STREAM, 0);
 	if (event_fd < 0) {
-		egg_warning("failed to create event socket: '%s'", g_strerror(errno));
+		g_warning("failed to create event socket: '%s'", g_strerror(errno));
 		up_devd_inited = FALSE;
 		return;
 	}
@@ -236,7 +234,7 @@ up_devd_init (UpBackend *backend)
 		g_io_channel_unref (channel);
 		up_devd_inited = TRUE;
 	} else {
-		egg_warning ("failed to connect to %s: '%s'", UP_DEVD_SOCK_PATH,
+		g_warning ("failed to connect to %s: '%s'", UP_DEVD_SOCK_PATH,
 			     g_strerror(errno));
 		close (event_fd);
 		up_devd_inited = FALSE;

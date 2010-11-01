@@ -42,8 +42,6 @@
 #include <errno.h>
 
 #include "sysfs-utils.h"
-#include "egg-debug.h"
-
 #include "up-types.h"
 #include "up-device-wup.h"
 
@@ -87,7 +85,7 @@ up_device_wup_poll_cb (UpDeviceWup *wup)
 {
 	UpDevice *device = UP_DEVICE (wup);
 
-	egg_debug ("Polling: %s", up_device_get_object_path (device));
+	g_debug ("Polling: %s", up_device_get_object_path (device));
 	up_device_wup_refresh (device);
 
 	/* always continue polling */
@@ -105,7 +103,7 @@ up_device_wup_set_speed (UpDeviceWup *wup)
 
 	retval = tcgetattr (wup->priv->fd, &t);
 	if (retval != 0) {
-		egg_debug ("failed to get speed");
+		g_debug ("failed to get speed");
 		return FALSE;
 	}
 
@@ -118,7 +116,7 @@ up_device_wup_set_speed (UpDeviceWup *wup)
 	t.c_cflag &= ~CSTOPB;
 	retval = tcsetattr (wup->priv->fd, TCSANOW, &t);
 	if (retval != 0) {
-		egg_debug ("failed to set speed");
+		g_debug ("failed to set speed");
 		return FALSE;
 	}
 
@@ -138,10 +136,10 @@ up_device_wup_write_command (UpDeviceWup *wup, const gchar *data)
 	gint length;
 
 	length = strlen (data);
-	egg_debug ("writing [%s]", data);
+	g_debug ("writing [%s]", data);
 	retval = write (wup->priv->fd, data, length);
 	if (retval != length) {
-		egg_debug ("Writing [%s] to device failed", data);
+		g_debug ("Writing [%s] to device failed", data);
 		ret = FALSE;
 	}
 	return ret;
@@ -159,7 +157,7 @@ up_device_wup_read_command (UpDeviceWup *wup)
 	gchar buffer[UP_DEVICE_WUP_COMMAND_LEN];
 	retval = read (wup->priv->fd, &buffer, UP_DEVICE_WUP_COMMAND_LEN);
 	if (retval < 0) {
-		egg_debug ("failed to read from fd: %s", strerror (errno));
+		g_debug ("failed to read from fd: %s", strerror (errno));
 		return NULL;
 	}
 	return g_strdup (buffer);
@@ -197,7 +195,7 @@ up_device_wup_parse_command (UpDeviceWup *wup, const gchar *data)
 	/* ensure we have a long enough response */
 	length = strlen (data);
 	if (length < 3) {
-		egg_debug ("not enough data '%s'", data);
+		g_debug ("not enough data '%s'", data);
 		goto out;
 	}
 
@@ -208,7 +206,7 @@ up_device_wup_parse_command (UpDeviceWup *wup, const gchar *data)
 
 	/* does packet exist? */
 	if (packet == NULL) {
-		egg_debug ("no start char in %s", data);
+		g_debug ("no start char in %s", data);
 		goto out;
 	}
 
@@ -227,7 +225,7 @@ up_device_wup_parse_command (UpDeviceWup *wup, const gchar *data)
 	tokens = g_strsplit (packet, ",", -1);
 	number_tokens = g_strv_length (tokens);
 	if (number_tokens < 3) {
-		egg_debug ("not enough tokens '%s'", packet);
+		g_debug ("not enough tokens '%s'", packet);
 		goto out;
 	}
 
@@ -238,11 +236,11 @@ up_device_wup_parse_command (UpDeviceWup *wup, const gchar *data)
 	/* check the first token */
 	length = strlen (tokens[0]);
 	if (length != 2) {
-		egg_debug ("expected command '#?' but got '%s'", tokens[0]);
+		g_debug ("expected command '#?' but got '%s'", tokens[0]);
 		goto out;
 	}
 	if (tokens[0][0] != '#') {
-		egg_debug ("expected command '#?' but got '%s'", tokens[0]);
+		g_debug ("expected command '#?' but got '%s'", tokens[0]);
 		goto out;
 	}
 	command = tokens[0][1];
@@ -250,7 +248,7 @@ up_device_wup_parse_command (UpDeviceWup *wup, const gchar *data)
 	/* check the second token */
 	length = strlen (tokens[1]);
 	if (length != 1) {
-		egg_debug ("expected command '?' but got '%s'", tokens[1]);
+		g_debug ("expected command '?' but got '%s'", tokens[1]);
 		goto out;
 	}
 	subcommand = tokens[1][0]; /* expect to be '-' */
@@ -258,14 +256,14 @@ up_device_wup_parse_command (UpDeviceWup *wup, const gchar *data)
 	/* check the length is present */
 	length = strlen (tokens[2]);
 	if (length == 0) {
-		egg_debug ("length value not present");
+		g_debug ("length value not present");
 		goto out;
 	}
 
 	/* check the length matches what data we've got*/
 	size = atoi (tokens[2]);
 	if (size != number_tokens - offset) {
-		egg_debug ("size expected to be '%i' but got '%i'", number_tokens - offset, size);
+		g_debug ("size expected to be '%i' but got '%i'", number_tokens - offset, size);
 		goto out;
 	}
 
@@ -277,7 +275,7 @@ up_device_wup_parse_command (UpDeviceWup *wup, const gchar *data)
 			      NULL);
 		ret = TRUE;
 	} else {
-		egg_debug ("ignoring command '%c'", command);
+		g_debug ("ignoring command '%c'", command);
 	}
 
 out:
@@ -313,40 +311,40 @@ up_device_wup_coldplug (UpDevice *device)
 	/* get the device file */
 	device_file = g_udev_device_get_device_file (native);
 	if (device_file == NULL) {
-		egg_debug ("could not get device file for WUP device");
+		g_debug ("could not get device file for WUP device");
 		goto out;
 	}
 
 	/* connect to the device */
 	wup->priv->fd = open (device_file, O_RDWR | O_NONBLOCK);
 	if (wup->priv->fd < 0) {
-		egg_debug ("cannot open device file %s", device_file);
+		g_debug ("cannot open device file %s", device_file);
 		goto out;
 	}
-	egg_debug ("opened %s", device_file);
+	g_debug ("opened %s", device_file);
 
 	/* set speed */
 	ret = up_device_wup_set_speed (wup);
 	if (!ret) {
-		egg_debug ("not a WUP device (cannot set speed): %s", device_file);
+		g_debug ("not a WUP device (cannot set speed): %s", device_file);
 		goto out;
 	}
 
 	/* attempt to clear */
 	ret = up_device_wup_write_command (wup, "#R,W,0;");
 	if (!ret)
-		egg_debug ("failed to clear, nonfatal");
+		g_debug ("failed to clear, nonfatal");
 
 	/* setup logging interval */
 	data = g_strdup_printf ("#L,W,3,E,1,%i;", UP_DEVICE_WUP_REFRESH_TIMEOUT);
 	ret = up_device_wup_write_command (wup, data);
 	if (!ret)
-		egg_debug ("failed to setup logging interval, nonfatal");
+		g_debug ("failed to setup logging interval, nonfatal");
 	g_free (data);
 
 	/* dummy read */
 	data = up_device_wup_read_command (wup);
-	egg_debug ("data after clear %s", data);
+	g_debug ("data after clear %s", data);
 
 	/* shouldn't do anything */
 	up_device_wup_parse_command (wup, data);
@@ -375,7 +373,7 @@ up_device_wup_coldplug (UpDevice *device)
 		      NULL);
 
 	/* coldplug */
-	egg_debug ("coldplug");
+	g_debug ("coldplug");
 	ret = up_device_wup_refresh (device);
 out:
 	return ret;
@@ -397,14 +395,14 @@ up_device_wup_refresh (UpDevice *device)
 	/* get data */
 	data = up_device_wup_read_command (wup);
 	if (data == NULL) {
-		egg_debug ("no data");
+		g_debug ("no data");
 		goto out;
 	}
 
 	/* parse */
 	ret = up_device_wup_parse_command (wup, data);
 	if (!ret) {
-		egg_debug ("failed to parse %s", data);
+		g_debug ("failed to parse %s", data);
 		goto out;
 	}
 

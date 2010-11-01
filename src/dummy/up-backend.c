@@ -27,8 +27,6 @@
 #include <glib/gi18n.h>
 #include <gio/gio.h>
 
-#include "egg-debug.h"
-
 #include "up-backend.h"
 #include "up-daemon.h"
 #include "up-marshal.h"
@@ -93,7 +91,7 @@ up_backend_add_cb (UpBackend *backend)
 	/* coldplug */
 	ret = up_device_coldplug (backend->priv->device, backend->priv->daemon, backend->priv->native);
 	if (!ret) {
-		egg_warning ("failed to coldplug");
+		g_warning ("failed to coldplug");
 		goto out;
 	}
 
