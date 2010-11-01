@@ -995,6 +995,8 @@ up_daemon_init (UpDaemon *daemon)
 	gboolean ret;
 	GError *error = NULL;
 	GKeyFile *file;
+	const gchar *filename_self_test;
+	gchar *filename;
 
 	daemon->priv = UP_DAEMON_GET_PRIVATE (daemon);
 	daemon->priv->polkit = up_polkit_new ();
@@ -1016,17 +1018,25 @@ up_daemon_init (UpDaemon *daemon)
 
 	/* load some values from the config file */
 	file = g_key_file_new ();
-	ret = g_key_file_load_from_file (file, PACKAGE_SYSCONF_DIR "/UPower/UPower.conf", G_KEY_FILE_NONE, &error);
+	filename_self_test = g_getenv ("UPOWER_CONF_FILE_NAME");
+	if (filename_self_test != NULL) {
+		g_debug ("using %s as the self test conf file", filename_self_test);
+		filename = g_strdup (filename_self_test);
+	} else {
+		filename = g_build_filename (PACKAGE_SYSCONF_DIR,"UPower", "UPower.conf", NULL);
+	}
+	ret = g_key_file_load_from_file (file, filename, G_KEY_FILE_NONE, &error);
 	if (ret) {
 		daemon->priv->conf_sleep_timeout =
 			g_key_file_get_integer (file, "UPower", "SleepTimeout", NULL);
 		daemon->priv->conf_allow_hibernate_encrypted_swap =
 			g_key_file_get_boolean (file, "UPower", "AllowHibernateEncryptedSwap", NULL);
 	} else {
-		g_warning ("failed to load config file: %s", error->message);
+		g_warning ("failed to load config file %s: %s", filename, error->message);
 		g_error_free (error);
 	}
 	g_key_file_free (file);
+	g_free (filename);
 
 	daemon->priv->backend = up_backend_new ();
 	g_signal_connect (daemon->priv->backend, "device-added",

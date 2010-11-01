@@ -60,6 +60,12 @@ up_test_daemon_func (void)
 {
 	UpDaemon *daemon;
 
+	/* make check, vs. make distcheck */
+	if (g_file_test ("../etc/UPower.conf", G_FILE_TEST_EXISTS))
+		g_setenv ("UPOWER_CONF_FILE_NAME", "../etc/UPower.conf", TRUE);
+	else
+		g_setenv ("UPOWER_CONF_FILE_NAME", "../../etc/UPower.conf", TRUE);
+
 	daemon = up_daemon_new ();
 	g_assert (daemon != NULL);
 
