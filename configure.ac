@@ -159,7 +159,6 @@ PKG_CHECK_MODULES(POLKIT, \
 		  has_new_polkit=no)
 if test x$has_new_polkit = xno; then
 	PKG_CHECK_MODULES(POLKIT, \
-			  polkit-backend-1 \
 			  polkit-gobject-1 >= 0.91)
 else
 	AC_DEFINE(USE_SECURITY_POLKIT_NEW, 1, [if we should use PolicyKits new API])
