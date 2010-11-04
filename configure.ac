@@ -197,7 +197,7 @@ if test x$with_backend = xlinux; then
 	AC_ARG_WITH(idevice, AS_HELP_STRING([--without-idevice],[Build without libimobiledevice]),
 		    with_idevice=$withval,with_idevice=yes)
 	AS_IF([test "x$with_idevice" != "xno"],
-	      [PKG_CHECK_MODULES(IDEVICE, libimobiledevice-1.0 >= 0.9.7, have_idevice=yes, have_idevice=no)],
+	      [PKG_CHECK_MODULES(IDEVICE, libimobiledevice-1.0 >= 0.9.7 libplist >= 0.12, have_idevice=yes, have_idevice=no)],
 	      [have_idevice=no])
 	AS_IF([test "x$have_idevice" = "xyes"],
 	      [AC_DEFINE(HAVE_IDEVICE, 1, [Define to 1 if AFC is going to be built])])
