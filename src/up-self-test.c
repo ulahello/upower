@@ -223,7 +223,7 @@ up_test_history_func (void)
 
 	/* ensure old entries are purged */
 	up_history_set_max_data_age (history, 2);
-	g_usleep (2 * G_USEC_PER_SEC);
+	g_usleep (1100 * G_USEC_PER_SEC / 1000);
 	g_object_unref (history);
 
 	/* ensure only 2 points are returned */
