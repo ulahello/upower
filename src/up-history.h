@@ -84,6 +84,9 @@ void		 up_history_set_max_data_age		(UpHistory		*history,
 							 guint			 max_data_age);
 gboolean	 up_history_save_data			(UpHistory		*history);
 
+void		 up_history_set_directory		(UpHistory		*history,
+							 const gchar		*dir);
+
 G_END_DECLS
 
 #endif /* __UP_HISTORY_H */

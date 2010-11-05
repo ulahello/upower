@@ -53,6 +53,7 @@ struct UpHistoryPrivate
 	GPtrArray		*data_time_empty;
 	guint			 save_id;
 	guint			 max_data_age;
+	gchar			*dir;
 };
 
 enum {
@@ -394,9 +395,19 @@ up_history_get_filename (UpHistory *history, const gchar *type)
 	gchar *filename;
 
 	filename = g_strdup_printf ("history-%s-%s.dat", type, history->priv->id);
-	path = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", filename, NULL);
+	path = g_build_filename (history->priv->dir, filename, NULL);
 	g_free (filename);
 	return path;
+}
+
+/**
+ * up_history_set_directory:
+ **/
+void
+up_history_set_directory (UpHistory *history, const gchar *dir)
+{
+	g_free (history->priv->dir);
+	history->priv->dir = g_strdup (dir);
 }
 
 /**
@@ -877,6 +888,7 @@ up_history_init (UpHistory *history)
 	history->priv->data_time_empty = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	history->priv->save_id = 0;
 	history->priv->max_data_age = UP_HISTORY_DEFAULT_MAX_DATA_AGE;
+	history->priv->dir = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", NULL);
 }
 
 /**
