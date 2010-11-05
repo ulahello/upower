@@ -24,6 +24,8 @@
 #include <glib-object.h>
 #include <glib/gstdio.h>
 #include <up-history-item.h>
+#include <stdlib.h>
+#include <errno.h>
 #include "up-backend.h"
 #include "up-daemon.h"
 #include "up-device.h"
@@ -33,6 +35,8 @@
 #include "up-polkit.h"
 #include "up-qos.h"
 #include "up-wakeups.h"
+
+gchar *history_dir = NULL;
 
 static void
 up_test_native_func (void)
@@ -122,16 +126,16 @@ static void
 up_test_history_remove_temp_files (void)
 {
 	gchar *filename;
-	filename = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", "history-time-full-test.dat", NULL);
+	filename = g_build_filename (history_dir, "history-time-full-test.dat", NULL);
 	g_unlink (filename);
 	g_free (filename);
-	filename = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", "history-time-empty-test.dat", NULL);
+	filename = g_build_filename (history_dir, "history-time-empty-test.dat", NULL);
 	g_unlink (filename);
 	g_free (filename);
-	filename = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", "history-charge-test.dat", NULL);
+	filename = g_build_filename (history_dir, "history-charge-test.dat", NULL);
 	g_unlink (filename);
 	g_free (filename);
-	filename = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", "history-rate-test.dat", NULL);
+	filename = g_build_filename (history_dir, "history-rate-test.dat", NULL);
 	g_unlink (filename);
 	g_free (filename);
 }
@@ -148,9 +152,11 @@ up_test_history_func (void)
 	history = up_history_new ();
 	g_assert (history != NULL);
 
-	/* is this a distcheck with no writable root? */
-	if (g_strstr_len (PACKAGE_LOCALSTATE_DIR, -1, "_inst") != NULL)
-		goto distcheck_skip;
+	/* set a temporary directory for the history */
+	history_dir = g_build_filename (g_get_tmp_dir(), "upower-test.XXXXXX", NULL);
+	if (mkdtemp (history_dir) == NULL)
+		g_error ("Cannot create temporary directory: %s", g_strerror(errno));
+	up_history_set_directory (history, history_dir);
 
 	/* remove previous test files */
 	up_test_history_remove_temp_files ();
@@ -196,12 +202,13 @@ up_test_history_func (void)
 	g_object_unref (history);
 
 	/* ensure the file was created */
-	filename = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", "history-charge-test.dat", NULL);
+	filename = g_build_filename (history_dir, "history-charge-test.dat", NULL);
 	g_assert (g_file_test (filename, G_FILE_TEST_EXISTS));
 	g_free (filename);
 
 	/* ensure we can load from disk */
 	history = up_history_new ();
+	up_history_set_directory (history, history_dir);
 	up_history_set_id (history, "test");
 
 	/* get data for last 10 seconds */
@@ -221,19 +228,19 @@ up_test_history_func (void)
 
 	/* ensure only 2 points are returned */
 	history = up_history_new ();
+	up_history_set_directory (history, history_dir);
 	up_history_set_id (history, "test");
 	array = up_history_get_data (history, UP_HISTORY_TYPE_CHARGE, 10, 100);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 2);
 	g_ptr_array_unref (array);
 
-distcheck_skip:
-
 	/* unref */
 	g_object_unref (history);
 
 	/* remove these test files */
 	up_test_history_remove_temp_files ();
+	rmdir (history_dir);
 }
 
 static void
