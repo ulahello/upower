@@ -1,7 +1,7 @@
 ##############################################################################################################
 # Uninterruptible Power Supplies with USB HID interfaces
 #
-# to keep up to date, monitor: http://svn.debian.org/wsvn/nut/trunk/scripts/dkp/95-upower-hid.rules
+# to keep up to date, monitor: http://svn.debian.org/wsvn/nut/trunk/scripts/upower/95-upower-hid.rules
 
 # only support USB, else ignore
 SUBSYSTEM!="usb", GOTO="up_hid_end"
@@ -25,7 +25,11 @@ ATTRS{idVendor}=="10af", ENV{UPOWER_VENDOR}="Liebert"
 
 # Hewlett Packard
 ATTRS{idVendor}=="03f0", ATTRS{idProduct}=="1f06", ENV{UPOWER_BATTERY_TYPE}="ups"
+ATTRS{idVendor}=="03f0", ATTRS{idProduct}=="1f08", ENV{UPOWER_BATTERY_TYPE}="ups"
+ATTRS{idVendor}=="03f0", ATTRS{idProduct}=="1f09", ENV{UPOWER_BATTERY_TYPE}="ups"
 ATTRS{idVendor}=="03f0", ATTRS{idProduct}=="1f0a", ENV{UPOWER_BATTERY_TYPE}="ups"
+ATTRS{idVendor}=="03f0", ATTRS{idProduct}=="1fe0", ENV{UPOWER_BATTERY_TYPE}="ups"
+ATTRS{idVendor}=="03f0", ATTRS{idProduct}=="1fe1", ENV{UPOWER_BATTERY_TYPE}="ups"
 
 # Eaton
 ATTRS{idVendor}=="0463", ATTRS{idProduct}=="0001", ENV{UPOWER_BATTERY_TYPE}="ups"
@@ -47,6 +51,7 @@ ATTRS{idVendor}=="050d", ATTRS{idProduct}=="1100", ENV{UPOWER_BATTERY_TYPE}="ups
 
 # APC
 ATTRS{idVendor}=="051d", ATTRS{idProduct}=="0002", ENV{UPOWER_BATTERY_TYPE}="ups"
+ATTRS{idVendor}=="051d", ATTRS{idProduct}=="0003", ENV{UPOWER_BATTERY_TYPE}="ups"
 
 # Liebert
 ATTRS{idVendor}=="06da", ATTRS{idProduct}=="ffff", ENV{UPOWER_BATTERY_TYPE}="ups"
@@ -99,4 +104,3 @@ ATTRS{idVendor}=="0d9f", ATTRS{idProduct}=="00a6", ENV{UPOWER_BATTERY_TYPE}="ups
 ATTRS{idVendor}=="10af", ATTRS{idProduct}=="0001", ENV{UPOWER_BATTERY_TYPE}="ups"
 
 LABEL="up_hid_end"
-
