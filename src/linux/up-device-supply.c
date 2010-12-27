@@ -554,16 +554,20 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 		supply->priv->unknown_retries = 0;
 	}
 
-	/* get rate; it seems odd as it's either in uVh or uWh */
-	energy_rate = fabs (sysfs_get_double (native_path, "current_now") / 1000000.0);
+	/* this is the new value in mWh */
+	energy_rate = fabs (sysfs_get_double (native_path, "power_now") / 1000000.0);
+	if (energy_rate == 0) {
+		/* get the old rate, rate; which is either in uVh or uWh */
+		energy_rate = fabs (sysfs_get_double (native_path, "current_now") / 1000000.0);
 
-	/* convert charge to energy */
-	if (energy == 0) {
-		energy = sysfs_get_double (native_path, "charge_now") / 1000000.0;
-		if (energy == 0)
-			energy = sysfs_get_double (native_path, "charge_avg") / 1000000.0;
-		energy *= voltage_design;
-		energy_rate *= voltage_design;
+		/* convert charge to energy */
+		if (energy == 0) {
+			energy = sysfs_get_double (native_path, "charge_now") / 1000000.0;
+			if (energy == 0)
+				energy = sysfs_get_double (native_path, "charge_avg") / 1000000.0;
+			energy *= voltage_design;
+			energy_rate *= voltage_design;
+		}
 	}
 
 	/* some batteries don't update last_full attribute */
