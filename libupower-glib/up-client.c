@@ -64,6 +64,7 @@ struct _UpClientPrivate
 	gboolean		 on_battery;
 	gboolean		 on_low_battery;
 	gboolean		 lid_is_present;
+	gboolean		 is_docked;
 	gboolean		 done_enumerate;
 };
 
@@ -84,6 +85,7 @@ enum {
 	PROP_ON_LOW_BATTERY,
 	PROP_LID_IS_CLOSED,
 	PROP_LID_IS_PRESENT,
+	PROP_IS_DOCKED,
 	PROP_LAST
 };
 
@@ -406,6 +408,17 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 		g_object_notify (G_OBJECT(client), "lid-is-present");
 	}
 
+	value = g_hash_table_lookup (props, "IsDocked");
+	if (value == NULL) {
+		g_warning ("No 'IsDocked' property");
+		goto out;
+	}
+	ret = g_value_get_boolean (value);
+	if (ret != client->priv->is_docked) {
+		client->priv->is_docked = ret;
+		g_object_notify (G_OBJECT(client), "is-docked");
+	}
+
 	/* cached */
 	client->priv->have_properties = TRUE;
 
@@ -485,6 +498,24 @@ up_client_get_lid_is_present (UpClient *client)
 	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
 	up_client_get_properties_sync (client, NULL, NULL);
 	return client->priv->lid_is_present;
+}
+
+/**
+ * up_client_get_is_docked:
+ * @client: a #UpClient instance.
+ *
+ * Get whether the machine is docked into a docking station.
+ *
+ * Return value: %TRUE if the machine is docked
+ *
+ * Since: 0.9.2
+ */
+gboolean
+up_client_get_is_docked (UpClient *client)
+{
+	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
+	up_client_get_properties_sync (client, NULL, NULL);
+	return client->priv->is_docked;
 }
 
 /**
@@ -650,6 +681,9 @@ up_client_get_property (GObject *object,
 	case PROP_LID_IS_PRESENT:
 		g_value_set_boolean (value, client->priv->lid_is_present);
 		break;
+	case PROP_IS_DOCKED:
+		g_value_set_boolean (value, client->priv->is_docked);
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -763,6 +797,21 @@ up_client_class_init (UpClientClass *klass)
 					 PROP_LID_IS_PRESENT,
 					 g_param_spec_boolean ("lid-is-present",
 							       "If a laptop lid is present",
+							       NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
+
+	/**
+	 * UpClient:is-docked:
+	 *
+	 * If the laptop is docked
+	 *
+	 * Since: 0.9.8
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_IS_DOCKED,
+					 g_param_spec_boolean ("is-docked",
+							       "If a laptop is docked",
 							       NULL,
 							       FALSE,
 							       G_PARAM_READABLE));

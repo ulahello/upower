@@ -77,6 +77,8 @@ void		 up_daemon_set_lid_is_closed	(UpDaemon		*daemon,
 						 gboolean		 lid_is_closed);
 void		 up_daemon_set_lid_is_present	(UpDaemon		*daemon,
 						 gboolean		 lid_is_present);
+void		 up_daemon_set_is_docked	(UpDaemon		*daemon,
+						 gboolean		 is_docked);
 void		 up_daemon_set_on_battery	(UpDaemon		*daemon,
 						 gboolean		 on_battery);
 void		 up_daemon_set_on_low_battery	(UpDaemon		*daemon,

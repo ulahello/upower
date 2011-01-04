@@ -304,6 +304,18 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
       </doc:doc>
     </property>
 
+    <property name="IsDocked" type="b" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            If the system is currently docked.
+            Note: the "is-docked" value is the result of a heuristic,
+            which may involve testing the display output.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </property>
+
   </interface>
 
 </node>

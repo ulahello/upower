@@ -99,6 +99,7 @@ const gchar	*up_client_get_daemon_version		(UpClient		*client);
 gboolean	 up_client_get_can_hibernate		(UpClient		*client);
 gboolean	 up_client_get_lid_is_closed		(UpClient		*client);
 gboolean	 up_client_get_lid_is_present		(UpClient		*client);
+gboolean	 up_client_get_is_docked		(UpClient		*client);
 gboolean	 up_client_get_can_suspend		(UpClient		*client);
 gboolean	 up_client_get_on_battery		(UpClient		*client);
 gboolean	 up_client_get_on_low_battery		(UpClient		*client);

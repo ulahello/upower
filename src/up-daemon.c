@@ -51,6 +51,7 @@ enum
 	PROP_ON_LOW_BATTERY,
 	PROP_LID_IS_CLOSED,
 	PROP_LID_IS_PRESENT,
+	PROP_IS_DOCKED,
 	PROP_LAST
 };
 
@@ -78,6 +79,7 @@ struct UpDaemonPrivate
 	gboolean		 on_low_battery;
 	gboolean		 lid_is_closed;
 	gboolean		 lid_is_present;
+	gboolean		 is_docked;
 	gboolean		 kernel_can_suspend;
 	gboolean		 kernel_can_hibernate;
 	gboolean		 hibernate_has_encrypted_swap;
@@ -773,6 +775,18 @@ up_daemon_set_lid_is_present (UpDaemon *daemon, gboolean lid_is_present)
 }
 
 /**
+ * up_daemon_set_is_docked:
+ **/
+void
+up_daemon_set_is_docked (UpDaemon *daemon, gboolean is_docked)
+{
+	UpDaemonPrivate *priv = daemon->priv;
+	g_debug ("is_docked = %s", is_docked ? "yes" : "no");
+	priv->is_docked = is_docked;
+	g_object_notify (G_OBJECT (daemon), "is-docked");
+}
+
+/**
  * up_daemon_set_on_battery:
  **/
 void
@@ -1001,6 +1015,7 @@ up_daemon_init (UpDaemon *daemon)
 	daemon->priv = UP_DAEMON_GET_PRIVATE (daemon);
 	daemon->priv->polkit = up_polkit_new ();
 	daemon->priv->lid_is_present = FALSE;
+	daemon->priv->is_docked = FALSE;
 	daemon->priv->lid_is_closed = FALSE;
 	daemon->priv->kernel_can_suspend = FALSE;
 	daemon->priv->kernel_can_hibernate = FALSE;
@@ -1135,6 +1150,9 @@ up_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 	case PROP_LID_IS_PRESENT:
 		g_value_set_boolean (value, priv->lid_is_present);
 		break;
+	case PROP_IS_DOCKED:
+		g_value_set_boolean (value, priv->is_docked);
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -1228,6 +1246,14 @@ up_daemon_class_init (UpDaemonClass *klass)
 					 g_param_spec_boolean ("lid-is-present",
 							       "Is a laptop",
 							       "If this computer is probably a laptop",
+							       FALSE,
+							       G_PARAM_READABLE));
+
+	g_object_class_install_property (object_class,
+					 PROP_IS_DOCKED,
+					 g_param_spec_boolean ("is-docked",
+							       "Is docked",
+							       "If this computer is docked",
 							       FALSE,
 							       G_PARAM_READABLE));
 
