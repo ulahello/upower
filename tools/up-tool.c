@@ -124,6 +124,7 @@ up_client_print (UpClient *client)
 	gboolean on_low_battery;
 	gboolean lid_is_closed;
 	gboolean lid_is_present;
+	gboolean is_docked;
 
 	g_object_get (client,
 		      "daemon-version", &daemon_version,
@@ -133,6 +134,7 @@ up_client_print (UpClient *client)
 		      "on-low_battery", &on_low_battery,
 		      "lid-is-closed", &lid_is_closed,
 		      "lid-is-present", &lid_is_present,
+		      "is-docked", &is_docked,
 		      NULL);
 
 	g_print ("  daemon-version:  %s\n", daemon_version);
@@ -141,7 +143,8 @@ up_client_print (UpClient *client)
 	g_print ("  on-battery:      %s\n", on_battery ? "yes" : "no");
 	g_print ("  on-low-battery:  %s\n", on_low_battery ? "yes" : "no");
 	g_print ("  lid-is-closed:   %s\n", lid_is_closed ? "yes" : "no");
-	g_print ("  lid-is-present:   %s\n", lid_is_present ? "yes" : "no");
+	g_print ("  lid-is-present:  %s\n", lid_is_present ? "yes" : "no");
+	g_print ("  is-docked:       %s\n", is_docked ? "yes" : "no");
 
 	g_free (daemon_version);
 }

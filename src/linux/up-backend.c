@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -39,6 +39,7 @@
 #include "up-device-wup.h"
 #include "up-device-hid.h"
 #include "up-input.h"
+#include "up-dock.h"
 #ifdef HAVE_IDEVICE
 #include "up-device-idevice.h"
 #endif /* HAVE_IDEVICE */
@@ -55,6 +56,7 @@ struct UpBackendPrivate
 	UpDeviceList		*device_list;
 	GUdevClient		*gudev_client;
 	UpDeviceList		*managed_devices;
+	UpDock			*dock;
 };
 
 enum {
@@ -298,6 +300,7 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 	GList *devices;
 	GList *l;
 	guint i;
+	gboolean ret;
 	const gchar *subsystems[] = {"power_supply", "usb", "tty", "input", NULL};
 
 	backend->priv->daemon = g_object_ref (daemon);
@@ -317,6 +320,12 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 		g_list_foreach (devices, (GFunc) g_object_unref, NULL);
 		g_list_free (devices);
 	}
+
+	/* add dock update object */
+	backend->priv->dock = up_dock_new ();
+	ret = up_dock_coldplug (backend->priv->dock, daemon);
+	if (!ret)
+		g_warning ("failed to coldplug dock devices");
 
 	return TRUE;
 }
