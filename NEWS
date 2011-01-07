@@ -1,3 +1,23 @@
+Version 0.9.8
+~~~~~~~~~~~~~
+Released: 2011-01-07
+
+New Features:
+ - Add an IsDocked binary property to the main interface (Richard Hughes)
+ - Use the number of active DRM devices to determine the system docked status (Richard Hughes)
+
+Bugfixes:
+ - Add method to set history dir (Martin Pitt)
+ - Check for and link against libplist (Martin Pitt)
+ - Drop check for polkit-backend again (Martin Pitt)
+ - Fix compilation error against Linux 2.6.36 (Martin Pitt)
+ - Fix links to git repository in HACKING (Zygmunt Krynicki)
+ - Fix self check to work as non-root (Martin Pitt)
+ - Re-add AM_MAINTAINER_MODE (but enable it by default) (Michael Biebl)
+ - Reduce race condition in history purging self check (Martin Pitt)
+ - Support the power_now sysfs attribute to get time remaining on new kernels (Richard Hughes)
+ - Update the list of HID UPS devices (Arnaud Quette)
+
 Version 0.9.7
 ~~~~~~~~~~~~~
 Released: 2010-11-01
