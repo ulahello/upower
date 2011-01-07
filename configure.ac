@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 m4_define([up_major_version], [0])
 m4_define([up_minor_version], [9])
-m4_define([up_micro_version], [8])
+m4_define([up_micro_version], [9])
 m4_define([up_version],
           [up_major_version.up_minor_version.up_micro_version])
 
@@ -14,7 +14,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_MAINTAINER_MODE([enable])
 
-GOBJECT_INTROSPECTION_CHECK([0.9.8])
+GOBJECT_INTROSPECTION_CHECK([0.9.9])
 
 # enable nice build output on automake1.11
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
