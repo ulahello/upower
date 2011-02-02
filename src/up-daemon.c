@@ -51,6 +51,7 @@ enum
 	PROP_ON_LOW_BATTERY,
 	PROP_LID_IS_CLOSED,
 	PROP_LID_IS_PRESENT,
+	PROP_LID_FORCE_SLEEP,
 	PROP_IS_DOCKED,
 	PROP_LAST
 };
@@ -79,6 +80,7 @@ struct UpDaemonPrivate
 	gboolean		 on_low_battery;
 	gboolean		 lid_is_closed;
 	gboolean		 lid_is_present;
+	gboolean		 lid_force_sleep;
 	gboolean		 is_docked;
 	gboolean		 kernel_can_suspend;
 	gboolean		 kernel_can_hibernate;
@@ -763,6 +765,18 @@ up_daemon_set_lid_is_closed (UpDaemon *daemon, gboolean lid_is_closed)
 }
 
 /**
+ * up_daemon_set_lid_force_sleep:
+ **/
+void
+up_daemon_set_lid_force_sleep (UpDaemon *daemon, gboolean lid_force_sleep)
+{
+	UpDaemonPrivate *priv = daemon->priv;
+	g_debug ("lid_force_sleep = %s", lid_force_sleep ? "yes" : "no");
+	priv->lid_force_sleep = lid_force_sleep;
+	g_object_notify (G_OBJECT (daemon), "lid-enforce-sleep");
+}
+
+/**
  * up_daemon_set_lid_is_present:
  **/
 void
@@ -1150,6 +1164,9 @@ up_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 	case PROP_LID_IS_PRESENT:
 		g_value_set_boolean (value, priv->lid_is_present);
 		break;
+	case PROP_LID_FORCE_SLEEP:
+		g_value_set_boolean (value, priv->lid_force_sleep);
+		break;
 	case PROP_IS_DOCKED:
 		g_value_set_boolean (value, priv->is_docked);
 		break;
@@ -1246,6 +1263,14 @@ up_daemon_class_init (UpDaemonClass *klass)
 					 g_param_spec_boolean ("lid-is-present",
 							       "Is a laptop",
 							       "If this computer is probably a laptop",
+							       FALSE,
+							       G_PARAM_READABLE));
+
+	g_object_class_install_property (object_class,
+					 PROP_LID_FORCE_SLEEP,
+					 g_param_spec_boolean ("lid-enforce-sleep",
+							       "Enforce sleep on lid close",
+							       "If this computer has to sleep on lid close",
 							       FALSE,
 							       G_PARAM_READABLE));
 

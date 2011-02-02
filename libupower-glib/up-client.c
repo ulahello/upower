@@ -64,6 +64,7 @@ struct _UpClientPrivate
 	gboolean		 on_battery;
 	gboolean		 on_low_battery;
 	gboolean		 lid_is_present;
+	gboolean		 lid_force_sleep;
 	gboolean		 is_docked;
 	gboolean		 done_enumerate;
 };
@@ -85,6 +86,7 @@ enum {
 	PROP_ON_LOW_BATTERY,
 	PROP_LID_IS_CLOSED,
 	PROP_LID_IS_PRESENT,
+	PROP_LID_FORCE_SLEEP,
 	PROP_IS_DOCKED,
 	PROP_LAST
 };
@@ -419,6 +421,17 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 		g_object_notify (G_OBJECT(client), "is-docked");
 	}
 
+	value = g_hash_table_lookup (props, "LidForceSleep");
+	if (value == NULL) {
+		g_warning ("No 'LidForceSleep' property");
+		goto out;
+	}
+	ret = g_value_get_boolean (value);
+	if (ret != client->priv->lid_force_sleep) {
+		client->priv->lid_force_sleep = ret;
+		g_object_notify (G_OBJECT(client), "lid-force-sleep");
+	}
+
 	/* cached */
 	client->priv->have_properties = TRUE;
 
@@ -498,6 +511,24 @@ up_client_get_lid_is_present (UpClient *client)
 	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
 	up_client_get_properties_sync (client, NULL, NULL);
 	return client->priv->lid_is_present;
+}
+
+/**
+ * up_client_get_lid_force_sleep:
+ * @client: a #UpClient instance.
+ *
+ * Get whether the laptop has to sleep when the lid is closed.
+ *
+ * Return value: %TRUE if the session has to suspend
+ *
+ * Since: 0.9.9
+ */
+gboolean
+up_client_get_lid_force_sleep (UpClient *client)
+{
+	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
+	up_client_get_properties_sync (client, NULL, NULL);
+	return client->priv->lid_force_sleep;
 }
 
 /**
@@ -681,6 +712,9 @@ up_client_get_property (GObject *object,
 	case PROP_LID_IS_PRESENT:
 		g_value_set_boolean (value, client->priv->lid_is_present);
 		break;
+	case PROP_LID_FORCE_SLEEP:
+		g_value_set_boolean (value, client->priv->lid_force_sleep);
+		break;
 	case PROP_IS_DOCKED:
 		g_value_set_boolean (value, client->priv->is_docked);
 		break;
@@ -797,6 +831,21 @@ up_client_class_init (UpClientClass *klass)
 					 PROP_LID_IS_PRESENT,
 					 g_param_spec_boolean ("lid-is-present",
 							       "If a laptop lid is present",
+							       NULL,
+							       FALSE,
+							       G_PARAM_READABLE));
+
+	/**
+	 * UpClient:lid-force-sleep:
+	 *
+	 * If a laptop has to sleep if the lid is closed.
+	 *
+	 * Since: 0.9.9
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_LID_FORCE_SLEEP,
+					 g_param_spec_boolean ("lid-force-sleep",
+							       "If a laptop has to sleep on lid close",
 							       NULL,
 							       FALSE,
 							       G_PARAM_READABLE));

@@ -304,6 +304,24 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
       </doc:doc>
     </property>
 
+    <property name="LidForceSleep" type="b" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            If the system really has to sleep when the lid is closed.
+            Some laptops actually melt (!) if the lid is closed and the
+            computer keeps running. We blacklist those, and do something
+            sane for the other machines.
+          </doc:para>
+          <doc:para>
+            This allows us to set the default session policy to not
+            suspend on lid close if the laptop is docked, and be sure
+            the machine is not going to melt.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </property>
+
     <property name="IsDocked" type="b" access="read">
       <doc:doc>
         <doc:description>
