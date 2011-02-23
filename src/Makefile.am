@@ -183,9 +183,6 @@ install-data-hook:
 		mkdir -p $(DESTDIR)$(localstatedir)/lib/upower; \
 	fi
 
-install-exec-hook:
-	cd $(DESTDIR)$(libexecdir) && $(LN_S) -f upowerd devkit-power-daemon
-
 CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST =							\

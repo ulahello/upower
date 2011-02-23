@@ -25,9 +25,6 @@ upower_LDADD = 						\
 	$(UPOWER_LIBS)					\
 	$(POLKIT_DBUS_LIBS)
 
-install-exec-hook:
-	cd $(DESTDIR)$(bindir) && $(LN_S) -f upower devkit-power
-
 CLEANFILES = $(BUILT_SOURCES)
 
 clean-local :
