@@ -174,13 +174,15 @@ dnl - Compile time default choice of backend
 dnl ---------------------------------------------------------------------------
 AC_ARG_WITH([backend],
 	    AS_HELP_STRING([--with-backend=<option>],
-			   [Default backend to use linux, freebsd, dummy (dummy)]))
+			   [Default backend to use linux, freebsd, openbsd, dummy (dummy)]))
 # default to a sane option
 if test x$with_backend = x; then
 	if test -e /usr/include/gudev-1.0/gudev/gudev.h ; then
 		with_backend=linux
 	elif test -e /usr/include/dev/acpica/acpiio.h ; then
 	    	with_backend=freebsd
+	elif test -e /usr/include/machine/apmvar.h ; then
+	    	with_backend=openbsd
 	else
 		with_backend=dummy
 	fi
@@ -208,6 +210,7 @@ AM_CONDITIONAL(HAVE_IDEVICE, [test x$have_idevice = xyes])
 AM_CONDITIONAL(BACKEND_TYPE_DUMMY, [test x$with_backend = xdummy])
 AM_CONDITIONAL(BACKEND_TYPE_LINUX, [test x$with_backend = xlinux])
 AM_CONDITIONAL(BACKEND_TYPE_FREEBSD, [test x$with_backend = xfreebsd])
+AM_CONDITIONAL(BACKEND_TYPE_OPENBSD, [test x$with_backend = xopenbsd])
 
 dnl ---------------------------------------------------------------------------
 dnl - Build self tests
@@ -233,6 +236,7 @@ etc/Makefile
 src/Makefile
 src/dummy/Makefile
 src/freebsd/Makefile
+src/openbsd/Makefile
 src/linux/Makefile
 tools/Makefile
 doc/Makefile
