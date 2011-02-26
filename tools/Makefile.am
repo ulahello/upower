@@ -20,6 +20,8 @@ upower_SOURCES = 					\
 upower_CPPFLAGS = 					\
 	$(AM_CPPFLAGS)
 
+upower_LDFLAGS = -pthread
+
 upower_LDADD = 						\
 	$(DBUS_GLIB_LIBS)				\
 	$(UPOWER_LIBS)					\
