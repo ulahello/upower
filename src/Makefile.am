@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = dummy freebsd linux
+SUBDIRS = dummy freebsd linux openbsd
 
 INCLUDES = \
 	-I$(top_builddir)/src -I$(top_srcdir)/src		\
@@ -109,6 +109,11 @@ endif
 if BACKEND_TYPE_FREEBSD
 upowerd_LDADD +=						\
 	freebsd/libupshared.la
+endif
+
+if BACKEND_TYPE_OPENBSD
+upowerd_LDADD +=						\
+	openbsd/libupshared.la
 endif
 
 if BACKEND_TYPE_LINUX
