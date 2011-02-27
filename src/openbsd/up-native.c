@@ -11,5 +11,5 @@
 const gchar *
 up_native_get_native_path (GObject *object)
 {
-	return '/foo'; /* return sysctl acpiacX/acpibatX path ? */
+	return "/foo"; /* return sysctl acpiacX/acpibatX path ? */
 }
