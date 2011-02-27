@@ -135,6 +135,8 @@ up_backend_apm_powerchange_event_cb(gpointer object)
 	g_return_if_fail (UP_IS_BACKEND (object));
 	backend = UP_BACKEND (object);
 	g_message("Got event, in callback");
+	/* return false to not endless loop */
+	return FALSE;
 }
 
 /* thread doing kqueue() on apm device */
