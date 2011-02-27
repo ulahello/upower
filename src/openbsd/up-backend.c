@@ -42,6 +42,21 @@ static guint signals [SIGNAL_LAST] = { 0 };
 G_DEFINE_TYPE (UpBackend, up_backend, G_TYPE_OBJECT)
 
 /**
+ * up_backend_add_cb:
+ **/
+static gboolean
+up_backend_add_cb (UpBackend *backend)
+{
+	/* coldplug */
+	if (!up_device_coldplug (backend->priv->device, backend->priv->daemon, backend->priv->native))
+		g_warning ("failed to coldplug");
+	/* emit */
+	else
+		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, backend->priv->native, backend->priv->device);
+	return FALSE;
+}
+
+/**
  * functions called by upower daemon
  **/
 
@@ -60,6 +75,9 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 {
 	backend->priv->daemon = g_object_ref (daemon);
 	backend->priv->device_list = up_daemon_get_device_list (daemon);
+	/* small delay until first device is added */
+	g_timeout_add_seconds (1, (GSourceFunc) up_backend_add_cb, backend);
+
 	return TRUE;
 }
 
