@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/time.h>
-
+#include <sys/ioctl.h> /* ioctl() */
 /* APM macros */
 #include <machine/apmvar.h>
 
@@ -144,15 +144,56 @@ up_backend_get_used_swap (UpBackend *backend)
  * OpenBSD specific code
  **/
 
+struct apm_power_info
+up_backend_apm_get_power_info(int fd) {
+	struct apm_power_info bstate;
+	bstate.battery_state = 255;
+	bstate.ac_state = 255;
+	bstate.battery_life = 0;
+	bstate.minutes_left = -1;
+
+	if (-1 == ioctl(fd, APM_IOC_GETPOWER, &bstate))
+		g_warning("ioctl on fd %d failed : %s", fd, g_strerror(errno));
+	return bstate;
+}
+
+UpDeviceState up_backend_apm_get_battery_state_value(u_char battery_state) {
+	switch(battery_state) {
+		case APM_BATT_HIGH:
+			return UP_DEVICE_STATE_FULLY_CHARGED;
+		case APM_BATT_LOW:
+			return UP_DEVICE_STATE_DISCHARGING; // XXXX
+		case APM_BATT_CRITICAL:
+			return UP_DEVICE_STATE_EMPTY;
+		case APM_BATT_CHARGING:
+			return UP_DEVICE_STATE_CHARGING;
+		case APM_BATTERY_ABSENT:
+			return UP_DEVICE_STATE_EMPTY;
+		case APM_BATT_UNKNOWN:
+			return UP_DEVICE_STATE_UNKNOWN;
+	}
+}
+
 /* callback updating the device */
 static gboolean
 up_backend_apm_powerchange_event_cb(gpointer object)
 {
 	UpBackend *backend;
+	struct apm_power_info a;
+	GTimeVal timeval;
 
 	g_return_if_fail (UP_IS_BACKEND (object));
 	backend = UP_BACKEND (object);
-	g_message("Got event, in callback");
+	a = up_backend_apm_get_power_info(backend->priv->apm_fd);
+
+	g_message("Got event, in callback, percentage=%d", a.battery_life);
+
+	g_get_current_time (&timeval);
+	g_object_set (backend->priv->device,
+			"state", up_backend_apm_get_battery_state_value(a.battery_state),
+			"percentage", a.battery_life,
+			"update-time", (guint64) timeval.tv_sec,
+			NULL);
 	/* return false to not endless loop */
 	return FALSE;
 }
@@ -177,6 +218,7 @@ up_backend_apm_event_thread(gpointer object)
 		if (errno != ENXIO && errno != ENOENT)
 			g_error("cannot open device file");
 	}
+	g_message("apm fd=%d", backend->priv->apm_fd);
 	kq = kqueue();
 	if (kq <= 0)
 		g_error("kqueue");
