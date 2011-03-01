@@ -8,6 +8,8 @@
 /* APM macros */
 #include <machine/apmvar.h>
 
+#include "up-apm-native.h"
+
 #include "up-backend.h"
 #include "up-daemon.h"
 #include "up-marshal.h"
@@ -24,9 +26,8 @@ static void	up_backend_finalize	(GObject		*object);
 struct UpBackendPrivate
 {
 	UpDaemon		*daemon;
-	UpDevice		*device;
-	UpDeviceList		*device_list; /* unused */
-	GObject			*native;
+	UpDevice		*ac;
+	UpDevice		*battery;
 	GThread			*apm_thread;
 	int			apm_fd;
 };
@@ -47,12 +48,17 @@ G_DEFINE_TYPE (UpBackend, up_backend, G_TYPE_OBJECT)
 static gboolean
 up_backend_add_cb (UpBackend *backend)
 {
+	UpApmNative *acnative = up_apm_native_new("/ac");
+	UpApmNative *battnative = up_apm_native_new("/batt");
 	/* coldplug */
-	if (!up_device_coldplug (backend->priv->device, backend->priv->daemon, backend->priv->native))
-		g_warning ("failed to coldplug");
-	/* emit */
+	if (!up_device_coldplug (backend->priv->ac, backend->priv->daemon, G_OBJECT(acnative)))
+		g_warning ("failed to coldplug ac");
 	else
-		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, backend->priv->native, backend->priv->device);
+		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, acnative, backend->priv->ac);
+	if (!up_device_coldplug (backend->priv->battery, backend->priv->daemon, G_OBJECT(battnative)))
+		g_warning ("failed to coldplug battery");
+	else
+		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, battnative, backend->priv->battery);
 	return FALSE;
 }
 
@@ -74,7 +80,6 @@ gboolean
 up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 {
 	backend->priv->daemon = g_object_ref (daemon);
-	backend->priv->device_list = up_daemon_get_device_list (daemon);
 	/* small delay until first device is added */
 	g_timeout_add_seconds (1, (GSourceFunc) up_backend_add_cb, backend);
 
@@ -189,7 +194,7 @@ up_backend_apm_powerchange_event_cb(gpointer object)
 	g_message("Got event, in callback, percentage=%d", a.battery_life);
 
 	g_get_current_time (&timeval);
-	g_object_set (backend->priv->device,
+	g_object_set (backend->priv->battery,
 			"state", up_backend_apm_get_battery_state_value(a.battery_state),
 			"percentage", a.battery_life,
 			"update-time", (guint64) timeval.tv_sec,
@@ -299,9 +304,8 @@ up_backend_init (UpBackend *backend)
 
 	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
 	backend->priv->daemon = NULL;
-	backend->priv->device_list = NULL;
-	backend->priv->native = g_object_new (UP_TYPE_DEVICE, NULL);
-	backend->priv->device = up_device_new ();
+	backend->priv->ac = up_device_new ();
+	backend->priv->battery = up_device_new ();
 
 	g_thread_init (NULL);
 	/* creates thread */
@@ -312,6 +316,7 @@ up_backend_init (UpBackend *backend)
 	}
 
 	/* setup dummy */
+/*
 	g_object_set (backend->priv->device,
 		      "native-path", "/hal/blows/goats",
 		      "vendor", "hughsie",
@@ -332,6 +337,7 @@ up_backend_init (UpBackend *backend)
 		      "energy-rate", 5.0f,
 		      "percentage", 50.0f,
 		      NULL);
+*/
 }
 
 /**
@@ -348,10 +354,10 @@ up_backend_finalize (GObject *object)
 
 	if (backend->priv->daemon != NULL)
 		g_object_unref (backend->priv->daemon);
-	if (backend->priv->device_list != NULL)
-		g_object_unref (backend->priv->device_list);
-	g_object_unref (backend->priv->native);
-	g_object_unref (backend->priv->device);
+	if (backend->priv->battery != NULL)
+		g_object_unref (backend->priv->battery);
+	if (backend->priv->ac != NULL)
+	g_object_unref (backend->priv->ac);
 	/* XXX stop apm_thread ? */
 
 	G_OBJECT_CLASS (up_backend_parent_class)->finalize (object);
