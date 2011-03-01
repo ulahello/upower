@@ -120,7 +120,7 @@ up_backend_get_hibernate_command (UpBackend *backend)
 gboolean
 up_backend_kernel_can_suspend (UpBackend *backend)
 {
-	return FALSE;
+	return TRUE;
 }
 
 /**
@@ -177,6 +177,7 @@ UpDeviceState up_backend_apm_get_battery_state_value(u_char battery_state) {
 		case APM_BATT_UNKNOWN:
 			return UP_DEVICE_STATE_UNKNOWN;
 	}
+	return -1;
 }
 
 /* callback updating the device */
@@ -196,7 +197,9 @@ up_backend_apm_powerchange_event_cb(gpointer object)
 	g_get_current_time (&timeval);
 	g_object_set (backend->priv->battery,
 			"state", up_backend_apm_get_battery_state_value(a.battery_state),
+/*
 			"percentage", a.battery_life,
+*/
 			"update-time", (guint64) timeval.tv_sec,
 			NULL);
 	/* return false to not endless loop */
@@ -226,12 +229,12 @@ up_backend_apm_event_thread(gpointer object)
 	g_message("apm fd=%d", backend->priv->apm_fd);
 	kq = kqueue();
 	if (kq <= 0)
-		g_error("kqueue");
+		g_error("kqueue", 1);
 	EV_SET(&ev, backend->priv->apm_fd, EVFILT_READ, EV_ADD | EV_ENABLE | EV_CLEAR,
 	    0, 0, NULL);
 	nevents = 1;
 	if (kevent(kq, &ev, nevents, NULL, 0, &sts) < 0)
-		g_error("kevent");
+		g_error("kevent", 1);
 
 	/* blocking wait on kqueue */
 	for (;;) {
@@ -304,8 +307,8 @@ up_backend_init (UpBackend *backend)
 
 	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
 	backend->priv->daemon = NULL;
-	backend->priv->ac = up_device_new ();
-	backend->priv->battery = up_device_new ();
+	backend->priv->ac = UP_DEVICE(up_device_new());
+	backend->priv->battery = UP_DEVICE(up_device_new ());
 
 	g_thread_init (NULL);
 	/* creates thread */
@@ -316,28 +319,30 @@ up_backend_init (UpBackend *backend)
 	}
 
 	/* setup dummy */
-/*
-	g_object_set (backend->priv->device,
-		      "native-path", "/hal/blows/goats",
-		      "vendor", "hughsie",
-		      "model", "BAT1",
-		      "serial", "0001",
+	g_object_set (backend->priv->battery,
+		      "vendor", NULL,
+		      "model", NULL,
+		      "serial", NULL,
 		      "type", UP_DEVICE_KIND_BATTERY,
-		      "online", FALSE,
 		      "power-supply", TRUE,
 		      "is-present", TRUE,
 		      "is-rechargeable", TRUE,
 		      "has-history", FALSE,
 		      "has-statistics", FALSE,
-		      "state", UP_DEVICE_STATE_DISCHARGING,
+		      "state", UP_DEVICE_STATE_UNKNOWN,
 		      "energy", 0.0f,
 		      "energy-empty", 0.0f,
 		      "energy-full", 10.0f,
 		      "energy-full-design", 10.0f,
 		      "energy-rate", 5.0f,
 		      "percentage", 50.0f,
+		      "technology", UP_DEVICE_TECHNOLOGY_UNKNOWN,
 		      NULL);
-*/
+	g_object_set (backend->priv->ac,
+		      "type", UP_DEVICE_KIND_LINE_POWER,
+			"online", TRUE,
+		      "power-supply", TRUE,
+		      NULL);
 }
 
 /**
