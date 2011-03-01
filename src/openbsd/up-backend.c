@@ -197,9 +197,7 @@ up_backend_apm_powerchange_event_cb(gpointer object)
 	g_get_current_time (&timeval);
 	g_object_set (backend->priv->battery,
 			"state", up_backend_apm_get_battery_state_value(a.battery_state),
-/*
-			"percentage", a.battery_life,
-*/
+			"percentage", (gdouble) a.battery_life,
 			"update-time", (guint64) timeval.tv_sec,
 			NULL);
 	/* return false to not endless loop */
