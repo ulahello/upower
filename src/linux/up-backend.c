@@ -284,6 +284,38 @@ up_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 }
 
 /**
+ * up_backend_should_poll_docks:
+ **/
+static gboolean
+up_backend_should_poll_docks (void)
+{
+	gboolean ret;
+	GKeyFile *keyfile;
+	GError *error = NULL;
+
+	/* get the settings from the config file */
+	keyfile = g_key_file_new ();
+	ret = g_key_file_load_from_file (keyfile,
+					 PACKAGE_SYSCONF_DIR "/UPower/UPower.conf",
+					 G_KEY_FILE_NONE,
+					 &error);
+	if (!ret) {
+		g_error ("Failed to get poll setting, assuming FALSE: %s",
+			   error->message);
+		g_error_free (error);
+		goto out;
+	}
+	ret = g_key_file_get_boolean (keyfile,
+				      "UPower",
+				      "PollDockDevices",
+				      NULL);
+	g_debug ("Polling docks: %s", ret ? "YES" : "NO");
+out:
+	g_key_file_free (keyfile);
+	return ret;
+}
+
+/**
  * up_backend_coldplug:
  * @backend: The %UpBackend class instance
  * @daemon: The %UpDaemon controlling instance
@@ -323,6 +355,8 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 
 	/* add dock update object */
 	backend->priv->dock = up_dock_new ();
+	ret = up_backend_should_poll_docks ();
+	up_dock_set_should_poll (backend->priv->dock, ret);
 	ret = up_dock_coldplug (backend->priv->dock, daemon);
 	if (!ret)
 		g_warning ("failed to coldplug dock devices");

@@ -51,6 +51,8 @@ GType		 up_dock_get_type		(void);
 UpDock		*up_dock_new			(void);
 gboolean	 up_dock_coldplug		(UpDock		*dock,
 						 UpDaemon	*daemon);
+void		 up_dock_set_should_poll	(UpDock		*dock,
+						 gboolean	 should_poll);
 
 G_END_DECLS
 

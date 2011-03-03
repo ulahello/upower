@@ -106,14 +106,27 @@ up_dock_poll_cb (UpDock *dock)
 /**
  * up_dock_coldplug:
  **/
+void
+up_dock_set_should_poll (UpDock *dock, gboolean should_poll)
+{
+	if (should_poll && dock->priv->poll_id == 0) {
+		dock->priv->poll_id = g_timeout_add_seconds (UP_DOCK_POLL_TIMEOUT,
+							     (GSourceFunc) up_dock_poll_cb,
+							     dock);
+	} else if (dock->priv->poll_id > 0) {
+		g_source_remove (dock->priv->poll_id);
+		dock->priv->poll_id = 0;
+	}
+}
+
+/**
+ * up_dock_coldplug:
+ **/
 gboolean
 up_dock_coldplug (UpDock *dock, UpDaemon *daemon)
 {
 	/* save daemon */
 	dock->priv->daemon = g_object_ref (daemon);
-	dock->priv->poll_id = g_timeout_add_seconds (UP_DOCK_POLL_TIMEOUT,
-						     (GSourceFunc) up_dock_poll_cb,
-						     dock);
 	return up_dock_refresh (dock);
 }
 

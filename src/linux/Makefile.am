@@ -5,6 +5,7 @@ INCLUDES = \
 	-DUP_COMPILATION					\
 	-DG_UDEV_API_IS_SUBJECT_TO_CHANGE			\
 	-DG_LOG_DOMAIN=\"UPower-Linux\"				\
+	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\"		\
 	-I$(top_srcdir)/libupower-glib				\
 	$(USB_CFLAGS)						\
 	$(GIO_CFLAGS)						\
