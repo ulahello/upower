@@ -192,12 +192,16 @@ up_backend_apm_powerchange_event_cb(gpointer object)
 	backend = UP_BACKEND (object);
 	a = up_backend_apm_get_power_info(backend->priv->apm_fd);
 
-	g_message("Got event, in callback, percentage=%d", a.battery_life);
-
+	g_message("Got event, in callback, percentage=%d, battstate=%d, acstate=%d", a.battery_life, a.battery_state, a.ac_state);
+	// XXX set time-to-empty ?
 	g_get_current_time (&timeval);
 	g_object_set (backend->priv->battery,
 			"state", up_backend_apm_get_battery_state_value(a.battery_state),
 			"percentage", (gdouble) a.battery_life,
+			"update-time", (guint64) timeval.tv_sec,
+			NULL);
+	g_object_set (backend->priv->ac,
+			"online", (a.ac_state == APM_AC_ON ? TRUE : FALSE),
 			"update-time", (guint64) timeval.tv_sec,
 			NULL);
 	/* return false to not endless loop */
@@ -330,10 +334,10 @@ up_backend_init (UpBackend *backend)
 		      "state", UP_DEVICE_STATE_UNKNOWN,
 		      "energy", 0.0f,
 		      "energy-empty", 0.0f,
-		      "energy-full", 10.0f,
-		      "energy-full-design", 10.0f,
-		      "energy-rate", 5.0f,
-		      "percentage", 50.0f,
+		      "energy-full", 0.0f,
+		      "energy-full-design", 0.0f,
+		      "energy-rate", 0.0f,
+		      "percentage", 0.0f,
 		      "technology", UP_DEVICE_TECHNOLOGY_UNKNOWN,
 		      NULL);
 	g_object_set (backend->priv->ac,
