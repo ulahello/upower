@@ -197,8 +197,8 @@ up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
 
 	/* convert to a bitmask */
 	num_bits = up_input_str_to_bitmask (contents, bitmask, sizeof (bitmask));
-	if (num_bits != 1) {
-		g_debug ("not one bitmask entry for %s", native_path);
+	if ((num_bits == 0) || (num_bits >= SW_CNT)) {
+		g_debug ("invalid bitmask entry for %s", native_path);
 		ret = FALSE;
 		goto out;
 	}
