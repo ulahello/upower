@@ -281,6 +281,7 @@ up_backend_apm_event_thread(gpointer object)
 			g_idle_add((GSourceFunc) up_backend_apm_powerchange_event_cb, backend);
 		}
 	}
+	return NULL;
 	/* shouldnt be reached ? */
 }
 
