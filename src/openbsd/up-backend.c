@@ -409,6 +409,7 @@ static void
 up_backend_init (UpBackend *backend)
 {
 	GError *err = NULL;
+	UpDeviceClass *device_class;
 
 	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
 	backend->priv->daemon = NULL;
@@ -418,12 +419,14 @@ up_backend_init (UpBackend *backend)
 	{
 		backend->priv->ac = UP_DEVICE(up_device_new());
 		backend->priv->battery = UP_DEVICE(up_device_new ());
-/*
-		UpDeviceClass *device_class = UP_DEVICE_CLASS (backend->priv->battery);
+		device_class = UP_DEVICE_GET_CLASS (backend->priv->battery);
 		device_class->get_on_battery = up_apm_device_get_on_battery;
 		device_class->get_low_battery = up_apm_device_get_low_battery;
 		device_class->get_online = up_apm_device_get_online;
-*/
+		device_class = UP_DEVICE_GET_CLASS (backend->priv->ac);
+		device_class->get_on_battery = up_apm_device_get_on_battery;
+		device_class->get_low_battery = up_apm_device_get_low_battery;
+		device_class->get_online = up_apm_device_get_online;
 		g_thread_init (NULL);
 		/* creates thread */
 		if((backend->priv->apm_thread = (GThread*) g_thread_create((GThreadFunc)up_backend_apm_event_thread, backend, FALSE, &err) == NULL))
