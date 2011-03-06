@@ -213,7 +213,7 @@ up_backend_update_battery_state(UpDevice* device, struct apm_power_info a)
 		g_object_set (device,
 			"state", new_state,
 			"percentage", (gdouble) a.battery_life,
-			"time-to-empty", new_time_to_empty,
+			"time-to-empty", new_time_to_empty * 60,
 			"update-time", (guint64) timeval.tv_sec,
 			(void*) NULL);
 	}
