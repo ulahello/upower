@@ -19,6 +19,7 @@ struct UpBackendPrivate
 	UpDevice		*ac;
 	UpDevice		*battery;
 	GThread			*apm_thread;
+	gboolean		is_laptop;
 	int			apm_fd;
 };
 
@@ -71,6 +72,7 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 {
 	backend->priv->daemon = g_object_ref (daemon);
 	/* small delay until first device is added */
+	if (backend->priv->is_laptop)
 	g_timeout_add_seconds (1, (GSourceFunc) up_backend_add_cb, backend);
 
 	return TRUE;
@@ -299,44 +301,51 @@ up_backend_init (UpBackend *backend)
 
 	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
 	backend->priv->daemon = NULL;
-	backend->priv->ac = UP_DEVICE(up_device_new());
-	backend->priv->battery = UP_DEVICE(up_device_new ());
-
-	g_thread_init (NULL);
-	/* creates thread */
-	if((backend->priv->apm_thread = g_thread_create((GThreadFunc)up_backend_apm_event_thread, backend, FALSE, &err) == NULL))
+	backend->priv->is_laptop = up_native_is_laptop();
+	g_debug("is_laptop:%d",backend->priv->is_laptop);
+	if (backend->priv->is_laptop)
 	{
-		g_warning("Thread create failed: %s", err->message);
-		g_error_free (err);
+		backend->priv->ac = UP_DEVICE(up_device_new());
+		backend->priv->battery = UP_DEVICE(up_device_new ());
+
+		g_thread_init (NULL);
+		/* creates thread */
+		if((backend->priv->apm_thread = g_thread_create((GThreadFunc)up_backend_apm_event_thread, backend, FALSE, &err) == NULL))
+		{
+			g_warning("Thread create failed: %s", err->message);
+			g_error_free (err);
+		}
+
+		/* setup dummy */
+		g_object_set (backend->priv->battery,
+			      "vendor", NULL,
+			      "model", NULL,
+			      "serial", NULL,
+			      "type", UP_DEVICE_KIND_BATTERY,
+			      "power-supply", TRUE,
+			      "is-present", TRUE,
+			      "is-rechargeable", TRUE,
+			      "has-history", TRUE,
+			      "has-statistics", TRUE,
+			      "state", UP_DEVICE_STATE_UNKNOWN,
+			      "energy", 0.0f,
+			      "energy-empty", 0.0f,
+			      "energy-full", 0.0f,
+			      "energy-full-design", 0.0f,
+			      "energy-rate", 0.0f,
+			      "percentage", 0.0f,
+			      "technology", UP_DEVICE_TECHNOLOGY_UNKNOWN,
+			      NULL);
+		g_object_set (backend->priv->ac,
+			      "type", UP_DEVICE_KIND_LINE_POWER,
+				"online", TRUE,
+			      "power-supply", TRUE,
+			      NULL);
+	} else {
+		backend->priv->ac = NULL;
+		backend->priv->battery = NULL;
 	}
-
-	/* setup dummy */
-	g_object_set (backend->priv->battery,
-		      "vendor", NULL,
-		      "model", NULL,
-		      "serial", NULL,
-		      "type", UP_DEVICE_KIND_BATTERY,
-		      "power-supply", TRUE,
-		      "is-present", TRUE,
-		      "is-rechargeable", TRUE,
-		      "has-history", TRUE,
-		      "has-statistics", TRUE,
-		      "state", UP_DEVICE_STATE_UNKNOWN,
-		      "energy", 0.0f,
-		      "energy-empty", 0.0f,
-		      "energy-full", 0.0f,
-		      "energy-full-design", 0.0f,
-		      "energy-rate", 0.0f,
-		      "percentage", 0.0f,
-		      "technology", UP_DEVICE_TECHNOLOGY_UNKNOWN,
-		      NULL);
-	g_object_set (backend->priv->ac,
-		      "type", UP_DEVICE_KIND_LINE_POWER,
-			"online", TRUE,
-		      "power-supply", TRUE,
-		      NULL);
 }
-
 /**
  * up_backend_finalize:
  **/
