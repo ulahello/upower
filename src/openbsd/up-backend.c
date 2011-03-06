@@ -201,7 +201,7 @@ up_backend_apm_powerchange_event_cb(gpointer object)
 	backend = UP_BACKEND (object);
 	a = up_backend_apm_get_power_info(backend->priv->apm_fd);
 
-	g_message("Got event, in callback, percentage=%d, battstate=%d, acstate=%d", a.battery_life, a.battery_state, a.ac_state);
+	g_debug("Got apm event, in callback, percentage=%d, battstate=%d, acstate=%d, minutes left=%d", a.battery_life, a.battery_state, a.ac_state, a.minutes_left);
 	up_backend_update_ac_state(backend->priv->ac, a);
 	up_backend_update_battery_state(backend->priv->battery, a);
 	/* return false to not endless loop */
@@ -221,14 +221,13 @@ up_backend_apm_event_thread(gpointer object)
 	g_return_if_fail (UP_IS_BACKEND (object));
 	backend = UP_BACKEND (object);
 
-	g_message("setting up apm thread");
+	g_debug("setting up apm thread");
 
 	/* open /dev/apm */
 	if ((backend->priv->apm_fd = open("/dev/apm", O_RDONLY)) == -1) {
 		if (errno != ENXIO && errno != ENOENT)
 			g_error("cannot open device file");
 	}
-	g_message("apm fd=%d", backend->priv->apm_fd);
 	kq = kqueue();
 	if (kq <= 0)
 		g_error("kqueue", 1);
