@@ -14,6 +14,10 @@ static void	up_backend_finalize	(GObject		*object);
 static void	up_backend_apm_get_power_info(int, struct apm_power_info*);
 UpDeviceState up_backend_apm_get_battery_state_value(u_char battery_state);
 
+static gboolean		up_apm_device_get_on_battery	(UpDevice *device, gboolean *on_battery);
+static gboolean		up_apm_device_get_low_battery	(UpDevice *device, gboolean *low_battery);
+static gboolean		up_apm_device_get_online		(UpDevice *device, gboolean *online);
+
 #define UP_BACKEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_BACKEND, UpBackendPrivate))
 
 struct UpBackendPrivate
@@ -40,6 +44,76 @@ G_DEFINE_TYPE (UpBackend, up_backend, G_TYPE_OBJECT)
  * functions called by upower daemon
  **/
 
+
+/* those three ripped from freebsd/up-device-supply.c */
+gboolean
+up_apm_device_get_on_battery (UpDevice *device, gboolean * on_battery)
+{
+	UpDeviceKind type;
+	UpDeviceState state;
+	gboolean is_present;
+
+	g_return_val_if_fail (on_battery != NULL, FALSE);
+
+	g_object_get (device,
+		      "type", &type,
+		      "state", &state,
+		      "is-present", &is_present,
+		      (void*) NULL);
+
+	if (type != UP_DEVICE_KIND_BATTERY)
+		return FALSE;
+	if (state == UP_DEVICE_STATE_UNKNOWN)
+		return FALSE;
+	if (!is_present)
+		return FALSE;
+
+	*on_battery = (state == UP_DEVICE_STATE_DISCHARGING);
+	return TRUE;
+}
+gboolean
+up_apm_device_get_low_battery (UpDevice *device, gboolean * low_battery)
+{
+	gboolean ret;
+	gboolean on_battery;
+	gdouble percentage;
+
+	g_return_val_if_fail (low_battery != NULL, FALSE);
+
+	ret = up_apm_device_get_on_battery (device, &on_battery);
+	if (!ret)
+		return FALSE;
+
+	if (!on_battery) {
+		*low_battery = FALSE;
+		return TRUE;
+	}
+
+	g_object_get (device, "percentage", &percentage, (void*) NULL);
+	*low_battery = (percentage < 10.0f);
+	return TRUE;
+}
+
+gboolean
+up_apm_device_get_online (UpDevice *device, gboolean * online)
+{
+	UpDeviceKind type;
+	gboolean online_tmp;
+
+	g_return_val_if_fail (online != NULL, FALSE);
+
+	g_object_get (device,
+		      "type", &type,
+		      "online", &online_tmp,
+		      (void*) NULL);
+
+	if (type != UP_DEVICE_KIND_LINE_POWER)
+		return FALSE;
+
+	*online = online_tmp;
+
+	return TRUE;
+}
 /**
  * up_backend_coldplug:
  * @backend: The %UpBackend class instance
@@ -344,7 +418,12 @@ up_backend_init (UpBackend *backend)
 	{
 		backend->priv->ac = UP_DEVICE(up_device_new());
 		backend->priv->battery = UP_DEVICE(up_device_new ());
-
+/*
+		UpDeviceClass *device_class = UP_DEVICE_CLASS (backend->priv->battery);
+		device_class->get_on_battery = up_apm_device_get_on_battery;
+		device_class->get_low_battery = up_apm_device_get_low_battery;
+		device_class->get_online = up_apm_device_get_online;
+*/
 		g_thread_init (NULL);
 		/* creates thread */
 		if((backend->priv->apm_thread = (GThread*) g_thread_create((GThreadFunc)up_backend_apm_event_thread, backend, FALSE, &err) == NULL))
