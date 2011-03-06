@@ -1,13 +1,3 @@
-#include <errno.h> /* errno */
-#include <fcntl.h> /* open() */
-/* kevent() */
-#include <sys/types.h>
-#include <sys/event.h>
-#include <sys/time.h>
-#include <sys/ioctl.h> /* ioctl() */
-/* APM macros */
-#include <machine/apmvar.h>
-
 #include "up-apm-native.h"
 
 #include "up-backend.h"

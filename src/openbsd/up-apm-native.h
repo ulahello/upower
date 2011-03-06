@@ -1,6 +1,18 @@
 #ifndef __UP_APM_NATIVE_H__
 #define __UP_APM_NATIVE_H__
 
+/* os-specific headers */
+#include <errno.h> /* errno */
+#include <fcntl.h> /* open() */
+/* kevent() */
+#include <sys/types.h>
+#include <sys/event.h>
+#include <sys/time.h>
+#include <sys/ioctl.h> /* ioctl() */
+/* APM macros */
+
+#include <machine/apmvar.h>
+
 #include <glib.h>
 #include <glib-object.h>
 
@@ -31,7 +43,7 @@ typedef struct
 
 UpApmNative* up_apm_native_new (const char*);
 const gchar * up_apm_native_get_path(UpApmNative*);
-
+gboolean up_native_is_laptop();
 G_END_DECLS
 
 #endif
