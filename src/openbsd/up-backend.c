@@ -392,7 +392,7 @@ up_backend_finalize (GObject *object)
 	if (backend->priv->battery != NULL)
 		g_object_unref (backend->priv->battery);
 	if (backend->priv->ac != NULL)
-	g_object_unref (backend->priv->ac);
+		g_object_unref (backend->priv->ac);
 	/* XXX stop apm_thread ? */
 
 	G_OBJECT_CLASS (up_backend_parent_class)->finalize (object);
