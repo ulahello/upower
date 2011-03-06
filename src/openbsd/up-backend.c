@@ -187,13 +187,35 @@ static void
 up_backend_update_battery_state(UpDevice* device, struct apm_power_info a)
 {
 	GTimeVal timeval;
-	g_get_current_time (&timeval);
-	// XXX set time-to-empty ?
-	g_object_set (device,
-			"state", up_backend_apm_get_battery_state_value(a.battery_state),
+	gdouble percentage;
+	UpDeviceState cur_state, new_state;
+	gint64 cur_time_to_empty, new_time_to_empty;
+	g_object_get (device,
+		"state", &cur_state,
+		"percentage", &percentage,
+		"time-to-empty", &cur_time_to_empty,
+		NULL);
+
+	new_state = up_backend_apm_get_battery_state_value(a.battery_state);
+	// if percentage/minutes goes down or ac is off, we're likely discharging..
+	if (percentage < a.battery_life || cur_time_to_empty < new_time_to_empty || a.ac_state == APM_AC_OFF)
+		new_state = UP_DEVICE_STATE_DISCHARGING;
+
+	// zero out new_time_to empty if we're not discharging
+	new_time_to_empty = (new_state == UP_DEVICE_STATE_DISCHARGING ? a.minutes_left : 0);
+
+	if (cur_state != new_state ||
+		percentage != (gdouble) a.battery_life ||
+		cur_time_to_empty != new_time_to_empty)
+	{
+		g_get_current_time (&timeval);
+		g_object_set (device,
+			"state", new_state,
 			"percentage", (gdouble) a.battery_life,
+			"time-to-empty", new_time_to_empty,
 			"update-time", (guint64) timeval.tv_sec,
 			NULL);
+	}
 }
 
 /* callback updating the device */
