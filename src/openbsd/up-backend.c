@@ -166,30 +166,44 @@ UpDeviceState up_backend_apm_get_battery_state_value(u_char battery_state) {
 	return -1;
 }
 
+static void
+up_backend_update_ac_state(UpDevice* device, struct apm_power_info a)
+{
+	GTimeVal timeval;
+	g_get_current_time (&timeval);
+	g_object_set (device,
+			"online", (a.ac_state == APM_AC_ON ? TRUE : FALSE),
+			"update-time", (guint64) timeval.tv_sec,
+			NULL);
+}
+
+static void
+up_backend_update_battery_state(UpDevice* device, struct apm_power_info a)
+{
+	GTimeVal timeval;
+	g_get_current_time (&timeval);
+	// XXX set time-to-empty ?
+	g_object_set (device,
+			"state", up_backend_apm_get_battery_state_value(a.battery_state),
+			"percentage", (gdouble) a.battery_life,
+			"update-time", (guint64) timeval.tv_sec,
+			NULL);
+}
+
 /* callback updating the device */
 static gboolean
 up_backend_apm_powerchange_event_cb(gpointer object)
 {
 	UpBackend *backend;
 	struct apm_power_info a;
-	GTimeVal timeval;
 
 	g_return_if_fail (UP_IS_BACKEND (object));
 	backend = UP_BACKEND (object);
 	a = up_backend_apm_get_power_info(backend->priv->apm_fd);
 
 	g_message("Got event, in callback, percentage=%d, battstate=%d, acstate=%d", a.battery_life, a.battery_state, a.ac_state);
-	// XXX set time-to-empty ?
-	g_get_current_time (&timeval);
-	g_object_set (backend->priv->battery,
-			"state", up_backend_apm_get_battery_state_value(a.battery_state),
-			"percentage", (gdouble) a.battery_life,
-			"update-time", (guint64) timeval.tv_sec,
-			NULL);
-	g_object_set (backend->priv->ac,
-			"online", (a.ac_state == APM_AC_ON ? TRUE : FALSE),
-			"update-time", (guint64) timeval.tv_sec,
-			NULL);
+	up_backend_update_ac_state(backend->priv->ac, a);
+	up_backend_update_battery_state(backend->priv->battery, a);
 	/* return false to not endless loop */
 	return FALSE;
 }
