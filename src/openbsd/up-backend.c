@@ -171,7 +171,7 @@ up_backend_update_ac_state(UpDevice* device, struct apm_power_info a)
 {
 	GTimeVal timeval;
 	gboolean new_is_online, cur_is_online;
-	g_object_get (device, "online", &cur_is_online, NULL);
+	g_object_get (device, "online", &cur_is_online, (void*) NULL);
 	new_is_online = (a.ac_state == APM_AC_ON ? TRUE : FALSE);
 	if (cur_is_online != new_is_online)
 	{
@@ -179,7 +179,7 @@ up_backend_update_ac_state(UpDevice* device, struct apm_power_info a)
 		g_object_set (device,
 			"online", new_is_online,
 			"update-time", (guint64) timeval.tv_sec,
-			NULL);
+			(void*) NULL);
 	}
 }
 
@@ -194,7 +194,7 @@ up_backend_update_battery_state(UpDevice* device, struct apm_power_info a)
 		"state", &cur_state,
 		"percentage", &percentage,
 		"time-to-empty", &cur_time_to_empty,
-		NULL);
+		(void*) NULL);
 
 	new_state = up_backend_apm_get_battery_state_value(a.battery_state);
 	// if percentage/minutes goes down or ac is off, we're likely discharging..
@@ -214,7 +214,7 @@ up_backend_update_battery_state(UpDevice* device, struct apm_power_info a)
 			"percentage", (gdouble) a.battery_life,
 			"time-to-empty", new_time_to_empty,
 			"update-time", (guint64) timeval.tv_sec,
-			NULL);
+			(void*) NULL);
 	}
 }
 
@@ -362,12 +362,12 @@ up_backend_init (UpBackend *backend)
 			      "state", UP_DEVICE_STATE_UNKNOWN,
 			      "percentage", 0.0f,
 			      "time-to-empty", 0,
-			      NULL);
+			      (void*) NULL);
 		g_object_set (backend->priv->ac,
 			      "type", UP_DEVICE_KIND_LINE_POWER,
 			      "online", TRUE,
 			      "power-supply", TRUE,
-			      NULL);
+			      (void*) NULL);
 	} else {
 		backend->priv->ac = NULL;
 		backend->priv->battery = NULL;
