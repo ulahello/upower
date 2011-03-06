@@ -34,26 +34,6 @@ static guint signals [SIGNAL_LAST] = { 0 };
 G_DEFINE_TYPE (UpBackend, up_backend, G_TYPE_OBJECT)
 
 /**
- * up_backend_add_cb:
- **/
-static gboolean
-up_backend_add_cb (UpBackend *backend)
-{
-	UpApmNative *acnative = up_apm_native_new("/ac");
-	UpApmNative *battnative = up_apm_native_new("/batt");
-	/* coldplug */
-	if (!up_device_coldplug (backend->priv->ac, backend->priv->daemon, G_OBJECT(acnative)))
-		g_warning ("failed to coldplug ac");
-	else
-		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, acnative, backend->priv->ac);
-	if (!up_device_coldplug (backend->priv->battery, backend->priv->daemon, G_OBJECT(battnative)))
-		g_warning ("failed to coldplug battery");
-	else
-		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, battnative, backend->priv->battery);
-	return FALSE;
-}
-
-/**
  * functions called by upower daemon
  **/
 
@@ -70,10 +50,24 @@ up_backend_add_cb (UpBackend *backend)
 gboolean
 up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 {
+	UpApmNative *acnative = NULL;
+	UpApmNative *battnative = NULL;
 	backend->priv->daemon = g_object_ref (daemon);
 	/* small delay until first device is added */
 	if (backend->priv->is_laptop)
-	g_timeout_add_seconds (1, (GSourceFunc) up_backend_add_cb, backend);
+	{
+		acnative = up_apm_native_new("/ac");
+		if (!up_device_coldplug (backend->priv->ac, backend->priv->daemon, G_OBJECT(acnative)))
+			g_warning ("failed to coldplug ac");
+		else
+			g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, acnative, backend->priv->ac);
+
+		battnative = up_apm_native_new("/batt");
+		if (!up_device_coldplug (backend->priv->battery, backend->priv->daemon, G_OBJECT(battnative)))
+			g_warning ("failed to coldplug battery");
+		else
+			g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, battnative, backend->priv->battery);
+	}
 
 	return TRUE;
 }
