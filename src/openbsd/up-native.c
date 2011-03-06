@@ -43,3 +43,22 @@ up_native_get_native_path (GObject *object)
 {
 	return up_apm_native_get_path (UP_APM_NATIVE (object));
 }
+
+/**
+ * detect if we are on a desktop system or a laptop
+ * heuristic : laptop if sysctl hw.acpiac0 is present (TODO) or if apm acstate != APM_AC_UNKNOWN
+ */
+gboolean
+up_native_is_laptop()
+{
+	int apm_fd;
+	struct apm_power_info bstate;
+	if ((apm_fd = open("/dev/apm", O_RDONLY)) == -1) {
+		if (errno != ENXIO && errno != ENOENT)
+			g_error("cannot open device file");
+	}
+	if (-1 == ioctl(apm_fd, APM_IOC_GETPOWER, &bstate))
+		g_error("ioctl on fd %d failed : %s", apm_fd, g_strerror(errno));
+	close(apm_fd);
+	return bstate.ac_state != APM_AC_UNKNOWN;
+}
