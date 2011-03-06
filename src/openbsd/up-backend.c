@@ -353,9 +353,6 @@ up_backend_init (UpBackend *backend)
 
 		/* setup dummy */
 		g_object_set (backend->priv->battery,
-			      "vendor", NULL,
-			      "model", NULL,
-			      "serial", NULL,
 			      "type", UP_DEVICE_KIND_BATTERY,
 			      "power-supply", TRUE,
 			      "is-present", TRUE,
@@ -363,17 +360,12 @@ up_backend_init (UpBackend *backend)
 			      "has-history", TRUE,
 			      "has-statistics", TRUE,
 			      "state", UP_DEVICE_STATE_UNKNOWN,
-			      "energy", 0.0f,
-			      "energy-empty", 0.0f,
-			      "energy-full", 0.0f,
-			      "energy-full-design", 0.0f,
-			      "energy-rate", 0.0f,
 			      "percentage", 0.0f,
-			      "technology", UP_DEVICE_TECHNOLOGY_UNKNOWN,
+			      "time-to-empty", 0,
 			      NULL);
 		g_object_set (backend->priv->ac,
 			      "type", UP_DEVICE_KIND_LINE_POWER,
-				"online", TRUE,
+			      "online", TRUE,
 			      "power-supply", TRUE,
 			      NULL);
 	} else {
