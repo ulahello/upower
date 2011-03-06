@@ -259,12 +259,12 @@ up_backend_apm_event_thread(gpointer object)
 	}
 	kq = kqueue();
 	if (kq <= 0)
-		g_error("kqueue", 1);
+		g_error("kqueue");
 	EV_SET(&ev, backend->priv->apm_fd, EVFILT_READ, EV_ADD | EV_ENABLE | EV_CLEAR,
 	    0, 0, NULL);
 	nevents = 1;
 	if (kevent(kq, &ev, nevents, NULL, 0, &sts) < 0)
-		g_error("kevent", 1);
+		g_error("kevent");
 
 	/* blocking wait on kqueue */
 	for (;;) {
@@ -276,7 +276,7 @@ up_backend_apm_event_thread(gpointer object)
 			break;
 		if (!rv)
 			continue;
-		if (ev.ident == backend->priv->apm_fd && APM_EVENT_TYPE(ev.data) == APM_POWER_CHANGE ) {
+		if (ev.ident == (guint) backend->priv->apm_fd && APM_EVENT_TYPE(ev.data) == APM_POWER_CHANGE ) {
 			/* g_idle_add the callback */
 			g_idle_add((GSourceFunc) up_backend_apm_powerchange_event_cb, backend);
 		}
@@ -347,7 +347,7 @@ up_backend_init (UpBackend *backend)
 
 		g_thread_init (NULL);
 		/* creates thread */
-		if((backend->priv->apm_thread = g_thread_create((GThreadFunc)up_backend_apm_event_thread, backend, FALSE, &err) == NULL))
+		if((backend->priv->apm_thread = (GThread*) g_thread_create((GThreadFunc)up_backend_apm_event_thread, backend, FALSE, &err) == NULL))
 		{
 			g_warning("Thread create failed: %s", err->message);
 			g_error_free (err);
