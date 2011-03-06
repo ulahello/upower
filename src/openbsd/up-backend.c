@@ -170,11 +170,17 @@ static void
 up_backend_update_ac_state(UpDevice* device, struct apm_power_info a)
 {
 	GTimeVal timeval;
-	g_get_current_time (&timeval);
-	g_object_set (device,
-			"online", (a.ac_state == APM_AC_ON ? TRUE : FALSE),
+	gboolean new_is_online, cur_is_online;
+	g_object_get (device, "online", &cur_is_online, NULL);
+	new_is_online = (a.ac_state == APM_AC_ON ? TRUE : FALSE);
+	if (cur_is_online != new_is_online)
+	{
+		g_get_current_time (&timeval);
+		g_object_set (device,
+			"online", new_is_online,
 			"update-time", (guint64) timeval.tv_sec,
 			NULL);
+	}
 }
 
 static void
