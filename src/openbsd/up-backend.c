@@ -11,6 +11,9 @@ static void	up_backend_class_init	(UpBackendClass	*klass);
 static void	up_backend_init	(UpBackend		*backend);
 static void	up_backend_finalize	(GObject		*object);
 
+static void	up_backend_apm_get_power_info(int, struct apm_power_info*);
+UpDeviceState up_backend_apm_get_battery_state_value(u_char battery_state);
+
 #define UP_BACKEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_BACKEND, UpBackendPrivate))
 
 struct UpBackendPrivate
@@ -135,17 +138,15 @@ up_backend_get_used_swap (UpBackend *backend)
  * OpenBSD specific code
  **/
 
-struct apm_power_info
-up_backend_apm_get_power_info(int fd) {
-	struct apm_power_info bstate;
-	bstate.battery_state = 255;
-	bstate.ac_state = 255;
-	bstate.battery_life = 0;
-	bstate.minutes_left = -1;
+static void
+up_backend_apm_get_power_info(int fd, struct apm_power_info *bstate) {
+	bstate->battery_state = 255;
+	bstate->ac_state = 255;
+	bstate->battery_life = 0;
+	bstate->minutes_left = -1;
 
-	if (-1 == ioctl(fd, APM_IOC_GETPOWER, &bstate))
+	if (-1 == ioctl(fd, APM_IOC_GETPOWER, bstate))
 		g_warning("ioctl on fd %d failed : %s", fd, g_strerror(errno));
-	return bstate;
 }
 
 UpDeviceState up_backend_apm_get_battery_state_value(u_char battery_state) {
@@ -227,7 +228,7 @@ up_backend_apm_powerchange_event_cb(gpointer object)
 
 	g_return_if_fail (UP_IS_BACKEND (object));
 	backend = UP_BACKEND (object);
-	a = up_backend_apm_get_power_info(backend->priv->apm_fd);
+	up_backend_apm_get_power_info(backend->priv->apm_fd, &a);
 
 	g_debug("Got apm event, in callback, percentage=%d, battstate=%d, acstate=%d, minutes left=%d", a.battery_life, a.battery_state, a.ac_state, a.minutes_left);
 	up_backend_update_ac_state(backend->priv->ac, a);
