@@ -58,7 +58,7 @@ up_native_is_laptop()
 	struct apm_power_info bstate;
 	struct sensordev acpiac;
 
-	if (up_native_get_sensor("acpiac0", &acpiac))
+	if (up_native_get_sensordev("acpiac0", &acpiac))
 		return TRUE;
 
 	if ((apm_fd = open("/dev/apm", O_RDONLY)) == -1) {
@@ -76,7 +76,7 @@ up_native_is_laptop()
  * returns a gboolean if found or not
  */
 gboolean
-up_native_get_sensor(const char * id, struct sensordev * snsrdev)
+up_native_get_sensordev(const char * id, struct sensordev * snsrdev)
 {
 	int devn;
 	size_t sdlen = sizeof(struct sensordev);
