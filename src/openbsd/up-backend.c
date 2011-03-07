@@ -13,6 +13,7 @@ static void	up_backend_finalize	(GObject		*object);
 
 static void	up_backend_apm_get_power_info(int, struct apm_power_info*);
 UpDeviceState up_backend_apm_get_battery_state_value(u_char battery_state);
+static void	up_backend_update_acpibat_state(UpDevice*, struct sensordev);
 
 static gboolean		up_apm_device_get_on_battery	(UpDevice *device, gboolean *on_battery);
 static gboolean		up_apm_device_get_low_battery	(UpDevice *device, gboolean *low_battery);
@@ -263,6 +264,7 @@ up_backend_update_battery_state(UpDevice* device, struct apm_power_info a)
 {
 	GTimeVal timeval;
 	gdouble percentage;
+	struct sensordev sdev;
 	UpDeviceState cur_state, new_state;
 	gint64 cur_time_to_empty, new_time_to_empty;
 	g_object_get (device,
@@ -290,6 +292,32 @@ up_backend_update_battery_state(UpDevice* device, struct apm_power_info a)
 			"time-to-empty", new_time_to_empty * 60,
 			"update-time", (guint64) timeval.tv_sec,
 			(void*) NULL);
+		if(up_native_get_sensordev("acpibat0", &sdev))
+			up_backend_update_acpibat_state(device, sdev);
+	}
+}
+
+/* update acpibat properties */
+static void
+up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
+{
+	enum sensor_type type;
+	int numt;
+	struct sensor sens;
+	size_t slen = sizeof(sens);
+	int mib[] = {CTL_HW, HW_SENSORS, 0, 0, 0};
+
+	mib[2] = s.num;
+	for (type = 0; type < SENSOR_MAX_TYPES; type++) {
+		mib[3] = type;
+		for (numt = 0; numt < s.maxnumt[type]; numt++) {
+			mib[4] = numt;
+			if (sysctl(mib, 5, &sens, &slen, NULL, 0) < 0)
+				g_error("failed to get sensor type %d(%s) numt %d on %s", type, sensor_type_s[type], numt, s.xname);
+			else if (slen > 0 && (sens.flags & SENSOR_FINVALID) == 0) {
+				/* XX do something with sens.desc/sens.type/sens.value */
+			}
+		}
 	}
 }
 
