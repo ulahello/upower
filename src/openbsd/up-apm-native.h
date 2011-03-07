@@ -16,6 +16,10 @@
 /* sensor struct defs */
 #include <sys/sensors.h>
 
+/* sysctl() */
+#include <sys/param.h>
+#include <sys/sysctl.h>
+
 #include <glib.h>
 #include <glib-object.h>
 
