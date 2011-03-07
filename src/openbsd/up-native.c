@@ -2,7 +2,6 @@
 #include "up-native.h"
 
 #include <sys/param.h>
-#include <sys/sensors.h>
 #include <sys/sysctl.h>
 #include <errno.h>
 /* XXX why does this macro needs to be in the .c ? */
@@ -57,8 +56,9 @@ up_native_is_laptop()
 {
 	int apm_fd;
 	struct apm_power_info bstate;
+	struct sensordev acpiac;
 
-	if (up_native_has_sensor("acpiac0"))
+	if (up_native_get_sensor("acpiac0", &acpiac))
 		return TRUE;
 
 	if ((apm_fd = open("/dev/apm", O_RDONLY)) == -1) {
@@ -72,25 +72,25 @@ up_native_is_laptop()
 }
 
 /**
- * detect if a sensordev is present by its xname (acpibatX/acpiacX)
+ * get a sensordev by its xname (acpibatX/acpiacX)
+ * returns a gboolean if found or not
  */
 gboolean
-up_native_has_sensor(const char * id)
+up_native_get_sensor(const char * id, struct sensordev * snsrdev)
 {
 	int devn;
-	struct sensordev snsrdev;
-	size_t sdlen = sizeof(snsrdev);
+	size_t sdlen = sizeof(struct sensordev);
 	int mib[] = {CTL_HW, HW_SENSORS, 0, 0 ,0};
 
 	for (devn = 0 ; ; devn++) {
 		mib[2] = devn;
-		if (sysctl(mib, 3, &snsrdev, &sdlen, NULL, 0) == -1) {
+		if (sysctl(mib, 3, snsrdev, &sdlen, NULL, 0) == -1) {
 			if (errno == ENXIO)
 				continue;
 			if (errno == ENOENT)
 				break;
 		}
-		if (!strcmp(snsrdev.xname, id))
+		if (!strcmp(snsrdev->xname, id))
 			return TRUE;
 	}
 	return FALSE;

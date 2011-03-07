@@ -13,6 +13,9 @@
 
 #include <machine/apmvar.h>
 
+/* sensor struct defs */
+#include <sys/sensors.h>
+
 #include <glib.h>
 #include <glib-object.h>
 
@@ -44,7 +47,7 @@ typedef struct
 UpApmNative* up_apm_native_new (const char*);
 const gchar * up_apm_native_get_path(UpApmNative*);
 gboolean up_native_is_laptop();
-gboolean up_native_has_sensor(const char*);
+gboolean up_native_get_sensor(const char*, struct sensordev*);
 G_END_DECLS
 
 #endif
