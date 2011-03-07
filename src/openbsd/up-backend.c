@@ -4,6 +4,7 @@
 #include "up-daemon.h"
 #include "up-marshal.h"
 #include "up-device.h"
+#include <string.h> /* strcmp() */
 
 #define UP_BACKEND_SUSPEND_COMMAND	"/usr/sbin/zzz"
 
@@ -303,6 +304,7 @@ up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 {
 	enum sensor_type type;
 	int numt;
+	gdouble bst_volt, bif_dvolt, bst_rate, bif_lastfullcap, bst_cap, bif_dcap, bif_lowcap, capacity;
 	struct sensor sens;
 	size_t slen = sizeof(sens);
 	int mib[] = {CTL_HW, HW_SENSORS, 0, 0, 0};
@@ -315,10 +317,32 @@ up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 			if (sysctl(mib, 5, &sens, &slen, NULL, 0) < 0)
 				g_error("failed to get sensor type %d(%s) numt %d on %s", type, sensor_type_s[type], numt, s.xname);
 			else if (slen > 0 && (sens.flags & SENSOR_FINVALID) == 0) {
-				/* XX do something with sens.desc/sens.type/sens.value */
+				if (sens.type == SENSOR_VOLTS_DC && !strcmp(sens.desc, "current voltage"))
+					bst_volt = sens.value / 1000000.0f;
+				if (sens.type == SENSOR_AMPHOUR && !strcmp(sens.desc, "last full capacity"))
+					bif_lastfullcap = sens.value / 1000000.0f;
+				if (sens.type == SENSOR_AMPHOUR && !strcmp(sens.desc, "low capacity"))
+					bif_lowcap = sens.value / 1000000.0f;
+				if (sens.type == SENSOR_AMPHOUR && !strcmp(sens.desc, "remaining capacity"))
+					bst_cap = sens.value / 1000000.0f;
+				if (sens.type == SENSOR_INTEGER && !strcmp(sens.desc, "rate"))
+					bst_rate = sens.value / 1.0f;
+				/*
+				bif_dvolt = "voltage" = unused ?
+				capacity = lastfull/dcap * 100 ?
+				amphour1 = warning capacity ?
+				raw0 = battery state
+				*/
 			}
 		}
 	}
+	g_object_set (device,
+		"energy", bst_cap * bst_volt,
+		"energy-full", bif_lastfullcap * bst_volt,
+		"energy-rate", bst_rate * bst_volt,
+		"energy-empty", bif_lowcap * bst_volt,
+		"voltage", bst_volt,
+		(void*) NULL);
 }
 
 /* callback updating the device */
