@@ -44,6 +44,7 @@ typedef struct
 UpApmNative* up_apm_native_new (const char*);
 const gchar * up_apm_native_get_path(UpApmNative*);
 gboolean up_native_is_laptop();
+gboolean up_native_has_sensor(const char*);
 G_END_DECLS
 
 #endif

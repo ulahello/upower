@@ -1,6 +1,10 @@
 #include "up-apm-native.h"
 #include "up-native.h"
 
+#include <sys/param.h>
+#include <sys/sensors.h>
+#include <sys/sysctl.h>
+#include <errno.h>
 /* XXX why does this macro needs to be in the .c ? */
 G_DEFINE_TYPE (UpApmNative, up_apm_native, G_TYPE_OBJECT)
 
@@ -53,6 +57,10 @@ up_native_is_laptop()
 {
 	int apm_fd;
 	struct apm_power_info bstate;
+
+	if (up_native_has_sensor("acpiac0"))
+		return TRUE;
+
 	if ((apm_fd = open("/dev/apm", O_RDONLY)) == -1) {
 		if (errno != ENXIO && errno != ENOENT)
 			g_error("cannot open device file");
@@ -61,4 +69,29 @@ up_native_is_laptop()
 		g_error("ioctl on fd %d failed : %s", apm_fd, g_strerror(errno));
 	close(apm_fd);
 	return bstate.ac_state != APM_AC_UNKNOWN;
+}
+
+/**
+ * detect if a sensordev is present by its xname (acpibatX/acpiacX)
+ */
+gboolean
+up_native_has_sensor(const char * id)
+{
+	int devn;
+	struct sensordev snsrdev;
+	size_t sdlen = sizeof(snsrdev);
+	int mib[] = {CTL_HW, HW_SENSORS, 0, 0 ,0};
+
+	for (devn = 0 ; ; devn++) {
+		mib[2] = devn;
+		if (sysctl(mib, 3, &snsrdev, &sdlen, NULL, 0) == -1) {
+			if (errno == ENXIO)
+				continue;
+			if (errno == ENOENT)
+				break;
+		}
+		if (!strcmp(snsrdev.xname, id))
+			return TRUE;
+	}
+	return FALSE;
 }
