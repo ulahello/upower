@@ -1268,7 +1268,7 @@ up_daemon_class_init (UpDaemonClass *klass)
 
 	g_object_class_install_property (object_class,
 					 PROP_LID_FORCE_SLEEP,
-					 g_param_spec_boolean ("lid-enforce-sleep",
+					 g_param_spec_boolean ("lid-force-sleep",
 							       "Enforce sleep on lid close",
 							       "If this computer has to sleep on lid close",
 							       FALSE,
