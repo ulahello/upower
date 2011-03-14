@@ -40,6 +40,7 @@
 #include "up-device-hid.h"
 #include "up-input.h"
 #include "up-dock.h"
+#include "up-config.h"
 #ifdef HAVE_IDEVICE
 #include "up-device-idevice.h"
 #endif /* HAVE_IDEVICE */
@@ -57,6 +58,7 @@ struct UpBackendPrivate
 	GUdevClient		*gudev_client;
 	UpDeviceList		*managed_devices;
 	UpDock			*dock;
+	UpConfig		*config;
 };
 
 enum {
@@ -105,11 +107,15 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 	} else if (g_strcmp0 (subsys, "tty") == 0) {
 
 		/* try to detect a Watts Up? Pro monitor */
-		device = UP_DEVICE (up_device_wup_new ());
-		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
-		if (ret)
-			goto out;
-		g_object_unref (device);
+		ret = up_config_get_boolean (backend->priv->config,
+					     "EnableWattsUpPro");
+		if (ret) {
+			device = UP_DEVICE (up_device_wup_new ());
+			ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+			if (ret)
+				goto out;
+			g_object_unref (device);
+		}
 
 		/* no valid TTY object */
 		device = NULL;
@@ -284,38 +290,6 @@ up_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 }
 
 /**
- * up_backend_should_poll_docks:
- **/
-static gboolean
-up_backend_should_poll_docks (void)
-{
-	gboolean ret;
-	GKeyFile *keyfile;
-	GError *error = NULL;
-
-	/* get the settings from the config file */
-	keyfile = g_key_file_new ();
-	ret = g_key_file_load_from_file (keyfile,
-					 PACKAGE_SYSCONF_DIR "/UPower/UPower.conf",
-					 G_KEY_FILE_NONE,
-					 &error);
-	if (!ret) {
-		g_error ("Failed to get poll setting, assuming FALSE: %s",
-			   error->message);
-		g_error_free (error);
-		goto out;
-	}
-	ret = g_key_file_get_boolean (keyfile,
-				      "UPower",
-				      "PollDockDevices",
-				      NULL);
-	g_debug ("Polling docks: %s", ret ? "YES" : "NO");
-out:
-	g_key_file_free (keyfile);
-	return ret;
-}
-
-/**
  * up_backend_coldplug:
  * @backend: The %UpBackend class instance
  * @daemon: The %UpDaemon controlling instance
@@ -355,7 +329,8 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 
 	/* add dock update object */
 	backend->priv->dock = up_dock_new ();
-	ret = up_backend_should_poll_docks ();
+	ret = up_config_get_boolean (backend->priv->config, "PollDockDevices");
+	g_debug ("Polling docks: %s", ret ? "YES" : "NO");
 	up_dock_set_should_poll (backend->priv->dock, ret);
 	ret = up_dock_coldplug (backend->priv->dock, daemon);
 	if (!ret)
@@ -643,6 +618,7 @@ static void
 up_backend_init (UpBackend *backend)
 {
 	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
+	backend->priv->config = up_config_new ();
 	backend->priv->daemon = NULL;
 	backend->priv->device_list = NULL;
 	backend->priv->managed_devices = up_device_list_new ();
@@ -660,6 +636,7 @@ up_backend_finalize (GObject *object)
 
 	backend = UP_BACKEND (object);
 
+	g_object_unref (backend->priv->config);
 	if (backend->priv->daemon != NULL)
 		g_object_unref (backend->priv->daemon);
 	if (backend->priv->device_list != NULL)

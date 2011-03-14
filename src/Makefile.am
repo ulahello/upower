@@ -76,6 +76,8 @@ upowerd_SOURCES =						\
 	up-device-list.c					\
 	up-qos.h						\
 	up-qos.c						\
+	up-config.h						\
+	up-config.c						\
 	up-kbd-backlight.h					\
 	up-kbd-backlight.c					\
 	up-wakeups.h						\
