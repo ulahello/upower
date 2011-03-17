@@ -12,13 +12,14 @@ static void	up_backend_class_init	(UpBackendClass	*klass);
 static void	up_backend_init	(UpBackend		*backend);
 static void	up_backend_finalize	(GObject		*object);
 
-static void	up_backend_apm_get_power_info(int, struct apm_power_info*);
+static gboolean	up_backend_apm_get_power_info(int, struct apm_power_info*);
 UpDeviceState up_backend_apm_get_battery_state_value(u_char battery_state);
 static void	up_backend_update_acpibat_state(UpDevice*, struct sensordev);
 
 static gboolean		up_apm_device_get_on_battery	(UpDevice *device, gboolean *on_battery);
 static gboolean		up_apm_device_get_low_battery	(UpDevice *device, gboolean *low_battery);
 static gboolean		up_apm_device_get_online		(UpDevice *device, gboolean *online);
+static gboolean		up_apm_device_refresh		(UpDevice *device);
 
 #define UP_BACKEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_BACKEND, UpBackendPrivate))
 
@@ -39,6 +40,8 @@ enum {
 };
 
 static guint signals [SIGNAL_LAST] = { 0 };
+
+int apm_fd; /* ugly global.. needs to move to a device native object */
 
 G_DEFINE_TYPE (UpBackend, up_backend, G_TYPE_OBJECT)
 
@@ -214,15 +217,20 @@ up_backend_get_used_swap (UpBackend *backend)
  * OpenBSD specific code
  **/
 
-static void
+static gboolean
 up_backend_apm_get_power_info(int fd, struct apm_power_info *bstate) {
 	bstate->battery_state = 255;
 	bstate->ac_state = 255;
 	bstate->battery_life = 0;
 	bstate->minutes_left = -1;
 
-	if (-1 == ioctl(fd, APM_IOC_GETPOWER, bstate))
+	if (fd == 0)
+		return TRUE; /* cheat, defaulting values */
+	if (-1 == ioctl(fd, APM_IOC_GETPOWER, bstate)) {
 		g_warning("ioctl on fd %d failed : %s", fd, g_strerror(errno));
+		return FALSE;
+	}
+	return TRUE;
 }
 
 UpDeviceState up_backend_apm_get_battery_state_value(u_char battery_state) {
@@ -243,31 +251,42 @@ UpDeviceState up_backend_apm_get_battery_state_value(u_char battery_state) {
 	return -1;
 }
 
-static void
-up_backend_update_ac_state(UpDevice* device, struct apm_power_info a)
+static gboolean
+up_backend_update_ac_state(UpDevice* device)
 {
-	GTimeVal timeval;
-	gboolean new_is_online, cur_is_online;
+	gboolean ret, new_is_online, cur_is_online;
+	struct apm_power_info a;
+
+	ret = up_backend_apm_get_power_info(apm_fd, &a);
+	if (!ret)
+		return ret;
+
 	g_object_get (device, "online", &cur_is_online, (void*) NULL);
 	new_is_online = (a.ac_state == APM_AC_ON ? TRUE : FALSE);
 	if (cur_is_online != new_is_online)
 	{
-		g_get_current_time (&timeval);
 		g_object_set (device,
 			"online", new_is_online,
-			"update-time", (guint64) timeval.tv_sec,
 			(void*) NULL);
+		return TRUE;
 	}
+	return FALSE;
 }
 
-static void
-up_backend_update_battery_state(UpDevice* device, struct apm_power_info a)
+static gboolean
+up_backend_update_battery_state(UpDevice* device)
 {
-	GTimeVal timeval;
 	gdouble percentage;
+	gboolean ret;
 	struct sensordev sdev;
 	UpDeviceState cur_state, new_state;
 	gint64 cur_time_to_empty, new_time_to_empty;
+	struct apm_power_info a;
+
+	ret = up_backend_apm_get_power_info(apm_fd, &a);
+	if (!ret)
+		return ret;
+
 	g_object_get (device,
 		"state", &cur_state,
 		"percentage", &percentage,
@@ -286,16 +305,16 @@ up_backend_update_battery_state(UpDevice* device, struct apm_power_info a)
 		percentage != (gdouble) a.battery_life ||
 		cur_time_to_empty != new_time_to_empty)
 	{
-		g_get_current_time (&timeval);
 		g_object_set (device,
 			"state", new_state,
 			"percentage", (gdouble) a.battery_life,
 			"time-to-empty", new_time_to_empty * 60,
-			"update-time", (guint64) timeval.tv_sec,
 			(void*) NULL);
 		if(up_native_get_sensordev("acpibat0", &sdev))
 			up_backend_update_acpibat_state(device, sdev);
+		return TRUE;
 	}
+	return FALSE;
 }
 
 /* update acpibat properties */
@@ -354,13 +373,39 @@ up_backend_apm_powerchange_event_cb(gpointer object)
 
 	g_return_if_fail (UP_IS_BACKEND (object));
 	backend = UP_BACKEND (object);
-	up_backend_apm_get_power_info(backend->priv->apm_fd, &a);
-
-	g_debug("Got apm event, in callback, percentage=%d, battstate=%d, acstate=%d, minutes left=%d", a.battery_life, a.battery_state, a.ac_state, a.minutes_left);
-	up_backend_update_ac_state(backend->priv->ac, a);
-	up_backend_update_battery_state(backend->priv->battery, a);
+	up_apm_device_refresh(backend->priv->ac);
+	up_apm_device_refresh(backend->priv->battery);
 	/* return false to not endless loop */
 	return FALSE;
+}
+
+static gboolean
+up_apm_device_refresh(UpDevice* device)
+{
+	UpDeviceKind type;
+	GTimeVal timeval;
+	gboolean ret;
+
+	g_object_get (device, "type", &type, NULL);
+
+	switch (type) {
+		case UP_DEVICE_KIND_LINE_POWER:
+			ret = up_backend_update_ac_state(device);
+			break;
+		case UP_DEVICE_KIND_BATTERY:
+			ret = up_backend_update_battery_state(device);
+			break;
+		default:
+			g_assert_not_reached ();
+			break;
+	}
+
+	if (ret) {
+		g_get_current_time (&timeval);
+		g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
+	}
+
+	return ret;
 }
 
 /* thread doing kqueue() on apm device */
@@ -379,14 +424,14 @@ up_backend_apm_event_thread(gpointer object)
 	g_debug("setting up apm thread");
 
 	/* open /dev/apm */
-	if ((backend->priv->apm_fd = open("/dev/apm", O_RDONLY)) == -1) {
+	if ((apm_fd = open("/dev/apm", O_RDONLY)) == -1) {
 		if (errno != ENXIO && errno != ENOENT)
 			g_error("cannot open device file");
 	}
 	kq = kqueue();
 	if (kq <= 0)
 		g_error("kqueue");
-	EV_SET(&ev, backend->priv->apm_fd, EVFILT_READ, EV_ADD | EV_ENABLE | EV_CLEAR,
+	EV_SET(&ev, apm_fd, EVFILT_READ, EV_ADD | EV_ENABLE | EV_CLEAR,
 	    0, 0, NULL);
 	nevents = 1;
 	if (kevent(kq, &ev, nevents, NULL, 0, &sts) < 0)
@@ -402,7 +447,7 @@ up_backend_apm_event_thread(gpointer object)
 			break;
 		if (!rv)
 			continue;
-		if (ev.ident == (guint) backend->priv->apm_fd && APM_EVENT_TYPE(ev.data) == APM_POWER_CHANGE ) {
+		if (ev.ident == (guint) apm_fd && APM_EVENT_TYPE(ev.data) == APM_POWER_CHANGE ) {
 			/* g_idle_add the callback */
 			g_idle_add((GSourceFunc) up_backend_apm_powerchange_event_cb, backend);
 		}
@@ -475,10 +520,12 @@ up_backend_init (UpBackend *backend)
 		device_class->get_on_battery = up_apm_device_get_on_battery;
 		device_class->get_low_battery = up_apm_device_get_low_battery;
 		device_class->get_online = up_apm_device_get_online;
+		device_class->refresh = up_apm_device_refresh;
 		device_class = UP_DEVICE_GET_CLASS (backend->priv->ac);
 		device_class->get_on_battery = up_apm_device_get_on_battery;
 		device_class->get_low_battery = up_apm_device_get_low_battery;
 		device_class->get_online = up_apm_device_get_online;
+		device_class->refresh = up_apm_device_refresh;
 		g_thread_init (NULL);
 		/* creates thread */
 		if((backend->priv->apm_thread = (GThread*) g_thread_create((GThreadFunc)up_backend_apm_event_thread, backend, FALSE, &err) == NULL))
