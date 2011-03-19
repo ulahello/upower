@@ -156,7 +156,8 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 	UpApmNative *acnative = NULL;
 	UpApmNative *battnative = NULL;
 	backend->priv->daemon = g_object_ref (daemon);
-	/* small delay until first device is added */
+	/* XXX no way to get lid status atm */
+	up_daemon_set_lid_is_present (backend->priv->daemon, FALSE);
 	if (backend->priv->is_laptop)
 	{
 		acnative = up_apm_native_new("/ac");
@@ -580,7 +581,7 @@ up_backend_init (UpBackend *backend)
 			      "has-history", TRUE,
 			      "state", UP_DEVICE_STATE_UNKNOWN,
 			      "percentage", 0.0f,
-			      "time-to-empty", 0,
+			      "time-to-empty", (gint64) 0,
 			      (void*) NULL);
 		g_object_set (backend->priv->ac,
 			      "type", UP_DEVICE_KIND_LINE_POWER,
