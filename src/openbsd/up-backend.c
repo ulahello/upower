@@ -262,6 +262,7 @@ up_backend_update_ac_state(UpDevice* device)
 		return ret;
 
 	g_object_get (device, "online", &cur_is_online, (void*) NULL);
+	/* XXX use acpiac0.indicator0 if available */
 	new_is_online = (a.ac_state == APM_AC_ON ? TRUE : FALSE);
 	if (cur_is_online != new_is_online)
 	{
@@ -293,10 +294,13 @@ up_backend_update_battery_state(UpDevice* device)
 		"time-to-empty", &cur_time_to_empty,
 		(void*) NULL);
 
+	/* XXX use acpibat0.raw0 if available */
 	new_state = up_backend_apm_get_battery_state_value(a.battery_state);
 	// if percentage/minutes goes down or ac is off, we're likely discharging..
 	if (percentage < a.battery_life || cur_time_to_empty < new_time_to_empty || a.ac_state == APM_AC_OFF)
 		new_state = UP_DEVICE_STATE_DISCHARGING;
+	if (a.ac_state == APM_AC_ON)
+		new_state = UP_DEVICE_STATE_CHARGING;
 
 	// zero out new_time_to empty if we're not discharging
 	new_time_to_empty = (new_state == UP_DEVICE_STATE_DISCHARGING ? a.minutes_left : 0);
@@ -321,7 +325,7 @@ up_backend_update_battery_state(UpDevice* device)
 static void
 up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 {
-	enum sensor_type type;
+	enum sensor_type type, typev = SENSOR_INTEGER;
 	int numt;
 	gdouble bst_volt, bif_dvolt, bst_rate, bif_lastfullcap, bst_cap, bif_dcap, bif_lowcap, capacity;
 	struct sensor sens;
@@ -338,14 +342,20 @@ up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 			else if (slen > 0 && (sens.flags & SENSOR_FINVALID) == 0) {
 				if (sens.type == SENSOR_VOLTS_DC && !strcmp(sens.desc, "current voltage"))
 					bst_volt = sens.value / 1000000.0f;
-				if (sens.type == SENSOR_AMPHOUR && !strcmp(sens.desc, "last full capacity"))
+				if ((sens.type == SENSOR_AMPHOUR || sens.type == SENSOR_WATTHOUR) && !strcmp(sens.desc, "last full capacity")) {
+					typev = sens.type;
 					bif_lastfullcap = sens.value / 1000000.0f;
-				if (sens.type == SENSOR_AMPHOUR && !strcmp(sens.desc, "low capacity"))
+				}
+				if ((sens.type == SENSOR_AMPHOUR || sens.type == SENSOR_WATTHOUR) && !strcmp(sens.desc, "low capacity")) {
+					typev = sens.type;
 					bif_lowcap = sens.value / 1000000.0f;
-				if (sens.type == SENSOR_AMPHOUR && !strcmp(sens.desc, "remaining capacity"))
+				}
+				if ((sens.type == SENSOR_AMPHOUR || sens.type == SENSOR_WATTHOUR) && !strcmp(sens.desc, "remaining capacity")) {
+					typev = sens.type;
 					bst_cap = sens.value / 1000000.0f;
+				}
 				if (sens.type == SENSOR_INTEGER && !strcmp(sens.desc, "rate"))
-					bst_rate = sens.value / 1.0f;
+					bst_rate = sens.value / 1000.0f;
 				/*
 				bif_dvolt = "voltage" = unused ?
 				capacity = lastfull/dcap * 100 ?
@@ -355,11 +365,17 @@ up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 			}
 		}
 	}
+	if (typev == SENSOR_AMPHOUR) {
+		bst_cap *= bst_volt;
+		bif_lowcap *= bst_volt;
+		bif_lastfullcap *= bst_volt;
+		bst_rate *= bst_volt;
+	}
 	g_object_set (device,
-		"energy", bst_cap * bst_volt,
-		"energy-full", bif_lastfullcap * bst_volt,
-		"energy-rate", bst_rate * bst_volt,
-		"energy-empty", bif_lowcap * bst_volt,
+		"energy", bst_cap,
+		"energy-full", bif_lastfullcap,
+		"energy-rate", bst_rate,
+		"energy-empty", bif_lowcap,
 		"voltage", bst_volt,
 		(void*) NULL);
 }
@@ -541,7 +557,6 @@ up_backend_init (UpBackend *backend)
 			      "is-present", TRUE,
 			      "is-rechargeable", TRUE,
 			      "has-history", TRUE,
-			      "has-statistics", TRUE,
 			      "state", UP_DEVICE_STATE_UNKNOWN,
 			      "percentage", 0.0f,
 			      "time-to-empty", 0,
