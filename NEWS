@@ -1,3 +1,18 @@
+Version 0.9.9
+~~~~~~~~~~~~~
+Released: 2011-03-21
+
+New Features:
+ - Add a config option to disable the Watts Up Pro device (Richard Hughes)
+ - Add a LidForceSleep property to ensure that we don't melt any laptops (Richard Hughes)
+ - Add an option for polling dock devices in UPower.conf, defaulting to false (Richard Hughes)
+
+Bugfixes:
+ - Depend on stable GUdev API (Michael Biebl)
+ - Drop devkit and devkit-power-daemon symlinks (Michael Biebl)
+ - Fix bitmap check in the input code (Arnaud Patard)
+ - Honour ACLOCAL_FLAGS in Makefile.am (Richard Hughes)
+
 Version 0.9.8
 ~~~~~~~~~~~~~
 Released: 2011-01-07
