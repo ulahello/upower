@@ -32,6 +32,7 @@
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
 
+#include "up-config.h"
 #include "up-polkit.h"
 #include "up-device-list.h"
 #include "up-device.h"
@@ -73,6 +74,7 @@ struct UpDaemonPrivate
 {
 	DBusGConnection		*connection;
 	DBusGProxy		*proxy;
+	UpConfig		*config;
 	UpPolkit		*polkit;
 	UpBackend		*backend;
 	UpDeviceList		*power_devices;
@@ -759,6 +761,13 @@ void
 up_daemon_set_lid_is_closed (UpDaemon *daemon, gboolean lid_is_closed)
 {
 	UpDaemonPrivate *priv = daemon->priv;
+
+	/* check if we are ignoring the lid */
+	if (up_config_get_boolean (priv->config, "IgnoreLid")) {
+		g_debug ("ignoring lid state");
+		return;
+	}
+
 	g_debug ("lid_is_closed = %s", lid_is_closed ? "yes" : "no");
 	priv->lid_is_closed = lid_is_closed;
 	g_object_notify (G_OBJECT (daemon), "lid-is-closed");
@@ -783,6 +792,13 @@ void
 up_daemon_set_lid_is_present (UpDaemon *daemon, gboolean lid_is_present)
 {
 	UpDaemonPrivate *priv = daemon->priv;
+
+	/* check if we are ignoring the lid */
+	if (up_config_get_boolean (priv->config, "IgnoreLid")) {
+		g_debug ("ignoring lid state");
+		return;
+	}
+
 	g_debug ("lid_is_present = %s", lid_is_present ? "yes" : "no");
 	priv->lid_is_present = lid_is_present;
 	g_object_notify (G_OBJECT (daemon), "lid-is-present");
@@ -1028,6 +1044,7 @@ up_daemon_init (UpDaemon *daemon)
 
 	daemon->priv = UP_DAEMON_GET_PRIVATE (daemon);
 	daemon->priv->polkit = up_polkit_new ();
+	daemon->priv->config = up_config_new ();
 	daemon->priv->lid_is_present = FALSE;
 	daemon->priv->is_docked = FALSE;
 	daemon->priv->lid_is_closed = FALSE;
@@ -1345,6 +1362,7 @@ up_daemon_finalize (GObject *object)
 		dbus_g_connection_unref (priv->connection);
 	g_object_unref (priv->power_devices);
 	g_object_unref (priv->polkit);
+	g_object_unref (priv->config);
 	g_object_unref (priv->backend);
 	g_timer_destroy (priv->about_to_sleep_timer);
 
