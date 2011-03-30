@@ -567,13 +567,13 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 			energy *= voltage_design;
 		}
 
-                charge_full = sysfs_get_double (native_path, "charge_full") / 1000000.0;
-                if (charge_full == 0)
-                        charge_full = sysfs_get_double (native_path, "charge_full_design") / 1000000.0;
+		charge_full = sysfs_get_double (native_path, "charge_full") / 1000000.0;
+		if (charge_full == 0)
+			charge_full = sysfs_get_double (native_path, "charge_full_design") / 1000000.0;
 
-                /* If charge_full exists, then current_now is always reported in uA.
-                 * In the legacy case, where energy only units exist, and power_now isn't present
-                 * current_now is power in uW. */
+		/* If charge_full exists, then current_now is always reported in uA.
+		 * In the legacy case, where energy only units exist, and power_now isn't present
+		 * current_now is power in uW. */
 		energy_rate = fabs (sysfs_get_double (native_path, "current_now") / 1000000.0);
 		if (charge_full != 0)
 			energy_rate *= voltage_design;
