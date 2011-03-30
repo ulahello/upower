@@ -55,11 +55,15 @@ typedef struct
 	GObjectClass		 parent_class;
 	void			(*device_added)		(UpClient		*client,
 							 UpDevice		*device);
-	void			(*device_changed)      	(UpClient		*client,
+	void			(*device_changed)	(UpClient		*client,
 							 UpDevice		*device);
-	void			(*device_removed)      	(UpClient		*client,
+	void			(*device_removed)	(UpClient		*client,
 							 UpDevice		*device);
-	void			(*changed)              (UpClient		*client);
+	void			(*changed)		(UpClient		*client);
+	void			(*notify_sleep)		(UpClient		*client,
+							 UpSleepKind		 sleep_kind);
+	void			(*notify_resume)	(UpClient		*client,
+							 UpSleepKind		 sleep_kind);
 	/*< private >*/
 	/* Padding for future expansion */
 	void (*_up_client_reserved1) (void);
@@ -87,6 +91,7 @@ gboolean	 up_client_suspend_sync			(UpClient		*client,
 							 GCancellable		*cancellable,
 							 GError			**error);
 gboolean	 up_client_about_to_sleep_sync		(UpClient		*client,
+							 UpSleepKind		 sleep_kind,
 							 GCancellable		*cancellable,
 							 GError			**error);
 gboolean	 up_client_hibernate_sync		(UpClient		*client,

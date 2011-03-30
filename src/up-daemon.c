@@ -65,6 +65,8 @@ enum
 	SIGNAL_CHANGED,
 	SIGNAL_SLEEPING,
 	SIGNAL_RESUMING,
+	SIGNAL_NOTIFY_SLEEP,
+	SIGNAL_NOTIFY_RESUME,
 	SIGNAL_LAST,
 };
 
@@ -95,6 +97,7 @@ struct UpDaemonPrivate
 	guint			 about_to_sleep_id;
 	guint			 conf_sleep_timeout;
 	gboolean		 conf_allow_hibernate_encrypted_swap;
+	const gchar		*sleep_kind;
 };
 
 static void	up_daemon_finalize		(GObject	*object);
@@ -330,7 +333,9 @@ up_daemon_enumerate_devices (UpDaemon *daemon, DBusGMethodInvocation *context)
  * up_daemon_about_to_sleep:
  **/
 gboolean
-up_daemon_about_to_sleep (UpDaemon *daemon, DBusGMethodInvocation *context)
+up_daemon_about_to_sleep (UpDaemon *daemon,
+			  const gchar *sleep_kind,
+			  DBusGMethodInvocation *context)
 {
 	PolkitSubject *subject = NULL;
 	GError *error;
@@ -357,6 +362,8 @@ up_daemon_about_to_sleep (UpDaemon *daemon, DBusGMethodInvocation *context)
 	/* we've told the clients we're going down */
 	g_debug ("emitting sleeping");
 	g_signal_emit (daemon, signals[SIGNAL_SLEEPING], 0);
+	g_signal_emit (daemon, signals[SIGNAL_NOTIFY_SLEEP], 0,
+		       sleep_kind);
 	g_timer_start (priv->about_to_sleep_timer);
 	daemon->priv->sent_sleeping_signal = TRUE;
 
@@ -403,6 +410,8 @@ up_daemon_deferred_sleep_cb (UpDaemonDeferredSleep *sleep)
 	/* emit signal for session components */
 	g_debug ("emitting resuming");
 	g_signal_emit (daemon, signals[SIGNAL_RESUMING], 0);
+	g_signal_emit (daemon, signals[SIGNAL_NOTIFY_RESUME], 0,
+		       priv->sleep_kind);
 
 	/* reset the about-to-sleep logic */
 	g_timer_reset (priv->about_to_sleep_timer);
@@ -447,6 +456,8 @@ up_daemon_deferred_sleep (UpDaemon *daemon, const gchar *command, DBusGMethodInv
 	if (!priv->sent_sleeping_signal) {
 		g_debug ("no AboutToSleep(), so emitting ::Sleeping()");
 		g_signal_emit (daemon, signals[SIGNAL_SLEEPING], 0);
+		g_signal_emit (daemon, signals[SIGNAL_NOTIFY_SLEEP], 0,
+			       priv->sleep_kind);
 		priv->about_to_sleep_id = g_timeout_add (priv->conf_sleep_timeout,
 							 (GSourceFunc) up_daemon_deferred_sleep_cb, sleep);
 #if GLIB_CHECK_VERSION(2,25,8)
@@ -513,6 +524,7 @@ up_daemon_suspend (UpDaemon *daemon, DBusGMethodInvocation *context)
 	}
 
 	/* do this deferred action */
+	priv->sleep_kind = "suspend";
 	command = up_backend_get_suspend_command (priv->backend);
 	up_daemon_deferred_sleep (daemon, command, context);
 out:
@@ -637,6 +649,7 @@ up_daemon_hibernate (UpDaemon *daemon, DBusGMethodInvocation *context)
 	}
 
 	/* do this deferred action */
+	priv->sleep_kind = "hibernate";
 	command = up_backend_get_hibernate_command (priv->backend);
 	up_daemon_deferred_sleep (daemon, command, context);
 out:
@@ -1274,6 +1287,14 @@ up_daemon_class_init (UpDaemonClass *klass)
 			      g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
 
+	signals[SIGNAL_NOTIFY_SLEEP] =
+		g_signal_new ("notify-sleep",
+			      G_OBJECT_CLASS_TYPE (klass),
+			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
+			      0, NULL, NULL,
+			      g_cclosure_marshal_VOID__STRING,
+			      G_TYPE_NONE, 1, G_TYPE_STRING);
+
 	signals[SIGNAL_RESUMING] =
 		g_signal_new ("resuming",
 			      G_OBJECT_CLASS_TYPE (klass),
@@ -1281,6 +1302,14 @@ up_daemon_class_init (UpDaemonClass *klass)
 			      0, NULL, NULL,
 			      g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
+
+	signals[SIGNAL_NOTIFY_RESUME] =
+		g_signal_new ("notify-resume",
+			      G_OBJECT_CLASS_TYPE (klass),
+			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
+			      0, NULL, NULL,
+			      g_cclosure_marshal_VOID__STRING,
+			      G_TYPE_NONE, 1, G_TYPE_STRING);
 
 	g_object_class_install_property (object_class,
 					 PROP_DAEMON_VERSION,

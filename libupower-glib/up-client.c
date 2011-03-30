@@ -74,6 +74,8 @@ enum {
 	UP_CLIENT_DEVICE_CHANGED,
 	UP_CLIENT_DEVICE_REMOVED,
 	UP_CLIENT_CHANGED,
+	UP_CLIENT_NOTIFY_SLEEP,
+	UP_CLIENT_NOTIFY_RESUME,
 	UP_CLIENT_LAST_SIGNAL
 };
 
@@ -251,6 +253,7 @@ out:
 /**
  * up_client_about_to_sleep_sync:
  * @client: a #UpClient instance.
+ * @sleep_kind: a sleep type, e.g. %UP_SLEEP_KIND_SUSPEND
  * @cancellable: a #GCancellable or %NULL
  * @error: a #GError, or %NULL.
  *
@@ -259,10 +262,13 @@ out:
  *
  * Return value: TRUE if system suspended okay, FALSE other wise.
  *
- * Since: 0.9.1
+ * Since: 0.9.11
  **/
 gboolean
-up_client_about_to_sleep_sync (UpClient *client, GCancellable *cancellable, GError **error)
+up_client_about_to_sleep_sync (UpClient *client,
+			       UpSleepKind sleep_kind,
+			       GCancellable *cancellable,
+			       GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -271,7 +277,9 @@ up_client_about_to_sleep_sync (UpClient *client, GCancellable *cancellable, GErr
 	g_return_val_if_fail (client->priv->proxy != NULL, FALSE);
 
 	ret = dbus_g_proxy_call (client->priv->proxy, "AboutToSleep", &error_local,
-				 G_TYPE_INVALID, G_TYPE_INVALID);
+				 G_TYPE_STRING, sleep_kind,
+				 G_TYPE_INVALID,
+				 G_TYPE_INVALID);
 	if (!ret) {
 		/* DBus might time out, which is okay */
 		if (g_error_matches (error_local, DBUS_GERROR, DBUS_GERROR_NO_REPLY)) {
@@ -656,6 +664,26 @@ up_device_changed_cb (DBusGProxy *proxy, const gchar *object_path, UpClient *cli
 }
 
 /*
+ * up_client_notify_sleep_cb:
+ */
+static void
+up_client_notify_sleep_cb (DBusGProxy *proxy, const gchar *sleep_kind, UpClient *client)
+{
+	g_signal_emit (client, signals [UP_CLIENT_NOTIFY_SLEEP], 0,
+		       up_sleep_kind_from_string (sleep_kind));
+}
+
+/*
+ * up_client_notify_resume_cb:
+ */
+static void
+up_client_notify_resume_cb (DBusGProxy *proxy, const gchar *sleep_kind, UpClient *client)
+{
+	g_signal_emit (client, signals [UP_CLIENT_NOTIFY_RESUME], 0,
+		       up_sleep_kind_from_string (sleep_kind));
+}
+
+/*
  * up_client_removed_cb:
  */
 static void
@@ -915,7 +943,7 @@ up_client_class_init (UpClientClass *klass)
 
 	/**
 	 * UpClient::changed:
-	 * @client: the #UpDevice instance that emitted the signal
+	 * @client: the #UpClient instance that emitted the signal
 	 *
 	 * The ::changed signal is emitted when properties may have changed.
 	 *
@@ -927,6 +955,42 @@ up_client_class_init (UpClientClass *klass)
 			      G_STRUCT_OFFSET (UpClientClass, changed),
 			      NULL, NULL, g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
+
+	/**
+	 * UpClient::notify-sleep:
+	 * @client: the #UpClient instance that emitted the signal
+	 * @sleep_kind: the #UpSleepKind
+	 *
+	 * The ::notify-sleep signal is emitted when system sleep is
+	 * about to occur. Applications have about 1 second to do
+	 * anything they need to do. There is no way to stop the sleep
+	 * process.
+	 *
+	 * Since: 0.9.11
+	 **/
+	signals [UP_CLIENT_NOTIFY_SLEEP] =
+		g_signal_new ("notify-sleep",
+			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (UpClientClass, notify_sleep),
+			      NULL, NULL, g_cclosure_marshal_VOID__UINT,
+			      G_TYPE_NONE, 1, G_TYPE_UINT);
+
+	/**
+	 * UpClient::notify-resume:
+	 * @client: the #UpClient instance that emitted the signal
+	 * @sleep_kind: the #UpSleepKind
+	 *
+	 * The ::notify-resume signal is emitted when the system has
+	 * resumed.
+	 *
+	 * Since: 0.9.11
+	 **/
+	signals [UP_CLIENT_NOTIFY_RESUME] =
+		g_signal_new ("notify-resume",
+			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (UpClientClass, notify_resume),
+			      NULL, NULL, g_cclosure_marshal_VOID__UINT,
+			      G_TYPE_NONE, 1, G_TYPE_UINT);
 
 	g_type_class_add_private (klass, sizeof (UpClientPrivate));
 }
@@ -1017,6 +1081,8 @@ up_client_init (UpClient *client)
 	dbus_g_proxy_add_signal (client->priv->proxy, "DeviceRemoved", G_TYPE_STRING, G_TYPE_INVALID);
 	dbus_g_proxy_add_signal (client->priv->proxy, "DeviceChanged", G_TYPE_STRING, G_TYPE_INVALID);
 	dbus_g_proxy_add_signal (client->priv->proxy, "Changed", G_TYPE_INVALID);
+	dbus_g_proxy_add_signal (client->priv->proxy, "NotifySleep", G_TYPE_STRING, G_TYPE_INVALID);
+	dbus_g_proxy_add_signal (client->priv->proxy, "NotifyResume", G_TYPE_STRING, G_TYPE_INVALID);
 
 	/* all callbacks */
 	dbus_g_proxy_connect_signal (client->priv->proxy, "DeviceAdded",
@@ -1027,6 +1093,10 @@ up_client_init (UpClient *client)
 				     G_CALLBACK (up_device_changed_cb), client, NULL);
 	dbus_g_proxy_connect_signal (client->priv->proxy, "Changed",
 				     G_CALLBACK (up_client_changed_cb), client, NULL);
+	dbus_g_proxy_connect_signal (client->priv->proxy, "NotifySleep",
+				     G_CALLBACK (up_client_notify_sleep_cb), client, NULL);
+	dbus_g_proxy_connect_signal (client->priv->proxy, "NotifyResume",
+				     G_CALLBACK (up_client_notify_resume_cb), client, NULL);
 out:
 	return;
 }

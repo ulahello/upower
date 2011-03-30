@@ -98,6 +98,7 @@ gboolean	 up_daemon_get_low_battery	(UpDaemon		*daemon,
 gboolean	 up_daemon_suspend		(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
 gboolean	 up_daemon_about_to_sleep	(UpDaemon		*daemon,
+						 const gchar		*sleep_kind,
 						 DBusGMethodInvocation	*context);
 gboolean	 up_daemon_suspend_allowed	(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);

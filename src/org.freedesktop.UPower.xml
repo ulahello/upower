@@ -119,12 +119,36 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
           <doc:para>
             This signal is sent when the session is about to be suspended or
             hibernated.
+          </doc:para>
+          <doc:para>
+            This signal is DEPRECATED. Use NotifySleep() instead.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </signal>
+
+    <!-- ************************************************************ -->
+
+    <signal name="NotifySleep">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            This signal is sent when the session is about to be suspended or
+            hibernated.
             Session and system programs have one second to do anything required
             before the sleep action is taken (such as sending out Avahi or
             Jabber messages).
           </doc:para>
         </doc:description>
       </doc:doc>
+      <arg name="action" direction="out" type="s">
+        <doc:doc>
+          <doc:summary>
+            The sleep action type, e.g. <doc:tt>suspend</doc:tt>,
+            <doc:tt>hibernate</doc:tt> or <doc:tt>hybrid</doc:tt>.
+          </doc:summary>
+        </doc:doc>
+      </arg>
     </signal>
 
     <!-- ************************************************************ -->
@@ -135,11 +159,35 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
           <doc:para>
             This signal is sent when the session has just returned from
             Suspend() or Hibernate().
+          </doc:para>
+          <doc:para>
+            This signal is DEPRECATED. Use NotifyResume() instead.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </signal>
+
+    <!-- ************************************************************ -->
+
+    <signal name="NotifyResume">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            This signal is sent when the session has just returned from
+            Suspend() or Hibernate().
             Session and system programs can then do anything required (such as
             sending out Avahi or Jabber messages).
           </doc:para>
         </doc:description>
       </doc:doc>
+      <arg name="action" direction="out" type="s">
+        <doc:doc>
+          <doc:summary>
+            The sleep action type, e.g. <doc:tt>suspend</doc:tt>,
+            <doc:tt>hibernate</doc:tt> or <doc:tt>hybrid</doc:tt>.
+          </doc:summary>
+        </doc:doc>
+      </arg>
     </signal>
 
     <!-- ************************************************************ -->
@@ -168,6 +216,14 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
           </doc:para>
         </doc:description>
       </doc:doc>
+      <arg name="action" direction="in" type="s">
+        <doc:doc>
+          <doc:summary>
+            The sleep action type, e.g. <doc:tt>suspend</doc:tt> or
+            <doc:tt>hibernate</doc:tt>.
+          </doc:summary>
+        </doc:doc>
+      </arg>
     </method>
 
     <!-- ************************************************************ -->
