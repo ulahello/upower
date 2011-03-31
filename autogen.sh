@@ -1,7 +1,7 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
-ACLOCAL_FLAGS="-I m4"
+ACLOCAL_FLAGS="-I m4 ${ACLOCAL_FLAGS}"
 
 touch ChangeLog
 
