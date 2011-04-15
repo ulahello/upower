@@ -1,6 +1,6 @@
 .deps
 upowerd
-dkp-self-test
+up-self-test
 *.o
 *-glue.h
 *-marshal.c
