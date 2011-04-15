@@ -306,6 +306,7 @@ up_device_hid_coldplug (UpDevice *device)
 	UpDeviceHid *hid = UP_DEVICE_HID (device);
 	GUdevDevice *native;
 	gboolean ret = FALSE;
+	gboolean fake_device;
 	const gchar *device_file;
 	const gchar *type;
 	const gchar *vendor;
@@ -332,10 +333,14 @@ up_device_hid_coldplug (UpDevice *device)
 	}
 
 	/* first check that we are an UPS */
-	ret = up_device_hid_is_ups (hid);
-	if (!ret) {
-		g_debug ("not a HID device: %s", device_file);
-		goto out;
+	fake_device = g_udev_device_has_property (native, "UPOWER_FAKE_DEVICE");
+	if (!fake_device)
+	{
+		ret = up_device_hid_is_ups (hid);
+		if (!ret) {
+			g_debug ("not a HID device: %s", device_file);
+			goto out;
+		}
 	}
 
 	/* prefer UPOWER names */
@@ -355,10 +360,21 @@ up_device_hid_coldplug (UpDevice *device)
 		      NULL);
 
 	/* coldplug everything */
-	ret = up_device_hid_get_all_data (hid);
-	if (!ret) {
-		g_debug ("failed to coldplug: %s", device_file);
-		goto out;
+	if (fake_device)
+	{
+		ret = TRUE;
+		if (g_udev_device_get_property_as_boolean (native, "UPOWER_FAKE_HID_CHARGING"))
+			up_device_hid_set_values (hid, UP_DEVICE_HID_CHARGING, 1);
+		else
+			up_device_hid_set_values (hid, UP_DEVICE_HID_DISCHARGING, 1);
+		up_device_hid_set_values (hid, UP_DEVICE_HID_REMAINING_CAPACITY,
+			g_udev_device_get_property_as_int (native, "UPOWER_FAKE_HID_PERCENTAGE"));
+	} else {
+		ret = up_device_hid_get_all_data (hid);
+		if (!ret) {
+			g_debug ("failed to coldplug: %s", device_file);
+			goto out;
+		}
 	}
 
 	/* fix up device states */
