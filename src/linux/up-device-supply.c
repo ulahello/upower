@@ -40,6 +40,7 @@
 #define UP_DEVICE_SUPPLY_REFRESH_TIMEOUT	30	/* seconds */
 #define UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT	2	/* seconds */
 #define UP_DEVICE_SUPPLY_UNKNOWN_RETRIES	30
+#define UP_DEVICE_SUPPLY_CHARGED_THRESHOLD  90.0f	/* % */
 
 #define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_CHARGE		TRUE
 #define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_ENERGY		FALSE
@@ -421,8 +422,11 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	const gchar *recall_vendor = NULL;
 	const gchar *recall_url = NULL;
 	UpDaemon *daemon;
-	gboolean on_battery;
-	guint battery_count;
+	gboolean ac_online = FALSE;
+	gboolean has_ac = FALSE;
+	gboolean online;
+	GPtrArray *devices;
+	guint i;
 
 	native = G_UDEV_DEVICE (up_device_get_native (device));
 	native_path = g_udev_device_get_sysfs_path (native);
@@ -616,41 +620,50 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	/* the battery isn't charging or discharging, it's just
 	 * sitting there half full doing nothing: try to guess a state */
 	if (state == UP_DEVICE_STATE_UNKNOWN) {
-
-		/* get global battery status */
 		daemon = up_device_get_daemon (device);
-		g_object_get (daemon,
-			      "on-battery", &on_battery,
-			      NULL);
 
-		/* only guess when we have more than one battery devices */
-		battery_count = up_daemon_get_number_devices_of_type (daemon, UP_DEVICE_KIND_BATTERY);
+		/* If we have any online AC, assume charging, otherwise
+		 * discharging */
+		devices = up_device_list_get_array (up_daemon_get_device_list (daemon));
+		for (i=0; i < devices->len; i++) {
+			if (up_device_get_online ((UpDevice *) g_ptr_array_index (devices, i), &online)) {
+			       has_ac = TRUE;
+				if (online) {
+					ac_online = TRUE;
+				}
+				break;
+			}
+		}
+		g_ptr_array_unref (devices);
 
-		/* try to find a suitable icon depending on AC state */
-		if (battery_count > 1) {
-			if (on_battery && percentage < 1.0f) {
-				/* battery is low */
-				state = UP_DEVICE_STATE_EMPTY;
-			} else if (on_battery) {
-				/* battery is waiting */
-				state = UP_DEVICE_STATE_PENDING_DISCHARGE;
+		if (has_ac) {
+			if (ac_online) {
+				if (percentage > UP_DEVICE_SUPPLY_CHARGED_THRESHOLD)
+					state = UP_DEVICE_STATE_FULLY_CHARGED;
+				else
+					state = UP_DEVICE_STATE_CHARGING;
 			} else {
-				/* battery is waiting */
-				state = UP_DEVICE_STATE_PENDING_CHARGE;
+				if (percentage < 1.0f)
+					state = UP_DEVICE_STATE_EMPTY;
+				else
+					state = UP_DEVICE_STATE_DISCHARGING;
 			}
 		} else {
-			if (on_battery) {
-				/* battery is assumed discharging */
-				state = UP_DEVICE_STATE_DISCHARGING;
-			} else {
-				/* battery is waiting */
-				state = UP_DEVICE_STATE_FULLY_CHARGED;
+			/* only guess when we have only one battery */
+			if (up_daemon_get_number_devices_of_type (daemon, UP_DEVICE_KIND_BATTERY)  == 1) {
+				if (percentage < 1.0f)
+					state = UP_DEVICE_STATE_EMPTY;
+				else
+					state = UP_DEVICE_STATE_DISCHARGING;
 			}
+
+			/* if we have multiple batteries and don't know their
+			 * state, give up and leave it as "unknown". */
 		}
 
 		/* print what we did */
-		g_debug ("guessing battery state '%s' using global on-battery:%i",
-			   up_device_state_to_string (state), on_battery);
+		g_debug ("guessing battery state '%s': AC present: %i, AC online: %i",
+			   up_device_state_to_string (state), has_ac, ac_online);
 
 		g_object_unref (daemon);
 	}
