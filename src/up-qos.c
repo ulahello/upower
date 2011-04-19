@@ -577,7 +577,7 @@ up_qos_init (UpQos *qos)
 	if (qos->priv->fd[UP_QOS_KIND_NETWORK] < 0)
 		g_debug ("cannot open network device file");
 
-	qos->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
+	qos->priv->connection = dbus_g_bus_get (up_daemon_get_bus_type (), &error);
 	if (error != NULL) {
 		g_warning ("Cannot connect to bus: %s", error->message);
 		g_error_free (error);

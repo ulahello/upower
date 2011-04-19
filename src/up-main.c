@@ -133,6 +133,7 @@ main (gint argc, gchar **argv)
 	gint retval = 1;
 	gboolean timed_exit = FALSE;
 	gboolean immediate_exit = FALSE;
+	gboolean session_bus = FALSE;
 	guint timer_id = 0;
 
 	const GOptionEntry options[] = {
@@ -142,6 +143,8 @@ main (gint argc, gchar **argv)
 		{ "immediate-exit", '\0', 0, G_OPTION_ARG_NONE, &immediate_exit,
 		  /* TRANSLATORS: exit straight away, used for automatic profiling */
 		  _("Exit after the engine has loaded"), NULL },
+		{ "test", '\0', 0, G_OPTION_ARG_NONE, &session_bus,
+		  _("Run on the session bus (only for testing)"), NULL },
 		{ NULL}
 	};
 
@@ -153,7 +156,9 @@ main (gint argc, gchar **argv)
 	g_option_context_free (context);
 
 	/* get bus connection */
-	bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
+	if (session_bus)
+		up_daemon_set_bus_type (DBUS_BUS_SESSION);
+	bus = dbus_g_bus_get (up_daemon_get_bus_type (), &error);
 	if (bus == NULL) {
 		g_warning ("Couldn't connect to system bus: %s", error->message);
 		g_error_free (error);
