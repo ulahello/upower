@@ -40,8 +40,9 @@ class Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # run from local build tree if we are in one, otherwise use system instance
-        if os.access (os.path.join('src', 'upowerd'), os.X_OK):
-            daemon_path = os.path.join('src', 'upowerd')
+        builddir = os.getenv('top_builddir', '.')
+        if os.access (os.path.join(builddir, 'src', 'upowerd'), os.X_OK):
+            daemon_path = os.path.join(builddir, 'src', 'upowerd')
             print('Testing binaries from local build tree')
         else:
             print('Testing installed system binaries')
