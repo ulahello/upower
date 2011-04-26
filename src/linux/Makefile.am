@@ -44,7 +44,8 @@ libupshared_la_SOURCES =					\
 	$(idevice_files)					\
 	$(BUILT_SOURCES)
 
-EXTRA_DIST = $(libupshared_la_SOURCES)
+EXTRA_DIST = $(libupshared_la_SOURCES) 			\
+	     integration-test
 
 libupshared_la_CFLAGS =					\
 	$(WARNINGFLAGS_C)
@@ -53,7 +54,7 @@ if UP_BUILD_TESTS
 DBUS_LAUNCH=$(shell which dbus-launch)
 
 check-local: $(top_builddir)/src/upowerd
-	env top_builddir=$(top_builddir) $(DBUS_LAUNCH) ./integration-test -v
+	env top_builddir=$(top_builddir) $(DBUS_LAUNCH) $(srcdir)/integration-test -v
 endif
 
 clean-local :
