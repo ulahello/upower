@@ -50,13 +50,6 @@ EXTRA_DIST = $(libupshared_la_SOURCES) 			\
 libupshared_la_CFLAGS =					\
 	$(WARNINGFLAGS_C)
 
-if UP_BUILD_TESTS
-DBUS_LAUNCH=$(shell which dbus-launch)
-
-check-local: $(top_builddir)/src/upowerd
-	env top_builddir=$(top_builddir) $(DBUS_LAUNCH) $(srcdir)/integration-test -v
-endif
-
 clean-local :
 	rm -f *~
 

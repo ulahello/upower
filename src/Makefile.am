@@ -122,6 +122,14 @@ upowerd_LDADD += 						\
 	$(USB_LIBS)						\
 	$(GUDEV_LIBS)						\
 	$(IDEVICE_LIBS)
+
+if UP_BUILD_TESTS
+DBUS_LAUNCH=$(shell which dbus-launch)
+
+check-local: upowerd
+	env top_builddir=$(top_builddir) $(DBUS_LAUNCH) $(srcdir)/linux/integration-test -v
+endif
+
 endif
 
 upowerd_CFLAGS =						\
