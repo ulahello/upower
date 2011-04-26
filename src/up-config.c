@@ -73,15 +73,23 @@ up_config_init (UpConfig *config)
 {
 	gboolean ret;
 	GError *error = NULL;
+	gchar *filename;
 
 	config->priv = UP_CONFIG_GET_PRIVATE (config);
 	config->priv->keyfile = g_key_file_new ();
 
+	filename = g_strdup (g_getenv ("UPOWER_CONF_FILE_NAME"));
+	if (filename == NULL)
+		filename = g_build_filename (PACKAGE_SYSCONF_DIR,"UPower", "UPower.conf", NULL);
+
 	/* load */
 	ret = g_key_file_load_from_file (config->priv->keyfile,
-					 PACKAGE_SYSCONF_DIR "/UPower/UPower.conf",
+					 filename,
 					 G_KEY_FILE_NONE,
 					 &error);
+
+	g_free (filename);
+
 	if (!ret) {
 		g_warning ("failed to load config file: %s",
 			   error->message);
