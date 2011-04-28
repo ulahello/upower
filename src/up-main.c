@@ -41,6 +41,10 @@
 #include "up-kbd-backlight.h"
 #include "up-wakeups.h"
 
+#if GLIB_CHECK_VERSION(2,28,7)
+ #include <glib-unix.h>
+#endif
+
 #define DEVKIT_POWER_SERVICE_NAME "org.freedesktop.UPower"
 static GMainLoop *loop = NULL;
 
@@ -88,6 +92,21 @@ out:
 	return ret;
 }
 
+#if GLIB_CHECK_VERSION(2,28,7)
+
+/**
+ * up_main_sigint_cb:
+ **/
+static gboolean
+up_main_sigint_cb (gpointer user_data)
+{
+	g_debug ("Handling SIGINT");
+	g_main_loop_quit (loop);
+	return FALSE;
+}
+
+#else
+
 /**
  * up_main_sigint_handler:
  **/
@@ -102,6 +121,8 @@ up_main_sigint_handler (gint sig)
 	/* cleanup */
 	g_main_loop_quit (loop);
 }
+
+#endif
 
 /**
  * up_main_timed_exit_cb:
@@ -180,8 +201,16 @@ main (gint argc, gchar **argv)
 		goto out;
 	}
 
+#if GLIB_CHECK_VERSION(2,28,7)
 	/* do stuff on ctrl-c */
+	g_unix_signal_add_watch_full (SIGINT,
+				      G_PRIORITY_DEFAULT,
+				      up_main_sigint_cb,
+				      loop,
+				      NULL);
+#else
 	signal (SIGINT, up_main_sigint_handler);
+#endif
 
 	g_debug ("Starting upowerd version %s", PACKAGE_VERSION);
 
