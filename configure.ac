@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 m4_define([up_major_version], [0])
 m4_define([up_minor_version], [9])
-m4_define([up_micro_version], [10])
+m4_define([up_micro_version], [11])
 m4_define([up_version],
           [up_major_version.up_minor_version.up_micro_version])
 
