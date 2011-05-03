@@ -1,3 +1,24 @@
+Version 0.9.10
+~~~~~~~~~~~~~~
+Released: 2011-05-03
+
+New Features:
+ - Add a config option 'IgnoreLid' for users with broken lid switches (Richard Hughes)
+ - Add integration test suite for Linux (Martin Pitt)
+ - Add option to run daemon on the session bus for testing (Martin Pitt)
+ - Add OpenBSD backend which uses the APM_IOC_GETPOWER ioctl() (Landry Breuil)
+ - Support virtual UPS devices for testing (Martin Pitt)
+
+Bugfixes:
+ - Consider a discharging UPS as "on battery" (Martin Pitt)
+ - Do not overwrite aclocal flags in autogen, fixes b.fd.o #35261 (Tobias Mueller)
+ - Fix "unknown" battery status guessing to not be recursive (Martin Pitt)
+ - Respect $UPOWER_CONF_FILE_NAME in up_config_init (Martin Pitt)
+ - Support batteries that report both energy and charge (Benson Leung)
+ - upower needs -pthread (Landry Breuil)
+ - Use the new threadsafe signal handling support in GLib (Richard Hughes)
+ - Wuninitialized needs -O (Landry Breuil)
+
 Version 0.9.9
 ~~~~~~~~~~~~~
 Released: 2011-03-21
