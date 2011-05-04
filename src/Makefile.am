@@ -127,7 +127,7 @@ if UP_BUILD_TESTS
 DBUS_LAUNCH=$(shell which dbus-launch)
 
 check-local: upowerd
-	env top_builddir=$(top_builddir) $(DBUS_LAUNCH) $(srcdir)/linux/integration-test -v
+	env top_builddir=$(top_builddir) $(DBUS_LAUNCH) $${PYTHON:-python} $(srcdir)/linux/integration-test -v
 endif
 
 endif
