@@ -176,6 +176,7 @@ up_self_test_LDADD =						\
 
 up_self_test_CFLAGS = $(AM_CFLAGS) $(WARNINGFLAGS_C)
 
+TESTS_ENVIRONMENT = $(DBUS_LAUNCH)
 TESTS = up-self-test
 
 endif

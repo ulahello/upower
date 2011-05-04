@@ -38,6 +38,8 @@
 
 gchar *history_dir = NULL;
 
+#define DBUS_SYSTEM_SOCKET "/var/run/dbus/system_bus_socket"
+
 static void
 up_test_native_func (void)
 {
@@ -63,6 +65,12 @@ static void
 up_test_daemon_func (void)
 {
 	UpDaemon *daemon;
+
+	/* needs polkit, which only listens to the system bus */
+	if (!g_file_test (DBUS_SYSTEM_SOCKET, G_FILE_TEST_EXISTS)) {
+		puts("No system D-BUS running, skipping test");
+		return;
+	}
 
 	daemon = up_daemon_new ();
 	g_assert (daemon != NULL);
@@ -242,6 +250,12 @@ up_test_polkit_func (void)
 {
 	UpPolkit *polkit;
 
+	/* polkit only listens to the system bus */
+	if (!g_file_test (DBUS_SYSTEM_SOCKET, G_FILE_TEST_EXISTS)) {
+		puts("No system D-BUS running, skipping test");
+		return;
+	}
+
 	polkit = up_polkit_new ();
 	g_assert (polkit != NULL);
 
@@ -253,6 +267,12 @@ static void
 up_test_qos_func (void)
 {
 	UpQos *qos;
+
+	/* needs polkit, which only listens to the system bus */
+	if (!g_file_test (DBUS_SYSTEM_SOCKET, G_FILE_TEST_EXISTS)) {
+		puts("No system D-BUS running, skipping test");
+		return;
+	}
 
 	qos = up_qos_new ();
 	g_assert (qos != NULL);
@@ -284,6 +304,14 @@ main (int argc, char **argv)
 		g_setenv ("UPOWER_CONF_FILE_NAME", "../etc/UPower.conf", TRUE);
 	else
 		g_setenv ("UPOWER_CONF_FILE_NAME", "../../etc/UPower.conf", TRUE);
+
+	/* Test on system bus if possible, but fall back to session bus; this
+	 * allows the test suite to work in restricted environments like
+	 * package builds. */
+	if (!g_file_test (DBUS_SYSTEM_SOCKET, G_FILE_TEST_EXISTS)) {
+		puts("No system D-BUS running, running on session D-BUS");
+		up_daemon_set_bus_type (DBUS_BUS_SESSION);
+	}
 
 	/* tests go here */
 	g_test_add_func ("/power/backend", up_test_backend_func);
