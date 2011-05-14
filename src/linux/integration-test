@@ -281,6 +281,9 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'IsPresent'), True)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Percentage'), 80.0)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Energy'), 48.0)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'EnergyFull'), 60.0)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'EnergyFullDesign'), 80.0)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Voltage'), 12.0)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'NativePath'), bat0)
         self.stop_daemon()
@@ -376,6 +379,38 @@ class Tests(unittest.TestCase):
         self.start_daemon()
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
         self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.stop_daemon()
+
+    def test_battery_charge(self):
+        '''battery which reports charge instead of energy
+        
+        energy_* is in uWh, while charge_* is in uAh.
+        '''
+        bat0 = self.add_device('power_supply', 'BAT0', 
+                {'type': 'Battery', 
+                 'present': '1', 
+                 'status': 'Discharging',
+                 'charge_full': '10500000',
+                 'charge_full_design': '11000000',
+                 'charge_now': '7875000',
+                 'current_now': '787000',
+                 'voltage_now': '12000000'})
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        bat0_up = devs[0]
+
+        self.assertEqual(self.get_dbus_property('OnBattery'), True)
+        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'IsPresent'), True)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Percentage'), 75.0)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Energy'), 94.5)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'EnergyFull'), 126.0)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'EnergyFullDesign'), 132.0)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Voltage'), 12.0)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'NativePath'), bat0)
         self.stop_daemon()
 
     def test_ups_ac(self):
