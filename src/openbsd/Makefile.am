@@ -16,6 +16,7 @@ endif
 libupshared_la_SOURCES =					\
 	up-backend.c						\
 	up-native.c						\
+	up-apm-native.h						\
 	$(BUILT_SOURCES)
 
 libupshared_la_CFLAGS =					\
