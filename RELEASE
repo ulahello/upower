@@ -2,9 +2,9 @@ UPower Release Notes
 
 1. Write NEWS entries for UPower in the same format as usual.
 
-git shortlog UPOWER_0_9_10.. | grep -i -v trivial | grep -v Merge > NEWS.new
+git shortlog UPOWER_0_9_11.. | grep -i -v trivial | grep -v Merge > NEWS.new
 
-Version 0.9.11
+Version 0.9.12
 ~~~~~~~~~~~~~~
 Released: 2011-xx-xx
 
@@ -14,8 +14,8 @@ Bugfixes:
 
 2. Commit changes to git:
 
-git commit -a -m "Released UPower 0.9.11"
-git tag -s -f -m "Released UPower 0.9.11" UPOWER_0_9_11
+git commit -a -m "Released UPower 0.9.12"
+git tag -s -f -m "Released UPower 0.9.12" UPOWER_0_9_12
 <wait>
 git push --tags
 git push
