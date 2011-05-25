@@ -1,3 +1,17 @@
+Version 0.9.11
+~~~~~~~~~~~~~~
+Released: 2011-05-25
+
+New Features:
+ - Add new NotifySleep() and NotifyResume() signals that include the sleep type (Richard Hughes)
+
+Bugfixes:
+ - Ensure up-apm-native.h gets shipped in the tarball for OpenBSD (Richard Hughes)
+ - Check energy vs. charge in the Linux integration tests (Martin Pitt)
+ - Only include glib-unix.h if the GLib version is >= 2.29.4 (Richard Hughes)
+ - Respect $PYTHON for running the test suite (Martin Pitt)
+ - Run subset of tests when system D-BUS is not available (Martin Pitt)
+
 Version 0.9.10
 ~~~~~~~~~~~~~~
 Released: 2011-05-03
