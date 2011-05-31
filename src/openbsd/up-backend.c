@@ -349,7 +349,8 @@ up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 {
 	enum sensor_type type, typev = SENSOR_INTEGER;
 	int numt;
-	gdouble bst_volt, bif_dvolt, bst_rate, bif_lastfullcap, bst_cap, bif_dcap, bif_lowcap, capacity;
+	gdouble bst_volt, bst_rate, bif_lastfullcap, bst_cap, bif_lowcap;
+	/* gdouble bif_dvolt, bif_dcap, capacity; */
 	struct sensor sens;
 	size_t slen = sizeof(sens);
 	int mib[] = {CTL_HW, HW_SENSORS, 0, 0, 0};
@@ -407,9 +408,8 @@ static gboolean
 up_backend_apm_powerchange_event_cb(gpointer object)
 {
 	UpBackend *backend;
-	struct apm_power_info a;
 
-	g_return_if_fail (UP_IS_BACKEND (object));
+	g_return_val_if_fail (UP_IS_BACKEND (object), FALSE);
 	backend = UP_BACKEND (object);
 	up_apm_device_refresh(backend->priv->ac);
 	up_apm_device_refresh(backend->priv->battery);
@@ -456,7 +456,7 @@ up_backend_apm_event_thread(gpointer object)
 
 	UpBackend *backend;
 
-	g_return_if_fail (UP_IS_BACKEND (object));
+	g_return_val_if_fail (UP_IS_BACKEND (object), NULL);
 	backend = UP_BACKEND (object);
 
 	g_debug("setting up apm thread");
@@ -566,7 +566,7 @@ up_backend_init (UpBackend *backend)
 		device_class->refresh = up_apm_device_refresh;
 		g_thread_init (NULL);
 		/* creates thread */
-		if((backend->priv->apm_thread = (GThread*) g_thread_create((GThreadFunc)up_backend_apm_event_thread, backend, FALSE, &err) == NULL))
+		if((backend->priv->apm_thread = (GThread*) g_thread_create((GThreadFunc)up_backend_apm_event_thread, (void*) backend, FALSE, &err) == NULL))
 		{
 			g_warning("Thread create failed: %s", err->message);
 			g_error_free (err);
