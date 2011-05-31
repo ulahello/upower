@@ -21,6 +21,8 @@
 
 #include "up-apm-native.h"
 #include "up-native.h"
+#include <unistd.h> /* close() */
+#include <string.h> /* strcmp() */
 
 /* XXX why does this macro needs to be in the .c ? */
 G_DEFINE_TYPE (UpApmNative, up_apm_native, G_TYPE_OBJECT)
