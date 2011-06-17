@@ -62,7 +62,7 @@ enum {
 
 static guint signals [SIGNAL_LAST] = { 0 };
 
-int apm_fd; /* ugly global.. needs to move to a device native object */
+int apm_fd = 0; /* ugly global.. needs to move to a device native object */
 
 G_DEFINE_TYPE (UpBackend, up_backend, G_TYPE_OBJECT)
 
@@ -423,7 +423,10 @@ up_apm_device_refresh(UpDevice* device)
 	UpDeviceKind type;
 	GTimeVal timeval;
 	gboolean ret;
-
+	if (apm_fd == 0) {
+		g_debug("refresh callback called but apm_fd is not initialized yet");
+		return TRUE;
+	}
 	g_object_get (device, "type", &type, NULL);
 
 	switch (type) {
