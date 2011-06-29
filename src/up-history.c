@@ -888,7 +888,7 @@ up_history_init (UpHistory *history)
 	history->priv->data_time_empty = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	history->priv->save_id = 0;
 	history->priv->max_data_age = UP_HISTORY_DEFAULT_MAX_DATA_AGE;
-	history->priv->dir = g_build_filename (PACKAGE_LOCALSTATE_DIR, "lib", "upower", NULL);
+	history->priv->dir = g_build_filename (HISTORY_DIR, NULL);
 }
 
 /**
