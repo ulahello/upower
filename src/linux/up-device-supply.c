@@ -52,6 +52,7 @@ struct UpDeviceSupplyPrivate
 	gboolean		 coldplug_units;
 	gdouble			 energy_old;
 	GTimeVal		 energy_old_timespec;
+	gdouble			 rate_old;
 	guint			 unknown_retries;
 	gboolean		 enable_poll;
 };
@@ -94,6 +95,7 @@ up_device_supply_reset_values (UpDeviceSupply *supply)
 
 	supply->priv->has_coldplug_values = FALSE;
 	supply->priv->coldplug_units = UP_DEVICE_SUPPLY_COLDPLUG_UNITS_ENERGY;
+	supply->priv->rate_old = 0;
 	supply->priv->energy_old = 0;
 	supply->priv->energy_old_timespec.tv_sec = 0;
 
@@ -214,41 +216,34 @@ up_device_supply_get_online (UpDevice *device, gboolean *online)
 /**
  * up_device_supply_calculate_rate:
  **/
-static void
-up_device_supply_calculate_rate (UpDeviceSupply *supply)
+static gdouble
+up_device_supply_calculate_rate (UpDeviceSupply *supply, gdouble energy)
 {
 	guint time_s;
-	gdouble energy;
-	gdouble energy_rate;
 	GTimeVal now;
-	UpDevice *device = UP_DEVICE (supply);
-
-	g_object_get (device, "energy", &energy, NULL);
 
 	if (energy < 0.1f)
-		return;
+		return 0.0f;
 
 	if (supply->priv->energy_old < 0.1f)
-		return;
+		return 0.0f;
 
-	if (supply->priv->energy_old == energy)
-		return;
+	if (supply->priv->energy_old - energy < 0.01)
+		return supply->priv->rate_old;
 
 	/* get the time difference */
 	g_get_current_time (&now);
 	time_s = now.tv_sec - supply->priv->energy_old_timespec.tv_sec;
-
 	if (time_s == 0)
-		return;
+		return supply->priv->rate_old;
 
 	/* get the difference in charge */
-	energy = supply->priv->energy_old - energy;
+	energy = fabs (supply->priv->energy_old - energy);
 	if (energy < 0.1f)
-		return;
+		return supply->priv->rate_old;
 
 	/* probably okay */
-	energy_rate = energy * 3600 / time_s;
-	g_object_set (device, "energy-rate", energy_rate, NULL);
+	return energy * 3600.0 / time_s;
 }
 
 /**
@@ -441,7 +436,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 
 	/* get the currect charge */
 	energy = sysfs_get_double (native_path, "energy_now") / 1000000.0;
-	if (energy == 0)
+	if (energy < 0.01)
 		energy = sysfs_get_double (native_path, "energy_avg") / 1000000.0;
 
 	/* used to convert A to W later */
@@ -492,7 +487,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 		energy_full_design = sysfs_get_double (native_path, "energy_full_design") / 1000000.0;
 
 		/* convert charge to energy */
-		if (energy == 0) {
+		if (energy < 0.01) {
 			energy_full = sysfs_get_double (native_path, "charge_full") / 1000000.0;
 			energy_full_design = sysfs_get_double (native_path, "charge_full_design") / 1000000.0;
 			energy_full *= voltage_design;
@@ -560,19 +555,19 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 
 	/* this is the new value in uW */
 	energy_rate = fabs (sysfs_get_double (native_path, "power_now") / 1000000.0);
-	if (energy_rate == 0) {
+	if (energy_rate < 0.01) {
 		gdouble charge_full;
 
 		/* convert charge to energy */
-		if (energy == 0) {
+		if (energy < 0.01) {
 			energy = sysfs_get_double (native_path, "charge_now") / 1000000.0;
-			if (energy == 0)
+			if (energy < 0.01)
 				energy = sysfs_get_double (native_path, "charge_avg") / 1000000.0;
 			energy *= voltage_design;
 		}
 
 		charge_full = sysfs_get_double (native_path, "charge_full") / 1000000.0;
-		if (charge_full == 0)
+		if (charge_full < 0.01)
 			charge_full = sysfs_get_double (native_path, "charge_full_design") / 1000000.0;
 
 		/* If charge_full exists, then current_now is always reported in uA.
@@ -591,7 +586,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 
 	/* present voltage */
 	voltage = sysfs_get_double (native_path, "voltage_now") / 1000000.0;
-	if (voltage == 0)
+	if (voltage < 0.01)
 		voltage = sysfs_get_double (native_path, "voltage_avg") / 1000000.0;
 
 	/* ACPI gives out the special 'Ones' value for rate when it's unable
@@ -605,8 +600,8 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 		energy_rate = 0;
 
 	/* the hardware reporting failed -- try to calculate this */
-	if (energy_rate < 0)
-		up_device_supply_calculate_rate (supply);
+	if (energy_rate < 0.01)
+		energy_rate = up_device_supply_calculate_rate (supply, energy);
 
 	/* get a precise percentage */
 	if (energy_full > 0.0f) {
@@ -696,9 +691,12 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	if (time_to_full > (20 * 60 * 60))
 		time_to_full = 0;
 
-	/* set the old status */
-	supply->priv->energy_old = energy;
-	g_get_current_time (&supply->priv->energy_old_timespec);
+	/* set the old status if it hasn't changed */
+	if (supply->priv->energy_old != energy) {
+		supply->priv->energy_old = energy;
+		supply->priv->rate_old = energy_rate;
+		g_get_current_time (&supply->priv->energy_old_timespec);
+	}
 
 	/* we changed state */
 	g_object_get (device, "state", &old_state, NULL);
