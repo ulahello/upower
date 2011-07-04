@@ -1,3 +1,14 @@
+Version 0.9.12
+~~~~~~~~~~~~~~
+Released: 2011-07-04
+
+Bugfixes:
+ - Add AC_PROG_LIBTOOL as advised by autotools (Landry Breuil)
+ - Add openbsd missing includes for close and strcmp (Landry Breuil)
+ - Fix how we estimate the device rate for batteries that do not provide this data (Richard Hughes)
+ - Silence some openbsd warnings about unused vars and bad return values (Landry Breuil)
+ - Switch to using .xz tarballs (Richard Hughes)
+
 Version 0.9.11
 ~~~~~~~~~~~~~~
 Released: 2011-05-25
