@@ -26,8 +26,8 @@ if test -z $GTKDOCIZE; then
 fi
 
 gtkdocize
-intltoolize --copy --force --automake
-autoreconf --force --install --verbose
+autopoint --force
+AUTOPOINT='intltoolize --automake --copy' autoreconf --force --install --verbose
 
 cd $olddir
 test -n "$NOCONFIGURE" || "$srcdir/configure" "$@"
