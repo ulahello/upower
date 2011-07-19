@@ -74,9 +74,17 @@ FIXXREF_OPTIONS=
 MAINTAINERCLEANFILES =		\
 	*~			\
 	Makefile.in		\
-	upower.types	\
-	upower-*.txt	\
-	$(NULL)
+	UPower.types		\
+	UPower-*.txt
+
+DISTCLEANFILES =					\
+	org.freedesktop.UPower.Device.ref.xml		\
+	org.freedesktop.UPower.KbdBacklight.ref.xml	\
+	org.freedesktop.UPower.QoS.ref.xml		\
+	org.freedesktop.UPower.ref.xml			\
+	upowerd.xml					\
+	upower.xml					\
+	UPower.xml
 
 if ENABLE_GTK_DOC
 include $(top_srcdir)/gtk-doc.make
@@ -87,3 +95,4 @@ endif
 # Version information for marking the documentation
 EXTRA_DIST += version.xml.in
 
+-include $(top_srcdir)/git.mk

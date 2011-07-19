@@ -23,5 +23,9 @@ org.freedesktop.UPower.Wakeups.ref.xml : $(top_srcdir)/src/org.freedesktop.UPowe
 
 EXTRA_DIST = spec-to-docbook.xsl dbus-introspect-docs.dtd
 
+MAINTAINERCLEANFILES = *.ref.xml
+
 clean-local :
 	rm -f *~ *.ref.xml
+
+-include $(top_srcdir)/git.mk

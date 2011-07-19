@@ -53,3 +53,4 @@ libupshared_la_CFLAGS =					\
 clean-local :
 	rm -f *~
 
+-include $(top_srcdir)/git.mk

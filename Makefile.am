@@ -25,9 +25,25 @@ $(srcdir)/ChangeLog:
 	  echo A git checkout and git-log is required to generate this file >> $@); \
 	fi
 
-EXTRA_DIST = 			\
-	HACKING 		\
+EXTRA_DIST = 				\
+	HACKING 			\
 	ChangeLog
+
+MAINTAINERCLEANFILES =			\
+	$(srcdir)ABOUT-NLS		\
+	$(srcdir)aclocal.m4		\
+	$(srcdir)build-aux		\
+	$(srcdir)ChangeLog		\
+	$(srcdir)config.h.in		\
+	$(srcdir)gtk-doc.make		\
+	$(srcdir)po/Makefile.in.in~	\
+	$(srcdir)po/Makevars.template	\
+	$(srcdir)po/Rules-quot		\
+	$(srcdir)po/e*.header		\
+	$(srcdir)po/*.sin		\
+	$(srcdir)po/*.sed		\
+	$(srcdir)*.tar.xz		\
+	$(srcdir)INSTALL
 
 snapshot:
 	$(MAKE) dist distdir=$(PACKAGE)-$(VERSION)-`date +"%Y%m%d"`
@@ -40,3 +56,5 @@ DISTCHECK_CONFIGURE_FLAGS=--disable-man-pages --enable-gtk-doc
 
 clean-local :
 	rm -f *~
+
+-include $(top_srcdir)/git.mk

@@ -202,6 +202,10 @@ install-data-hook:
 
 CLEANFILES = $(BUILT_SOURCES)
 
+MAINTAINERCLEANFILES =						\
+	$(dbusconf_DATA)					\
+	$(service_DATA)
+
 EXTRA_DIST =							\
 	org.freedesktop.UPower.xml				\
 	org.freedesktop.UPower.Device.xml			\
@@ -215,3 +219,4 @@ EXTRA_DIST =							\
 clean-local :
 	rm -f *~ $(service_DATA) $(dbusconf_DATA)
 
+-include $(top_srcdir)/git.mk

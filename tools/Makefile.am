@@ -31,3 +31,5 @@ CLEANFILES = $(BUILT_SOURCES)
 
 clean-local :
 	rm -f *~ $(service_DATA) $(dbusconf_DATA)
+
+-include $(top_srcdir)/git.mk

@@ -1,8 +1,0 @@
-.deps
-upower
-*-glue.h
-*.o
-*-marshal.c
-*-marshal.h
-.libs
-
