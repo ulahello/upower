@@ -63,6 +63,30 @@ G_DEFINE_TYPE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
 static gboolean		 up_device_supply_refresh	 	(UpDevice *device);
 
 /**
+ * up_device_supply_is_power_supply:
+ *
+ * Blacklist wacom tablets until we get a sysfs interface that
+ * doesn't suck...
+ **/
+static gboolean
+up_device_supply_is_power_supply (UpDeviceSupply *supply)
+{
+	gchar *native_path;
+	gboolean is_power_supply = TRUE;
+
+	g_object_get (supply,
+		      "native-path", &native_path,
+		      NULL);
+	if (g_strstr_len (native_path, -1, "wacom_battery") != NULL ||
+	    g_strstr_len (native_path, -1, "wacom_ac") != NULL) {
+		g_debug ("found a wacom tablet");
+		is_power_supply = FALSE;
+	}
+	g_free (native_path);
+	return is_power_supply;
+}
+
+/**
  * up_device_supply_refresh_line_power:
  *
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
@@ -74,8 +98,10 @@ up_device_supply_refresh_line_power (UpDeviceSupply *supply)
 	GUdevDevice *native;
 	const gchar *native_path;
 
-	/* force true */
-	g_object_set (device, "power-supply", TRUE, NULL);
+	/* is providing power to computer? */
+	g_object_set (device,
+		      "power-supply", up_device_supply_is_power_supply (supply),
+		      NULL);
 
 	/* get new AC value */
 	native = G_UDEV_DEVICE (up_device_get_native (device));
@@ -447,7 +473,9 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	    up_device_supply_units_changed (supply, native_path)) {
 
 		/* when we add via sysfs power_supply class then we know this is true */
-		g_object_set (device, "power-supply", TRUE, NULL);
+		g_object_set (device,
+			      "power-supply", up_device_supply_is_power_supply (supply),
+			      NULL);
 
 		/* the ACPI spec is bad at defining battery type constants */
 		technology_native = up_device_supply_get_string (native_path, "technology");
