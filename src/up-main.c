@@ -41,7 +41,7 @@
 #include "up-kbd-backlight.h"
 #include "up-wakeups.h"
 
-#if GLIB_CHECK_VERSION(2,29,4)
+#if GLIB_CHECK_VERSION(2,29,19)
  #include <glib-unix.h>
 #endif
 
@@ -92,7 +92,7 @@ out:
 	return ret;
 }
 
-#if GLIB_CHECK_VERSION(2,29,4)
+#if GLIB_CHECK_VERSION(2,29,19)
 
 /**
  * up_main_sigint_cb:
@@ -201,13 +201,13 @@ main (gint argc, gchar **argv)
 		goto out;
 	}
 
-#if GLIB_CHECK_VERSION(2,29,4)
+#if GLIB_CHECK_VERSION(2,29,19)
 	/* do stuff on ctrl-c */
-	g_unix_signal_add_watch_full (SIGINT,
-				      G_PRIORITY_DEFAULT,
-				      up_main_sigint_cb,
-				      loop,
-				      NULL);
+	g_unix_signal_add_full (G_PRIORITY_DEFAULT,
+				SIGINT,
+				up_main_sigint_cb,
+				loop,
+				NULL);
 #else
 	signal (SIGINT, up_main_sigint_handler);
 #endif
