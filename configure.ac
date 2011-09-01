@@ -173,16 +173,13 @@ AC_ARG_WITH([backend],
 	    AS_HELP_STRING([--with-backend=<option>],
 			   [Default backend to use linux, freebsd, openbsd, dummy (dummy)]))
 # default to a sane option
+AC_CANONICAL_HOST
 if test x$with_backend = x; then
-	if test -e /usr/include/gudev-1.0/gudev/gudev.h ; then
-		with_backend=linux
-	elif test -e /usr/include/dev/acpica/acpiio.h ; then
-	    	with_backend=freebsd
-	elif test -e /usr/include/machine/apmvar.h ; then
-	    	with_backend=openbsd
-	else
-		with_backend=dummy
-	fi
+	AS_CASE([$host],
+		[*-linux*],   [with_backend=linux],
+		[*-freebsd*], [with_backend=freebsd],
+		[*-openbsd*], [with_backedn=openbsd],
+		              [with_backend=dummy])
 fi
 AC_DEFINE_UNQUOTED(BACKEND, "$with_backend", [backend])
 AC_SUBST(BACKEND, "$with_backend")
