@@ -178,7 +178,7 @@ if test x$with_backend = x; then
 	AS_CASE([$host],
 		[*-linux*],   [with_backend=linux],
 		[*-freebsd*], [with_backend=freebsd],
-		[*-openbsd*], [with_backedn=openbsd],
+		[*-openbsd*], [with_backend=openbsd],
 		              [with_backend=dummy])
 fi
 AC_DEFINE_UNQUOTED(BACKEND, "$with_backend", [backend])
