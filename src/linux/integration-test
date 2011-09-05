@@ -24,8 +24,8 @@ import subprocess
 import unittest
 import shutil
 import time
-import glib
 
+from gi.repository import GLib
 from gi.repository import Gio
 
 UP = 'org.freedesktop.UPower'
@@ -169,7 +169,7 @@ class Tests(unittest.TestCase):
             try:
                 self.get_dbus_property('DaemonVersion')
                 break
-            except glib.GError:
+            except GLib.GError:
                 pass
 
         self.proxy = Gio.DBusProxy.new_sync(self.dbus,
