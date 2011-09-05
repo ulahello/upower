@@ -1,3 +1,20 @@
+Version 0.9.13
+~~~~~~~~~~~~~~
+Released: 2011-09-05
+
+New Features:
+ - Modernize autotools config (Javier Jardón)
+ - Use git.mk and remove the manual .gitignore files (Richard Hughes)
+ - Use upstream gettext instead the glib one (Javier Jardón)
+
+Bugfixes:
+ - Avoid warnings about missing annotations (Javier Jardón)
+ - Don't rely on files' presence to define the default backend (Diego Elio Pettenò)
+ - Fully port the test suite to use GObject Introspection (Martin Pitt)
+ - Hardcode wacom battery devices as not power-supply devices (Richard Hughes)
+ - Use autoreconf instead custom script (Javier Jardón)
+ - Use g_unix_signal_add_full() which has been renamed in GLib (Denis Washington)
+
 Version 0.9.12
 ~~~~~~~~~~~~~~
 Released: 2011-07-04
