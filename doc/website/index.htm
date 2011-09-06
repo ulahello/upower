@@ -1,0 +1,59 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta name="robots" content="index,follow">
+<link rel="stylesheet" type="text/css" charset="utf-8" media="all" href="common.css">
+<title>UPower</title>
+</head>
+<body>
+<h1>UPower</h1>
+<p>
+<img src="img/battery.png" alt="[image of a battery]">
+</p>
+<p>
+UPower is an abstraction for enumerating power devices,
+listening to device events and querying history and statistics.
+Any application or service on the system can access the
+<code>org.freedesktop.UPower</code> service via the system message bus.
+Some operations (such as suspending the system) are restricted using <a href="http://hal.freedesktop.org/docs/PolicyKit/">PolicyKit</a>.
+</p>
+<p>
+UPower was <a href="http://lists.freedesktop.org/archives/devkit-devel/2009-December/000567.html">
+once called DeviceKit-power</a>.
+UPower aims to make a large chunk of HAL redundant, as HAL is officially
+<a href="http://lists.freedesktop.org/archives/hal/2008-May/011560.html">deprecated</a>.
+</p>
+<p>
+UPower is also useful to control the
+<a href="http://blogs.gnome.org/hughsie/2008/11/06/devicekit-power-latency-control/">
+latency of different operations</a> on your computer,
+which enables you to save significant amounts of power.
+Nothing much uses this interface yet, but this is a classic chicken and egg scenario,
+and I think it's important to encourage the egg to lay a chicken.
+Please report any problems to the
+<a href="http://lists.freedesktop.org/mailman/listinfo/devkit-devel">DeviceKit</a>
+mailing list.
+</p>
+<p>
+Documentation is available <a href="docs/">here</a>.
+</p>
+<p>
+Releases are available <a href="releases/">here</a>.
+</p>
+<p>
+The source is managed using Git.
+You can <a href="http://cgit.freedesktop.org/upower/">browse</a> the
+repository using cgit or clone it using the following command:
+</p>
+<pre>
+$ git clone git://anongit.freedesktop.org/upower
+</pre>
+<p class="footer">
+Copyright <a href="mailto:richard@hughsie.com">Richard Hughes 2007-2010</a><br>
+<a href="http://validator.w3.org/check/referer">Optimized</a>
+for <a href="http://www.w3.org/">standards</a>.
+</p>
+</body>
+</html>
+
