@@ -177,7 +177,7 @@ AC_CANONICAL_HOST
 if test x$with_backend = x; then
 	AS_CASE([$host],
 		[*-linux*],   [with_backend=linux],
-		[*-freebsd*], [with_backend=freebsd],
+		[*-*freebsd*], [with_backend=freebsd],
 		[*-openbsd*], [with_backend=openbsd],
 		              [with_backend=dummy])
 fi
