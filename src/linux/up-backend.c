@@ -361,8 +361,8 @@ up_backend_supports_sleep_state (const gchar *state)
 		g_error_free (error);
 		goto out;
 	}
-	if (WIFEXITED(exit_status) && (WEXITSTATUS(exit_status) == EXIT_SUCCESS))
-		ret = TRUE;
+	ret = (WIFEXITED(exit_status) && (WEXITSTATUS(exit_status) == EXIT_SUCCESS));
+
 out:
 	g_free (command);
 	return ret;
