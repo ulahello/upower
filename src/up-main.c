@@ -137,6 +137,41 @@ up_main_timed_exit_cb (GMainLoop *loop)
 }
 
 /**
+ * up_main_log_ignore_cb:
+ **/
+static void
+up_main_log_ignore_cb (const gchar *log_domain, GLogLevelFlags log_level,
+		       const gchar *message, gpointer user_data)
+{
+}
+
+/**
+ * up_main_log_handler_cb:
+ **/
+static void
+up_main_log_handler_cb (const gchar *log_domain, GLogLevelFlags log_level,
+			const gchar *message, gpointer user_data)
+{
+	gchar str_time[255];
+	time_t the_time;
+
+	/* header always in green */
+	time (&the_time);
+	strftime (str_time, 254, "%H:%M:%S", localtime (&the_time));
+	g_print ("%c[%dmTI:%s\t", 0x1B, 32, str_time);
+
+	/* critical is also in red */
+	if (log_level == G_LOG_LEVEL_CRITICAL ||
+	    log_level == G_LOG_LEVEL_WARNING ||
+	    log_level == G_LOG_LEVEL_ERROR) {
+		g_print ("%c[%dm%s\n%c[%dm", 0x1B, 31, message, 0x1B, 0);
+	} else {
+		/* debug in blue */
+		g_print ("%c[%dm%s\n%c[%dm", 0x1B, 34, message, 0x1B, 0);
+	}
+}
+
+/**
  * main:
  **/
 gint
@@ -156,6 +191,7 @@ main (gint argc, gchar **argv)
 	gboolean immediate_exit = FALSE;
 	gboolean session_bus = FALSE;
 	guint timer_id = 0;
+	gboolean verbose = FALSE;
 
 	const GOptionEntry options[] = {
 		{ "timed-exit", '\0', 0, G_OPTION_ARG_NONE, &timed_exit,
@@ -166,6 +202,8 @@ main (gint argc, gchar **argv)
 		  _("Exit after the engine has loaded"), NULL },
 		{ "test", '\0', 0, G_OPTION_ARG_NONE, &session_bus,
 		  _("Run on the session bus (only for testing)"), NULL },
+		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
+		  _("Show extra debugging information"), NULL },
 		{ NULL}
 	};
 
@@ -175,6 +213,35 @@ main (gint argc, gchar **argv)
 	g_option_context_add_main_entries (context, options, NULL);
 	g_option_context_parse (context, &argc, &argv, NULL);
 	g_option_context_free (context);
+
+	/* verbose? */
+	if (verbose) {
+		g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR |
+					    G_LOG_LEVEL_CRITICAL);
+		g_log_set_handler (G_LOG_DOMAIN,
+				   G_LOG_LEVEL_ERROR |
+				   G_LOG_LEVEL_CRITICAL |
+				   G_LOG_LEVEL_DEBUG |
+				   G_LOG_LEVEL_WARNING,
+				   up_main_log_handler_cb, NULL);
+		g_log_set_handler ("UPower-Linux",
+				   G_LOG_LEVEL_ERROR |
+				   G_LOG_LEVEL_CRITICAL |
+				   G_LOG_LEVEL_DEBUG |
+				   G_LOG_LEVEL_WARNING,
+				   up_main_log_handler_cb, NULL);
+	} else {
+		/* hide all debugging */
+		g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR);
+		g_log_set_handler (G_LOG_DOMAIN,
+				   G_LOG_LEVEL_DEBUG,
+				   up_main_log_ignore_cb,
+				   NULL);
+		g_log_set_handler ("UPower-Linux",
+				   G_LOG_LEVEL_DEBUG,
+				   up_main_log_ignore_cb,
+				   NULL);
+	}
 
 	/* get bus connection */
 	if (session_bus)
