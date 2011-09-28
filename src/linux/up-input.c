@@ -213,7 +213,7 @@ up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
 	/* get device file */
 	device_file = g_udev_device_get_device_file (d);
 	if (device_file == NULL || device_file[0] == '\0') {
-		g_warning ("no device file");
+		g_debug ("no device file: %s", native_path);
 		ret = FALSE;
 		goto out;
 	}
