@@ -1,3 +1,14 @@
+Version 0.9.14
+~~~~~~~~~~~~~~
+Released: 2011-10-03
+
+New Features:
+ - Filter the debugging details unless --verbose is specified (Richard Hughes)
+
+Bugfixes:
+ - Fix linux up_backend_supports_sleep_state() return code (Christian Seiler)
+ - Fix the kFreeBSD detection (Pino Toscano)
+
 Version 0.9.13
 ~~~~~~~~~~~~~~
 Released: 2011-09-05
