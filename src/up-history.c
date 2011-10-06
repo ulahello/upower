@@ -631,7 +631,7 @@ up_history_schedule_save (UpHistory *history)
 	/* if low power, then don't batch up save requests */
 	ret = up_history_is_low_power (history);
 	if (ret) {
-		g_warning ("saving directly to disk as low power");
+		g_debug ("saving directly to disk as low power");
 		up_history_save_data (history);
 		return TRUE;
 	}
