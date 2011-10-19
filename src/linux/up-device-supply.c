@@ -45,13 +45,17 @@
 #define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_CHARGE		TRUE
 #define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_ENERGY		FALSE
 
+/* number of old energy values to keep cached */
+#define UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH		4
+
 struct UpDeviceSupplyPrivate
 {
 	guint			 poll_timer_id;
 	gboolean		 has_coldplug_values;
 	gboolean		 coldplug_units;
-	gdouble			 energy_old;
-	GTimeVal		 energy_old_timespec;
+	gdouble			*energy_old;
+	GTimeVal		*energy_old_timespec;
+	guint			 energy_old_first;
 	gdouble			 rate_old;
 	guint			 unknown_retries;
 	gboolean		 enable_poll;
@@ -118,12 +122,17 @@ static void
 up_device_supply_reset_values (UpDeviceSupply *supply)
 {
 	UpDevice *device = UP_DEVICE (supply);
+	guint i;
 
 	supply->priv->has_coldplug_values = FALSE;
 	supply->priv->coldplug_units = UP_DEVICE_SUPPLY_COLDPLUG_UNITS_ENERGY;
 	supply->priv->rate_old = 0;
-	supply->priv->energy_old = 0;
-	supply->priv->energy_old_timespec.tv_sec = 0;
+
+	for (i = 0; i < UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH; ++i) {
+		supply->priv->energy_old[i] = 0.0f;
+		supply->priv->energy_old_timespec[i].tv_sec = 0;
+	}
+	supply->priv->energy_old_first = 0;
 
 	/* reset to default */
 	g_object_set (device,
@@ -240,36 +249,90 @@ up_device_supply_get_online (UpDevice *device, gboolean *online)
 }
 
 /**
+ * up_device_supply_push_new_energy:
+ *
+ * Store the new energy in the list of old energies of the supply, so
+ * it can be used to determine the energy rate.
+ */
+static gboolean
+up_device_supply_push_new_energy (UpDeviceSupply *supply, gdouble energy)
+{
+	guint first = supply->priv->energy_old_first;
+	guint new_position = (first + UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH - 1) %
+		UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH;
+
+	/* check if the energy value has changed and, if that's the case,
+	 * store the new values in the buffer. */
+	if (supply->priv->energy_old[first] != energy) {
+		supply->priv->energy_old[new_position] = energy;
+		g_get_current_time (&supply->priv->energy_old_timespec[new_position]);
+		supply->priv->energy_old_first = new_position;
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+/**
  * up_device_supply_calculate_rate:
  **/
 static gdouble
 up_device_supply_calculate_rate (UpDeviceSupply *supply, gdouble energy)
 {
-	guint time_s;
+	gdouble rate = 0.0f;
+	gdouble sum_x = 0.0f; /* sum of the squared times difference */
 	GTimeVal now;
+	guint i;
+	guint valid_values = 0;
 
-	if (energy < 0.1f)
-		return 0.0f;
-
-	if (supply->priv->energy_old < 0.1f)
-		return 0.0f;
-
-	if (supply->priv->energy_old - energy < 0.01)
-		return supply->priv->rate_old;
-
-	/* get the time difference */
+	/* get the time difference from now and use linear regression to determine
+	 * the discharge rate of the battery. */
 	g_get_current_time (&now);
-	time_s = now.tv_sec - supply->priv->energy_old_timespec.tv_sec;
-	if (time_s == 0)
-		return supply->priv->rate_old;
 
-	/* get the difference in charge */
-	energy = fabs (supply->priv->energy_old - energy);
+	/* store the data on the new energy received */
+	up_device_supply_push_new_energy (supply, energy);
+
 	if (energy < 0.1f)
+		return 0.0f;
+
+	if (supply->priv->energy_old[supply->priv->energy_old_first] < 0.1f)
+		return 0.0f;
+
+	/* don't use the new point obtained since it may cause instability in
+	 * the estimate */
+	i = supply->priv->energy_old_first;
+	now = supply->priv->energy_old_timespec[i];
+	do {
+		/* only use this value if it seems valid */
+		if (supply->priv->energy_old_timespec[i].tv_sec && supply->priv->energy_old[i]) {
+			/* This is the square of t_i^2 */
+			sum_x += (now.tv_sec - supply->priv->energy_old_timespec[i].tv_sec) *
+				(now.tv_sec - supply->priv->energy_old_timespec[i].tv_sec);
+
+			/* Sum the module of the energy difference */
+			rate += fabs ((supply->priv->energy_old_timespec[i].tv_sec - now.tv_sec) *
+				      (energy - supply->priv->energy_old[i]));
+			valid_values++;
+		}
+
+		/* get the next element in the circular buffer */
+		i = (i + 1) % UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH;
+	} while (i != supply->priv->energy_old_first);
+
+	/* Check that at least 3 points were involved in computation */
+	if (sum_x == 0.0f || valid_values < 3)
 		return supply->priv->rate_old;
 
-	/* probably okay */
-	return energy * 3600.0 / time_s;
+	/* Compute the discharge per hour, and not per second */
+	rate /= sum_x / 3600.0f;
+
+	/* if the rate is zero, use the old rate. It will usually happens if no
+	 * data is in the buffer yet. If the rate is too high, i.e. more than,
+	 * 100W don't use it. */
+	if (rate == 0.0f || rate > 100.0f)
+		return supply->priv->rate_old;
+
+	return rate;
 }
 
 /**
@@ -719,17 +782,21 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	if (time_to_full > (20 * 60 * 60))
 		time_to_full = 0;
 
-	/* set the old status if it hasn't changed */
-	if (supply->priv->energy_old != energy) {
-		supply->priv->energy_old = energy;
+	/* check if the energy value has changed and, if that's the case,
+	 * store the new values in the buffer. */
+	if (up_device_supply_push_new_energy (supply, energy))
 		supply->priv->rate_old = energy_rate;
-		g_get_current_time (&supply->priv->energy_old_timespec);
-	}
 
 	/* we changed state */
 	g_object_get (device, "state", &old_state, NULL);
-	if (old_state != state)
-		supply->priv->energy_old = 0;
+	if (old_state != state) {
+		for (i = 0; i < UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH; ++i) {
+			supply->priv->energy_old[i] = 0.0f;
+			supply->priv->energy_old_timespec[i].tv_sec = 0;
+
+		}
+		supply->priv->energy_old_first = 0;
+	}
 
 	g_object_set (device,
 		      "energy", energy,
@@ -919,6 +986,11 @@ up_device_supply_init (UpDeviceSupply *supply)
 	supply->priv->unknown_retries = 0;
 	supply->priv->poll_timer_id = 0;
 	supply->priv->enable_poll = TRUE;
+
+	/* allocate the stats for the battery charging & discharging */
+	supply->priv->energy_old = g_new (gdouble, UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH);
+	supply->priv->energy_old_timespec = g_new (GTimeVal, UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH);
+	supply->priv->energy_old_first = 0;
 }
 
 /**
@@ -937,6 +1009,9 @@ up_device_supply_finalize (GObject *object)
 
 	if (supply->priv->poll_timer_id > 0)
 		g_source_remove (supply->priv->poll_timer_id);
+
+	g_free (supply->priv->energy_old);
+	g_free (supply->priv->energy_old_timespec);
 
 	G_OBJECT_CLASS (up_device_supply_parent_class)->finalize (object);
 }
