@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # upower integration test suite
 #
@@ -47,10 +47,11 @@ class Tests(unittest.TestCase):
         else:
             print('Testing installed system binaries')
             daemon_path = None
-            for l in open('/usr/share/dbus-1/system-services/org.freedesktop.UPower.service'):
-                if l.startswith('Exec='):
-                    daemon_path = l.split('=', 1)[1].strip()
-                    break
+            with open('/usr/share/dbus-1/system-services/org.freedesktop.UPower.service') as f:
+                for line in f:
+                    if line.startswith('Exec='):
+                        daemon_path = line.split('=', 1)[1].strip()
+                        break
             assert daemon_path, 'could not determine daemon path from D-BUS .service file'
 
         # if we are root, test the real thing on the system bus, otherwise
@@ -87,7 +88,7 @@ class Tests(unittest.TestCase):
         shutil.rmtree(self.sysfs)
 
         # on failures, print daemon log
-        if not self._resultForDoCleanups.wasSuccessful():
+        if not self._outcomeForDoCleanups.success:
             with open(self.log.name) as f:
                 sys.stderr.write('\n-------------- daemon log: ----------------\n')
                 sys.stderr.write(f.read())
@@ -216,7 +217,7 @@ class Tests(unittest.TestCase):
 
         self.start_daemon()
         self.assertEqual(self.proxy.EnumerateDevices(), [])
-        self.assertRegexpMatches(self.get_dbus_property('DaemonVersion'), '^[0-9.]+$')
+        self.assertRegex(self.get_dbus_property('DaemonVersion'), '^[0-9.]+$')
 
         # without any devices we should assume AC
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
