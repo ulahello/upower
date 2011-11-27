@@ -502,7 +502,12 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	native_path = g_udev_device_get_sysfs_path (native);
 
 	/* have we just been removed? */
-	is_present = sysfs_get_bool (native_path, "present");
+	if (sysfs_file_exists (native_path, "present")) {
+		is_present = sysfs_get_bool (native_path, "present");
+	} else {
+		/* when no present property exists, handle as present */
+		is_present = TRUE;
+	}
 	g_object_set (device, "is-present", is_present, NULL);
 	if (!is_present) {
 		up_device_supply_reset_values (supply);
