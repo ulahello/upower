@@ -40,7 +40,7 @@
 #define UP_DEVICE_SUPPLY_REFRESH_TIMEOUT	30	/* seconds */
 #define UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT	2	/* seconds */
 #define UP_DEVICE_SUPPLY_UNKNOWN_RETRIES	30
-#define UP_DEVICE_SUPPLY_CHARGED_THRESHOLD  90.0f	/* % */
+#define UP_DEVICE_SUPPLY_CHARGED_THRESHOLD	90.0f	/* % */
 
 #define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_CHARGE		TRUE
 #define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_ENERGY		FALSE
@@ -701,6 +701,13 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 			percentage = 0.0f;
 		if (percentage > 100.0f)
 			percentage = 100.0f;
+	}
+
+	/* device is a peripheral and not providing power to the computer */
+	if (energy < 0.01f &&
+	    energy_rate < 0.01f &&
+	    energy_full < 0.01f) {
+		percentage = sysfs_get_double (native_path, "CAPACITY");
 	}
 
 	/* the battery isn't charging or discharging, it's just
