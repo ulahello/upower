@@ -59,36 +59,13 @@ struct UpDeviceSupplyPrivate
 	gdouble			 rate_old;
 	guint			 unknown_retries;
 	gboolean		 enable_poll;
+	gboolean		 is_power_supply;
 };
 
 G_DEFINE_TYPE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
 #define UP_DEVICE_SUPPLY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE_SUPPLY, UpDeviceSupplyPrivate))
 
 static gboolean		 up_device_supply_refresh	 	(UpDevice *device);
-
-/**
- * up_device_supply_is_power_supply:
- *
- * Blacklist wacom tablets until we get a sysfs interface that
- * doesn't suck...
- **/
-static gboolean
-up_device_supply_is_power_supply (UpDeviceSupply *supply)
-{
-	gchar *native_path;
-	gboolean is_power_supply = TRUE;
-
-	g_object_get (supply,
-		      "native-path", &native_path,
-		      NULL);
-	if (g_strstr_len (native_path, -1, "wacom_battery") != NULL ||
-	    g_strstr_len (native_path, -1, "wacom_ac") != NULL) {
-		g_debug ("found a wacom tablet");
-		is_power_supply = FALSE;
-	}
-	g_free (native_path);
-	return is_power_supply;
-}
 
 /**
  * up_device_supply_refresh_line_power:
@@ -104,7 +81,7 @@ up_device_supply_refresh_line_power (UpDeviceSupply *supply)
 
 	/* is providing power to computer? */
 	g_object_set (device,
-		      "power-supply", up_device_supply_is_power_supply (supply),
+		      "power-supply", supply->priv->is_power_supply,
 		      NULL);
 
 	/* get new AC value */
@@ -537,7 +514,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 
 		/* when we add via sysfs power_supply class then we know this is true */
 		g_object_set (device,
-			      "power-supply", up_device_supply_is_power_supply (supply),
+			      "power-supply", supply->priv->is_power_supply,
 			      NULL);
 
 		/* the ACPI spec is bad at defining battery type constants */
@@ -872,8 +849,22 @@ up_device_supply_coldplug (UpDevice *device)
 	if (device_type != NULL) {
 		if (g_ascii_strcasecmp (device_type, "mains") == 0) {
 			type = UP_DEVICE_KIND_LINE_POWER;
+			supply->priv->is_power_supply = TRUE;
 		} else if (g_ascii_strcasecmp (device_type, "battery") == 0) {
 			type = UP_DEVICE_KIND_BATTERY;
+			supply->priv->is_power_supply = TRUE;
+		} else if (g_ascii_strcasecmp (device_type, "USB") == 0) {
+
+			/* use a heuristic to find the device type */
+			if (g_strstr_len (native_path, -1, "wacom_") != NULL ||
+			    g_strstr_len (native_path, -1, "wacom_") != NULL) {
+				type = UP_DEVICE_KIND_TABLET;
+			} else if (g_strstr_len (native_path, -1, "magicmouse_") != NULL) {
+				type = UP_DEVICE_KIND_MOUSE;
+			} else {
+				g_warning ("did not recognise USB path %s, please report",
+					   native_path);
+			}
 		} else {
 			g_warning ("did not recognise type %s, please report", device_type);
 		}
