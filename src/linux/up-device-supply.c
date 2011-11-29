@@ -684,7 +684,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	if (energy < 0.01f &&
 	    energy_rate < 0.01f &&
 	    energy_full < 0.01f) {
-		percentage = sysfs_get_double (native_path, "CAPACITY");
+		percentage = sysfs_get_double (native_path, "capacity");
 	}
 
 	/* the battery isn't charging or discharging, it's just
