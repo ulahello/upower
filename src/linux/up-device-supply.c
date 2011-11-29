@@ -370,6 +370,7 @@ static gdouble
 up_device_supply_get_design_voltage (const gchar *native_path)
 {
 	gdouble voltage;
+	const gchar *device_type;
 
 	/* design maximum */
 	voltage = sysfs_get_double (native_path, "voltage_max_design") / 1000000.0;
@@ -396,6 +397,14 @@ up_device_supply_get_design_voltage (const gchar *native_path)
 	voltage = sysfs_get_double (native_path, "voltage_now") / 1000000.0;
 	if (voltage > 1.00f) {
 		g_debug ("using present voltage (alternate)");
+		goto out;
+	}
+
+	/* is this a USB device? */
+	device_type = up_device_supply_get_string (native_path, "type");
+	if (g_ascii_strcasecmp (device_type, "USB") == 0) {
+		g_debug ("USB device, so assuming 5v");
+		voltage = 5.0f;
 		goto out;
 	}
 
