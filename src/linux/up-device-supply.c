@@ -953,15 +953,12 @@ up_device_supply_refresh (UpDevice *device)
 	case UP_DEVICE_KIND_LINE_POWER:
 		ret = up_device_supply_refresh_line_power (supply);
 		break;
-	case UP_DEVICE_KIND_BATTERY:
+	default:
 		ret = up_device_supply_refresh_battery (supply);
 
 		/* Seems that we don't get change uevents from the
 		 * kernel on some BIOS types */
 		up_device_supply_setup_poll (device);
-		break;
-	default:
-		g_assert_not_reached ();
 		break;
 	}
 
