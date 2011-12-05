@@ -1,3 +1,22 @@
+Version 0.9.15
+~~~~~~~~~~~~~~
+Released: 2011-12-05
+
+New Features:
+ - Add --with-historydir to specify where we want the history files to be stored (Landry Breuil)
+ - Use linear regression to get better predicted battery times (Leonardo Robol)
+
+Bugfixes:
+ - Don't assert when the power_supply device type is usb (Richard Hughes)
+ - Don't spam the log when we're saving history when on low power (Richard Hughes)
+ - Fail the tests gracefully if GI is not available (Martin Pitt)
+ - Fix crash in up_device_csr_finalize() (Martin Pitt)
+ - Fix invocation of src/linux/integration-test (Martin Pitt)
+ - Handle Linux power supplies not exporting a present property (Heiko Stübner)
+ - If a power-supply device doesn't report charge or energy, try to read the percentage (Richard Hughes)
+ - Move the wacom hack to allow us to support other types of USB device (Richard Hughes)
+ - Port the tests to Python 3 (Martin Pitt)
+
 Version 0.9.14
 ~~~~~~~~~~~~~~
 Released: 2011-10-03
