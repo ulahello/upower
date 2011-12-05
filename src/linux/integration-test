@@ -88,18 +88,11 @@ class Tests(unittest.TestCase):
         shutil.rmtree(self.sysfs)
 
         # on failures, print daemon log
-        try:
-            if self._outcomeForDoCleanups.success:
-                return
-        except AttributeError:
-            # _outcomeForDoCleanups is a private member which seems to be a bit
-            # unreliable; if it does not exist, just ignore it
-            return
-
-        with open(self.log.name) as f:
-            sys.stderr.write('\n-------------- daemon log: ----------------\n')
-            sys.stderr.write(f.read())
-            sys.stderr.write('------------------------------\n')
+        if not self._outcomeForDoCleanups.success:
+            with open(self.log.name) as f:
+                sys.stderr.write('\n-------------- daemon log: ----------------\n')
+                sys.stderr.write(f.read())
+                sys.stderr.write('------------------------------\n')
 
     #
     # Methods for fake sysfs
