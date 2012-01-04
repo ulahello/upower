@@ -33,7 +33,7 @@ static void	up_backend_class_init	(UpBackendClass	*klass);
 static void	up_backend_init	(UpBackend		*backend);
 static void	up_backend_finalize	(GObject		*object);
 
-static gboolean	up_backend_apm_get_power_info(int, struct apm_power_info*);
+static gboolean	up_backend_apm_get_power_info(struct apm_power_info*);
 UpDeviceState up_backend_apm_get_battery_state_value(u_char battery_state);
 static void	up_backend_update_acpibat_state(UpDevice*, struct sensordev);
 
@@ -51,7 +51,6 @@ struct UpBackendPrivate
 	UpDevice		*battery;
 	GThread			*apm_thread;
 	gboolean		is_laptop;
-	int			apm_fd;
 };
 
 enum {
@@ -238,16 +237,14 @@ up_backend_get_used_swap (UpBackend *backend)
  **/
 
 static gboolean
-up_backend_apm_get_power_info(int fd, struct apm_power_info *bstate) {
+up_backend_apm_get_power_info(struct apm_power_info *bstate) {
 	bstate->battery_state = 255;
 	bstate->ac_state = 255;
 	bstate->battery_life = 0;
 	bstate->minutes_left = -1;
 
-	if (fd == 0)
-		return TRUE; /* cheat, defaulting values */
-	if (-1 == ioctl(fd, APM_IOC_GETPOWER, bstate)) {
-		g_warning("ioctl on fd %d failed : %s", fd, g_strerror(errno));
+	if (-1 == ioctl(up_apm_get_fd(), APM_IOC_GETPOWER, bstate)) {
+		g_error("ioctl on apm fd failed : %s", g_strerror(errno));
 		return FALSE;
 	}
 	return TRUE;
@@ -277,7 +274,7 @@ up_backend_update_ac_state(UpDevice* device)
 	gboolean ret, new_is_online, cur_is_online;
 	struct apm_power_info a;
 
-	ret = up_backend_apm_get_power_info(up_apm_get_fd(), &a);
+	ret = up_backend_apm_get_power_info(&a);
 	if (!ret)
 		return ret;
 
@@ -304,7 +301,7 @@ up_backend_update_battery_state(UpDevice* device)
 	gint64 cur_time_to_empty, new_time_to_empty;
 	struct apm_power_info a;
 
-	ret = up_backend_apm_get_power_info(up_apm_get_fd(), &a);
+	ret = up_backend_apm_get_power_info(&a);
 	if (!ret)
 		return ret;
 
