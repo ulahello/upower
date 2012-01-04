@@ -375,8 +375,10 @@ up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 					typev = sens.type;
 					bst_cap = sens.value / 1000000.0f;
 				}
-				if (sens.type == SENSOR_INTEGER && !strcmp(sens.desc, "rate"))
-					bst_rate = sens.value / 1000.0f;
+				if ((sens.type == SENSOR_AMPS || sens.type == SENSOR_WATTS) && !strcmp(sens.desc, "rate")) {
+					typev = sens.type;
+					bst_rate = sens.value / 1000000.0f;
+				}
 				/*
 				bif_dvolt = "voltage" = unused ?
 				capacity = lastfull/dcap * 100 ?
@@ -386,7 +388,7 @@ up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 			}
 		}
 	}
-	if (typev == SENSOR_AMPHOUR) {
+	if (typev == SENSOR_AMPHOUR || typev == SENSOR_AMPS) {
 		bst_cap *= bst_volt;
 		bif_lowcap *= bst_volt;
 		bif_lastfullcap *= bst_volt;
