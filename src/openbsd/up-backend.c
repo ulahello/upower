@@ -28,6 +28,8 @@
 #include <string.h> /* strcmp() */
 
 #define UP_BACKEND_SUSPEND_COMMAND	"/usr/sbin/zzz"
+#define UP_BACKEND_POWERSAVE_TRUE_COMMAND	"/usr/sbin/apm -C"
+#define UP_BACKEND_POWERSAVE_FALSE_COMMAND	"/usr/sbin/apm -A"
 
 static void	up_backend_class_init	(UpBackendClass	*klass);
 static void	up_backend_init	(UpBackend		*backend);
@@ -180,7 +182,9 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 const gchar *
 up_backend_get_powersave_command (UpBackend *backend, gboolean powersave)
 {
-	return NULL;
+	if (powersave)
+		return UP_BACKEND_POWERSAVE_TRUE_COMMAND;
+	return UP_BACKEND_POWERSAVE_FALSE_COMMAND;
 }
 
 /**
