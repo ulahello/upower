@@ -53,6 +53,21 @@ up_apm_native_get_path(UpApmNative * native)
 	return native->path;
 }
 
+int
+up_apm_get_fd()
+{
+	static int apm_fd = 0;
+	if (apm_fd == 0) {
+		g_debug("apm_fd is not initialized yet, opening");
+		/* open /dev/apm */
+		if ((apm_fd = open("/dev/apm", O_RDONLY)) == -1) {
+			if (errno != ENXIO && errno != ENOENT)
+				g_error("cannot open device file");
+		}
+	}
+	return apm_fd;
+}
+
 /**
  * up_native_get_native_path:
  * @object: the native tracking object
@@ -74,20 +89,14 @@ up_native_get_native_path (GObject *object)
 gboolean
 up_native_is_laptop()
 {
-	int apm_fd;
 	struct apm_power_info bstate;
 	struct sensordev acpiac;
 
 	if (up_native_get_sensordev("acpiac0", &acpiac))
 		return TRUE;
 
-	if ((apm_fd = open("/dev/apm", O_RDONLY)) == -1) {
-		if (errno != ENXIO && errno != ENOENT)
-			g_error("cannot open device file");
-	}
-	if (-1 == ioctl(apm_fd, APM_IOC_GETPOWER, &bstate))
-		g_error("ioctl on fd %d failed : %s", apm_fd, g_strerror(errno));
-	close(apm_fd);
+	if (-1 == ioctl(up_apm_get_fd(), APM_IOC_GETPOWER, &bstate))
+		g_error("ioctl on apm fd failed : %s", g_strerror(errno));
 	return bstate.ac_state != APM_AC_UNKNOWN;
 }
 

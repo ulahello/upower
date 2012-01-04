@@ -62,8 +62,6 @@ enum {
 
 static guint signals [SIGNAL_LAST] = { 0 };
 
-int apm_fd = 0; /* ugly global.. needs to move to a device native object */
-
 G_DEFINE_TYPE (UpBackend, up_backend, G_TYPE_OBJECT)
 
 /**
@@ -279,7 +277,7 @@ up_backend_update_ac_state(UpDevice* device)
 	gboolean ret, new_is_online, cur_is_online;
 	struct apm_power_info a;
 
-	ret = up_backend_apm_get_power_info(apm_fd, &a);
+	ret = up_backend_apm_get_power_info(up_apm_get_fd(), &a);
 	if (!ret)
 		return ret;
 
@@ -306,7 +304,7 @@ up_backend_update_battery_state(UpDevice* device)
 	gint64 cur_time_to_empty, new_time_to_empty;
 	struct apm_power_info a;
 
-	ret = up_backend_apm_get_power_info(apm_fd, &a);
+	ret = up_backend_apm_get_power_info(up_apm_get_fd(), &a);
 	if (!ret)
 		return ret;
 
@@ -423,10 +421,6 @@ up_apm_device_refresh(UpDevice* device)
 	UpDeviceKind type;
 	GTimeVal timeval;
 	gboolean ret;
-	if (apm_fd == 0) {
-		g_debug("refresh callback called but apm_fd is not initialized yet");
-		return TRUE;
-	}
 	g_object_get (device, "type", &type, NULL);
 
 	switch (type) {
@@ -464,15 +458,10 @@ up_backend_apm_event_thread(gpointer object)
 
 	g_debug("setting up apm thread");
 
-	/* open /dev/apm */
-	if ((apm_fd = open("/dev/apm", O_RDONLY)) == -1) {
-		if (errno != ENXIO && errno != ENOENT)
-			g_error("cannot open device file");
-	}
 	kq = kqueue();
 	if (kq <= 0)
 		g_error("kqueue");
-	EV_SET(&ev, apm_fd, EVFILT_READ, EV_ADD | EV_ENABLE | EV_CLEAR,
+	EV_SET(&ev, up_apm_get_fd(), EVFILT_READ, EV_ADD | EV_ENABLE | EV_CLEAR,
 	    0, 0, NULL);
 	nevents = 1;
 	if (kevent(kq, &ev, nevents, NULL, 0, &sts) < 0)
@@ -488,7 +477,7 @@ up_backend_apm_event_thread(gpointer object)
 			break;
 		if (!rv)
 			continue;
-		if (ev.ident == (guint) apm_fd && APM_EVENT_TYPE(ev.data) == APM_POWER_CHANGE ) {
+		if (ev.ident == (guint) up_apm_get_fd() && APM_EVENT_TYPE(ev.data) == APM_POWER_CHANGE ) {
 			/* g_idle_add the callback */
 			g_idle_add((GSourceFunc) up_backend_apm_powerchange_event_cb, backend);
 		}
