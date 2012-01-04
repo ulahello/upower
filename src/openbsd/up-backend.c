@@ -345,7 +345,7 @@ up_backend_update_battery_state(UpDevice* device)
 static void
 up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 {
-	enum sensor_type type, typev = SENSOR_INTEGER;
+	enum sensor_type type;
 	int numt;
 	gdouble bst_volt, bst_rate, bif_lastfullcap, bst_cap, bif_lowcap;
 	/* gdouble bif_dvolt, bif_dcap, capacity; */
@@ -364,20 +364,16 @@ up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 				if (sens.type == SENSOR_VOLTS_DC && !strcmp(sens.desc, "current voltage"))
 					bst_volt = sens.value / 1000000.0f;
 				if ((sens.type == SENSOR_AMPHOUR || sens.type == SENSOR_WATTHOUR) && !strcmp(sens.desc, "last full capacity")) {
-					typev = sens.type;
-					bif_lastfullcap = sens.value / 1000000.0f;
+					bif_lastfullcap = (sens.type == SENSOR_AMPHOUR ? bst_volt : 1) * sens.value / 1000000.0f;
 				}
 				if ((sens.type == SENSOR_AMPHOUR || sens.type == SENSOR_WATTHOUR) && !strcmp(sens.desc, "low capacity")) {
-					typev = sens.type;
-					bif_lowcap = sens.value / 1000000.0f;
+					bif_lowcap = (sens.type == SENSOR_AMPHOUR ? bst_volt : 1) * sens.value / 1000000.0f;
 				}
 				if ((sens.type == SENSOR_AMPHOUR || sens.type == SENSOR_WATTHOUR) && !strcmp(sens.desc, "remaining capacity")) {
-					typev = sens.type;
-					bst_cap = sens.value / 1000000.0f;
+					bst_cap = (sens.type == SENSOR_AMPHOUR ? bst_volt : 1) * sens.value / 1000000.0f;
 				}
 				if ((sens.type == SENSOR_AMPS || sens.type == SENSOR_WATTS) && !strcmp(sens.desc, "rate")) {
-					typev = sens.type;
-					bst_rate = sens.value / 1000000.0f;
+					bst_rate = (sens.type == SENSOR_AMPS ? bst_volt : 1) * sens.value / 1000000.0f;
 				}
 				/*
 				bif_dvolt = "voltage" = unused ?
@@ -387,12 +383,6 @@ up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 				*/
 			}
 		}
-	}
-	if (typev == SENSOR_AMPHOUR || typev == SENSOR_AMPS) {
-		bst_cap *= bst_volt;
-		bif_lowcap *= bst_volt;
-		bif_lastfullcap *= bst_volt;
-		bst_rate *= bst_volt;
 	}
 	g_object_set (device,
 		"energy", bst_cap,
