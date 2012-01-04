@@ -322,8 +322,8 @@ up_backend_update_battery_state(UpDevice* device)
 	if (a.ac_state == APM_AC_ON)
 		new_state = UP_DEVICE_STATE_CHARGING;
 
-	// zero out new_time_to empty if we're not discharging
-	new_time_to_empty = (new_state == UP_DEVICE_STATE_DISCHARGING ? a.minutes_left : 0);
+	// zero out new_time_to empty if we're not discharging or minutes_left is negative
+	new_time_to_empty = (new_state == UP_DEVICE_STATE_DISCHARGING && a.minutes_left > 0 ? a.minutes_left : 0);
 
 	if (cur_state != new_state ||
 		percentage != (gdouble) a.battery_life ||
