@@ -97,6 +97,7 @@ struct UpDaemonPrivate
 	guint			 about_to_sleep_id;
 	guint			 conf_sleep_timeout;
 	gboolean		 conf_allow_hibernate_encrypted_swap;
+	gboolean		 conf_run_powersave_command;
 	const gchar		*sleep_kind;
 };
 
@@ -768,7 +769,8 @@ up_daemon_startup (UpDaemon *daemon)
 	g_debug ("daemon now not coldplug");
 
 	/* set power policy */
-	up_daemon_set_powersave (daemon, priv->on_battery);
+	if (priv->conf_run_powersave_command)
+		up_daemon_set_powersave (daemon, priv->on_battery);
 out:
 	return ret;
 }
@@ -940,7 +942,8 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 		up_daemon_set_on_battery (daemon, ret);
 
 		/* set power policy */
-		up_daemon_set_powersave (daemon, ret);
+		if (priv->conf_run_powersave_command)
+			up_daemon_set_powersave (daemon, ret);
 	}
 	ret = up_daemon_get_on_low_battery_local (daemon);
 	if (ret != priv->on_low_battery)
@@ -1089,6 +1092,7 @@ up_daemon_init (UpDaemon *daemon)
 	daemon->priv->about_to_sleep_id = 0;
 	daemon->priv->conf_sleep_timeout = 1000;
 	daemon->priv->conf_allow_hibernate_encrypted_swap = FALSE;
+	daemon->priv->conf_run_powersave_command = TRUE;
 
 	/* load some values from the config file */
 	file = g_key_file_new ();
@@ -1105,6 +1109,8 @@ up_daemon_init (UpDaemon *daemon)
 			g_key_file_get_integer (file, "UPower", "SleepTimeout", NULL);
 		daemon->priv->conf_allow_hibernate_encrypted_swap =
 			g_key_file_get_boolean (file, "UPower", "AllowHibernateEncryptedSwap", NULL);
+		daemon->priv->conf_run_powersave_command =
+			g_key_file_get_boolean (file, "UPower", "RunPowersaveCommand", NULL);
 	} else {
 		g_warning ("failed to load config file %s: %s", filename, error->message);
 		g_error_free (error);
