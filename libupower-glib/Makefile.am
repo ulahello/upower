@@ -1,6 +1,7 @@
 INCLUDES = \
 	$(GLIB_CFLAGS)						\
 	$(DBUS_GLIB_CFLAGS)					\
+	-I$(top_builddir)					\
 	-I$(top_srcdir)						\
 	-I$(top_srcdir)/libupower-glib				\
 	-DUP_COMPILATION					\
