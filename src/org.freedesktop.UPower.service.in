@@ -2,4 +2,5 @@
 Name=org.freedesktop.UPower
 Exec=@libexecdir@/upowerd
 User=root
+SystemdService=upower.service
 

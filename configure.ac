@@ -210,6 +210,14 @@ fi
 
 AM_CONDITIONAL(HAVE_IDEVICE, [test x$have_idevice = xyes])
 
+# systemd
+AC_ARG_WITH([systemdsystemunitdir],
+            AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [Directory for systemd service files]),
+            [],
+            [with_systemdsystemunitdir=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)])
+AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])
+AM_CONDITIONAL(HAVE_SYSTEMD, [test -n "$with_systemdsystemunitdir"])
+
 # export to Makefile.am
 AM_CONDITIONAL(BACKEND_TYPE_DUMMY, [test x$with_backend = xdummy])
 AM_CONDITIONAL(BACKEND_TYPE_LINUX, [test x$with_backend = xlinux])
