@@ -213,6 +213,12 @@ up_history_copy_array_timespan (const GPtrArray *array, guint timespan)
 	if (array->len == 0)
 		return NULL;
 
+	/* no limit on data */
+	if (timespan == 0) {
+		array_new = g_ptr_array_ref ((GPtrArray *) array);
+		goto out;
+	}
+
 	/* new data */
 	array_new = g_ptr_array_new ();
 	g_get_current_time (&timeval);
@@ -225,7 +231,7 @@ up_history_copy_array_timespan (const GPtrArray *array, guint timespan)
 		if (timeval.tv_sec - up_history_item_get_time (item) < timespan)
 			g_ptr_array_add (array_new, g_object_ref (item));
 	}
-
+out:
 	return array_new;
 }
 
