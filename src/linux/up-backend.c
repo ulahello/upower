@@ -426,7 +426,9 @@ up_backend_has_encrypted_swap (UpBackend *backend)
 	/* get crypttab data */
 	ret = g_file_get_contents (filename_crypttab, &contents_crypttab, NULL, &error);
 	if (!ret) {
-		g_warning ("failed to open %s: %s", filename_crypttab, error->message);
+		if (error->code != G_FILE_ERROR_NOENT) {
+			g_warning ("failed to open %s: %s", filename_crypttab, error->message);
+		}
 		g_error_free (error);
 		goto out;
 	}
