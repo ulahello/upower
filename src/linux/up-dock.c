@@ -46,22 +46,23 @@ G_DEFINE_TYPE (UpDock, up_dock, G_TYPE_OBJECT)
  * up_dock_device_check:
  **/
 static gboolean
-up_dock_device_check (GUdevDevice *d)
+up_dock_device_check (GUdevDevice *device)
 {
-	const gchar *status;
-	gboolean ret = FALSE;
+	gint docked;
+	gboolean ret;
 
-	/* Get the boolean state from the kernel -- note that ideally
-	 * the property value would be "1" or "true" but now it's
-	 * set in stone as ABI. Urgh. */
-	status = g_udev_device_get_sysfs_attr (d, "status");
-	if (status == NULL)
-		goto out;
-	ret = (g_strcmp0 (status, "connected") == 0);
-	g_debug ("graphics device %s is %s",
-		 g_udev_device_get_sysfs_path (d),
-		 ret ? "on" : "off");
-out:
+	/* Is it a docking station? */
+	if (g_strcmp0 (g_udev_device_get_sysfs_attr (device, "dock_type"), "dock_station") != 0)
+		return FALSE;
+
+	/* Get the boolean state from the kernel */
+	if (g_udev_device_get_sysfs_attr (device, "docked") == NULL)
+		return FALSE;
+
+	docked = g_udev_device_get_sysfs_attr_as_int (device, "docked");
+	ret = (docked == 1);
+	g_debug ("dock_station %s is %s", g_udev_device_get_sysfs_path (device), ret ? "docked" : "undocked");
+
 	return ret;
 }
 
@@ -76,10 +77,9 @@ up_dock_refresh (UpDock *dock)
 	GUdevDevice *native;
 	guint count = 0;
 
-	/* the metric we're using here is that a machine is docked when
-	 * there is more than one active output */
+	/* check to see if there are any docking stations, and if they are docked */
 	devices = g_udev_client_query_by_subsystem (dock->priv->gudev_client,
-						    "drm");
+						    "platform/dock_station");
 	for (l = devices; l != NULL; l = l->next) {
 		native = l->data;
 		count += up_dock_device_check (native);
@@ -163,7 +163,7 @@ up_dock_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 static void
 up_dock_init (UpDock *dock)
 {
-	const gchar *subsystems[] = { "drm", NULL};
+	const gchar *subsystems[] = { "platform/dock_station", NULL};
 	dock->priv = UP_DOCK_GET_PRIVATE (dock);
 	dock->priv->gudev_client = g_udev_client_new (subsystems);
 	g_signal_connect (dock->priv->gudev_client, "uevent",
