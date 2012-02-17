@@ -187,7 +187,7 @@ up_device_hid_set_values (UpDeviceHid *hid, int code, int value)
 
 	switch (code) {
 	case UP_DEVICE_HID_REMAINING_CAPACITY:
-		g_object_set (device, "percentage", (gfloat) value, NULL);
+		g_object_set (device, "percentage", (gfloat) CLAMP (value, 0, 100), NULL);
 		break;
 	case UP_DEVICE_HID_RUNTIME_TO_EMPTY:
 		g_object_set (device, "time-to-empty", (gint64) value, NULL);
