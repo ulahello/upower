@@ -323,7 +323,7 @@ up_device_csr_finalize (GObject *object)
 	csr = UP_DEVICE_CSR (object);
 	g_return_if_fail (csr->priv != NULL);
 
-	if (csr->priv->ctx != NULL);
+	if (csr->priv->ctx != NULL)
 		libusb_exit (csr->priv->ctx);
 	if (csr->priv->poll_timer_id > 0)
 		g_source_remove (csr->priv->poll_timer_id);
