@@ -845,6 +845,7 @@ up_device_supply_coldplug (UpDevice *device)
 	gboolean ret = FALSE;
 	GUdevDevice *native;
 	const gchar *native_path;
+	const gchar *scope;
 	gchar *device_type = NULL;
 	UpDeviceKind type = UP_DEVICE_KIND_UNKNOWN;
 
@@ -858,15 +859,24 @@ up_device_supply_coldplug (UpDevice *device)
 		goto out;
 	}
 
+	/* try to work out if the device is powering the system */
+	scope = g_udev_device_get_sysfs_attr (native, "scope");
+	if (g_ascii_strcasecmp (scope, "device") == 0) {
+		supply->priv->is_power_supply = FALSE;
+	} else if (g_ascii_strcasecmp (scope, "system") == 0) {
+		supply->priv->is_power_supply = TRUE;
+	} else {
+		g_debug ("taking a guess for power supply scope");
+		supply->priv->is_power_supply = TRUE;
+	}
+
 	/* try to detect using the device type */
 	device_type = up_device_supply_get_string (native_path, "type");
 	if (device_type != NULL) {
 		if (g_ascii_strcasecmp (device_type, "mains") == 0) {
 			type = UP_DEVICE_KIND_LINE_POWER;
-			supply->priv->is_power_supply = TRUE;
 		} else if (g_ascii_strcasecmp (device_type, "battery") == 0) {
 			type = UP_DEVICE_KIND_BATTERY;
-			supply->priv->is_power_supply = TRUE;
 		} else if (g_ascii_strcasecmp (device_type, "USB") == 0) {
 
 			/* use a heuristic to find the device type */
