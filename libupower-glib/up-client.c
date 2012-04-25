@@ -339,6 +339,7 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 		g_warning ("No 'DaemonVersion' property");
 		goto out;
 	}
+	g_free (client->priv->daemon_version);
 	client->priv->daemon_version = g_strdup (g_value_get_string (value));
 
 	value = g_hash_table_lookup (props, "CanSuspend");
