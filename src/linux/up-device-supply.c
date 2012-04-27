@@ -678,7 +678,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 		energy_rate = 0;
 
 	/* sanity check to less than 100W */
-	if (energy_rate > 100*1000)
+	if (energy_rate > 100)
 		energy_rate = 0;
 
 	/* the hardware reporting failed -- try to calculate this */
