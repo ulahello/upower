@@ -1,3 +1,27 @@
+Version 0.9.16
+~~~~~~~~~~~~~~
+Released: 2012-04-30
+
+Translations:
+New Features:
+ - Add boolean RunPowersaveCommand to UPower.conf (Landry Breuil)
+ - Install a systemd service file if systemd is used (Benedikt Morbach)
+
+Bugfixes:
+ - Clamp the UPS percentage from 0 to 100 to fix syslog spam (Richard Hughes)
+ - Correct the cap on the energy rate (Gary Ching-Pang Lin)
+ - Do not print error message for missing /etc/crypttab (Kelly Anderson)
+ - Fix crash in up_device_csr_finalize (Martin Pitt)
+ - Never detect HID devices with batteries as power supplies (Richard Hughes)
+ - Re-coldplug dock status when resuming from sleep (Evan Broder)
+ - Return all history records for a timespan of zero (Richard Hughes)
+ - libupower-glib: fix small memory leak (Pavel Vasin)
+ - libupower-glib: srcdir != builddir fix (Ryan Lortie)
+ - openbsd: Fix history by not trying to refresh if /dev/apm wasn't opened yet (Landry Breuil)
+ - openbsd: Handle case where minutes_left might be negative (Landry Breuil)
+ - openbsd: Set powersave command to apm -C/-A (Landry Breuil)
+ - openbsd: Use a singleton pattern to access /dev/apm (Landry Breuil)
+
 Version 0.9.15
 ~~~~~~~~~~~~~~
 Released: 2011-12-05
