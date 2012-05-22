@@ -355,6 +355,7 @@ up_qos_cancel_request (UpQos *qos, guint cookie, DBusGMethodInvocation *context)
 	GError *error;
 	gchar *sender = NULL;
 	PolkitSubject *subject = NULL;
+	UpQosKind item_kind;
 
 	/* find the correct cookie */
 	item = up_qos_find_from_cookie (qos, cookie);
@@ -387,8 +388,9 @@ up_qos_cancel_request (UpQos *qos, guint cookie, DBusGMethodInvocation *context)
 	g_debug ("Clear #%i", cookie);
 
 	/* remove object from list */
+	item_kind = up_qos_item_get_kind (item);
 	g_ptr_array_remove (qos->priv->data, item);
-	up_qos_latency_perhaps_changed (qos, up_qos_item_get_kind (item));
+	up_qos_latency_perhaps_changed (qos, item_kind);
 
 	/* TODO: if persistent remove from datadase */
 
@@ -497,6 +499,7 @@ up_qos_remove_dbus (UpQos *qos, const gchar *sender)
 	guint i;
 	GPtrArray *data;
 	UpQosItem *item;
+	UpQosKind item_kind;
 
 	/* remove *any* senders that match the sender */
 	data = qos->priv->data;
@@ -504,8 +507,9 @@ up_qos_remove_dbus (UpQos *qos, const gchar *sender)
 		item = g_ptr_array_index (data, i);
 		if (strcmp (up_qos_item_get_sender (item), sender) == 0) {
 			g_debug ("Auto-revoked idle qos on %s", sender);
+			item_kind = up_qos_item_get_kind (item);
 			g_ptr_array_remove (qos->priv->data, item);
-			up_qos_latency_perhaps_changed (qos, up_qos_item_get_kind (item));
+			up_qos_latency_perhaps_changed (qos, item_kind);
 		}
 	}
 }
