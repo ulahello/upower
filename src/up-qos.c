@@ -534,7 +534,7 @@ up_qos_class_init (UpQosClass *klass)
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpQosClass, latency_changed),
 			      NULL, NULL, up_marshal_VOID__STRING_INT,
-			      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+			      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT);
 	signals [REQUESTS_CHANGED] =
 		g_signal_new ("requests-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
