@@ -164,14 +164,6 @@
     <!-- ************************************************************ -->
     <method name="CancelRequest">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-      <arg name="type" direction="in" type="s">
-        <doc:doc>
-          <doc:summary>
-            The type of latency to control, <doc:tt>cpu_dma</doc:tt> or
-            <doc:tt>network</doc:tt>.
-          </doc:summary>
-        </doc:doc>
-      </arg>
       <arg name="cookie" direction="in" type="u">
         <doc:doc>
           <doc:summary>
