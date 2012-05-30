@@ -620,6 +620,8 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 		state = UP_DEVICE_STATE_EMPTY;
 	else if (g_ascii_strcasecmp (status, "unknown") == 0)
 		state = UP_DEVICE_STATE_UNKNOWN;
+	else if (g_ascii_strcasecmp (status, "not charging") == 0)
+		state = UP_DEVICE_STATE_PENDING_CHARGE;
 	else {
 		g_warning ("unknown status string: %s", status);
 		state = UP_DEVICE_STATE_UNKNOWN;
