@@ -863,9 +863,9 @@ up_device_supply_coldplug (UpDevice *device)
 
 	/* try to work out if the device is powering the system */
 	scope = g_udev_device_get_sysfs_attr (native, "scope");
-	if (g_ascii_strcasecmp (scope, "device") == 0) {
+	if (scope != NULL && g_ascii_strcasecmp (scope, "device") == 0) {
 		supply->priv->is_power_supply = FALSE;
-	} else if (g_ascii_strcasecmp (scope, "system") == 0) {
+	} else if (scope != NULL && g_ascii_strcasecmp (scope, "system") == 0) {
 		supply->priv->is_power_supply = TRUE;
 	} else {
 		g_debug ("taking a guess for power supply scope");
