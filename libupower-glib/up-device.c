@@ -563,6 +563,10 @@ out:
 	return ret;
 }
 
+/* FIXME: GValueArray is deprecated in GLib 2.33+, but we need to convert to
+ * GDBus to get rid of it */
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 /**
  * up_device_get_history_sync:
  * @device: a #UpDevice instance.
@@ -727,6 +731,8 @@ out:
 		g_ptr_array_free (gvalue_ptr_array, TRUE);
 	return array;
 }
+
+#pragma GCC diagnostic error "-Wdeprecated-declarations"
 
 /*
  * up_device_set_property:

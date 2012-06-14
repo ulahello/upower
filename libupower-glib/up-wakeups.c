@@ -87,6 +87,10 @@ up_wakeups_get_total_sync (UpWakeups *wakeups, GCancellable *cancellable, GError
 	return total;
 }
 
+/* FIXME: GValueArray is deprecated in GLib 2.33+, but we need to convert to
+ * GDBus to get rid of it */
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 /**
  * up_wakeups_get_data_sync:
  * @wakeups: a #UpWakeups instance.
@@ -180,6 +184,8 @@ out:
 		g_ptr_array_unref (gvalue_ptr_array);
 	return array;
 }
+
+#pragma GCC diagnostic error "-Wdeprecated-declarations"
 
 /**
  * up_wakeups_ensure_properties:
