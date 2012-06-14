@@ -58,6 +58,11 @@ class Tests(unittest.TestCase):
                         break
             assert daemon_path, 'could not determine daemon path from D-BUS .service file'
 
+        # fail on CRITICALs on client side
+        GLib.log_set_always_fatal(GLib.LogLevelFlags.LEVEL_WARNING|
+                                  GLib.LogLevelFlags.LEVEL_ERROR|
+                                  GLib.LogLevelFlags.LEVEL_CRITICAL)
+
         # if we are root, test the real thing on the system bus, otherwise
         # start on the session bus
         if os.geteuid() == 0:
@@ -163,19 +168,24 @@ class Tests(unittest.TestCase):
         When done, this sets self.proxy a the Gio.DBusProxy for upowerd.
         '''
         env = os.environ.copy()
+        env['G_DEBUG'] = 'fatal-criticals'
         env['SYSFS_PATH'] = self.sysfs
         self.log = tempfile.NamedTemporaryFile()
         self.daemon = subprocess.Popen(self.daemon_argv,
                 env=env, stdout=self.log, stderr=subprocess.STDOUT)
 
         # wait until the daemon gets online
-        while True:
+        timeout = 100
+        while timeout > 0:
             time.sleep(0.1)
+            timeout -= 1
             try:
                 self.get_dbus_property('DaemonVersion')
                 break
             except GLib.GError:
                 pass
+        else:
+            self.fail('daemon did not start in 10 seconds')
 
         self.proxy = Gio.DBusProxy.new_sync(self.dbus,
                 Gio.DBusProxyFlags.DO_NOT_AUTO_START, None,
