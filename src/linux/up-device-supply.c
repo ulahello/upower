@@ -886,11 +886,8 @@ up_device_supply_coldplug (UpDevice *device)
 		} else if (g_ascii_strcasecmp (device_type, "USB") == 0) {
 
 			/* use a heuristic to find the device type */
-			if (g_strstr_len (native_path, -1, "wacom_") != NULL ||
-			    g_strstr_len (native_path, -1, "wacom_") != NULL) {
+			if (g_strstr_len (native_path, -1, "wacom_") != NULL) {
 				type = UP_DEVICE_KIND_TABLET;
-			} else if (g_strstr_len (native_path, -1, "magicmouse_") != NULL) {
-				type = UP_DEVICE_KIND_MOUSE;
 			} else {
 				g_warning ("did not recognise USB path %s, please report",
 					   native_path);
