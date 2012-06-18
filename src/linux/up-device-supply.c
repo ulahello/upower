@@ -147,6 +147,7 @@ up_device_supply_get_on_battery (UpDevice *device, gboolean *on_battery)
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
 	UpDeviceKind type;
 	UpDeviceState state;
+	gboolean is_power_supply;
 	gboolean is_present;
 
 	g_return_val_if_fail (UP_IS_DEVICE_SUPPLY (supply), FALSE);
@@ -156,8 +157,11 @@ up_device_supply_get_on_battery (UpDevice *device, gboolean *on_battery)
 		      "type", &type,
 		      "state", &state,
 		      "is-present", &is_present,
+		      "power-supply", &is_power_supply,
 		      NULL);
 
+	if (!is_power_supply)
+		return FALSE;
 	if (type != UP_DEVICE_KIND_BATTERY)
 		return FALSE;
 	if (state == UP_DEVICE_STATE_UNKNOWN)
