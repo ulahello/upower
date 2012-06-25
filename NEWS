@@ -1,3 +1,20 @@
+Version 0.9.17
+~~~~~~~~~~~~~~
+Released: 2012-06-25
+
+New Features:
+ - Fail on CRITICALs in the integration-test (Martin Pitt)
+
+Bugfixes:
+ - Drop 'type' parameter from CancelRequest() signature (Sascha Silbe)
+ - Fix the LatencyChanged signal (Sascha Silbe)
+ - Fix use-after-free of qos item (Sascha Silbe)
+ - Fix wrong PowerSupply property for devices without a scope sysfs attribute (Martin Pitt)
+ - linux: Don't allow non-power-supply devices to set the OnBattery property (Daniel Nicoletti)
+ - linux: Remove obsolete check for magicmouse_ and duplicated wacom_ checks (Daniel Nicoletti)
+ - linux: Treat the battery state 'not charging' as PENDING_CHARGE (Richard Hughes)
+ - Selectively disable warnings for deprecated GValueArray (Martin Pitt)
+
 Version 0.9.16
 ~~~~~~~~~~~~~~
 Released: 2012-04-30
