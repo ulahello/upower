@@ -237,11 +237,11 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
             System state is not preserved if the power is lost.
           </doc:para>
           <doc:para>
-            If AboutToRequestSleep() has not been called then UPower will send
+            If AboutToSleep() has not been called then UPower will send
             the Sleeping() signal and block for one second.
           </doc:para>
           <doc:para>
-            If AboutToRequestSleep() has been called less than one second
+            If AboutToSleep() has been called less than one second
             before this method is called then UPower will block for the
             remaining time to complete one second of delay.
           </doc:para>
@@ -277,11 +277,11 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
             System state is preserved if the power is lost.
           </doc:para>
           <doc:para>
-            If AboutToRequestSleep() has not been called then UPower will send
+            If AboutToSleep() has not been called then UPower will send
             the Sleeping() signal and block for one second.
           </doc:para>
           <doc:para>
-            If AboutToRequestSleep() has been called less than one second
+            If AboutToSleep() has been called less than one second
             before this method is called then UPower will block for the
             remaining time to complete one second of delay.
           </doc:para>
