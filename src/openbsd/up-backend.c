@@ -529,6 +529,7 @@ static void
 up_backend_init (UpBackend *backend)
 {
 	GError *err = NULL;
+	GTimeVal timeval;
 	UpDeviceClass *device_class;
 
 	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
@@ -558,6 +559,7 @@ up_backend_init (UpBackend *backend)
 		}
 
 		/* setup dummy */
+		g_get_current_time (&timeval);
 		g_object_set (backend->priv->battery,
 			      "type", UP_DEVICE_KIND_BATTERY,
 			      "power-supply", TRUE,
@@ -567,11 +569,13 @@ up_backend_init (UpBackend *backend)
 			      "state", UP_DEVICE_STATE_UNKNOWN,
 			      "percentage", 0.0f,
 			      "time-to-empty", (gint64) 0,
+			      "update-time", (guint64) timeval.tv_sec,
 			      (void*) NULL);
 		g_object_set (backend->priv->ac,
 			      "type", UP_DEVICE_KIND_LINE_POWER,
 			      "online", TRUE,
 			      "power-supply", TRUE,
+			      "update-time", (guint64) timeval.tv_sec,
 			      (void*) NULL);
 	} else {
 		backend->priv->ac = NULL;
