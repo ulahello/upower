@@ -30,6 +30,8 @@ libupshared_la_SOURCES =					\
 	up-device-supply.h					\
 	up-device-csr.c						\
 	up-device-csr.h						\
+	up-device-lg-unifying.c					\
+	up-device-lg-unifying.h					\
 	up-device-hid.c						\
 	up-device-hid.h						\
 	up-device-wup.c						\

@@ -36,6 +36,7 @@
 
 #include "up-device-supply.h"
 #include "up-device-csr.h"
+#include "up-device-lg-unifying.h"
 #include "up-device-wup.h"
 #include "up-device-hid.h"
 #include "up-input.h"
@@ -166,20 +167,27 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 		/* check input device */
 		input = up_input_new ();
 		ret = up_input_coldplug (input, backend->priv->daemon, native);
-		if (!ret) {
+		if (ret) {
+			/* we now have a lid */
+			up_daemon_set_lid_is_present (backend->priv->daemon, TRUE);
+
+			/* not a power device */
+			up_device_list_insert (backend->priv->managed_devices, G_OBJECT (native), G_OBJECT (input));
+
+			/* no valid input object */
+			device = NULL;
+		} else {
 			g_object_unref (input);
-			goto out;
+
+			/* see if this is a Unifying mouse or keyboard */
+			device = UP_DEVICE (up_device_unifying_new ());
+			ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+			if (!ret) {
+				g_object_unref (device);
+				/* no valid input object */
+				device = NULL;
+			}
 		}
-
-		/* we now have a lid */
-		up_daemon_set_lid_is_present (backend->priv->daemon, TRUE);
-
-		/* not a power device */
-		up_device_list_insert (backend->priv->managed_devices, G_OBJECT (native), G_OBJECT (input));
-
-		/* no valid input object */
-		device = NULL;
-
 	} else {
 		native_path = g_udev_device_get_sysfs_path (native);
 		g_warning ("native path %s (%s) ignoring", native_path, subsys);
