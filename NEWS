@@ -1,3 +1,13 @@
+Version 0.9.18
+~~~~~~~~~~~~~~
+Released: 2012-08-08
+
+New Features:
+ - Use systemd if possible for suspend and hibernate (Matthias Clasen)
+
+Bugfixes:
+ - openbsd: Properly initialize update-time when creating devices (Landry Breuil)
+
 Version 0.9.17
 ~~~~~~~~~~~~~~
 Released: 2012-06-25
