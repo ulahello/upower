@@ -603,10 +603,11 @@ gboolean
 up_backend_emits_resuming (UpBackend *backend)
 {
 #ifdef HAVE_SYSTEMD
-	return TRUE;
-#else
-	return FALSE;
+	if (sd_booted ())
+		return TRUE;
+	else
 #endif
+	return FALSE;
 }
 
 /**
