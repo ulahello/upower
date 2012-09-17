@@ -4,3 +4,4 @@
 	--dest=org.freedesktop.UPower		\
 	/org/freedesktop/UPower			\
 	org.freedesktop.UPower.Resuming
+exit 0
