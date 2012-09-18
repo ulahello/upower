@@ -42,19 +42,19 @@ up-marshal.c: up-marshal.list
 	echo "#include \"up-marshal.h\"" > $@ && glib-genmarshal $< --prefix=up_marshal --body >> $@
 
 up-daemon-glue.h: org.freedesktop.UPower.xml Makefile.am
-	dbus-binding-tool --prefix=up_daemon --mode=glib-server --output=up-daemon-glue.h org.freedesktop.UPower.xml
+	dbus-binding-tool --prefix=up_daemon --mode=glib-server --output=up-daemon-glue.h $(srcdir)/org.freedesktop.UPower.xml
 
 up-device-glue.h: org.freedesktop.UPower.Device.xml Makefile.am
-	dbus-binding-tool --prefix=up_device --mode=glib-server --output=up-device-glue.h org.freedesktop.UPower.Device.xml
+	dbus-binding-tool --prefix=up_device --mode=glib-server --output=up-device-glue.h $(srcdir)/org.freedesktop.UPower.Device.xml
 
 up-qos-glue.h: org.freedesktop.UPower.QoS.xml Makefile.am
-	dbus-binding-tool --prefix=up_qos --mode=glib-server --output=up-qos-glue.h org.freedesktop.UPower.QoS.xml
+	dbus-binding-tool --prefix=up_qos --mode=glib-server --output=up-qos-glue.h $(srcdir)/org.freedesktop.UPower.QoS.xml
 
 up-kbd-backlight-glue.h: org.freedesktop.UPower.KbdBacklight.xml Makefile.am
-	dbus-binding-tool --prefix=up_kbd_backlight --mode=glib-server --output=up-kbd-backlight-glue.h org.freedesktop.UPower.KbdBacklight.xml
+	dbus-binding-tool --prefix=up_kbd_backlight --mode=glib-server --output=up-kbd-backlight-glue.h $(srcdir)/org.freedesktop.UPower.KbdBacklight.xml
 
 up-wakeups-glue.h: org.freedesktop.UPower.Wakeups.xml Makefile.am
-	dbus-binding-tool --prefix=up_wakeups --mode=glib-server --output=up-wakeups-glue.h org.freedesktop.UPower.Wakeups.xml
+	dbus-binding-tool --prefix=up_wakeups --mode=glib-server --output=up-wakeups-glue.h $(srcdir)/org.freedesktop.UPower.Wakeups.xml
 
 libexec_PROGRAMS = upowerd
 
