@@ -567,7 +567,7 @@ skip:
 out:
 	g_free (data);
 	g_strfreev (lines);
-	return TRUE;
+	return ret;
 }
 
 /**
