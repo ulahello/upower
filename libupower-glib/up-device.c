@@ -81,6 +81,7 @@ struct _UpDevicePrivate
 	gdouble			 energy_full_design;	/* Watt Hours */
 	gdouble			 energy_rate;		/* Watts */
 	gdouble			 voltage;		/* Volts */
+	gdouble			 luminosity;   		/* Lux */
 	gint64			 time_to_empty;		/* seconds */
 	gint64			 time_to_full;		/* seconds */
 	gdouble			 percentage;		/* percent */
@@ -112,6 +113,7 @@ enum {
 	PROP_ENERGY_FULL_DESIGN,
 	PROP_ENERGY_RATE,
 	PROP_VOLTAGE,
+	PROP_LUMINOSITY,
 	PROP_TIME_TO_EMPTY,
 	PROP_TIME_TO_FULL,
 	PROP_PERCENTAGE,
@@ -195,6 +197,8 @@ up_device_collect_props_cb (const char *key, const GValue *value, UpDevice *devi
 		device->priv->energy_rate = g_value_get_double (value);
 	} else if (g_strcmp0 (key, "Voltage") == 0) {
 		device->priv->voltage = g_value_get_double (value);
+	} else if (g_strcmp0 (key, "Luminosity") == 0) {
+		device->priv->luminosity = g_value_get_double (value);
 	} else if (g_strcmp0 (key, "TimeToFull") == 0) {
 		device->priv->time_to_full = g_value_get_int64 (value);
 	} else if (g_strcmp0 (key, "TimeToEmpty") == 0) {
@@ -480,6 +484,10 @@ up_device_to_text (UpDevice *device)
 	    device->priv->kind == UP_DEVICE_KIND_MONITOR) {
 		if (device->priv->voltage > 0)
 			g_string_append_printf (string, "    voltage:             %g V\n", device->priv->voltage);
+	}
+	if (device->priv->kind == UP_DEVICE_KIND_KEYBOARD) {
+		if (device->priv->luminosity > 0)
+			g_string_append_printf (string, "    luminosity:          %g lx\n", device->priv->luminosity);
 	}
 	if (device->priv->kind == UP_DEVICE_KIND_BATTERY ||
 	    device->priv->kind == UP_DEVICE_KIND_UPS) {
@@ -807,6 +815,9 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 	case PROP_VOLTAGE:
 		device->priv->voltage = g_value_get_double (value);
 		break;
+	case PROP_LUMINOSITY:
+		device->priv->luminosity = g_value_get_double (value);
+		break;
 	case PROP_TIME_TO_EMPTY:
 		device->priv->time_to_empty = g_value_get_int64 (value);
 		break;
@@ -907,6 +918,9 @@ up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 		break;
 	case PROP_VOLTAGE:
 		g_value_set_double (value, device->priv->voltage);
+		break;
+	case PROP_LUMINOSITY:
+		g_value_set_double (value, device->priv->luminosity);
 		break;
 	case PROP_TIME_TO_EMPTY:
 		g_value_set_int64 (value, device->priv->time_to_empty);
@@ -1232,6 +1246,19 @@ up_device_class_init (UpDeviceClass *klass)
 	g_object_class_install_property (object_class,
 					 PROP_VOLTAGE,
 					 g_param_spec_double ("voltage", NULL, NULL,
+							      0.0, G_MAXDOUBLE, 0.0,
+							      G_PARAM_READWRITE));
+
+	/**
+	 * UpDevice:luminosity:
+	 *
+	 * The current luminosity of the device.
+	 *
+	 * Since: 0.9.19
+	 **/
+	g_object_class_install_property (object_class,
+					 PROP_LUMINOSITY,
+					 g_param_spec_double ("luminosity", NULL, NULL,
 							      0.0, G_MAXDOUBLE, 0.0,
 							      G_PARAM_READWRITE));
 	/**

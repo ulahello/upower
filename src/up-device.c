@@ -73,6 +73,7 @@ struct UpDevicePrivate
 	gdouble			 energy_full_design;	/* Watt Hours */
 	gdouble			 energy_rate;		/* Watts */
 	gdouble			 voltage;		/* Volts */
+	gdouble			 luminosity;		/* Lux */
 	gint64			 time_to_empty;		/* seconds */
 	gint64			 time_to_full;		/* seconds */
 	gdouble			 percentage;		/* percent */
@@ -105,6 +106,7 @@ enum {
 	PROP_ENERGY_FULL_DESIGN,
 	PROP_ENERGY_RATE,
 	PROP_VOLTAGE,
+	PROP_LUMINOSITY,
 	PROP_TIME_TO_EMPTY,
 	PROP_TIME_TO_FULL,
 	PROP_PERCENTAGE,
@@ -235,6 +237,9 @@ up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 	case PROP_VOLTAGE:
 		g_value_set_double (value, device->priv->voltage);
 		break;
+	case PROP_LUMINOSITY:
+		g_value_set_double (value, device->priv->luminosity);
+		break;
 	case PROP_TIME_TO_EMPTY:
 		g_value_set_int64 (value, device->priv->time_to_empty);
 		break;
@@ -334,6 +339,9 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 		break;
 	case PROP_VOLTAGE:
 		device->priv->voltage = g_value_get_double (value);
+		break;
+	case PROP_LUMINOSITY:
+		device->priv->luminosity = g_value_get_double (value);
 		break;
 	case PROP_TIME_TO_EMPTY:
 		device->priv->time_to_empty = g_value_get_int64 (value);
@@ -1127,6 +1135,14 @@ up_device_class_init (UpDeviceClass *klass)
 	g_object_class_install_property (object_class,
 					 PROP_VOLTAGE,
 					 g_param_spec_double ("voltage", NULL, NULL,
+							      0.0, G_MAXDOUBLE, 0.0,
+							      G_PARAM_READWRITE));
+	/**
+	 * UpDevice:luminosity:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_LUMINOSITY,
+					 g_param_spec_double ("luminosity", NULL, NULL,
 							      0.0, G_MAXDOUBLE, 0.0,
 							      G_PARAM_READWRITE));
 	/**

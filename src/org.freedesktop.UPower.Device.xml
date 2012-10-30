@@ -482,6 +482,16 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
+    <property name="Luminosity" type="d" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Luminosity being recorded by the meter.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </property>
+
     <property name="TimeToEmpty" type="x" access="read">
       <doc:doc>
         <doc:description>
