@@ -139,7 +139,7 @@ up_client_print (UpClient *client)
 
 	g_print ("  daemon-version:  %s\n", daemon_version);
 	g_print ("  can-suspend:     %s\n", can_suspend ? "yes" : "no");
-	g_print ("  can-hibernate    %s\n", can_hibernate ? "yes" : "no");
+	g_print ("  can-hibernate:   %s\n", can_hibernate ? "yes" : "no");
 	g_print ("  on-battery:      %s\n", on_battery ? "yes" : "no");
 	g_print ("  on-low-battery:  %s\n", on_low_battery ? "yes" : "no");
 	g_print ("  lid-is-closed:   %s\n", lid_is_closed ? "yes" : "no");
