@@ -84,10 +84,9 @@
 #define HIDPP_FEATURE_GETDEVICENAMETYPE_FUNCTION_GETCOUNT      (0x00 << 4)
 #define HIDPP_FEATURE_GETDEVICENAMETYPE_FUNCTION_GETDEVICENAME (0x01 << 4)
 
-/* I wish i has the spec for this, but I don't so I invented the name */
-#define HIDPP_FEATURE_K750_BATTERY                                   0x4301
-#define HIDPP_FEATURE_K750_BATTERY_FUNCTION_STARTLUXANDBATTERY   (0x00 << 4)
-#define HIDPP_FEATURE_K750_BATTERY_FUNCTION_LUXANDBATTERYEVENT   (0x01 << 4)
+#define HIDPP_FEATURE_SOLAR_DASHBOARD                                     0x4301
+#define HIDPP_FEATURE_SOLAR_DASHBOARD_FUNCTION_SetLightMeasure       (0x00 << 4)
+#define HIDPP_FEATURE_SOLAR_DASHBOARD_BattLightMeasureBroadcastEvent (0x01 << 4)
 
 #define HIDPP_FEATURE_FUNCTION_AS_ARG(feature)	\
 	feature >> 8, feature, 0x00
@@ -105,7 +104,7 @@ struct UpDeviceUnifyingPrivate
 	int			 fd;
 	/* Device index on the Unifying "bus" */
 	gint			 device_index;
-	gint			 feature_k750_battery_index;
+	gint			 feature_solar_dashboard_index;
 	GIOChannel		*channel;
 	guint			 channel_source_id;
 };
@@ -130,8 +129,8 @@ up_device_unifying_event_io (GIOChannel *channel, GIOCondition condition, gpoint
 	while (read (unifying->priv->fd, buf, sizeof(buf)) > 0)
 		if (buf[0] == HIDPP_HEADER_RESPONSE &&
 		    buf[1] == unifying->priv->device_index &&
-		    buf[2] == unifying->priv->feature_k750_battery_index &&
-		    buf[3] == HIDPP_FEATURE_K750_BATTERY_FUNCTION_LUXANDBATTERYEVENT) {
+		    buf[2] == unifying->priv->feature_solar_dashboard_index &&
+		    buf[3] == HIDPP_FEATURE_SOLAR_DASHBOARD_BattLightMeasureBroadcastEvent) {
 			lux = (buf[5] << 8) | buf[6];
 			if (lux > 200) {
 				g_object_set (device,
@@ -283,25 +282,24 @@ up_device_unifying_hidpp2_set_battery (UpDeviceUnifying *unifying)
 		0x00, 0x00, 0x00, 0x00, 0x00,
 	};
 
-	if (unifying->priv->feature_k750_battery_index == -1)
-		unifying->priv->feature_k750_battery_index =
-			up_device_unifying_hidpp2_get_feature_index (unifying, HIDPP_FEATURE_K750_BATTERY);
+	if (unifying->priv->feature_solar_dashboard_index == -1)
+		unifying->priv->feature_solar_dashboard_index =
+			up_device_unifying_hidpp2_get_feature_index (unifying, HIDPP_FEATURE_SOLAR_DASHBOARD);
 
-	if (unifying->priv->feature_k750_battery_index == 0) {
-		/* Probably not a K750 */
+	if (unifying->priv->feature_solar_dashboard_index == 0) {
+		/* Probably not a solar keyboard */
 		/* TODO: add support for BatteryLevelStatus */
 	} else {
 		/* This request will make the keyboard send a bunch of packets
 		 * (events) with lux-meter and battery information */
-		request[2] = unifying->priv->feature_k750_battery_index;
-		request[3] = HIDPP_FEATURE_K750_BATTERY_FUNCTION_STARTLUXANDBATTERY;
-		/* Don't know what this means */
-		request[4] = 0x78;
-		request[5] = 0x01;
+		request[2] = unifying->priv->feature_solar_dashboard_index;
+		request[3] = HIDPP_FEATURE_SOLAR_DASHBOARD_FUNCTION_SetLightMeasure;
+		request[4] = 0x01; /* Max number of reports: number of report sent after function call */
+		request[5] = 0x01; /* Report period: time between reports, in seconds */
 
 
 		if (write (unifying->priv->fd, request, sizeof(request)) != sizeof(request)) {
-			g_debug ("Unable to send K750 battery/lux events start request to device");
+			g_debug ("Unable to send solar battery/lux events start request to device");
 			return FALSE;
 		}
 
@@ -719,7 +717,7 @@ up_device_unifying_init (UpDeviceUnifying *unifying)
 	unifying->priv = UP_DEVICE_UNIFYING_GET_PRIVATE (unifying);
 	unifying->priv->poll_timer_id = 0;
 	unifying->priv->fd = -1;
-	unifying->priv->feature_k750_battery_index = -1;
+	unifying->priv->feature_solar_dashboard_index = -1;
 }
 
 /**
