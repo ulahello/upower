@@ -2,11 +2,11 @@ UPower Release Notes
 
 1. Write NEWS entries for UPower in the same format as usual.
 
-git shortlog UPOWER_0_9_18.. | grep -i -v trivial | grep -v Merge > NEWS.new
+git shortlog UPOWER_0_9_19.. | grep -i -v trivial | grep -v Merge > NEWS.new
 
-Version 0.9.19
+Version 0.9.20
 ~~~~~~~~~~~~~~
-Released: 2012-xx-xx
+Released: 2013-xx-xx
 
 New Features:
 Bugfixes:
