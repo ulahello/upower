@@ -1,3 +1,20 @@
+Version 0.9.19
+~~~~~~~~~~~~~~
+Released: 2013-01-02
+
+New Features:
+ - Add a Documentation tag to the service file (Matthias Clasen)
+ - Add luminosity property (Julien Danjou)
+ - Add support for Logitech Unifying devices (Julien Danjou)
+
+Bugfixes:
+ - Always return 0 from notify-upower.sh (Richard Hughes)
+ - Do not continue to poll if /proc/timer_stats is not readable (Richard Hughes)
+ - Fix "can-hibernate" formatting in upower --dump (Martin Pitt)
+ - Fix device matching for recent kernels (Peter Hurley)
+ - Fix srcdir != builddir (Colin Walters)
+ - Send resume signal when built with systemd and using pm-utils suspend (Jan Alexander Steffens)
+
 Version 0.9.18
 ~~~~~~~~~~~~~~
 Released: 2012-08-08
