@@ -36,7 +36,7 @@
 
 #include "up-device-supply.h"
 #include "up-device-csr.h"
-#include "up-device-lg-unifying.h"
+#include "up-device-unifying.h"
 #include "up-device-wup.h"
 #include "up-device-hid.h"
 #include "up-input.h"
@@ -118,6 +118,18 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 		/* no valid power supply object */
 		device = NULL;
 
+	} else if (g_strcmp0 (subsys, "hid") == 0) {
+
+		/* see if this is a Unifying mouse or keyboard */
+		device = UP_DEVICE (up_device_unifying_new ());
+		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+		if (ret)
+			goto out;
+		g_object_unref (device);
+
+		/* no valid power supply object */
+		device = NULL;
+
 	} else if (g_strcmp0 (subsys, "tty") == 0) {
 
 		/* try to detect a Watts Up? Pro monitor */
@@ -176,18 +188,8 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 
 			/* no valid input object */
 			device = NULL;
-		} else {
-			g_object_unref (input);
-
-			/* see if this is a Unifying mouse or keyboard */
-			device = UP_DEVICE (up_device_unifying_new ());
-			ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
-			if (!ret) {
-				g_object_unref (device);
-				/* no valid input object */
-				device = NULL;
-			}
 		}
+		g_object_unref (input);
 	} else {
 		native_path = g_udev_device_get_sysfs_path (native);
 		g_warning ("native path %s (%s) ignoring", native_path, subsys);
@@ -328,7 +330,7 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 	GList *l;
 	guint i;
 	gboolean ret;
-	const gchar *subsystems[] = {"power_supply", "usb", "usbmisc", "tty", "input", NULL};
+	const gchar *subsystems[] = {"power_supply", "usb", "usbmisc", "tty", "input", "hid", NULL};
 
 	backend->priv->daemon = g_object_ref (daemon);
 	backend->priv->device_list = up_daemon_get_device_list (daemon);

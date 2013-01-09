@@ -30,8 +30,8 @@ libupshared_la_SOURCES =					\
 	up-device-supply.h					\
 	up-device-csr.c						\
 	up-device-csr.h						\
-	up-device-lg-unifying.c					\
-	up-device-lg-unifying.h					\
+	up-device-unifying.c					\
+	up-device-unifying.h					\
 	up-device-hid.c						\
 	up-device-hid.h						\
 	up-device-wup.c						\
@@ -42,10 +42,24 @@ libupshared_la_SOURCES =					\
 	up-dock.h						\
 	up-backend.c						\
 	up-native.c						\
+	hidpp-device.c						\
+	hidpp-device.h						\
 	sysfs-utils.c						\
 	sysfs-utils.h						\
 	$(idevice_files)					\
 	$(BUILT_SOURCES)
+
+noinst_PROGRAMS =						\
+	hidpp-test
+hidpp_test_SOURCES =						\
+	hidpp-device.c						\
+	hidpp-device.h						\
+	hidpp-test.c
+hidpp_test_LDADD =						\
+	-lm							\
+	$(GLIB_LIBS)						\
+	$(GIO_LIBS)
+hidpp_test_CFLAGS = $(AM_CFLAGS) $(WARNINGFLAGS_C)
 
 EXTRA_DIST = $(libupshared_la_SOURCES) 			\
 	     integration-test
