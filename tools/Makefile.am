@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	-DUP_COMPILATION					\
 	-DG_LOG_DOMAIN=\"UPower\"				\
 	-I$(top_srcdir)						\

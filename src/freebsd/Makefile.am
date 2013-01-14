@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	-I$(top_builddir)/src -I$(top_srcdir)/src		\
 	-DUP_COMPILATION					\
 	-DG_LOG_DOMAIN=\"UPower-Freebsd\"			\
