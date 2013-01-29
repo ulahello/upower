@@ -374,7 +374,7 @@ static gdouble
 up_device_supply_get_design_voltage (const gchar *native_path)
 {
 	gdouble voltage;
-	const gchar *device_type;
+	gchar *device_type = NULL;
 
 	/* design maximum */
 	voltage = sysfs_get_double (native_path, "voltage_max_design") / 1000000.0;
@@ -416,6 +416,7 @@ up_device_supply_get_design_voltage (const gchar *native_path)
 	g_warning ("no voltage values, using 10V as approximation");
 	voltage = 10.0f;
 out:
+	g_free (device_type);
 	return voltage;
 }
 

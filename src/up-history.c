@@ -922,6 +922,7 @@ up_history_finalize (GObject *object)
 	g_ptr_array_unref (history->priv->data_time_empty);
 
 	g_free (history->priv->id);
+	g_free (history->priv->dir);
 
 	g_return_if_fail (history->priv != NULL);
 
