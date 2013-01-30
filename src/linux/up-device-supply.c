@@ -574,7 +574,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 		energy_full_design = sysfs_get_double (native_path, "energy_full_design") / 1000000.0;
 
 		/* convert charge to energy */
-		if (energy < 0.01) {
+		if (energy_full < 0.01) {
 			energy_full = sysfs_get_double (native_path, "charge_full") / 1000000.0;
 			energy_full_design = sysfs_get_double (native_path, "charge_full_design") / 1000000.0;
 			energy_full *= voltage_design;
