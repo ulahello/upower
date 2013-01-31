@@ -782,9 +782,9 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 
 	/* check the remaining time is under a set limit, to deal with broken
 	   primary batteries rate */
-	if (time_to_empty > (20 * 60 * 60))
+	if (time_to_empty > (240 * 60 * 60)) /* ten days for discharging */
 		time_to_empty = 0;
-	if (time_to_full > (20 * 60 * 60))
+	if (time_to_full > (20 * 60 * 60)) /* 20 hours for charging */
 		time_to_full = 0;
 
 	/* check if the energy value has changed and, if that's the case,
