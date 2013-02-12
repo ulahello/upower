@@ -95,9 +95,9 @@ static void up_backend_device_remove (UpBackend *backend, GUdevDevice *native);
 #ifdef ENABLE_DEPRECATED
 #define UP_BACKEND_SUSPEND_COMMAND		"/usr/sbin/pm-suspend"
 #define UP_BACKEND_HIBERNATE_COMMAND		"/usr/sbin/pm-hibernate"
-#endif
 #define UP_BACKEND_POWERSAVE_TRUE_COMMAND	"/usr/sbin/pm-powersave true"
 #define UP_BACKEND_POWERSAVE_FALSE_COMMAND	"/usr/sbin/pm-powersave false"
+#endif
 
 /**
  * up_backend_device_new:
@@ -628,6 +628,7 @@ up_backend_emits_resuming (UpBackend *backend)
 }
 #endif
 
+#ifdef ENABLE_DEPRECATED
 /**
  * up_backend_get_powersave_command:
  **/
@@ -638,6 +639,7 @@ up_backend_get_powersave_command (UpBackend *backend, gboolean powersave)
 		return UP_BACKEND_POWERSAVE_TRUE_COMMAND;
 	return UP_BACKEND_POWERSAVE_FALSE_COMMAND;
 }
+#endif
 
 /**
  * up_backend_class_init:

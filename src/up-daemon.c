@@ -102,8 +102,8 @@ struct UpDaemonPrivate
 	guint			 about_to_sleep_id;
 	guint			 conf_sleep_timeout;
 	gboolean		 conf_allow_hibernate_encrypted_swap;
-#endif
 	gboolean		 conf_run_powersave_command;
+#endif
 	const gchar		*sleep_kind;
 };
 
@@ -254,6 +254,7 @@ up_daemon_get_on_ac_local (UpDaemon *daemon)
 	return result;
 }
 
+#ifdef ENABLE_DEPRECATED
 /**
  * up_daemon_set_powersave:
  **/
@@ -280,6 +281,7 @@ up_daemon_set_powersave (UpDaemon *daemon, gboolean powersave)
 out:
 	return ret;
 }
+#endif
 
 /**
  * up_daemon_refresh_battery_devices:
@@ -847,9 +849,11 @@ up_daemon_startup (UpDaemon *daemon)
 	priv->during_coldplug = FALSE;
 	g_debug ("daemon now not coldplug");
 
+#ifdef ENABLE_DEPRECATED
 	/* set power policy */
 	if (priv->conf_run_powersave_command)
 		up_daemon_set_powersave (daemon, priv->on_battery);
+#endif
 out:
 	return ret;
 }
@@ -1020,9 +1024,11 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 	if (ret != priv->on_battery) {
 		up_daemon_set_on_battery (daemon, ret);
 
+#ifdef ENABLE_DEPRECATED
 		/* set power policy */
 		if (priv->conf_run_powersave_command)
 			up_daemon_set_powersave (daemon, ret);
+#endif
 	}
 	ret = up_daemon_get_on_low_battery_local (daemon);
 	if (ret != priv->on_low_battery)
@@ -1166,8 +1172,8 @@ up_daemon_init (UpDaemon *daemon)
 	daemon->priv->battery_poll_count = 0;
 #ifdef ENABLE_DEPRECATED
 	daemon->priv->conf_sleep_timeout = 1000;
-#endif
 	daemon->priv->conf_run_powersave_command = TRUE;
+#endif
 
 	/* load some values from the config file */
 	file = g_key_file_new ();
@@ -1185,9 +1191,9 @@ up_daemon_init (UpDaemon *daemon)
 			g_key_file_get_integer (file, "UPower", "SleepTimeout", NULL);
 		daemon->priv->conf_allow_hibernate_encrypted_swap =
 			g_key_file_get_boolean (file, "UPower", "AllowHibernateEncryptedSwap", NULL);
-#endif
 		daemon->priv->conf_run_powersave_command =
 			g_key_file_get_boolean (file, "UPower", "RunPowersaveCommand", NULL);
+#endif
 	} else {
 		g_warning ("failed to load config file %s: %s", filename, error->message);
 		g_error_free (error);

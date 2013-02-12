@@ -78,8 +78,10 @@ gfloat		 up_backend_get_used_swap		(UpBackend	*backend);
 const gchar	*up_backend_get_suspend_command		(UpBackend	*backend);
 const gchar	*up_backend_get_hibernate_command	(UpBackend	*backend);
 #endif
+#ifdef ENABLE_DEPRECATED
 const gchar	*up_backend_get_powersave_command	(UpBackend	*backend,
 							 gboolean	 powersave);
+#endif
 #ifdef ENABLE_DEPRECATED
 gboolean	 up_backend_emits_resuming		(UpBackend	*backend);
 #endif
