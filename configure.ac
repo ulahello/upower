@@ -61,16 +61,10 @@ AC_SYS_LARGEFILE
 # Initialize libtool
 LT_INIT
 
-# Taken from dbus
-AC_ARG_ENABLE(ansi,             [  --enable-ansi           enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
-AC_ARG_ENABLE(verbose-mode,     [  --enable-verbose-mode   support verbose debug mode],enable_verbose_mode=$enableval,enable_verbose_mode=$USE_MAINTAINER_MODE)
+# Build man pages?
 AC_ARG_ENABLE(man-pages,        [  --enable-man-pages      build manual pages],enable_man_pages=$enableval,enable_man_pages=yes)
-
 if test "${enable_man_page}" != no; then
-dnl
-dnl Check for xsltproc
-dnl
-AC_PATH_PROG([XSLTPROC], [xsltproc])
+  AC_PATH_PROG([XSLTPROC], [xsltproc])
   if test -z "$XSLTPROC"; then
     enable_man_pages=no
   fi
