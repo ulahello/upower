@@ -61,6 +61,15 @@ AC_SYS_LARGEFILE
 # Initialize libtool
 LT_INIT
 
+# Build deprecated functionality
+AC_ARG_ENABLE(deprecated, [  --enable-deprecated      build deprecated functionality],
+	      enable_deprecated=$enableval,
+	      enable_deprecated=no)
+if test "${enable_deprecated}" != no; then
+  AC_DEFINE(ENABLE_DEPRECATED, 1, [Define if we should build deprecated functionalty])
+fi
+AM_CONDITIONAL(ENABLE_DEPRECATED, test x$enable_deprecated = xyes)
+
 # Build man pages?
 AC_ARG_ENABLE(man-pages,        [  --enable-man-pages      build manual pages],enable_man_pages=$enableval,enable_man_pages=yes)
 if test "${enable_man_page}" != no; then
@@ -291,6 +300,7 @@ echo "
         cppflags:                   ${CPPFLAGS}
         xsltproc:                   ${XSLTPROC}
 
+        Enable deprecated stuff:    ${enable_deprecated}
         Backend:                    ${with_backend}
         libimobiledevice support:   ${have_idevice}
         Maintainer mode:            ${USE_MAINTAINER_MODE}
