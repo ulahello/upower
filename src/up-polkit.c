@@ -250,16 +250,12 @@ up_polkit_init (UpPolkit *polkit)
 		goto out;
 	}
 
-#ifdef USE_SECURITY_POLKIT_NEW
 	polkit->priv->authority = polkit_authority_get_sync (NULL, &error);
 	if (polkit->priv->authority == NULL) {
 		g_error ("failed to get pokit authority: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
-#else
-	polkit->priv->authority = polkit_authority_get ();
-#endif
 out:
 	return;
 }

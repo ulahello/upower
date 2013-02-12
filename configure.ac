@@ -142,20 +142,7 @@ AC_SUBST(WARNINGFLAGS_C)
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.21.5])
 PKG_CHECK_MODULES(DBUS, [dbus-1 >= 1.0])
 PKG_CHECK_MODULES(DBUS_GLIB, [dbus-glib-1 >= 0.76])
-
-# polkit >= 0.97 uses polkit_authority_get_sync() rather than
-# polkit_authority_get
-PKG_CHECK_MODULES(POLKIT, \
-		  polkit-gobject-1 >= 0.97,
-		  has_new_polkit=yes,
-		  has_new_polkit=no)
-if test x$has_new_polkit = xno; then
-	PKG_CHECK_MODULES(POLKIT, \
-			  polkit-gobject-1 >= 0.91)
-else
-	AC_DEFINE(USE_SECURITY_POLKIT_NEW, 1, [if we should use PolicyKits new API])
-fi
-
+PKG_CHECK_MODULES(POLKIT, polkit-gobject-1 >= 0.97)
 PKG_CHECK_MODULES(GIO, [gio-2.0 >= 2.16.1])
 
 dnl ====================================================================
