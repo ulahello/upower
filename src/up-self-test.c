@@ -305,14 +305,6 @@ main (int argc, char **argv)
 	else
 		g_setenv ("UPOWER_CONF_FILE_NAME", "../../etc/UPower.conf", TRUE);
 
-	/* Test on system bus if possible, but fall back to session bus; this
-	 * allows the test suite to work in restricted environments like
-	 * package builds. */
-	if (!g_file_test (DBUS_SYSTEM_SOCKET, G_FILE_TEST_EXISTS)) {
-		puts("No system D-BUS running, running on session D-BUS");
-		up_daemon_set_bus_type (DBUS_BUS_SESSION);
-	}
-
 	/* tests go here */
 	g_test_add_func ("/power/backend", up_test_backend_func);
 	g_test_add_func ("/power/device", up_test_device_func);
