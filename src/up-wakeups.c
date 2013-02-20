@@ -743,7 +743,7 @@ up_wakeups_init (UpWakeups *wakeups)
 	wakeups->priv->has_capability = FALSE;
 	wakeups->priv->polling_enabled = FALSE;
 
-	wakeups->priv->connection = dbus_g_bus_get (up_daemon_get_bus_type (), &error);
+	wakeups->priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (error != NULL) {
 		g_warning ("Cannot connect to bus: %s", error->message);
 		g_error_free (error);

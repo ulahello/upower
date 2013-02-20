@@ -889,7 +889,7 @@ up_device_init (UpDevice *device)
 	device->priv->during_coldplug = FALSE;
 	device->priv->history = up_history_new ();
 
-	device->priv->system_bus_connection = dbus_g_bus_get (up_daemon_get_bus_type (), &error);
+	device->priv->system_bus_connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (device->priv->system_bus_connection == NULL) {
 		g_error ("error getting system bus: %s", error->message);
 		g_error_free (error);

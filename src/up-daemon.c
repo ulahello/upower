@@ -126,21 +126,6 @@ G_DEFINE_TYPE (UpDaemon, up_daemon, G_TYPE_OBJECT)
 #define UP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY	1 /* seconds */
 #define UP_DAEMON_POLL_BATTERY_NUMBER_TIMES		5
 
-/* D-BUS to connect to. Can be set to session bus for testing */
-static DBusBusType daemon_bus_type = DBUS_BUS_SYSTEM;
-
-DBusBusType
-up_daemon_get_bus_type (void)
-{
-	return daemon_bus_type;
-}
-
-void
-up_daemon_set_bus_type (DBusBusType type)
-{
-	daemon_bus_type = type;
-}
-
 /**
  * up_daemon_get_on_battery_local:
  *
@@ -781,7 +766,7 @@ up_daemon_register_power_daemon (UpDaemon *daemon)
 	gboolean ret = FALSE;
 	UpDaemonPrivate *priv = daemon->priv;
 
-	priv->connection = dbus_g_bus_get (up_daemon_get_bus_type (), &error);
+	priv->connection = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (priv->connection == NULL) {
 		if (error != NULL) {
 			g_critical ("error getting system bus: %s", error->message);
