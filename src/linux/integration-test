@@ -52,39 +52,34 @@ class Tests(unittest.TestCase):
         # run from local build tree if we are in one, otherwise use system instance
         builddir = os.getenv('top_builddir', '.')
         if os.access (os.path.join(builddir, 'src', 'upowerd'), os.X_OK):
-            daemon_path = os.path.join(builddir, 'src', 'upowerd')
+            cls.daemon_path = os.path.join(builddir, 'src', 'upowerd')
             print('Testing binaries from local build tree')
         else:
             print('Testing installed system binaries')
-            daemon_path = None
+            cls.daemon_path = None
             with open('/usr/share/dbus-1/system-services/org.freedesktop.UPower.service') as f:
                 for line in f:
                     if line.startswith('Exec='):
-                        daemon_path = line.split('=', 1)[1].strip()
+                        cls.daemon_path = line.split('=', 1)[1].strip()
                         break
-            assert daemon_path, 'could not determine daemon path from D-BUS .service file'
+            assert cls.daemon_path, 'could not determine daemon path from D-BUS .service file'
 
         # fail on CRITICALs on client side
         GLib.log_set_always_fatal(GLib.LogLevelFlags.LEVEL_WARNING|
                                   GLib.LogLevelFlags.LEVEL_ERROR|
                                   GLib.LogLevelFlags.LEVEL_CRITICAL)
 
-        # if we are root, test the real thing on the system bus, otherwise
-        # start on the session bus
-        if os.geteuid() == 0:
-            # kill running daemons
-            subprocess.call(['killall', 'upowerd'])
+        # set up a fake system D-BUS
+        cls.test_bus = Gio.TestDBus.new(Gio.TestDBusFlags.NONE)
+        cls.test_bus.up()
+        del os.environ['DBUS_SESSION_BUS_ADDRESS']
+        os.environ['DBUS_SYSTEM_BUS_ADDRESS'] = cls.test_bus.get_bus_address()
 
-            cls.dbus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
-            cls.daemon_argv = ['umockdev-wrapper', daemon_path]
-            print('Testing as root on the system bus')
-        else:
-            cls.dbus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
-            cls.daemon_argv = ['umockdev-wrapper', daemon_path, '--test']
+        cls.dbus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
 
-            # use dbus-lauch if possible
-            print('Testing as user on the session bus')
-
+    @classmethod
+    def tearDownClass(cls):
+        cls.test_bus.down()
 
     def setUp(self):
         '''Set up a local umockdev testbed.
@@ -127,7 +122,7 @@ class Tests(unittest.TestCase):
         # have to do that ourselves
         env['UMOCKDEV_DIR'] = self.testbed.get_root_dir()
         self.log = tempfile.NamedTemporaryFile()
-        self.daemon = subprocess.Popen(self.daemon_argv,
+        self.daemon = subprocess.Popen(['umockdev-wrapper', self.daemon_path, '-v'],
                 env=env, stdout=self.log, stderr=subprocess.STDOUT)
 
         # wait until the daemon gets online
