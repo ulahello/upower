@@ -166,15 +166,19 @@ AC_ARG_WITH([systemdutildir],
             AS_HELP_STRING([--with-systemdutildir=DIR], [Directory for systemd utilities]),
             [],
             [with_systemdutildir=$($PKG_CONFIG --variable=systemdutildir systemd)])
-AC_SUBST([systemdutildir], [$with_systemdutildir])
-AM_CONDITIONAL(HAVE_SYSTEMDUTILDIR, [test -n "$with_systemdutildir"])
+if test x$with_systemdutildir != xno; then
+        AC_SUBST([systemdutildir], [$with_systemdutildir])
+fi
+AM_CONDITIONAL(HAVE_SYSTEMDUTILDIR, [test -n "$systemdutildir"])
 
 AC_ARG_WITH([systemdsystemunitdir],
             AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [Directory for systemd service files]),
             [],
             [with_systemdsystemunitdir=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)])
-AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])
-AM_CONDITIONAL(HAVE_SYSTEMDSYSTEMUNITDIR, [test -n "$with_systemdsystemunitdir"])
+if test x$with_systemdsystemunitdir != xno; then
+        AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])
+fi
+AM_CONDITIONAL(HAVE_SYSTEMDSYSTEMUNITDIR, [test -n "$systemdsystemunitdir"])
 
 dnl ---------------------------------------------------------------------------
 dnl - Compile time default choice of backend
