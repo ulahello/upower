@@ -1,3 +1,25 @@
+Version 0.9.20
+~~~~~~~~~~~~~~
+Released: 2013-03-18
+
+New Features:
+ - Add a --enable-deprecated configure argument to remove pm-utils support (Richard Hughes)
+ - Deprecate running the powersave scripts (Richard Hughes)
+ - Factor out the Logitech Unifying support to support other devices (Richard Hughes)
+ - Require applications to define UPOWER_ENABLE_DEPRECATED to use deprecated functionality (Richard Hughes)
+
+Bugfixes:
+ - Bump maximum accepted "time to empty" to 10 days (Martin Pitt)
+ - Don't use the deprecated INCLUDES in Makefile.am (Richard Hughes)
+ - Fix batteries which report current energy but full charge (Alex Hornung)
+ - Fix K750 features name, use 1 second interval (Julien Danjou)
+ - Fix memory leak in up_polkit_get_subject (Charles Kerr)
+ - Fix two memory leaks (Colin Watson)
+ - integration-test: Always run on a fake system bus (Martin Pitt)
+ - integration-test: Move to using umockdev (Martin Pitt)
+ - Never use -WError when building (Richard Hughes)
+ - Raise the hard PolicyKit dep to 0.97 (Richard Hughes)
+
 Version 0.9.19
 ~~~~~~~~~~~~~~
 Released: 2013-01-02

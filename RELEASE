@@ -13,8 +13,8 @@ Bugfixes:
 
 2. Commit changes to git:
 
-git commit -a -m "Released UPower 0.9.19"
-git tag -s -f -m "Released UPower 0.9.19" UPOWER_0_9_19
+git commit -a -m "Released UPower 0.9.20"
+git tag -s -f -m "Released UPower 0.9.20" UPOWER_0_9_20
 <wait>
 git push --tags
 git push
