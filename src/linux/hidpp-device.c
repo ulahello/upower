@@ -327,7 +327,7 @@ hidpp_device_cmd (HidppDevice	*device,
 			goto out;
 		}
 	}
-	if (buf[0] != HIDPP_HEADER_RESPONSE ||
+	if ((buf[0] != HIDPP_HEADER_REQUEST && buf[0] != HIDPP_HEADER_RESPONSE) ||
 	    buf[1] != device_idx ||
 	    buf[2] != feature_idx ||
 	    buf[3] != function_idx) {
@@ -662,16 +662,14 @@ hidpp_device_refresh (HidppDevice *device,
 	/* get battery status */
 	if ((refresh_flags & HIDPP_REFRESH_FLAGS_BATTERY) > 0) {
 		if (priv->version == 1) {
-			buf[0] = HIDPP_READ_SHORT_REGISTER;
-			buf[1] = HIDPP_READ_SHORT_REGISTER_BATTERY;
+			buf[0] = 0x00;
+			buf[1] = 0x00;
 			buf[2] = 0x00;
-			buf[3] = 0x00;
-			buf[4] = 0x00;
 			ret = hidpp_device_cmd (device,
 						priv->device_idx,
-						HIDPP_FEATURE_ROOT_INDEX,
-						HIDPP_FEATURE_ROOT_FN_PING,
-						buf, 5,
+						HIDPP_READ_SHORT_REGISTER,
+						HIDPP_READ_SHORT_REGISTER_BATTERY,
+						buf, 3,
 						buf, 1,
 						error);
 			if (!ret)
