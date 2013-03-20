@@ -314,9 +314,9 @@ hidpp_device_cmd (HidppDevice	*device,
 	    buf[2] == HIDPP_ERR_INVALID_SUBID &&
 	    buf[3] == 0x00 &&
 	    buf[4] == HIDPP_FEATURE_ROOT_FN_PING) {
-		/* HID++ 1.0 ping reply, so fake success  */
+		/* HID++ 1.0 ping reply, so fake success with version 1  */
 		if (buf[5] == HIDPP_ERROR_CODE_UNKNOWN) {
-			buf[0] = 1;
+			response_data[0] = 1;
 			goto out;
 		}
 		if (buf[5] == HIDPP_ERROR_CODE_UNSUPPORTED) {
