@@ -165,7 +165,7 @@ up_device_unifying_coldplug (UpDevice *device)
 	hidraw_list = g_udev_client_query_by_subsystem (client, "hidraw");
 	for (l = hidraw_list; l != NULL; l = l->next) {
 		if (g_strcmp0 (g_udev_device_get_sysfs_path (parent),
-			       g_udev_device_get_sysfs_attr (l->data, "device")) == 0) {
+			       g_udev_device_get_sysfs_path(g_udev_device_get_parent(l->data))) == 0) {
 			receiver = g_object_ref (l->data);
 			break;
 		}
