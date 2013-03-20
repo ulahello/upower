@@ -560,7 +560,7 @@ hidpp_device_refresh (HidppDevice *device,
 						HIDPP_READ_LONG_REGISTER,
 						0xb5,
 						buf, 3,
-						buf, 7,
+						buf, 8,
 						error);
 			if (!ret)
 				goto out;
