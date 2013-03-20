@@ -82,13 +82,11 @@ AM_CONDITIONAL(MAN_PAGES_ENABLED, test x$enable_man_pages = xyes)
 
 GTK_DOC_CHECK([1.11],[--flavour no-tmpl])
 
-# udev rules go in /lib, not /usr/lib
-if test "$prefix" = "/usr" -o "$prefix" = "/usr/local" ; then
-  slashlibdir=/lib
-else
-  slashlibdir=$prefix/lib
-fi
-AC_SUBST(slashlibdir)
+AC_ARG_WITH([udevrulesdir],
+            AS_HELP_STRING([--with-udevrulesdir=DIR], [Directory for udev rules]),
+            [],
+            [with_udevrulesdir=$($PKG_CONFIG --variable=udevdir udev)"/rules.d"])
+AC_SUBST([udevrulesdir], [$with_udevrulesdir])
 
 # History/Db dir
 AC_ARG_WITH([historydir],

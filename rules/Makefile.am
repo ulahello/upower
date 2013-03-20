@@ -1,6 +1,5 @@
 ## Process this file with automake to produce Makefile.in
 
-udevrulesdir = $(slashlibdir)/udev/rules.d
 udevrules_DATA =						\
 	95-upower-battery-recall-dell.rules			\
 	95-upower-battery-recall-fujitsu.rules			\
