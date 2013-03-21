@@ -13,7 +13,7 @@ AM_CPPFLAGS = \
 	$(POLKIT_CFLAGS)					\
 	$(GLIB_CFLAGS)						\
 	$(IDEVICE_CFLAGS)					\
-	$(SYSTEMD_CFLAGS)
+	$(NULL)
 
 if BACKEND_TYPE_LINUX
 noinst_LTLIBRARIES = libupshared.la

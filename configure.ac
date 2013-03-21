@@ -151,38 +151,6 @@ PKG_CHECK_MODULES(GIO, [gio-2.0 >= 2.16.1])
 dnl ====================================================================
 dnl Check for systemd
 dnl ====================================================================
-AC_ARG_ENABLE([systemd],
-              AS_HELP_STRING([--enable-systemd], [Use systemd]),
-              [enable_systemd=$enableval],
-              [enable_systemd=auto])
-
-PKG_CHECK_MODULES(SYSTEMD,
-                  [libsystemd-daemon],
-                  [have_systemd=yes], [have_systemd=no])
-
-AC_MSG_CHECKING([whether to use systemd])
-
-if test x$enable_systemd = xauto ; then
-        if test x$have_systemd = xno ; then
-                enable_systemd=no
-        else
-                enable_systemd=yes
-        fi
-fi
-AC_MSG_RESULT($enable_systemd)
-
-if test x$enable_systemd = xyes; then
-        if test x$have_systemd = xno; then
-                AC_MSG_ERROR([Systemd support explicitly required, but systemd not found])
-        fi
-        AC_DEFINE(HAVE_SYSTEMD, 1, [Define if systemd is used for session tracking])
-fi
-
-AC_SUBST(SYSTEMD_CFLAGS)
-AC_SUBST(SYSTEMD_LIBS)
-
-AM_CONDITIONAL(HAVE_SYSTEMD, [test "$with_systemd" = "yes"], [Using systemd])
-
 AC_ARG_WITH([systemdutildir],
             AS_HELP_STRING([--with-systemdutildir=DIR], [Directory for systemd utilities]),
             [],

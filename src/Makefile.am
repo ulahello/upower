@@ -123,7 +123,7 @@ upowerd_LDADD += 						\
 	$(USB_LIBS)						\
 	$(GUDEV_LIBS)						\
 	$(IDEVICE_LIBS)						\
-	$(SYSTEMD_LIBS)
+	$(NULL)
 
 if HAVE_SYSTEMDUTILDIR
 systemsleepdir = $(systemdutildir)/system-sleep
@@ -232,7 +232,7 @@ EXTRA_DIST =							\
 	$(dbusservice_in_files)					\
 	$(dbusconf_in_files)
 
-if HAVE_SYSTEMD
+if HAVE_SYSTEMDSYSTEMUNITDIR
 EXTRA_DIST += $(systemdservice_in_files)
 endif
 
