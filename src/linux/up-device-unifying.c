@@ -123,6 +123,7 @@ up_device_unifying_coldplug (UpDevice *device)
 	const gchar *bus_address;
 	const gchar *device_file;
 	const gchar *type;
+	const gchar *vendor;
 	gboolean ret = FALSE;
 	gchar *endptr = NULL;
 	gchar *tmp;
@@ -198,9 +199,13 @@ up_device_unifying_coldplug (UpDevice *device)
 		goto out;
 	}
 
+	vendor = g_udev_device_get_property (native, "UPOWER_VENDOR");
+	if (vendor == NULL)
+		vendor = g_udev_device_get_property (native, "ID_VENDOR");
+
 	/* set some default values */
 	g_object_set (device,
-		      "vendor", g_udev_device_get_property (native, "ID_VENDOR"),
+		      "vendor", vendor,
 		      "type", up_device_unifying_get_device_kind (unifying),
 		      "model", hidpp_device_get_model (unifying->priv->hidpp_device),
 		      "has-history", TRUE,
