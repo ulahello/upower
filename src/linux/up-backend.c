@@ -50,13 +50,12 @@
 #include <dbus/dbus-glib-lowlevel.h>
 
 #ifdef ENABLE_DEPRECATED
-#ifdef HAVE_SYSTEMD
-#include <systemd/sd-daemon.h>
+
+#define LOGIND_AVAILABLE() (access("/run/systemd/seats/", F_OK) >= 0)
 
 #define SD_HIBERNATE_COMMAND	"gdbus call --system --dest org.freedesktop.login1 --object-path /org/freedesktop/login1 --method org.freedesktop.login1.Manager.Hibernate 'true'"
 #define SD_SUSPEND_COMMAND	"gdbus call --system --dest org.freedesktop.login1 --object-path /org/freedesktop/login1 --method org.freedesktop.login1.Manager.Suspend 'true'"
 
-#endif
 #endif
 
 static void	up_backend_class_init	(UpBackendClass	*klass);
@@ -594,12 +593,10 @@ out:
 const gchar *
 up_backend_get_suspend_command (UpBackend *backend)
 {
-#ifdef HAVE_SYSTEMD
-	if (sd_booted ())
+	if (LOGIND_AVAILABLE())
 		return SD_SUSPEND_COMMAND;
 	else
-#endif
-	return UP_BACKEND_SUSPEND_COMMAND;
+		return UP_BACKEND_SUSPEND_COMMAND;
 }
 
 /**
@@ -608,23 +605,19 @@ up_backend_get_suspend_command (UpBackend *backend)
 const gchar *
 up_backend_get_hibernate_command (UpBackend *backend)
 {
-#ifdef HAVE_SYSTEMD
-	if (sd_booted ())
+	if (LOGIND_AVAILABLE())
 		return SD_HIBERNATE_COMMAND;
 	else
-#endif
-	return UP_BACKEND_HIBERNATE_COMMAND;
+		return UP_BACKEND_HIBERNATE_COMMAND;
 }
 
 gboolean
 up_backend_emits_resuming (UpBackend *backend)
 {
-#ifdef HAVE_SYSTEMD
-	if (sd_booted ())
+	if (LOGIND_AVAILABLE())
 		return TRUE;
 	else
-#endif
-	return FALSE;
+		return FALSE;
 }
 #endif
 
@@ -705,14 +698,12 @@ up_backend_init (UpBackend *backend)
 	backend->priv->managed_devices = up_device_list_new ();
 
 #ifdef ENABLE_DEPRECATED
-#ifdef HAVE_SYSTEMD
-	if (sd_booted ()) {
+	if (LOGIND_AVAILABLE()) {
 		DBusGConnection *bus;
 		bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, NULL);
 		backend->priv->connection = dbus_g_connection_get_connection (bus);
 		dbus_connection_add_filter (backend->priv->connection, message_filter, backend, NULL);
 	}
-#endif
 #endif
 }
 
