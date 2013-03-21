@@ -624,39 +624,60 @@ hidpp_device_refresh (HidppDevice *device,
 
 	/* get device model string */
 	if ((refresh_flags & HIDPP_REFRESH_FLAGS_MODEL) > 0) {
-		buf[0] = 0x00;
-		buf[1] = 0x00;
-		buf[2] = 0x00;
-		map = hidpp_device_map_get_by_feature (device, HIDPP_FEATURE_GET_DEVICE_NAME_TYPE);
-		if (map != NULL) {
+		if (priv->version == 1) {
+			buf[0] = 0x40 | (priv->device_idx - 1);
+			buf[1] = 0x00;
+			buf[2] = 0x00;
+
 			ret = hidpp_device_cmd (device,
+					HIDPP_RECEIVER_ADDRESS,
+					HIDPP_READ_LONG_REGISTER,
+					0xb5,
+					buf, 3,
+					buf, HIDPP_RESPONSE_LONG_LENGTH,
+					error);
+			if (!ret)
+				goto out;
+
+			len = buf[1];
+			name = g_string_new ("");
+			g_string_append_len (name, (gchar *) buf+2, len);
+			priv->model = g_strdup (name->str);
+		} else if (priv->version == 2) {
+			buf[0] = 0x00;
+			buf[1] = 0x00;
+			buf[2] = 0x00;
+			map = hidpp_device_map_get_by_feature (device, HIDPP_FEATURE_GET_DEVICE_NAME_TYPE);
+			if (map != NULL) {
+				ret = hidpp_device_cmd (device,
 						priv->device_idx,
 						map->idx,
 						HIDPP_FEATURE_GET_DEVICE_NAME_TYPE_FN_GET_COUNT,
 						buf, 3,
 						buf, 1,
 						error);
-			if (!ret)
-				goto out;
-		}
-		len = buf[0];
-		name = g_string_new ("");
-		for (i = 0; i < len; i +=4 ) {
-			buf[0] = i;
-			buf[1] = 0x00;
-			buf[2] = 0x00;
-			ret = hidpp_device_cmd (device,
+				if (!ret)
+					goto out;
+			}
+			len = buf[0];
+			name = g_string_new ("");
+			for (i = 0; i < len; i +=4 ) {
+				buf[0] = i;
+				buf[1] = 0x00;
+				buf[2] = 0x00;
+				ret = hidpp_device_cmd (device,
 						priv->device_idx,
 						map->idx,
 						HIDPP_FEATURE_GET_DEVICE_NAME_TYPE_FN_GET_NAME,
 						buf, 3,
 						buf, 4,
 						error);
-			if (!ret)
-				goto out;
-			g_string_append_len (name, (gchar *) &buf[0], 4);
+				if (!ret)
+					goto out;
+				g_string_append_len (name, (gchar *) &buf[0], 4);
+			}
+			priv->model = g_strdup (name->str);
 		}
-		priv->model = g_strdup (name->str);
 	}
 
 	/* get battery status */
