@@ -142,7 +142,7 @@ up_device_unifying_coldplug (UpDevice *device)
 	type = g_udev_device_get_property (native, "UPOWER_BATTERY_TYPE");
 	if (type == NULL)
 		goto out;
-	if (g_strcmp0 (type, "unifying") != 0)
+	if ((g_strcmp0 (type, "unifying") != 0) && (g_strcmp0 (type, "lg-wireless") != 0))
 		goto out;
 
 	/* get the device index */
@@ -153,23 +153,37 @@ up_device_unifying_coldplug (UpDevice *device)
 		g_debug ("Could not get physical device index");
 		goto out;
 	}
-	hidpp_device_set_index (unifying->priv->hidpp_device,
+
+	if (g_strcmp0 (type, "lg-wireless") == 0)
+		hidpp_device_set_index (unifying->priv->hidpp_device, 1);
+	else {
+		hidpp_device_set_index (unifying->priv->hidpp_device,
 				g_ascii_strtoull (tmp + 1, &endptr, 10));
-	if (endptr != NULL && endptr[0] != '\0') {
-		g_debug ("HID_PHYS malformed: '%s'", bus_address);
-		goto out;
+		if (endptr != NULL && endptr[0] != '\0') {
+			g_debug ("HID_PHYS malformed: '%s'", bus_address);
+			goto out;
+		}
 	}
 
-	/* find the hidraw device that matches the parent */
+	/* find the hidraw device that matches */
 	parent = g_udev_device_get_parent (native);
 	client = g_udev_client_new (NULL);
 	hidraw_list = g_udev_client_query_by_subsystem (client, "hidraw");
 	for (l = hidraw_list; l != NULL; l = l->next) {
-		if (g_strcmp0 (g_udev_device_get_sysfs_path (parent),
-			       g_udev_device_get_sysfs_path(g_udev_device_get_parent(l->data))) == 0) {
-			receiver = g_object_ref (l->data);
-			break;
+		if (g_strcmp0 (type, "lg-wireless") == 0) {
+			if (g_strcmp0 (g_udev_device_get_sysfs_path (native),
+						g_udev_device_get_sysfs_path(g_udev_device_get_parent(l->data))) != 0)
+				continue;
+			// Ugly way to distinguish receiver itself from mouse/keyboard etc for non-unifying dongles
+			if (g_strcmp0(g_udev_device_get_property(g_udev_device_get_parent (native), "INTERFACE"), "3/0/0") != 0)
+				continue;
+		} else {
+			if (g_strcmp0 (g_udev_device_get_sysfs_path (parent),
+						g_udev_device_get_sysfs_path(g_udev_device_get_parent(l->data))) != 0)
+				continue;
 		}
+		receiver = g_object_ref (l->data);
+		break;
 	}
 	if (receiver == NULL) {
 		g_debug ("Unable to find an hidraw device for Unifying receiver");
