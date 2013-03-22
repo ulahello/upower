@@ -52,13 +52,25 @@ up_device_unifying_refresh (UpDevice *device)
 	gboolean ret;
 	GError *error = NULL;
 	GTimeVal timeval;
+	HidppRefreshFlags refresh_flags;
 	UpDeviceState state = UP_DEVICE_STATE_UNKNOWN;
 	UpDeviceUnifying *unifying = UP_DEVICE_UNIFYING (device);
 	UpDeviceUnifyingPrivate *priv = unifying->priv;
 
-	/* refresh just the battery stats */
+	/* refresh the battery stats */
+	refresh_flags = HIDPP_REFRESH_FLAGS_BATTERY;
+
+	/*
+	 * Device hid++ v2 when in unreachable mode seems to be able
+	 * to respond to hid++ v1 queries (but fails to respond to v2
+	 * queries). When it gets waken up it starts responding
+	 * to v2 queries, so always try to upgrade protocol to v2
+	 */
+	if (hidpp_device_get_version (priv->hidpp_device) < 2)
+		refresh_flags |= HIDPP_REFRESH_FLAGS_VERSION;
+
 	ret = hidpp_device_refresh (priv->hidpp_device,
-				    HIDPP_REFRESH_FLAGS_BATTERY,
+				    refresh_flags,
 				    &error);
 	if (!ret) {
 		g_warning ("failed to coldplug unifying device: %s",

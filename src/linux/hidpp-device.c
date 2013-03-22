@@ -46,6 +46,7 @@
 /* HID++ 1.0 */
 #define HIDPP_READ_SHORT_REGISTER				0x81
 #define HIDPP_READ_SHORT_REGISTER_BATTERY			0x0d
+#define HIDPP_READ_SHORT_REGISTER_CONNECTION_STATE		0x02
 
 #define HIDPP_READ_LONG_REGISTER				0x83
 #define HIDPP_READ_LONG_REGISTER_DEVICE_TYPE			11
@@ -314,11 +315,6 @@ hidpp_device_cmd (HidppDevice	*device,
 	    buf[2] == HIDPP_ERR_INVALID_SUBID &&
 	    buf[3] == 0x00 &&
 	    buf[4] == HIDPP_FEATURE_ROOT_FN_PING) {
-		/* HID++ 1.0 ping reply, so fake success with version 1  */
-		if (buf[5] == HIDPP_ERROR_CODE_UNKNOWN) {
-			response_data[0] = 1;
-			goto out;
-		}
 		if (buf[5] == HIDPP_ERROR_CODE_UNSUPPORTED) {
 			/* device offline / unreachable */
 			g_set_error_literal (error, 1, 0,
@@ -533,6 +529,7 @@ hidpp_device_refresh (HidppDevice *device,
 
 	/* get version */
 	if ((refresh_flags & HIDPP_REFRESH_FLAGS_VERSION) > 0) {
+		/* first try v2 packet */
 		buf[0] = 0x00;
 		buf[1] = 0x00;
 		buf[2] = HIDPP_PING_DATA;
@@ -543,9 +540,32 @@ hidpp_device_refresh (HidppDevice *device,
 					buf, 3,
 					buf, 4,
 					error);
-		if (!ret)
-			goto out;
-		priv->version = buf[0];
+		if (ret)
+			priv->version = buf[0];
+		/* then try v1 packet */
+		else {
+			/* discard potential v1 error */
+			g_clear_error (error);
+
+			/* checking hid++ v1 packet */
+			buf[0] = 0x00;
+			buf[1] = 0x00;
+			buf[2] = 0x00;
+
+			ret = hidpp_device_cmd (device,
+					HIDPP_RECEIVER_ADDRESS,
+					HIDPP_READ_SHORT_REGISTER,
+					HIDPP_READ_SHORT_REGISTER_CONNECTION_STATE,
+					buf, 3,
+					buf, 2,
+					error);
+
+			if (!ret)
+				goto out;
+
+			priv->version = 1;
+		}
+
 	}
 
 	/* get device kind */
