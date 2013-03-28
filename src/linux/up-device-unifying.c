@@ -183,11 +183,32 @@ up_device_unifying_coldplug (UpDevice *device)
 	hidraw_list = g_udev_client_query_by_subsystem (client, "hidraw");
 	for (l = hidraw_list; l != NULL; l = l->next) {
 		if (g_strcmp0 (type, "lg-wireless") == 0) {
+			gboolean receiver_found = FALSE;
+			const gchar *filename;
+			GDir* dir;
+
 			if (g_strcmp0 (g_udev_device_get_sysfs_path (native),
 						g_udev_device_get_sysfs_path(g_udev_device_get_parent(l->data))) != 0)
 				continue;
-			// Ugly way to distinguish receiver itself from mouse/keyboard etc for non-unifying dongles
-			if (g_strcmp0(g_udev_device_get_property(g_udev_device_get_parent (native), "INTERFACE"), "3/0/0") != 0)
+
+			/* hidraw device which exposes hiddev interface is our receiver */
+			tmp = g_build_filename(g_udev_device_get_sysfs_path (g_udev_device_get_parent(native)),
+					"usbmisc", NULL);
+			dir = g_dir_open (tmp, 0, &error);
+			g_free(tmp);
+			if (error) {
+				g_clear_error(&error);
+				continue;
+			}
+			while ( (filename = g_dir_read_name(dir)) ) {
+				if (g_ascii_strncasecmp(filename, "hiddev", 6) == 0) {
+					receiver_found = TRUE;
+					break;
+				}
+			}
+			g_dir_close(dir);
+
+			if (!receiver_found)
 				continue;
 		} else {
 			if (g_strcmp0 (g_udev_device_get_sysfs_path (parent),
