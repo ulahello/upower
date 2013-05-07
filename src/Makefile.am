@@ -3,6 +3,7 @@
 SUBDIRS = dummy freebsd linux openbsd
 
 AM_CPPFLAGS = \
+	$(PIE_CFLAGS)						\
 	-I$(top_builddir)/src -I$(top_srcdir)/src		\
 	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\"		\
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\"		\
@@ -124,6 +125,10 @@ upowerd_LDADD += 						\
 	$(GUDEV_LIBS)						\
 	$(IDEVICE_LIBS)						\
 	$(NULL)
+
+upowerd_LDFLAGS =						\
+	$(PIE_LDFLAGS)						\
+	$(RELRO_LDFLAGS)
 
 if HAVE_SYSTEMDUTILDIR
 systemsleepdir = $(systemdutildir)/system-sleep

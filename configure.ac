@@ -142,6 +142,18 @@ else
 fi
 AC_SUBST(WARNINGFLAGS_C)
 
+# check for PIE (position independent executable) support
+AX_CHECK_COMPILE_FLAG([-fPIE],
+		      [AX_CHECK_LINK_FLAG([-fPIE -pie],
+					  [PIE_CFLAGS="-fPIE" PIE_LDFLAGS="-pie"])])
+AC_SUBST(PIE_CFLAGS)
+AC_SUBST(PIE_LDFLAGS)
+
+# check for full RELRO (relocation read-only) support
+AX_CHECK_LINK_FLAG([-Wl,-z,relro,-z,now],
+		   [RELRO_LDFLAGS="-Wl,-z,relro,-z,now"])
+AC_SUBST([RELRO_LDFLAGS])
+
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.21.5])
 PKG_CHECK_MODULES(DBUS, [dbus-1 >= 1.0])
 PKG_CHECK_MODULES(DBUS_GLIB, [dbus-glib-1 >= 0.76])
