@@ -19,9 +19,13 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>upower</command>
+      <arg><option>--dump</option></arg>
       <arg><option>--enumerate</option></arg>
-      <arg><option>--monitor</option></arg>
       <arg><option>--monitor-detail</option></arg>
+      <arg><option>--monitor</option></arg>
+      <arg><option>--show-info</option></arg>
+      <arg><option>--version</option></arg>
+      <arg><option>--wakeups</option></arg>
       <arg><option>--help</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
