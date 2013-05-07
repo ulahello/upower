@@ -223,6 +223,7 @@ CLEANFILES = $(BUILT_SOURCES)
 
 MAINTAINERCLEANFILES =						\
 	$(dbusconf_DATA)					\
+	$(systemdservice_DATA)					\
 	$(dbusservice_DATA)
 
 EXTRA_DIST =							\

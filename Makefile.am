@@ -30,20 +30,20 @@ EXTRA_DIST = 				\
 	ChangeLog
 
 MAINTAINERCLEANFILES =			\
-	$(srcdir)ABOUT-NLS		\
-	$(srcdir)aclocal.m4		\
-	$(srcdir)build-aux		\
-	$(srcdir)ChangeLog		\
-	$(srcdir)config.h.in		\
-	$(srcdir)gtk-doc.make		\
-	$(srcdir)po/Makefile.in.in~	\
-	$(srcdir)po/Makevars.template	\
-	$(srcdir)po/Rules-quot		\
-	$(srcdir)po/e*.header		\
-	$(srcdir)po/*.sin		\
-	$(srcdir)po/*.sed		\
-	$(srcdir)*.tar.xz		\
-	$(srcdir)INSTALL
+	ABOUT-NLS		\
+	aclocal.m4		\
+	build-aux		\
+	ChangeLog		\
+	config.h.in		\
+	gtk-doc.make		\
+	po/Makefile.in.in~	\
+	po/Makevars.template	\
+	po/Rules-quot		\
+	po/e*.header		\
+	po/*.sin		\
+	po/*.sed		\
+	*.tar.xz		\
+	INSTALL
 
 snapshot:
 	$(MAKE) dist distdir=$(PACKAGE)-$(VERSION)-`date +"%Y%m%d"`
