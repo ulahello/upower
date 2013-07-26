@@ -1,3 +1,19 @@
+Version 0.9.21
+~~~~~~~~~~~~~~
+Released: 2013-07-26
+
+New Features:
+ - Add support for Logitech Wireless (NonUnifying) devices (Arkadiusz Miśkiewicz)
+ - Use PIE to better secure installed tools and also use full RELRO in the daemon (Richard Hughes)
+
+Bugfixes:
+ - Allow clients to call org.freedesktop.DBus.Peer (Richard Hughes)
+ - Detect udev rules dir (Tom Gundersen)
+ - Drop --enable-systemd and linking to libsystemd-daemon (Martin Pitt)
+ - Find hidraw devices correctly with systemd udev >= v196 (Arkadiusz Miśkiewicz)
+ - Fix test for logind availability (Martin Pitt)
+ - Update the upower man page with all the current options (Richard Hughes)
+
 Version 0.9.20
 ~~~~~~~~~~~~~~
 Released: 2013-03-18
