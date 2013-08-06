@@ -855,6 +855,13 @@ hidpp_device_refresh (HidppDevice *device,
 		}
 	}
 out:
+	/* do not spam when device is unreachable */
+	if (hidpp_is_error(&msg, &error_code) &&
+			(error_code == HIDPP10_ERROR_CODE_RESOURCE_ERROR)) {
+		g_debug("HID++ error: %s", (*error)->message);
+		g_error_free(*error);
+		*error = NULL;
+	}
 	if (name != NULL)
 		g_string_free (name, TRUE);
 	return ret;

@@ -73,9 +73,11 @@ up_device_unifying_refresh (UpDevice *device)
 				    refresh_flags,
 				    &error);
 	if (!ret) {
-		g_warning ("failed to coldplug unifying device: %s",
-			   error->message);
-		g_error_free (error);
+		if (error) {
+			g_warning ("failed to coldplug unifying device: %s",
+				   error->message);
+			g_error_free (error);
+		}
 		goto out;
 	}
 	switch (hidpp_device_get_batt_status (priv->hidpp_device)) {
@@ -240,9 +242,11 @@ up_device_unifying_coldplug (UpDevice *device)
 				    HIDPP_REFRESH_FLAGS_MODEL,
 				    &error);
 	if (!ret) {
-		g_warning ("failed to coldplug unifying device: %s",
-			   error->message);
-		g_error_free (error);
+		if (error) {
+			g_warning ("failed to coldplug unifying device: %s",
+				   error->message);
+			g_error_free (error);
+		}
 		goto out;
 	}
 
