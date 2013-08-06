@@ -41,6 +41,7 @@
 /* HID++ 1.0 */
 #define HIDPP_READ_SHORT_REGISTER				0x81
 #define HIDPP_READ_SHORT_REGISTER_BATTERY			0x0d
+#define HIDPP_READ_SHORT_REGISTER_BATTERY_APPROX		0x07
 
 #define HIDPP_READ_LONG_REGISTER				0x83
 #define HIDPP_READ_LONG_REGISTER_DEVICE_TYPE			11
@@ -791,10 +792,61 @@ hidpp_device_refresh (HidppDevice *device,
 			ret = hidpp_device_cmd (device,
 						&msg, &msg,
 						error);
+			if (!ret && hidpp_is_error(&msg, &error_code) &&
+					error_code == HIDPP10_ERROR_CODE_INVALID_ADDRESS) {
+				g_error_free(*error);
+				*error = NULL;
+
+				msg.type = HIDPP_MSG_TYPE_SHORT;
+				msg.device_idx = priv->device_idx;
+				msg.feature_idx = HIDPP_READ_SHORT_REGISTER;
+				msg.function_idx = HIDPP_READ_SHORT_REGISTER_BATTERY_APPROX;
+				memset(msg.s.params, 0, sizeof(msg.s.params));
+
+				ret = hidpp_device_cmd (device,
+							&msg, &msg,
+							error);
+			}
 			if (!ret)
 				goto out;
-			priv->batt_percentage = msg.s.params[0];
-			priv->batt_status = HIDPP_DEVICE_BATT_STATUS_DISCHARGING;
+			if (msg.function_idx == HIDPP_READ_SHORT_REGISTER_BATTERY) {
+				priv->batt_percentage = msg.s.params[0];
+				priv->batt_status = HIDPP_DEVICE_BATT_STATUS_DISCHARGING;
+			} else {
+				/* approximate battery levels */
+				switch (msg.s.params[0]) {
+				case 1: /* 0 - 10 */
+					priv->batt_percentage = 5;
+					break;
+				case 3: /* 11 - 30 */
+					priv->batt_percentage = 20;
+					break;
+				case 5: /* 31 - 80 */
+					priv->batt_percentage = 55;
+					break;
+				case 7: /* 81 - 100 */
+					priv->batt_percentage = 90;
+					break;
+				default:
+					g_debug("Unknown battery percentage: %i", priv->batt_percentage);
+					break;
+				}
+				switch (msg.s.params[1]) {
+				case 0x00:
+					priv->batt_status = HIDPP_DEVICE_BATT_STATUS_DISCHARGING;
+					break;
+				case 0x22:
+				case 0x26: /* for notification, probably N/A for reg read */
+					priv->batt_status = HIDPP_DEVICE_BATT_STATUS_CHARGED;
+					break;
+				case 0x25:
+					priv->batt_status = HIDPP_DEVICE_BATT_STATUS_CHARGING;
+					break;
+				default:
+					g_debug("Unknown battery status: 0x%02x", priv->batt_status);
+					break;
+				}
+			}
 		} else if (priv->version == 2) {
 
 			/* sent a SetLightMeasure report */
