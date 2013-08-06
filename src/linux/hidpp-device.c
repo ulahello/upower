@@ -149,6 +149,7 @@ struct HidppDevicePrivate
 	guint			 device_idx;
 	guint			 version;
 	HidppDeviceBattStatus	 batt_status;
+	gboolean		 batt_is_approx;
 	HidppDeviceKind		 kind;
 	int			 fd;
 };
@@ -782,21 +783,24 @@ hidpp_device_refresh (HidppDevice *device,
 	/* get battery status */
 	if ((refresh_flags & HIDPP_REFRESH_FLAGS_BATTERY) > 0) {
 		if (priv->version == 1) {
-			msg.type = HIDPP_MSG_TYPE_SHORT;
-			msg.device_idx = priv->device_idx;
-			msg.feature_idx = HIDPP_READ_SHORT_REGISTER;
-			msg.function_idx = HIDPP_READ_SHORT_REGISTER_BATTERY;
-			msg.s.params[0] = 0x00;
-			msg.s.params[1] = 0x00;
-			msg.s.params[2] = 0x00;
-			ret = hidpp_device_cmd (device,
-						&msg, &msg,
-						error);
-			if (!ret && hidpp_is_error(&msg, &error_code) &&
+			if (!priv->batt_is_approx) {
+				msg.type = HIDPP_MSG_TYPE_SHORT;
+				msg.device_idx = priv->device_idx;
+				msg.feature_idx = HIDPP_READ_SHORT_REGISTER;
+				msg.function_idx = HIDPP_READ_SHORT_REGISTER_BATTERY;
+				memset(msg.s.params, 0, sizeof(msg.s.params));
+				ret = hidpp_device_cmd (device,
+							&msg, &msg,
+							error);
+				if (!ret && hidpp_is_error(&msg, &error_code) &&
 					error_code == HIDPP10_ERROR_CODE_INVALID_ADDRESS) {
-				g_error_free(*error);
-				*error = NULL;
+					g_error_free(*error);
+					*error = NULL;
+					priv->batt_is_approx = TRUE;
+				}
+			}
 
+			if (priv->batt_is_approx) {
 				msg.type = HIDPP_MSG_TYPE_SHORT;
 				msg.device_idx = priv->device_idx;
 				msg.feature_idx = HIDPP_READ_SHORT_REGISTER;
@@ -931,6 +935,7 @@ hidpp_device_init (HidppDevice *device)
 	device->priv->fd = -1;
 	device->priv->feature_index = g_ptr_array_new_with_free_func (g_free);
 	device->priv->batt_status = HIDPP_DEVICE_BATT_STATUS_UNKNOWN;
+	device->priv->batt_is_approx = FALSE;
 	device->priv->kind = HIDPP_DEVICE_KIND_UNKNOWN;
 
 	/* add known root */
