@@ -37,12 +37,6 @@
 
 #define HIDPP_RECEIVER_ADDRESS					0xff
 
-#define HIDPP_RESPONSE_SHORT_LENGTH				7
-#define HIDPP_RESPONSE_LONG_LENGTH				20
-
-#define HIDPP_HEADER_REQUEST					0x10
-#define HIDPP_HEADER_RESPONSE					0x11
-
 /* HID++ 1.0 */
 #define HIDPP_READ_SHORT_REGISTER				0x81
 #define HIDPP_READ_SHORT_REGISTER_BATTERY			0x0d
@@ -107,6 +101,24 @@
 #define HIDPP_FEATURE_SOLAR_DASHBOARD_BE_BATTERY_LEVEL_STATUS	(0x01 << 4)
 
 #define HIDPP_DEVICE_READ_RESPONSE_TIMEOUT			3000 /* miliseconds */
+
+typedef struct {
+#define HIDPP_MSG_TYPE_SHORT	0x10
+#define HIDPP_MSG_TYPE_LONG	0x11
+#define HIDPP_MSG_LENGTH(msg) ((msg)->type == HIDPP_MSG_TYPE_SHORT ? 7 : 20)
+	guchar			 type;
+	guchar			 device_idx;
+	guchar			 feature_idx;
+	guchar			 function_idx; /* funcId:software_id */
+	union {
+		struct {
+			gchar	 params[3];
+		} s; /* short */
+		struct {
+			gchar	 params[16];
+		} l; /* long */
+	};
+} HidppMessage;
 
 struct HidppDevicePrivate
 {
@@ -197,48 +209,48 @@ hidpp_device_map_get_by_idx (HidppDevice *device, gint idx)
  * Pretty print the send/recieve buffer.
  **/
 static void
-hidpp_device_print_buffer (HidppDevice *device, const guint8 *buffer)
+hidpp_device_print_buffer (HidppDevice *device, const HidppMessage *msg)
 {
 	guint i;
 	const HidppDeviceMap *map;
 
 	if (!device->priv->enable_debug)
 		return;
-	for (i = 0; i < HIDPP_RESPONSE_LONG_LENGTH; i++)
-		g_print ("%02x ", buffer[i]);
+	for (i = 0; i < sizeof (*msg); i++)
+		g_print ("%02x ", ((const guchar*) msg)[i]);
 	g_print ("\n");
 
-	/* direction */
-	if (buffer[0] == HIDPP_HEADER_REQUEST)
-		g_print ("REQUEST\n");
-	else if (buffer[0] == HIDPP_HEADER_RESPONSE)
-		g_print ("RESPONSE\n");
+	/* direction/type */
+	if (msg->type == HIDPP_MSG_TYPE_SHORT)
+		g_print ("REQUEST/SHORT\n");
+	else if (msg->type == HIDPP_MSG_TYPE_LONG)
+		g_print ("RESPONSE/LONG\n");
 	else
 		g_print ("??\n");
 
 	/* dev index */
-	g_print ("device-idx=%02x ", buffer[1]);
-	if (buffer[1] == HIDPP_RECEIVER_ADDRESS) {
+	g_print ("device-idx=%02x ", msg->device_idx);
+	if (msg->device_idx == HIDPP_RECEIVER_ADDRESS) {
 		g_print ("[Receiver]\n");
-	} else if (device->priv->device_idx == buffer[1]) {
+	} else if (device->priv->device_idx == msg->device_idx) {
 		g_print ("[This Device]\n");
 	} else {
 		g_print ("[Random Device]\n");
 	}
 
 	/* feature index */
-	if (buffer[2] == HIDPP_READ_LONG_REGISTER) {
+	if (msg->feature_idx == HIDPP_READ_LONG_REGISTER) {
 		g_print ("feature-idx=%s [%02x]\n",
-			 "v1(ReadLongRegister)", buffer[2]);
+			 "v1(ReadLongRegister)", msg->feature_idx);
 	} else {
-		map = hidpp_device_map_get_by_idx (device, buffer[2]);
+		map = hidpp_device_map_get_by_idx (device, msg->feature_idx);
 		g_print ("feature-idx=v2(%s) [%02x]\n",
-			 map != NULL ? map->name : "unknown", buffer[2]);
+			 map != NULL ? map->name : "unknown", msg->feature_idx);
 	}
 
-	g_print ("function-id=%01x\n", buffer[3] & 0xf);
-	g_print ("software-id=%01x\n", buffer[3] >> 4);
-	g_print ("param[0]=%02x\n\n", buffer[4]);
+	g_print ("function-id=%01x\n", msg->function_idx & 0xf);
+	g_print ("software-id=%01x\n", msg->function_idx >> 4);
+	g_print ("param[0]=%02x\n\n", msg->s.params[0]);
 }
 
 /**
@@ -246,19 +258,14 @@ hidpp_device_print_buffer (HidppDevice *device, const guint8 *buffer)
  **/
 static gboolean
 hidpp_device_cmd (HidppDevice	*device,
-		  guint8	 device_idx,
-		  guint8	 feature_idx,
-		  guint8	 function_idx,
-		  guint8	*request_data,
-		  gsize		 request_len,
-		  guint8	*response_data,
-		  gsize		 response_len,
+		  const HidppMessage	*request,
+		  HidppMessage	*response,
 		  GError	**error)
 {
 	gboolean ret = TRUE;
 	gssize wrote;
-	guint8 buf[HIDPP_RESPONSE_LONG_LENGTH];
-	guint i;
+	HidppMessage read_msg = { 0 };
+	guint msg_len;
 	HidppDevicePrivate *priv = device->priv;
 	GPollFD poll[] = {
 		{
@@ -267,19 +274,16 @@ hidpp_device_cmd (HidppDevice	*device,
 		},
 	};
 
-	/* make the request packet */
-	memset (buf, 0x00, HIDPP_RESPONSE_LONG_LENGTH);
-	buf[0] = HIDPP_HEADER_REQUEST;
-	buf[1] = device_idx;
-	buf[2] = feature_idx;
-	buf[3] = function_idx;
-	for (i = 0; i < request_len; i++)
-		buf[4 + i] = request_data[i];
+	g_assert (request->type == HIDPP_MSG_TYPE_SHORT ||
+			request->type == HIDPP_MSG_TYPE_LONG);
+
+	hidpp_device_print_buffer (device, request);
+
+	msg_len = HIDPP_MSG_LENGTH(request);
 
 	/* write to the device */
-	hidpp_device_print_buffer (device, buf);
-	wrote = write (priv->fd, buf, 4 + request_len);
-	if ((gsize) wrote != 4 + request_len) {
+	wrote = write (priv->fd, (const char *)request, msg_len);
+	if ((gsize) wrote != msg_len) {
 		g_set_error (error, 1, 0,
 			     "Unable to write request to device: %" G_GSIZE_FORMAT,
 			     wrote);
@@ -288,6 +292,7 @@ hidpp_device_cmd (HidppDevice	*device,
 	}
 
 	/* read from the device */
+	// TODO: keep reading until wanted message is found
 	wrote = g_poll (poll, G_N_ELEMENTS(poll),
 		        HIDPP_DEVICE_READ_RESPONSE_TIMEOUT);
 	if (wrote <= 0) {
@@ -297,8 +302,8 @@ hidpp_device_cmd (HidppDevice	*device,
 		ret = FALSE;
 		goto out;
 	}
-	memset (buf, 0x00, HIDPP_RESPONSE_LONG_LENGTH);
-	wrote = read (priv->fd, buf, sizeof (buf));
+
+	wrote = read (priv->fd, &read_msg, sizeof (*response));
 	if (wrote <= 0) {
 		g_set_error (error, 1, 0,
 			     "Unable to read response from device: %" G_GSIZE_FORMAT,
@@ -307,20 +312,10 @@ hidpp_device_cmd (HidppDevice	*device,
 		goto out;
 	}
 
-	/* is device offline */
-	hidpp_device_print_buffer (device, buf);
-	if (buf[0] == HIDPP_HEADER_REQUEST &&
-	    buf[1] == device_idx &&
-	    buf[2] == HIDPP_ERR_INVALID_SUBID &&
-	    buf[3] == 0x00 &&
-	    buf[4] == HIDPP_FEATURE_ROOT_FN_PING) {
-		/* HID++ 1.0 ping reply, so fake success with version 1  */
-		if (priv->version < 2 && (buf[5] == HIDPP_ERROR_CODE_UNKNOWN
-					|| buf[5] == HIDPP_ERROR_CODE_UNSUPPORTED)) {
-			response_data[0] = 1;
-			goto out;
-		}
-	}
+	hidpp_device_print_buffer (device, response);
+
+	// TODO: test for invalid reply
+#if 0
 	if ((buf[0] != HIDPP_HEADER_REQUEST && buf[0] != HIDPP_HEADER_RESPONSE) ||
 	    buf[1] != device_idx ||
 	    buf[2] != feature_idx ||
@@ -331,9 +326,10 @@ hidpp_device_cmd (HidppDevice	*device,
 		ret = FALSE;
 		goto out;
 	}
-	for (i = 0; i < response_len; i++)
-		response_data[i] = buf[4 + i];
+#endif
 out:
+	/* allow caller to check for protocol errors */
+	memcpy (response, &read_msg, sizeof (read_msg));
 	return ret;
 }
 
@@ -350,21 +346,21 @@ hidpp_device_map_add (HidppDevice *device,
 {
 	gboolean ret;
 	GError *error = NULL;
-	guint8 buf[3];
+	HidppMessage msg;
 	HidppDeviceMap *map;
 	HidppDevicePrivate *priv = device->priv;
 
-	buf[0] = feature >> 8;
-	buf[1] = feature;
-	buf[2] = 0x00;
+	msg.type = HIDPP_MSG_TYPE_SHORT;
+	msg.device_idx = priv->device_idx;
+	msg.feature_idx = HIDPP_FEATURE_ROOT_INDEX;
+	msg.function_idx = HIDPP_FEATURE_ROOT_FN_GET_FEATURE;
+	msg.s.params[0] = feature >> 8;
+	msg.s.params[1] = feature;
+	msg.s.params[2] = 0x00;
 
 	g_debug ("Getting idx for feature %s [%02x]", name, feature);
 	ret = hidpp_device_cmd (device,
-				priv->device_idx,
-				HIDPP_FEATURE_ROOT_INDEX,
-				HIDPP_FEATURE_ROOT_FN_GET_FEATURE,
-				buf, sizeof (buf),
-				buf, sizeof (buf),
+				&msg, &msg,
 				&error);
 	if (!ret) {
 		g_warning ("Failed to get feature idx: %s", error->message);
@@ -373,7 +369,7 @@ hidpp_device_map_add (HidppDevice *device,
 	}
 
 	/* zero index */
-	if (buf[0] == 0x00) {
+	if (msg.s.params[0] == 0x00) {
 		ret = FALSE;
 		g_debug ("Feature not found");
 		goto out;
@@ -381,7 +377,7 @@ hidpp_device_map_add (HidppDevice *device,
 
 	/* add to map */
 	map = g_new0 (HidppDeviceMap, 1);
-	map->idx = buf[0];
+	map->idx = msg.s.params[0];
 	map->feature = feature;
 	map->name = g_strdup (name);
 	g_ptr_array_add (priv->feature_index, map);
@@ -485,7 +481,7 @@ hidpp_device_refresh (HidppDevice *device,
 	const HidppDeviceMap *map;
 	gboolean ret = TRUE;
 	GString *name = NULL;
-	guint8 buf[HIDPP_RESPONSE_LONG_LENGTH];
+	HidppMessage msg;
 	guint i;
 	guint len;
 	HidppDevicePrivate *priv = device->priv;
@@ -508,20 +504,21 @@ hidpp_device_refresh (HidppDevice *device,
 	if ((refresh_flags & HIDPP_REFRESH_FLAGS_VERSION) > 0) {
 		guint version_old = priv->version;
 
-		buf[0] = 0x00;
-		buf[1] = 0x00;
-		buf[2] = HIDPP_PING_DATA;
+		msg.type = HIDPP_MSG_TYPE_SHORT;
+		msg.device_idx = priv->device_idx;
+		msg.feature_idx = HIDPP_FEATURE_ROOT_INDEX;
+		msg.function_idx = HIDPP_FEATURE_ROOT_FN_PING;
+		msg.s.params[0] = 0x00;
+		msg.s.params[1] = 0x00;
+		msg.s.params[2] = HIDPP_PING_DATA;
 		ret = hidpp_device_cmd (device,
-					priv->device_idx,
-					HIDPP_FEATURE_ROOT_INDEX,
-					HIDPP_FEATURE_ROOT_FN_PING,
-					buf, 3,
-					buf, 4,
+					&msg, &msg,
 					error);
+		// TODO: on failure, test if hid error
 		if (!ret)
 			goto out;
 
-		priv->version = buf[0];
+		priv->version = msg.s.params[0];
 
 		if (version_old != priv->version)
 			g_debug("protocol for hid++ device changed from v%d to v%d",
@@ -559,19 +556,19 @@ hidpp_device_refresh (HidppDevice *device,
 	if ((refresh_flags & HIDPP_REFRESH_FLAGS_KIND) > 0) {
 
 		if (priv->version == 1) {
-			buf[0] = 0x20 | (priv->device_idx - 1);
-			buf[1] = 0x00;
-			buf[2] = 0x00;
+			msg.type = HIDPP_MSG_TYPE_SHORT;
+			msg.device_idx = HIDPP_RECEIVER_ADDRESS;
+			msg.feature_idx = HIDPP_READ_LONG_REGISTER;
+			msg.function_idx = 0xb5;
+			msg.s.params[0] = 0x20 | (priv->device_idx - 1);
+			msg.s.params[1] = 0x00;
+			msg.s.params[2] = 0x00;
 			ret = hidpp_device_cmd (device,
-						HIDPP_RECEIVER_ADDRESS,
-						HIDPP_READ_LONG_REGISTER,
-						0xb5,
-						buf, 3,
-						buf, 8,
+						&msg, &msg,
 						error);
 			if (!ret)
 				goto out;
-			switch (buf[7]) {
+			switch (msg.l.params[7]) {
 			case HIDPP_READ_LONG_REGISTER_DEVICE_TYPE_KEYBOARD:
 			case HIDPP_READ_LONG_REGISTER_DEVICE_TYPE_NUMPAD:
 			case HIDPP_READ_LONG_REGISTER_DEVICE_TYPE_REMOTE_CONTROL:
@@ -597,19 +594,19 @@ hidpp_device_refresh (HidppDevice *device,
 			/* send a BatteryLevelStatus report */
 			map = hidpp_device_map_get_by_feature (device, HIDPP_FEATURE_GET_DEVICE_NAME_TYPE);
 			if (map != NULL) {
-				buf[0] = 0x00;
-				buf[1] = 0x00;
-				buf[2] = 0x00;
+				msg.type = HIDPP_MSG_TYPE_SHORT;
+				msg.device_idx = priv->device_idx;
+				msg.feature_idx = map->idx;
+				msg.function_idx = HIDPP_FEATURE_GET_DEVICE_NAME_TYPE_FN_GET_TYPE;
+				msg.s.params[0] = 0x00;
+				msg.s.params[1] = 0x00;
+				msg.s.params[2] = 0x00;
 				ret = hidpp_device_cmd (device,
-							priv->device_idx,
-							map->idx,
-							HIDPP_FEATURE_GET_DEVICE_NAME_TYPE_FN_GET_TYPE,
-							buf, 3,
-							buf, 1,
+							&msg, &msg,
 							error);
 				if (!ret)
 					goto out;
-				switch (buf[0]) {
+				switch (msg.s.params[0]) {
 				case 0: /* keyboard */
 				case 2: /* numpad */
 					priv->kind = HIDPP_DEVICE_KIND_KEYBOARD;
@@ -632,56 +629,56 @@ hidpp_device_refresh (HidppDevice *device,
 	/* get device model string */
 	if ((refresh_flags & HIDPP_REFRESH_FLAGS_MODEL) > 0) {
 		if (priv->version == 1) {
-			buf[0] = 0x40 | (priv->device_idx - 1);
-			buf[1] = 0x00;
-			buf[2] = 0x00;
+			msg.type = HIDPP_MSG_TYPE_SHORT;
+			msg.device_idx = HIDPP_RECEIVER_ADDRESS;
+			msg.feature_idx = HIDPP_READ_LONG_REGISTER;
+			msg.function_idx = 0xb5;
+			msg.s.params[0] = 0x40 | (priv->device_idx - 1);
+			msg.s.params[1] = 0x00;
+			msg.s.params[2] = 0x00;
 
 			ret = hidpp_device_cmd (device,
-					HIDPP_RECEIVER_ADDRESS,
-					HIDPP_READ_LONG_REGISTER,
-					0xb5,
-					buf, 3,
-					buf, HIDPP_RESPONSE_LONG_LENGTH,
+					&msg, &msg,
 					error);
 			if (!ret)
 				goto out;
 
-			len = buf[1];
+			len = msg.l.params[1];
 			name = g_string_new ("");
-			g_string_append_len (name, (gchar *) buf+2, len);
+			g_string_append_len (name, msg.l.params + 2, len);
 			priv->model = g_strdup (name->str);
 		} else if (priv->version == 2) {
-			buf[0] = 0x00;
-			buf[1] = 0x00;
-			buf[2] = 0x00;
+			msg.type = HIDPP_MSG_TYPE_SHORT;
+			msg.device_idx = priv->device_idx;
+			msg.feature_idx = map->idx;
+			msg.function_idx = HIDPP_FEATURE_GET_DEVICE_NAME_TYPE_FN_GET_COUNT;
+			msg.s.params[0] = 0x00;
+			msg.s.params[1] = 0x00;
+			msg.s.params[2] = 0x00;
 			map = hidpp_device_map_get_by_feature (device, HIDPP_FEATURE_GET_DEVICE_NAME_TYPE);
 			if (map != NULL) {
 				ret = hidpp_device_cmd (device,
-						priv->device_idx,
-						map->idx,
-						HIDPP_FEATURE_GET_DEVICE_NAME_TYPE_FN_GET_COUNT,
-						buf, 3,
-						buf, 1,
+						&msg, &msg,
 						error);
 				if (!ret)
 					goto out;
 			}
-			len = buf[0];
+			len = msg.s.params[0];
 			name = g_string_new ("");
 			for (i = 0; i < len; i +=4 ) {
-				buf[0] = i;
-				buf[1] = 0x00;
-				buf[2] = 0x00;
+				msg.type = HIDPP_MSG_TYPE_SHORT;
+				msg.device_idx = priv->device_idx;
+				msg.feature_idx = map->idx;
+				msg.function_idx = HIDPP_FEATURE_GET_DEVICE_NAME_TYPE_FN_GET_NAME;
+				msg.s.params[0] = i;
+				msg.s.params[1] = 0x00;
+				msg.s.params[2] = 0x00;
 				ret = hidpp_device_cmd (device,
-						priv->device_idx,
-						map->idx,
-						HIDPP_FEATURE_GET_DEVICE_NAME_TYPE_FN_GET_NAME,
-						buf, 3,
-						buf, 4,
+						&msg, &msg,
 						error);
 				if (!ret)
 					goto out;
-				g_string_append_len (name, (gchar *) &buf[0], 4);
+				g_string_append_len (name, msg.s.params, 4);
 			}
 			priv->model = g_strdup (name->str);
 		}
@@ -690,59 +687,59 @@ hidpp_device_refresh (HidppDevice *device,
 	/* get battery status */
 	if ((refresh_flags & HIDPP_REFRESH_FLAGS_BATTERY) > 0) {
 		if (priv->version == 1) {
-			buf[0] = 0x00;
-			buf[1] = 0x00;
-			buf[2] = 0x00;
+			msg.type = HIDPP_MSG_TYPE_SHORT;
+			msg.device_idx = priv->device_idx;
+			msg.feature_idx = HIDPP_READ_SHORT_REGISTER;
+			msg.function_idx = HIDPP_READ_SHORT_REGISTER_BATTERY;
+			msg.s.params[0] = 0x00;
+			msg.s.params[1] = 0x00;
+			msg.s.params[2] = 0x00;
 			ret = hidpp_device_cmd (device,
-						priv->device_idx,
-						HIDPP_READ_SHORT_REGISTER,
-						HIDPP_READ_SHORT_REGISTER_BATTERY,
-						buf, 3,
-						buf, 1,
+						&msg, &msg,
 						error);
 			if (!ret)
 				goto out;
-			priv->batt_percentage = buf[0];
+			priv->batt_percentage = msg.s.params[0];
 			priv->batt_status = HIDPP_DEVICE_BATT_STATUS_DISCHARGING;
 		} else if (priv->version == 2) {
 
 			/* sent a SetLightMeasure report */
 			map = hidpp_device_map_get_by_feature (device, HIDPP_FEATURE_SOLAR_DASHBOARD);
 			if (map != NULL) {
-				buf[0] = 0x01; /* Max number of reports: number of report sent after function call */
-				buf[1] = 0x01; /* Report period: time between reports, in seconds */
+				msg.type = HIDPP_MSG_TYPE_SHORT;
+				msg.device_idx = priv->device_idx;
+				msg.feature_idx = map->idx;
+				msg.function_idx = HIDPP_FEATURE_SOLAR_DASHBOARD_FN_SET_LIGHT_MEASURE;
+				msg.s.params[0] = 0x01; /* Max number of reports: number of report sent after function call */
+				msg.s.params[1] = 0x01; /* Report period: time between reports, in seconds */
 				ret = hidpp_device_cmd (device,
-							priv->device_idx,
-							map->idx,
-							HIDPP_FEATURE_SOLAR_DASHBOARD_FN_SET_LIGHT_MEASURE,
-							buf, 2,
-							buf, 3,
+							&msg, &msg,
 							error);
 				if (!ret)
 					goto out;
-				priv->batt_percentage = buf[0];
+				priv->batt_percentage = msg.s.params[0];
 				priv->batt_status = HIDPP_DEVICE_BATT_STATUS_DISCHARGING;
 			}
 
 			/* send a BatteryLevelStatus report */
 			map = hidpp_device_map_get_by_feature (device, HIDPP_FEATURE_BATTERY_LEVEL_STATUS);
 			if (map != NULL) {
-				buf[0] = 0x00;
-				buf[1] = 0x00;
-				buf[2] = 0x00;
+				msg.type = HIDPP_MSG_TYPE_SHORT;
+				msg.device_idx = priv->device_idx;
+				msg.feature_idx = map->idx;
+				msg.function_idx = HIDPP_FEATURE_BATTERY_LEVEL_STATUS_FN_GET_STATUS;
+				msg.s.params[0] = 0x00;
+				msg.s.params[1] = 0x00;
+				msg.s.params[2] = 0x00;
 				ret = hidpp_device_cmd (device,
-							priv->device_idx,
-							map->idx,
-							HIDPP_FEATURE_BATTERY_LEVEL_STATUS_FN_GET_STATUS,
-							buf, 3,
-							buf, 3,
+							&msg, &msg,
 							error);
 				if (!ret)
 					goto out;
 
 				/* convert the HID++ v2 status into something
 				 * we can set on the device */
-				switch (buf[2]) {
+				switch (msg.s.params[2]) {
 				case 0: /* discharging */
 					priv->batt_status = HIDPP_DEVICE_BATT_STATUS_DISCHARGING;
 					break;
@@ -757,9 +754,9 @@ hidpp_device_refresh (HidppDevice *device,
 				default:
 					break;
 				}
-				priv->batt_percentage = buf[0];
+				priv->batt_percentage = msg.s.params[0];
 				g_debug ("level=%i%%, next-level=%i%%, battery-status=%i",
-					 buf[0], buf[1], buf[2]);
+					 msg.s.params[0], msg.s.params[1], msg.s.params[2]);
 			}
 		}
 	}
