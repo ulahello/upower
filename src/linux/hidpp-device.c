@@ -57,6 +57,21 @@
 
 #define HIDPP_ERROR_MESSAGE					0x8f
 
+/* HID++ 1.0 error codes */
+#define HIDPP10_ERROR_CODE_SUCCESS				0x00
+#define HIDPP10_ERROR_CODE_INVALID_SUBID			0x01
+#define HIDPP10_ERROR_CODE_INVALID_ADDRESS			0x02
+#define HIDPP10_ERROR_CODE_INVALID_VALUE			0x03
+#define HIDPP10_ERROR_CODE_CONNECT_FAIL				0x04
+#define HIDPP10_ERROR_CODE_TOO_MANY_DEVICES			0x05
+#define HIDPP10_ERROR_CODE_ALREADY_EXISTS			0x06
+#define HIDPP10_ERROR_CODE_BUSY					0x07
+#define HIDPP10_ERROR_CODE_UNKNOWN_DEVICE			0x08
+#define HIDPP10_ERROR_CODE_RESOURCE_ERROR			0x09
+#define HIDPP10_ERROR_CODE_REQUEST_UNAVAILABLE			0x0A
+#define HIDPP10_ERROR_CODE_INVALID_PARAM_VALUE			0x0B
+#define HIDPP10_ERROR_CODE_WRONG_PIN_CODE			0x0C
+
 /* HID++ 2.0 */
 
 /* HID++2.0 error codes */
@@ -554,6 +569,7 @@ hidpp_device_refresh (HidppDevice *device,
 	guint i;
 	guint len;
 	HidppDevicePrivate *priv = device->priv;
+	guchar error_code = 0;
 
 	g_return_val_if_fail (HIDPP_IS_DEVICE (device), FALSE);
 
@@ -583,11 +599,20 @@ hidpp_device_refresh (HidppDevice *device,
 		ret = hidpp_device_cmd (device,
 					&msg, &msg,
 					error);
-		// TODO: on failure, test if hid error
+		if (!ret) {
+			if (hidpp_is_error(&msg, &error_code) &&
+				(error_code == HIDPP10_ERROR_CODE_INVALID_SUBID)) {
+				/* assume HID++ 1.0 ping response */
+				priv->version = 1;
+				g_error_free(*error);
+				*error = NULL;
+				ret = TRUE;
+			}
+		} else
+			priv->version = msg.s.params[0];
+
 		if (!ret)
 			goto out;
-
-		priv->version = msg.s.params[0];
 
 		if (version_old != priv->version)
 			g_debug("protocol for hid++ device changed from v%d to v%d",
