@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "hidpp-device.h"
 
@@ -271,6 +272,27 @@ hidpp_device_print_buffer (HidppDevice *device, const HidppMessage *msg)
 	g_print ("param[0]=%02x\n\n", msg->s.params[0]);
 }
 
+static void
+hidpp_discard_messages (HidppDevice	*device)
+{
+	HidppDevicePrivate *priv = device->priv;
+	GPollFD poll[] = {
+		{
+			.fd = priv->fd,
+			.events = G_IO_IN | G_IO_OUT | G_IO_ERR,
+		},
+	};
+	char c;
+	int r;
+
+	while (g_poll (poll, G_N_ELEMENTS(poll), 0) > 0) {
+		/* kernel discards remainder of packet */
+		r = read (priv->fd, &c, 1);
+		if (r < 0 && errno != EINTR)
+			break;
+	}
+}
+
 /**
  * hidpp_device_cmd:
  **/
@@ -301,6 +323,9 @@ hidpp_device_cmd (HidppDevice	*device,
 	hidpp_device_print_buffer (device, request);
 
 	msg_len = HIDPP_MSG_LENGTH(request);
+
+	/* ignore all unrelated queued messages */
+	hidpp_discard_messages(device);
 
 	/* write to the device */
 	wrote = write (priv->fd, (const char *)request, msg_len);
