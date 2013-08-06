@@ -54,7 +54,7 @@
 #define HIDPP_READ_LONG_REGISTER_DEVICE_TYPE_GAMEPAD		0xb
 #define HIDPP_READ_LONG_REGISTER_DEVICE_TYPE_JOYSTICK		0xc
 
-#define HIDPP_ERR_INVALID_SUBID					0x8f
+#define HIDPP_ERROR_MESSAGE					0x8f
 
 /* HID++ 2.0 */
 
@@ -144,6 +144,24 @@ typedef struct {
 
 G_DEFINE_TYPE (HidppDevice, hidpp_device, G_TYPE_OBJECT)
 #define HIDPP_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), HIDPP_TYPE_DEVICE, HidppDevicePrivate))
+
+/**
+ * hidpp_is_error:
+ *
+ * Checks whether a message is a protocol-level error.
+ */
+static gboolean
+hidpp_is_error(HidppMessage *msg, guchar *error)
+{
+	if (msg->type == HIDPP_MSG_TYPE_SHORT &&
+		msg->feature_idx == HIDPP_ERROR_MESSAGE) {
+		if (error)
+			*error = msg->s.params[1];
+		return TRUE;
+	}
+
+	return FALSE;
+}
 
 /**
  * hidpp_device_map_print:
@@ -266,6 +284,7 @@ hidpp_device_cmd (HidppDevice	*device,
 	gssize wrote;
 	HidppMessage read_msg = { 0 };
 	guint msg_len;
+	guchar error_code;
 	HidppDevicePrivate *priv = device->priv;
 	GPollFD poll[] = {
 		{
@@ -273,6 +292,8 @@ hidpp_device_cmd (HidppDevice	*device,
 			.events = G_IO_IN | G_IO_OUT | G_IO_ERR,
 		},
 	};
+	guint64 begin_time;
+	gint remaining_time;
 
 	g_assert (request->type == HIDPP_MSG_TYPE_SHORT ||
 			request->type == HIDPP_MSG_TYPE_LONG);
@@ -292,41 +313,64 @@ hidpp_device_cmd (HidppDevice	*device,
 	}
 
 	/* read from the device */
-	// TODO: keep reading until wanted message is found
-	wrote = g_poll (poll, G_N_ELEMENTS(poll),
-		        HIDPP_DEVICE_READ_RESPONSE_TIMEOUT);
-	if (wrote <= 0) {
-		g_set_error (error, 1, 0,
-			     "Attempt to read response from device timed out: %" G_GSIZE_FORMAT,
-			     wrote);
-		ret = FALSE;
-		goto out;
+	begin_time = g_get_monotonic_time () / 1000;
+	remaining_time = HIDPP_DEVICE_READ_RESPONSE_TIMEOUT;
+	for (;;) {
+		wrote = g_poll (poll, G_N_ELEMENTS(poll), remaining_time);
+		if (wrote <= 0) {
+			g_set_error (error, 1, 0,
+				     "Attempt to read response from device timed out: %" G_GSIZE_FORMAT,
+				     wrote);
+			ret = FALSE;
+			goto out;
+		}
+
+		wrote = read (priv->fd, &read_msg, sizeof (*response));
+		if (wrote <= 0) {
+			g_set_error (error, 1, 0,
+				     "Unable to read response from device: %" G_GSIZE_FORMAT,
+				     wrote);
+			ret = FALSE;
+			goto out;
+		}
+
+		hidpp_device_print_buffer (device, response);
+
+		/* validate response */
+		if (read_msg.type != HIDPP_MSG_TYPE_SHORT &&
+			read_msg.type != HIDPP_MSG_TYPE_LONG) {
+			/* ignore key presses, mouse motions, etc. */
+			continue;
+		}
+
+		if (read_msg.feature_idx == request->feature_idx &&
+			read_msg.function_idx == request->function_idx) {
+			break;
+		}
+
+		/* recognize HID++ 1.0 errors */
+		if (hidpp_is_error(&read_msg, &error_code) &&
+			read_msg.function_idx == request->feature_idx &&
+			read_msg.s.params[0] == request->function_idx) {
+			g_set_error (error, 1, 0,
+				"Unable to satisfy request, HID++ error %02x", error_code);
+			ret = FALSE;
+			goto out;
+		}
+
+		/* avoid infinite loop when there is no response */
+		remaining_time = HIDPP_DEVICE_READ_RESPONSE_TIMEOUT -
+			(g_get_monotonic_time () / 1000 - begin_time);
+		if (remaining_time <= 0) {
+			g_set_error (error, 1, 0,
+					"timeout while reading response");
+			ret = FALSE;
+			goto out;
+		}
+
+		/* not our message, ignore it and try again */
 	}
 
-	wrote = read (priv->fd, &read_msg, sizeof (*response));
-	if (wrote <= 0) {
-		g_set_error (error, 1, 0,
-			     "Unable to read response from device: %" G_GSIZE_FORMAT,
-			     wrote);
-		ret = FALSE;
-		goto out;
-	}
-
-	hidpp_device_print_buffer (device, response);
-
-	// TODO: test for invalid reply
-#if 0
-	if ((buf[0] != HIDPP_HEADER_REQUEST && buf[0] != HIDPP_HEADER_RESPONSE) ||
-	    buf[1] != device_idx ||
-	    buf[2] != feature_idx ||
-	    buf[3] != function_idx) {
-		g_set_error (error, 1, 0,
-			     "invalid response from device: %" G_GSIZE_FORMAT,
-			     wrote);
-		ret = FALSE;
-		goto out;
-	}
-#endif
 out:
 	/* allow caller to check for protocol errors */
 	memcpy (response, &read_msg, sizeof (read_msg));
