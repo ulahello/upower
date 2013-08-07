@@ -235,6 +235,9 @@ up_device_unifying_coldplug (UpDevice *device)
 	hidpp_device_set_hidraw_device (unifying->priv->hidpp_device,
 					device_file);
 
+	/* give newly paired devices a chance to complete pairing */
+	g_usleep(30000);
+
 	/* coldplug initial parameters */
 	ret = hidpp_device_refresh (unifying->priv->hidpp_device,
 				    HIDPP_REFRESH_FLAGS_VERSION |
