@@ -603,7 +603,11 @@ hidpp_device_refresh (HidppDevice *device,
 					error);
 		if (!ret) {
 			if (hidpp_is_error(&msg, &error_code) &&
-				(error_code == HIDPP10_ERROR_CODE_INVALID_SUBID)) {
+				(error_code == HIDPP10_ERROR_CODE_INVALID_SUBID ||
+				/* if a device is unreachable, assume HID++ 1.0.
+				 * Otherwise, the device won't show up at
+				 * enumeration time. */
+				error_code == HIDPP10_ERROR_CODE_RESOURCE_ERROR)) {
 				/* assume HID++ 1.0 ping response */
 				priv->version = 1;
 				g_error_free(*error);
