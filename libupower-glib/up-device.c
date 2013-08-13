@@ -85,6 +85,7 @@ struct _UpDevicePrivate
 	gint64			 time_to_empty;		/* seconds */
 	gint64			 time_to_full;		/* seconds */
 	gdouble			 percentage;		/* percent */
+	gdouble			 temperature;		/* degrees C */
 	gboolean		 recall_notice;
 	gchar			*recall_vendor;
 	gchar			*recall_url;
@@ -117,6 +118,7 @@ enum {
 	PROP_TIME_TO_EMPTY,
 	PROP_TIME_TO_FULL,
 	PROP_PERCENTAGE,
+	PROP_TEMPERATURE,
 	PROP_RECALL_NOTICE,
 	PROP_RECALL_VENDOR,
 	PROP_RECALL_URL,
@@ -205,6 +207,8 @@ up_device_collect_props_cb (const char *key, const GValue *value, UpDevice *devi
 		device->priv->time_to_empty = g_value_get_int64 (value);
 	} else if (g_strcmp0 (key, "Percentage") == 0) {
 		device->priv->percentage = g_value_get_double (value);
+	} else if (g_strcmp0 (key, "Temperature") == 0) {
+		device->priv->temperature = g_value_get_double (value);
 	} else if (g_strcmp0 (key, "Technology") == 0) {
 		device->priv->technology = g_value_get_uint (value);
 	} else if (g_strcmp0 (key, "IsPresent") == 0) {
@@ -512,6 +516,8 @@ up_device_to_text (UpDevice *device)
 	    device->priv->kind == UP_DEVICE_KIND_UPS)
 		g_string_append_printf (string, "    percentage:          %g%%\n", device->priv->percentage);
 	if (device->priv->kind == UP_DEVICE_KIND_BATTERY) {
+		if (device->priv->temperature > 0)
+			g_string_append_printf (string, "    temperature:         %g degrees C\n", device->priv->temperature);
 		if (device->priv->capacity > 0)
 			g_string_append_printf (string, "    capacity:            %g%%\n", device->priv->capacity);
 	}
@@ -827,6 +833,9 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 	case PROP_PERCENTAGE:
 		device->priv->percentage = g_value_get_double (value);
 		break;
+	case PROP_TEMPERATURE:
+		device->priv->temperature = g_value_get_double (value);
+		break;
 	case PROP_TECHNOLOGY:
 		device->priv->technology = g_value_get_uint (value);
 		break;
@@ -930,6 +939,9 @@ up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 		break;
 	case PROP_PERCENTAGE:
 		g_value_set_double (value, device->priv->percentage);
+		break;
+	case PROP_TEMPERATURE:
+		g_value_set_double (value, device->priv->temperature);
 		break;
 	case PROP_RECALL_NOTICE:
 		g_value_set_boolean (value, device->priv->recall_notice);
@@ -1296,6 +1308,18 @@ up_device_class_init (UpDeviceClass *klass)
 					 PROP_PERCENTAGE,
 					 g_param_spec_double ("percentage", NULL, NULL,
 							      0.0, 100.f, 100.0,
+							      G_PARAM_READWRITE));
+	/**
+	 * UpDevice:temperature:
+	 *
+	 * The temperature of the device in degrees Celsius.
+	 *
+	 * Since: 0.9.22
+	 **/
+	g_object_class_install_property (object_class,
+					 PROP_TEMPERATURE,
+					 g_param_spec_double ("temperature", NULL, NULL,
+							      0.0, G_MAXDOUBLE, 0.0,
 							      G_PARAM_READWRITE));
 	/**
 	 * UpDevice:recall-notice:

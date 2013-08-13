@@ -544,6 +544,19 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
+    <property name="Temperature" type="d" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            The temperature of the device in degrees Celsius. This property is
+            only valid if the property
+            <doc:ref type="property" to="Source:Type">type</doc:ref>
+            has the value "battery".
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </property>
+
     <property name="IsPresent" type="b" access="read">
       <doc:doc>
         <doc:description>

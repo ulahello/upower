@@ -77,6 +77,7 @@ struct UpDevicePrivate
 	gint64			 time_to_empty;		/* seconds */
 	gint64			 time_to_full;		/* seconds */
 	gdouble			 percentage;		/* percent */
+	gdouble			 temperature;		/* degrees C */
 	gboolean		 recall_notice;
 	gchar			*recall_vendor;
 	gchar			*recall_url;
@@ -110,6 +111,7 @@ enum {
 	PROP_TIME_TO_EMPTY,
 	PROP_TIME_TO_FULL,
 	PROP_PERCENTAGE,
+	PROP_TEMPERATURE,
 	PROP_TECHNOLOGY,
 	PROP_RECALL_NOTICE,
 	PROP_RECALL_VENDOR,
@@ -249,6 +251,9 @@ up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 	case PROP_PERCENTAGE:
 		g_value_set_double (value, device->priv->percentage);
 		break;
+	case PROP_TEMPERATURE:
+		g_value_set_double (value, device->priv->temperature);
+		break;
 	case PROP_TECHNOLOGY:
 		g_value_set_uint (value, device->priv->technology);
 		break;
@@ -351,6 +356,9 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 		break;
 	case PROP_PERCENTAGE:
 		device->priv->percentage = g_value_get_double (value);
+		break;
+	case PROP_TEMPERATURE:
+		device->priv->temperature = g_value_get_double (value);
 		break;
 	case PROP_TECHNOLOGY:
 		device->priv->technology = g_value_get_uint (value);
@@ -1168,6 +1176,14 @@ up_device_class_init (UpDeviceClass *klass)
 					 PROP_PERCENTAGE,
 					 g_param_spec_double ("percentage", NULL, NULL,
 							      0.0, 100.f, 100.0,
+							      G_PARAM_READWRITE));
+	/**
+	 * UpDevice:temperature:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_TEMPERATURE,
+					 g_param_spec_double ("temperature", NULL, NULL,
+							      0.0, G_MAXDOUBLE, 0.0,
 							      G_PARAM_READWRITE));
 	/**
 	 * UpDevice:recall-notice:
