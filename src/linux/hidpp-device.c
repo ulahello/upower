@@ -579,7 +579,6 @@ hidpp_device_refresh (HidppDevice *device,
 	gboolean ret = TRUE;
 	GString *name = NULL;
 	HidppMessage msg = { };
-	guint i;
 	guint len;
 	HidppDevicePrivate *priv = device->priv;
 	guchar error_code = 0;
@@ -664,9 +663,9 @@ hidpp_device_refresh (HidppDevice *device,
 //		hidpp_device_map_add (device,
 //				      HIDPP_FEATURE_I_FIRMWARE_INFO,
 //				      "IFirmwareInfo");
-		hidpp_device_map_add (device,
-				HIDPP_FEATURE_GET_DEVICE_NAME_TYPE,
-				"GetDeviceNameType");
+//		hidpp_device_map_add (device,
+//				HIDPP_FEATURE_GET_DEVICE_NAME_TYPE,
+//				"GetDeviceNameType");
 		hidpp_device_map_add (device,
 				HIDPP_FEATURE_BATTERY_LEVEL_STATUS,
 				"BatteryLevelStatus");
@@ -684,7 +683,7 @@ hidpp_device_refresh (HidppDevice *device,
 
 		/* the device type can always be queried using HID++ 1.0 on the
 		 * receiver, regardless of the device version. */
-		if (priv->version <= 1) {
+		if (priv->version <= 1 || priv->version == 2) {
 			msg.type = HIDPP_MSG_TYPE_SHORT;
 			msg.device_idx = HIDPP_RECEIVER_ADDRESS;
 			msg.feature_idx = HIDPP_READ_LONG_REGISTER;
@@ -718,40 +717,6 @@ hidpp_device_refresh (HidppDevice *device,
 				priv->kind = HIDPP_DEVICE_KIND_UNKNOWN;
 				break;
 			}
-		} else if (priv->version == 2) {
-
-			/* send a BatteryLevelStatus report */
-			map = hidpp_device_map_get_by_feature (device, HIDPP_FEATURE_GET_DEVICE_NAME_TYPE);
-			if (map != NULL) {
-				msg.type = HIDPP_MSG_TYPE_SHORT;
-				msg.device_idx = priv->device_idx;
-				msg.feature_idx = map->idx;
-				msg.function_idx = HIDPP_FEATURE_GET_DEVICE_NAME_TYPE_FN_GET_TYPE;
-				msg.s.params[0] = 0x00;
-				msg.s.params[1] = 0x00;
-				msg.s.params[2] = 0x00;
-				ret = hidpp_device_cmd (device,
-							&msg, &msg,
-							error);
-				if (!ret)
-					goto out;
-				switch (msg.s.params[0]) {
-				case 0: /* keyboard */
-				case 2: /* numpad */
-					priv->kind = HIDPP_DEVICE_KIND_KEYBOARD;
-					break;
-				case 3: /* mouse */
-				case 4: /* touchpad */
-				case 5: /* trackball */
-					priv->kind = HIDPP_DEVICE_KIND_MOUSE;
-					break;
-				case 1: /* remote-control */
-				case 6: /* presenter */
-				case 7: /* receiver */
-					priv->kind = HIDPP_DEVICE_KIND_UNKNOWN;
-					break;
-				}
-			}
 		}
 	}
 
@@ -759,7 +724,7 @@ hidpp_device_refresh (HidppDevice *device,
 	if ((refresh_flags & HIDPP_REFRESH_FLAGS_MODEL) > 0) {
 		/* the device name can always be queried using HID++ 1.0 on the
 		 * receiver, regardless of the device version. */
-		if (priv->version <= 1) {
+		if (priv->version <= 1 || priv->version == 2) {
 			msg.type = HIDPP_MSG_TYPE_SHORT;
 			msg.device_idx = HIDPP_RECEIVER_ADDRESS;
 			msg.feature_idx = HIDPP_READ_LONG_REGISTER;
@@ -777,40 +742,6 @@ hidpp_device_refresh (HidppDevice *device,
 			len = msg.l.params[1];
 			name = g_string_new ("");
 			g_string_append_len (name, msg.l.params + 2, len);
-			priv->model = g_strdup (name->str);
-		} else if (priv->version == 2) {
-			msg.type = HIDPP_MSG_TYPE_SHORT;
-			msg.device_idx = priv->device_idx;
-			msg.feature_idx = map->idx;
-			msg.function_idx = HIDPP_FEATURE_GET_DEVICE_NAME_TYPE_FN_GET_COUNT;
-			msg.s.params[0] = 0x00;
-			msg.s.params[1] = 0x00;
-			msg.s.params[2] = 0x00;
-			map = hidpp_device_map_get_by_feature (device, HIDPP_FEATURE_GET_DEVICE_NAME_TYPE);
-			if (map != NULL) {
-				ret = hidpp_device_cmd (device,
-						&msg, &msg,
-						error);
-				if (!ret)
-					goto out;
-			}
-			len = msg.s.params[0];
-			name = g_string_new ("");
-			for (i = 0; i < len; i +=4 ) {
-				msg.type = HIDPP_MSG_TYPE_SHORT;
-				msg.device_idx = priv->device_idx;
-				msg.feature_idx = map->idx;
-				msg.function_idx = HIDPP_FEATURE_GET_DEVICE_NAME_TYPE_FN_GET_NAME;
-				msg.s.params[0] = i;
-				msg.s.params[1] = 0x00;
-				msg.s.params[2] = 0x00;
-				ret = hidpp_device_cmd (device,
-						&msg, &msg,
-						error);
-				if (!ret)
-					goto out;
-				g_string_append_len (name, msg.s.params, 4);
-			}
 			priv->model = g_strdup (name->str);
 		}
 	}
