@@ -61,12 +61,12 @@ up_device_unifying_refresh (UpDevice *device)
 	refresh_flags = HIDPP_REFRESH_FLAGS_BATTERY;
 
 	/*
-	 * Device hid++ v2 when in unreachable mode seems to be able
-	 * to respond to hid++ v1 queries (but fails to respond to v2
-	 * queries). When it gets waken up it starts responding
-	 * to v2 queries, so always try to upgrade protocol to v2
+	 * When a device is initially unreachable, the HID++ version cannot be
+	 * determined.  Therefore try determining the HID++ version, otherwise
+	 * battery information cannot be retrieved. Assume that the HID++
+	 * version does not change once detected.
 	 */
-	if (hidpp_device_get_version (priv->hidpp_device) < 2)
+	if (hidpp_device_get_version (priv->hidpp_device) == 0)
 		refresh_flags |= HIDPP_REFRESH_FLAGS_VERSION;
 
 	ret = hidpp_device_refresh (priv->hidpp_device,

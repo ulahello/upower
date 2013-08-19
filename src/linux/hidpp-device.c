@@ -567,7 +567,7 @@ hidpp_device_refresh (HidppDevice *device,
 	const HidppDeviceMap *map;
 	gboolean ret = TRUE;
 	GString *name = NULL;
-	HidppMessage msg;
+	HidppMessage msg = { };
 	guint i;
 	guint len;
 	HidppDevicePrivate *priv = device->priv;
@@ -605,11 +605,23 @@ hidpp_device_refresh (HidppDevice *device,
 			if (hidpp_is_error(&msg, &error_code) &&
 				(error_code == HIDPP10_ERROR_CODE_INVALID_SUBID ||
 				/* if a device is unreachable, assume HID++ 1.0.
-				 * Otherwise, the device won't show up at
+				 * By doing so, we are still able to get the
+				 * device type (e.g. mouse or keyboard) at
 				 * enumeration time. */
 				error_code == HIDPP10_ERROR_CODE_RESOURCE_ERROR)) {
-				/* assume HID++ 1.0 ping response */
-				priv->version = 1;
+
+				/* assert HID++ 1.0 for the device only if we
+				 * are sure (i.e.  when the ping request
+				 * returned INVALID_SUBID) */
+				if (error_code == HIDPP10_ERROR_CODE_INVALID_SUBID) {
+					priv->version = 1;
+				} else {
+					g_debug("Cannot detect version, unreachable device");
+				}
+
+				/* do not execute the error handler at the end
+				 * of this function */
+				memset(&msg, 0, sizeof (msg));
 				g_error_free(*error);
 				*error = NULL;
 				ret = TRUE;
@@ -655,7 +667,9 @@ hidpp_device_refresh (HidppDevice *device,
 	/* get device kind */
 	if ((refresh_flags & HIDPP_REFRESH_FLAGS_KIND) > 0) {
 
-		if (priv->version == 1) {
+		/* the device type can always be queried using HID++ 1.0 on the
+		 * receiver, regardless of the device version. */
+		if (priv->version <= 1) {
 			msg.type = HIDPP_MSG_TYPE_SHORT;
 			msg.device_idx = HIDPP_RECEIVER_ADDRESS;
 			msg.feature_idx = HIDPP_READ_LONG_REGISTER;
@@ -728,7 +742,9 @@ hidpp_device_refresh (HidppDevice *device,
 
 	/* get device model string */
 	if ((refresh_flags & HIDPP_REFRESH_FLAGS_MODEL) > 0) {
-		if (priv->version == 1) {
+		/* the device name can always be queried using HID++ 1.0 on the
+		 * receiver, regardless of the device version. */
+		if (priv->version <= 1) {
 			msg.type = HIDPP_MSG_TYPE_SHORT;
 			msg.device_idx = HIDPP_RECEIVER_ADDRESS;
 			msg.feature_idx = HIDPP_READ_LONG_REGISTER;
