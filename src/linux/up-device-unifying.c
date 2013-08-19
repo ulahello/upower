@@ -73,11 +73,9 @@ up_device_unifying_refresh (UpDevice *device)
 				    refresh_flags,
 				    &error);
 	if (!ret) {
-		if (error) {
-			g_warning ("failed to coldplug unifying device: %s",
-				   error->message);
-			g_error_free (error);
-		}
+		g_warning ("failed to coldplug unifying device: %s",
+			   error->message);
+		g_error_free (error);
 		goto out;
 	}
 	switch (hidpp_device_get_batt_status (priv->hidpp_device)) {
@@ -93,9 +91,15 @@ up_device_unifying_refresh (UpDevice *device)
 	default:
 		break;
 	}
+
+	/* if a device is unreachable, some known values do not make sense */
+	if (!hidpp_device_is_reachable (priv->hidpp_device)) {
+		state = UP_DEVICE_STATE_UNKNOWN;
+	}
+
 	g_get_current_time (&timeval);
 	g_object_set (device,
-		      "is-present", hidpp_device_get_version (priv->hidpp_device) > 0,
+		      "is-present", hidpp_device_is_reachable (priv->hidpp_device),
 		      "percentage", (gdouble) hidpp_device_get_batt_percentage (priv->hidpp_device),
 		      "state", state,
 		      "update-time", (guint64) timeval.tv_sec,
@@ -245,11 +249,9 @@ up_device_unifying_coldplug (UpDevice *device)
 				    HIDPP_REFRESH_FLAGS_MODEL,
 				    &error);
 	if (!ret) {
-		if (error) {
-			g_warning ("failed to coldplug unifying device: %s",
-				   error->message);
-			g_error_free (error);
-		}
+		g_warning ("failed to coldplug unifying device: %s",
+			   error->message);
+		g_error_free (error);
 		goto out;
 	}
 

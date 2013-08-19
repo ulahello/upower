@@ -84,6 +84,7 @@ void			 hidpp_device_set_index			(HidppDevice	*device,
 								 guint		 device_idx);
 void			 hidpp_device_set_enable_debug		(HidppDevice	*device,
 								 gboolean	 enable_debug);
+gboolean		 hidpp_device_is_reachable		(HidppDevice	*device);
 gboolean		 hidpp_device_refresh			(HidppDevice	*device,
 								 HidppRefreshFlags refresh_flags,
 								 GError		**error);

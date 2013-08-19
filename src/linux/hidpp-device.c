@@ -152,6 +152,7 @@ struct HidppDevicePrivate
 	gboolean		 batt_is_approx;
 	HidppDeviceKind		 kind;
 	int			 fd;
+	gboolean		 is_present;
 };
 
 typedef struct {
@@ -524,6 +525,16 @@ hidpp_device_get_kind (HidppDevice *device)
 }
 
 /**
+ * hidpp_device_is_reachable:
+ **/
+gboolean
+hidpp_device_is_reachable (HidppDevice *device)
+{
+	g_return_val_if_fail (HIDPP_IS_DEVICE (device), FALSE);
+	return device->priv->is_present;
+}
+
+/**
  * hidpp_device_set_hidraw_device:
  **/
 void
@@ -615,8 +626,10 @@ hidpp_device_refresh (HidppDevice *device,
 				 * returned INVALID_SUBID) */
 				if (error_code == HIDPP10_ERROR_CODE_INVALID_SUBID) {
 					priv->version = 1;
+					priv->is_present = TRUE;
 				} else {
 					g_debug("Cannot detect version, unreachable device");
+					priv->is_present = FALSE;
 				}
 
 				/* do not execute the error handler at the end
@@ -626,8 +639,10 @@ hidpp_device_refresh (HidppDevice *device,
 				*error = NULL;
 				ret = TRUE;
 			}
-		} else
+		} else {
 			priv->version = msg.s.params[0];
+			priv->is_present = TRUE;
+		}
 
 		if (!ret)
 			goto out;
@@ -930,6 +945,15 @@ hidpp_device_refresh (HidppDevice *device,
 			}
 		}
 	}
+
+	/* when no error occured for the requests done by the following refresh
+	 * flags, assume the device present. Note that the is_present flag is
+	 * always set when using HIDPP_REFRESH_FLAGS_VERSION */
+	if (priv->version > 0 && refresh_flags &
+			(HIDPP_REFRESH_FLAGS_MODEL |
+			 HIDPP_REFRESH_FLAGS_BATTERY)) {
+		priv->is_present = TRUE;
+	}
 out:
 	/* do not spam when device is unreachable */
 	if (hidpp_is_error(&msg, &error_code) &&
@@ -937,6 +961,11 @@ out:
 		g_debug("HID++ error: %s", (*error)->message);
 		g_error_free(*error);
 		*error = NULL;
+		/* the device is unreachable but paired, consider the refresh
+		 * successful. Use is_present to determine if battery
+		 * information is actually updated */
+		ret = TRUE;
+		priv->is_present = FALSE;
 	}
 	if (name != NULL)
 		g_string_free (name, TRUE);
@@ -952,6 +981,7 @@ hidpp_device_init (HidppDevice *device)
 	HidppDeviceMap *map;
 
 	device->priv = HIDPP_DEVICE_GET_PRIVATE (device);
+	device->priv->is_present = FALSE;
 	device->priv->fd = -1;
 	device->priv->feature_index = g_ptr_array_new_with_free_func (g_free);
 	device->priv->batt_status = HIDPP_DEVICE_BATT_STATUS_UNKNOWN;
