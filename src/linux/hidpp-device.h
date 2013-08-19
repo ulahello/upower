@@ -69,7 +69,8 @@ typedef enum {
 	HIDPP_REFRESH_FLAGS_KIND	= 2,
 	HIDPP_REFRESH_FLAGS_BATTERY	= 4,
 	HIDPP_REFRESH_FLAGS_MODEL	= 8,
-	HIDPP_REFRESH_FLAGS_FEATURES	= 16
+	HIDPP_REFRESH_FLAGS_FEATURES	= 16,
+	HIDPP_REFRESH_FLAGS_SERIAL	= 32
 } HidppRefreshFlags;
 
 GType			 hidpp_device_get_type			(void);
@@ -78,6 +79,7 @@ guint			 hidpp_device_get_batt_percentage	(HidppDevice	*device);
 guint			 hidpp_device_get_version		(HidppDevice	*device);
 HidppDeviceBattStatus	 hidpp_device_get_batt_status		(HidppDevice	*device);
 HidppDeviceKind		 hidpp_device_get_kind			(HidppDevice	*device);
+const gchar		*hidpp_device_get_serial		(HidppDevice	*device);
 void			 hidpp_device_set_hidraw_device		(HidppDevice	*device,
 								 const gchar	*hidraw_device);
 void			 hidpp_device_set_index			(HidppDevice	*device,

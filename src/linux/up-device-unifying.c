@@ -246,6 +246,7 @@ up_device_unifying_coldplug (UpDevice *device)
 	ret = hidpp_device_refresh (unifying->priv->hidpp_device,
 				    HIDPP_REFRESH_FLAGS_VERSION |
 				    HIDPP_REFRESH_FLAGS_KIND |
+				    HIDPP_REFRESH_FLAGS_SERIAL |
 				    HIDPP_REFRESH_FLAGS_MODEL,
 				    &error);
 	if (!ret) {
@@ -264,6 +265,7 @@ up_device_unifying_coldplug (UpDevice *device)
 		      "vendor", vendor,
 		      "type", up_device_unifying_get_device_kind (unifying),
 		      "model", hidpp_device_get_model (unifying->priv->hidpp_device),
+		      "serial", hidpp_device_get_serial (unifying->priv->hidpp_device),
 		      "has-history", TRUE,
 		      "is-rechargeable", TRUE,
 		      "power-supply", FALSE,

@@ -153,6 +153,7 @@ struct HidppDevicePrivate
 	HidppDeviceKind		 kind;
 	int			 fd;
 	gboolean		 is_present;
+	gchar			*serial;
 };
 
 typedef struct {
@@ -525,6 +526,16 @@ hidpp_device_get_kind (HidppDevice *device)
 }
 
 /**
+ * hidpp_device_get_serial:
+ **/
+const gchar *
+hidpp_device_get_serial (HidppDevice *device)
+{
+	g_return_val_if_fail (HIDPP_IS_DEVICE (device), NULL);
+	return device->priv->serial;
+}
+
+/**
  * hidpp_device_is_reachable:
  **/
 gboolean
@@ -746,6 +757,30 @@ hidpp_device_refresh (HidppDevice *device,
 		}
 	}
 
+	/* get serial number, this can be queried from the receiver */
+	if ((refresh_flags & HIDPP_REFRESH_FLAGS_SERIAL) > 0) {
+		guint32 *serialp;
+
+		msg.type = HIDPP_MSG_TYPE_SHORT;
+		msg.device_idx = HIDPP_RECEIVER_ADDRESS;
+		msg.feature_idx = HIDPP_READ_LONG_REGISTER;
+		msg.function_idx = 0xb5;
+		msg.s.params[0] = 0x30 | (priv->device_idx - 1);
+		msg.s.params[1] = 0x00;
+		msg.s.params[2] = 0x00;
+
+		ret = hidpp_device_cmd (device,
+				&msg, &msg,
+				error);
+		if (!ret)
+			goto out;
+
+		name = g_string_new ("");
+		serialp = (guint32 *) &msg.l.params[1];
+		g_string_printf (name, "%08X", g_ntohl(*serialp));
+		priv->serial = g_strdup (name->str);
+	}
+
 	/* get battery status */
 	if ((refresh_flags & HIDPP_REFRESH_FLAGS_BATTERY) > 0) {
 		if (priv->version == 1) {
@@ -918,6 +953,7 @@ hidpp_device_init (HidppDevice *device)
 	device->priv->batt_status = HIDPP_DEVICE_BATT_STATUS_UNKNOWN;
 	device->priv->batt_is_approx = FALSE;
 	device->priv->kind = HIDPP_DEVICE_KIND_UNKNOWN;
+	device->priv->serial = NULL;
 
 	/* add known root */
 	map = g_new0 (HidppDeviceMap, 1);
@@ -952,6 +988,7 @@ hidpp_device_finalize (GObject *object)
 
 	g_free (device->priv->hidraw_device);
 	g_free (device->priv->model);
+	g_free (device->priv->serial);
 
 	G_OBJECT_CLASS (hidpp_device_parent_class)->finalize (object);
 }
