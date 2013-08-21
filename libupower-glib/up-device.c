@@ -592,7 +592,9 @@ out:
  *
  * Gets the device history.
  *
- * Return value: (transfer full): an array of #UpHistoryItem's, else #NULL and @error is used
+ * Return value: (transfer full): an array of #UpHistoryItem's, with the most
+ *               recent one being first; %NULL if @error is set or @device is
+ *               invalid
  *
  * Since: 0.9.0
  **/

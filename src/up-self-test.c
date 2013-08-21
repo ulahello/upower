@@ -149,7 +149,7 @@ up_test_history_func (void)
 	gboolean ret;
 	GPtrArray *array;
 	gchar *filename;
-	UpHistoryItem *item;
+	UpHistoryItem *item, *item2, *item3;
 
 	history = up_history_new ();
 	g_assert (history != NULL);
@@ -171,17 +171,23 @@ up_test_history_func (void)
 	array = up_history_get_data (history, UP_HISTORY_TYPE_CHARGE, 10, 100);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 0);
+	g_ptr_array_unref (array);
 
-	/* setup some fake device */
+	/* setup some fake device and three data points */
 	up_history_set_state (history, UP_DEVICE_STATE_CHARGING);
+	up_history_set_charge_data (history, 85);
+	up_history_set_rate_data (history, 0.99f);
+	up_history_set_time_empty_data (history, 12346);
+	up_history_set_time_full_data (history, 54322);
+
+	g_usleep (2 * G_USEC_PER_SEC);
 	up_history_set_charge_data (history, 90);
 	up_history_set_rate_data (history, 1.00f);
 	up_history_set_time_empty_data (history, 12345);
 	up_history_set_time_full_data (history, 54321);
 
-	/* sleep for a little bit */
-	g_usleep (3 * G_USEC_PER_SEC);
-	up_history_set_charge_data (history, 91);
+	g_usleep (2 * G_USEC_PER_SEC);
+	up_history_set_charge_data (history, 95);
 	up_history_set_rate_data (history, 1.01f);
 	up_history_set_time_empty_data (history, 12344);
 	up_history_set_time_full_data (history, 54320);
@@ -189,13 +195,44 @@ up_test_history_func (void)
 	/* get data for last 10 seconds */
 	array = up_history_get_data (history, UP_HISTORY_TYPE_CHARGE, 10, 100);
 	g_assert (array != NULL);
-	g_assert_cmpint (array->len, ==, 2);
+	g_assert_cmpint (array->len, ==, 3);
 
 	/* get the first item, which should be the most recent */
 	item = g_ptr_array_index (array, 0);
 	g_assert (item != NULL);
-	g_assert_cmpint (up_history_item_get_value (item), ==, 91);
+	g_assert_cmpint (up_history_item_get_value (item), ==, 95);
 	g_assert_cmpint (up_history_item_get_time (item), >, 1000000);
+
+        /* the second one ought to be older */
+	item2 = g_ptr_array_index (array, 1);
+	g_assert (item2 != NULL);
+	g_assert_cmpint (up_history_item_get_value (item2), ==, 90);
+	g_assert_cmpint (up_history_item_get_time (item2), <, up_history_item_get_time (item));
+
+        /* third one is the oldest */
+	item3 = g_ptr_array_index (array, 2);
+	g_assert (item3 != NULL);
+	g_assert_cmpint (up_history_item_get_value (item3), ==, 85);
+	g_assert_cmpint (up_history_item_get_time (item3), <, up_history_item_get_time (item2));
+
+	g_ptr_array_unref (array);
+
+        /* request fewer items than we have in our history; should have the
+         * same order: first one is the most recent, and the data gets
+         * interpolated */
+	array = up_history_get_data (history, UP_HISTORY_TYPE_CHARGE, 10, 2);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 2);
+
+	item = g_ptr_array_index (array, 0);
+	g_assert (item != NULL);
+	item2 = g_ptr_array_index (array, 1);
+	g_assert (item2 != NULL);
+
+	g_assert_cmpint (up_history_item_get_time (item), >, 1000000);
+	g_assert_cmpint (up_history_item_get_value (item), ==, 95);
+	g_assert_cmpint (up_history_item_get_value (item2), ==, 87);
+
 	g_ptr_array_unref (array);
 
 	/* force a save to disk */
@@ -216,10 +253,10 @@ up_test_history_func (void)
 	/* get data for last 10 seconds */
 	array = up_history_get_data (history, UP_HISTORY_TYPE_CHARGE, 10, 100);
 	g_assert (array != NULL);
-	g_assert_cmpint (array->len, ==, 3); /* we have inserted an unknown as the first entry */
+	g_assert_cmpint (array->len, ==, 4); /* we have inserted an unknown as the first entry */
 	item = g_ptr_array_index (array, 1);
 	g_assert (item != NULL);
-	g_assert_cmpint (up_history_item_get_value (item), ==, 91);
+	g_assert_cmpint (up_history_item_get_value (item), ==, 95);
 	g_assert_cmpint (up_history_item_get_time (item), >, 1000000);
 	g_ptr_array_unref (array);
 

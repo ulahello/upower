@@ -121,7 +121,7 @@ up_history_array_limit_resolution (GPtrArray *array, guint max_num)
 	UpHistoryItem *item_new;
 	gfloat division;
 	guint length;
-	gint i;
+	guint i;
 	guint last;
 	guint first;
 	GPtrArray *new;
@@ -157,7 +157,7 @@ up_history_array_limit_resolution (GPtrArray *array, guint max_num)
 	/* Reduces the number of points to a pre-set level using a time
 	 * division algorithm so we don't keep diluting the previous
 	 * data with a conventional 1-in-x type algorithm. */
-	for (i=length-1; i>=0; i--) {
+	for (i = 0; i < length; i++) {
 		item = (UpHistoryItem *) g_ptr_array_index (array, i);
 		preset = last + (division * (gfloat) step);
 
