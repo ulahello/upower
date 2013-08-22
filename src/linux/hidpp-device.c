@@ -368,6 +368,9 @@ hidpp_device_cmd (HidppDevice	*device,
 	for (;;) {
 		wrote = g_poll (poll, G_N_ELEMENTS(poll), remaining_time);
 		if (wrote < 0) {
+			if (errno == EINTR)
+				continue;
+
 			g_set_error (error, 1, 0,
 					"Failed to read from device: %s",
 					g_strerror (errno));
@@ -382,6 +385,9 @@ hidpp_device_cmd (HidppDevice	*device,
 
 		wrote = read (priv->fd, &read_msg, sizeof (*response));
 		if (wrote <= 0) {
+			if (wrote == -1 && errno == EINTR)
+				continue;
+
 			g_set_error (error, 1, 0,
 					"Unable to read response from device: %s",
 					g_strerror (errno));
