@@ -990,6 +990,9 @@ hidpp_device_finalize (GObject *object)
 	g_free (device->priv->model);
 	g_free (device->priv->serial);
 
+	if (device->priv->fd > 0)
+		close (device->priv->fd);
+
 	G_OBJECT_CLASS (hidpp_device_parent_class)->finalize (object);
 }
 
