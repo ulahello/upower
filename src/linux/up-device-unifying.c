@@ -188,13 +188,19 @@ up_device_unifying_coldplug (UpDevice *device)
 	client = g_udev_client_new (NULL);
 	hidraw_list = g_udev_client_query_by_subsystem (client, "hidraw");
 	for (l = hidraw_list; l != NULL; l = l->next) {
+		gboolean receiver_found = FALSE;
+
 		if (g_strcmp0 (type, "lg-wireless") == 0) {
-			gboolean receiver_found = FALSE;
 			const gchar *filename;
 			GDir* dir;
+			GUdevDevice *parent_dev;
 
-			if (g_strcmp0 (g_udev_device_get_sysfs_path (native),
-						g_udev_device_get_sysfs_path(g_udev_device_get_parent(l->data))) != 0)
+			parent_dev = g_udev_device_get_parent(l->data);
+			receiver_found = g_strcmp0 (g_udev_device_get_sysfs_path (native),
+						g_udev_device_get_sysfs_path(parent_dev)) == 0;
+			g_object_unref (parent_dev);
+
+			if (!receiver_found)
 				continue;
 
 			/* hidraw device which exposes hiddev interface is our receiver */
@@ -213,16 +219,20 @@ up_device_unifying_coldplug (UpDevice *device)
 				}
 			}
 			g_dir_close(dir);
-
-			if (!receiver_found)
-				continue;
 		} else {
-			if (g_strcmp0 (g_udev_device_get_sysfs_path (parent),
-						g_udev_device_get_sysfs_path(g_udev_device_get_parent(l->data))) != 0)
-				continue;
+			GUdevDevice *parent_dev;
+
+			/* Unifying devices are located under their receiver */
+			parent_dev = g_udev_device_get_parent(l->data);
+			receiver_found = g_strcmp0 (g_udev_device_get_sysfs_path (parent),
+						g_udev_device_get_sysfs_path(parent_dev)) == 0;
+			g_object_unref (parent_dev);
 		}
-		receiver = g_object_ref (l->data);
-		break;
+
+		if (receiver_found) {
+			receiver = g_object_ref (l->data);
+			break;
+		}
 	}
 	if (receiver == NULL) {
 		g_debug ("Unable to find an hidraw device for Unifying receiver");
