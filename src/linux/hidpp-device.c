@@ -349,9 +349,15 @@ hidpp_device_cmd (HidppDevice	*device,
 	/* write to the device */
 	wrote = write (priv->fd, (const char *)request, msg_len);
 	if ((gsize) wrote != msg_len) {
-		g_set_error (error, 1, 0,
-			     "Unable to write request to device: %" G_GSIZE_FORMAT,
-			     wrote);
+		if (wrote < 0) {
+			g_set_error (error, 1, 0,
+					"Failed to write HID++ request: %s",
+					g_strerror (errno));
+		} else {
+			g_set_error (error, 1, 0,
+					"Could not fully write HID++ request, wrote %" G_GSIZE_FORMAT " bytes",
+					wrote);
+		}
 		ret = FALSE;
 		goto out;
 	}
@@ -361,10 +367,15 @@ hidpp_device_cmd (HidppDevice	*device,
 	remaining_time = HIDPP_DEVICE_READ_RESPONSE_TIMEOUT;
 	for (;;) {
 		wrote = g_poll (poll, G_N_ELEMENTS(poll), remaining_time);
-		if (wrote <= 0) {
+		if (wrote < 0) {
 			g_set_error (error, 1, 0,
-				     "Attempt to read response from device timed out: %" G_GSIZE_FORMAT,
-				     wrote);
+					"Failed to read from device: %s",
+					g_strerror (errno));
+			ret = FALSE;
+			goto out;
+		} else if (wrote == 0) {
+			g_set_error (error, 1, 0,
+					"Attempt to read response from device timed out");
 			ret = FALSE;
 			goto out;
 		}
@@ -372,8 +383,8 @@ hidpp_device_cmd (HidppDevice	*device,
 		wrote = read (priv->fd, &read_msg, sizeof (*response));
 		if (wrote <= 0) {
 			g_set_error (error, 1, 0,
-				     "Unable to read response from device: %" G_GSIZE_FORMAT,
-				     wrote);
+					"Unable to read response from device: %s",
+					g_strerror (errno));
 			ret = FALSE;
 			goto out;
 		}
