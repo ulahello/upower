@@ -435,7 +435,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'NativePath'), bat0)
 
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        #self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
         self.stop_daemon()
 
     def test_ups_ac(self):
