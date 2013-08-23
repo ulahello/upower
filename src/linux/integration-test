@@ -376,6 +376,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'EnergyFull'), 126.0)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'EnergyFullDesign'), 132.0)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Voltage'), 12.0)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Temperature'), 0.0)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'NativePath'), bat0)
         self.stop_daemon()
 
@@ -436,6 +437,31 @@ class Tests(unittest.TestCase):
 
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
         self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.stop_daemon()
+
+    def test_battery_temperature(self):
+        '''battery which reports temperature'''
+
+        bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
+                ['type', 'Battery',
+                 'present', '1',
+                 'status', 'Discharging',
+                 'temp', '254',
+                 'energy_full', '60000000',
+                 'energy_full_design', '80000000',
+                 'energy_now', '1500000',
+                 'voltage_now', '12000000'], [])
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        bat0_up = devs[0]
+
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Temperature'), 25.4)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Percentage'), 2.5)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Energy'), 1.5)
+        self.assertEqual(self.get_dbus_property('OnBattery'), True)
+        self.assertEqual(self.get_dbus_property('OnLowBattery'), True)
         self.stop_daemon()
 
     def test_ups_ac(self):
