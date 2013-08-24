@@ -414,7 +414,7 @@ up_device_supply_get_design_voltage (const gchar *native_path)
 	}
 
 	/* completely guess, to avoid getting zero values */
-	g_warning ("no voltage values, using 10V as approximation");
+	g_warning ("no voltage values for device %s, using 10V as approximation", native_path);
 	voltage = 10.0f;
 out:
 	g_free (device_type);
