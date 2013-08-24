@@ -407,7 +407,7 @@ up_device_supply_get_design_voltage (const gchar *native_path)
 
 	/* is this a USB device? */
 	device_type = up_device_supply_get_string (native_path, "type");
-	if (g_ascii_strcasecmp (device_type, "USB") == 0) {
+	if (device_type != NULL && g_ascii_strcasecmp (device_type, "USB") == 0) {
 		g_debug ("USB device, so assuming 5v");
 		voltage = 5.0f;
 		goto out;
