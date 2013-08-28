@@ -129,10 +129,10 @@ typedef struct {
 	guchar			 function_idx; /* funcId:software_id */
 	union {
 		struct {
-			gchar	 params[3];
+			guchar	 params[3];
 		} s; /* short */
 		struct {
-			gchar	 params[16];
+			guchar	 params[16];
 		} l; /* long */
 	};
 } HidppMessage;
@@ -154,6 +154,7 @@ struct HidppDevicePrivate
 	int			 fd;
 	gboolean		 is_present;
 	gchar			*serial;
+	double			 lux;
 };
 
 typedef struct {
@@ -597,6 +598,17 @@ hidpp_device_is_reachable (HidppDevice *device)
 }
 
 /**
+ * hidpp_device_get_luminosity:
+ * Determine the luminosity of the device in lux or negative if unknown.
+ */
+double
+hidpp_device_get_luminosity (HidppDevice *device)
+{
+	g_return_val_if_fail (HIDPP_IS_DEVICE (device), -1);
+	return device->priv->lux;
+}
+
+/**
  * hidpp_device_set_hidraw_device:
  **/
 void
@@ -919,8 +931,24 @@ hidpp_device_refresh (HidppDevice *device,
 							error);
 				if (!ret)
 					goto out;
-				priv->batt_percentage = msg.s.params[0];
-				priv->batt_status = HIDPP_DEVICE_BATT_STATUS_DISCHARGING;
+
+				/* assume a BattLightMeasureEvent after previous command */
+				ret = hidpp_device_read_resp (device,
+							priv->device_idx,
+							map->idx,
+							HIDPP_FEATURE_SOLAR_DASHBOARD_BE_BATTERY_LEVEL_STATUS,
+							&msg,
+							error);
+				if (!ret)
+					goto out;
+
+				priv->batt_percentage = msg.l.params[0];
+				priv->lux = (msg.l.params[1] << 8) | msg.l.params[2];
+				if (priv->lux > 200) {
+					priv->batt_status = HIDPP_DEVICE_BATT_STATUS_CHARGING;
+				} else {
+					priv->batt_status = HIDPP_DEVICE_BATT_STATUS_DISCHARGING;
+				}
 			}
 
 			/* send a BatteryLevelStatus report */
@@ -1005,6 +1033,7 @@ hidpp_device_init (HidppDevice *device)
 	device->priv->batt_is_approx = FALSE;
 	device->priv->kind = HIDPP_DEVICE_KIND_UNKNOWN;
 	device->priv->serial = NULL;
+	device->priv->lux = -1;
 
 	/* add known root */
 	map = g_new0 (HidppDeviceMap, 1);

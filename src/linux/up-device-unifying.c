@@ -56,6 +56,7 @@ up_device_unifying_refresh (UpDevice *device)
 	UpDeviceState state = UP_DEVICE_STATE_UNKNOWN;
 	UpDeviceUnifying *unifying = UP_DEVICE_UNIFYING (device);
 	UpDeviceUnifyingPrivate *priv = unifying->priv;
+	double lux;
 
 	/* refresh the battery stats */
 	refresh_flags = HIDPP_REFRESH_FLAGS_BATTERY;
@@ -98,6 +99,11 @@ up_device_unifying_refresh (UpDevice *device)
 	}
 
 	g_get_current_time (&timeval);
+	lux = hidpp_device_get_luminosity (priv->hidpp_device);
+	if (lux >= 0) {
+		g_object_set (device, "luminosity", lux, NULL);
+	}
+
 	g_object_set (device,
 		      "is-present", hidpp_device_is_reachable (priv->hidpp_device),
 		      "percentage", (gdouble) hidpp_device_get_batt_percentage (priv->hidpp_device),

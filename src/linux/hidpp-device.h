@@ -80,6 +80,7 @@ guint			 hidpp_device_get_version		(HidppDevice	*device);
 HidppDeviceBattStatus	 hidpp_device_get_batt_status		(HidppDevice	*device);
 HidppDeviceKind		 hidpp_device_get_kind			(HidppDevice	*device);
 const gchar		*hidpp_device_get_serial		(HidppDevice	*device);
+double			 hidpp_device_get_luminosity		(HidppDevice	*device);
 void			 hidpp_device_set_hidraw_device		(HidppDevice	*device,
 								 const gchar	*hidraw_device);
 void			 hidpp_device_set_index			(HidppDevice	*device,
