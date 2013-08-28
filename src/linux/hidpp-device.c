@@ -312,6 +312,14 @@ hidpp_discard_messages (HidppDevice	*device)
 	}
 }
 
+static gboolean
+hidpp_device_read_resp (HidppDevice	*device,
+			guchar		 device_index,
+			guchar		 feature_index,
+			guchar		 function_index,
+			HidppMessage	*response,
+			GError	**error);
+
 /**
  * hidpp_device_cmd:
  **/
@@ -321,20 +329,9 @@ hidpp_device_cmd (HidppDevice	*device,
 		  HidppMessage	*response,
 		  GError	**error)
 {
-	gboolean ret = TRUE;
 	gssize wrote;
-	HidppMessage read_msg = { 0 };
 	guint msg_len;
-	guchar error_code;
 	HidppDevicePrivate *priv = device->priv;
-	GPollFD poll[] = {
-		{
-			.fd = priv->fd,
-			.events = G_IO_IN | G_IO_OUT | G_IO_ERR,
-		},
-	};
-	guint64 begin_time;
-	gint remaining_time;
 
 	g_assert (request->type == HIDPP_MSG_TYPE_SHORT ||
 			request->type == HIDPP_MSG_TYPE_LONG);
@@ -358,16 +355,47 @@ hidpp_device_cmd (HidppDevice	*device,
 					"Could not fully write HID++ request, wrote %" G_GSIZE_FORMAT " bytes",
 					wrote);
 		}
-		ret = FALSE;
-		goto out;
+		return FALSE;
 	}
+
+	return hidpp_device_read_resp (device,
+		request->device_idx,
+		request->feature_idx,
+		request->function_idx,
+		response,
+		error);
+}
+
+/**
+ * hidpp_device_read_resp:
+ */
+static gboolean
+hidpp_device_read_resp (HidppDevice	*device,
+			guchar		 device_index,
+			guchar		 feature_index,
+			guchar		 function_index,
+			HidppMessage	*response,
+			GError	**error)
+{
+	HidppDevicePrivate *priv = device->priv;
+	gboolean ret = TRUE;
+	gssize r;
+	GPollFD poll[] = {
+		{
+			.fd = priv->fd,
+			.events = G_IO_IN | G_IO_OUT | G_IO_ERR,
+		},
+	};
+	HidppMessage read_msg = { 0 };
+	guint64 begin_time;
+	gint remaining_time;
+	guchar error_code;
 
 	/* read from the device */
 	begin_time = g_get_monotonic_time () / 1000;
-	remaining_time = HIDPP_DEVICE_READ_RESPONSE_TIMEOUT;
 	for (;;) {
-		wrote = g_poll (poll, G_N_ELEMENTS(poll), remaining_time);
-		if (wrote < 0) {
+		r = g_poll (poll, G_N_ELEMENTS(poll), remaining_time);
+		if (r < 0) {
 			if (errno == EINTR)
 				continue;
 
@@ -376,16 +404,16 @@ hidpp_device_cmd (HidppDevice	*device,
 					g_strerror (errno));
 			ret = FALSE;
 			goto out;
-		} else if (wrote == 0) {
+		} else if (r == 0) {
 			g_set_error (error, 1, 0,
 					"Attempt to read response from device timed out");
 			ret = FALSE;
 			goto out;
 		}
 
-		wrote = read (priv->fd, &read_msg, sizeof (*response));
-		if (wrote <= 0) {
-			if (wrote == -1 && errno == EINTR)
+		r = read (priv->fd, &read_msg, sizeof (*response));
+		if (r <= 0) {
+			if (r == -1 && errno == EINTR)
 				continue;
 
 			g_set_error (error, 1, 0,
@@ -404,15 +432,21 @@ hidpp_device_cmd (HidppDevice	*device,
 			continue;
 		}
 
-		if (read_msg.feature_idx == request->feature_idx &&
-			read_msg.function_idx == request->function_idx) {
+		/* not our device */
+		if (read_msg.device_idx != device_index) {
+			continue;
+		}
+
+		/* yep, this is our request */
+		if (read_msg.feature_idx == feature_index &&
+			read_msg.function_idx == function_index) {
 			break;
 		}
 
 		/* recognize HID++ 1.0 errors */
 		if (hidpp_is_error(&read_msg, &error_code) &&
-			read_msg.function_idx == request->feature_idx &&
-			read_msg.s.params[0] == request->function_idx) {
+			read_msg.function_idx == feature_index &&
+			read_msg.s.params[0] == function_index) {
 			g_set_error (error, 1, 0,
 				"Unable to satisfy request, HID++ error %02x", error_code);
 			ret = FALSE;
