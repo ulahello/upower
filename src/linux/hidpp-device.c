@@ -394,6 +394,16 @@ hidpp_device_read_resp (HidppDevice	*device,
 	/* read from the device */
 	begin_time = g_get_monotonic_time () / 1000;
 	for (;;) {
+		/* avoid infinite loop when there is no response */
+		remaining_time = HIDPP_DEVICE_READ_RESPONSE_TIMEOUT -
+			(g_get_monotonic_time () / 1000 - begin_time);
+		if (remaining_time <= 0) {
+			g_set_error (error, 1, 0,
+					"timeout while reading response");
+			ret = FALSE;
+			goto out;
+		}
+
 		r = g_poll (poll, G_N_ELEMENTS(poll), remaining_time);
 		if (r < 0) {
 			if (errno == EINTR)
@@ -449,16 +459,6 @@ hidpp_device_read_resp (HidppDevice	*device,
 			read_msg.s.params[0] == function_index) {
 			g_set_error (error, 1, 0,
 				"Unable to satisfy request, HID++ error %02x", error_code);
-			ret = FALSE;
-			goto out;
-		}
-
-		/* avoid infinite loop when there is no response */
-		remaining_time = HIDPP_DEVICE_READ_RESPONSE_TIMEOUT -
-			(g_get_monotonic_time () / 1000 - begin_time);
-		if (remaining_time <= 0) {
-			g_set_error (error, 1, 0,
-					"timeout while reading response");
 			ret = FALSE;
 			goto out;
 		}
