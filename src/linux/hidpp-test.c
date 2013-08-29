@@ -39,7 +39,9 @@ main (int argc, char **argv)
 	gboolean ret;
 	GError *error = NULL;
 
+#if !defined(GLIB_VERSION_2_36)
 	g_type_init ();
+#endif
 	g_test_init (&argc, &argv, NULL);
 
 	d = hidpp_device_new ();

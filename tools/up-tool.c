@@ -278,7 +278,9 @@ main (int argc, char **argv)
 		{ NULL }
 	};
 
+#if !defined(GLIB_VERSION_2_36)
 	g_type_init ();
+#endif
 
 	context = g_option_context_new ("UPower tool");
 	g_option_context_add_main_entries (context, entries, NULL);

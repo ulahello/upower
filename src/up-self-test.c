@@ -333,7 +333,9 @@ up_test_wakeups_func (void)
 int
 main (int argc, char **argv)
 {
+#if !defined(GLIB_VERSION_2_36)
 	g_type_init ();
+#endif
 	g_test_init (&argc, &argv, NULL);
 
 	/* make check, vs. make distcheck */
