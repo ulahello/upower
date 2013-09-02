@@ -250,12 +250,14 @@ hidpp_device_map_get_by_idx (HidppDevice *device, gint idx)
 static void
 hidpp_device_print_buffer (HidppDevice *device, const HidppMessage *msg)
 {
-	guint i;
+	guint i, mlen;
 	const HidppDeviceMap *map;
 
 	if (!device->priv->enable_debug)
 		return;
-	for (i = 0; i < sizeof (*msg); i++)
+
+	mlen = HIDPP_MSG_LENGTH(msg);
+	for (i = 0; i < mlen; i++)
 		g_print ("%02x ", ((const guchar*) msg)[i]);
 	g_print ("\n");
 
