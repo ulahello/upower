@@ -389,7 +389,6 @@ hidpp_device_read_resp (HidppDevice	*device,
 			.events = G_IO_IN | G_IO_OUT | G_IO_ERR,
 		},
 	};
-	HidppMessage read_msg = { 0 };
 	guint64 begin_time;
 	gint remaining_time;
 	guchar error_code;
@@ -424,7 +423,7 @@ hidpp_device_read_resp (HidppDevice	*device,
 			goto out;
 		}
 
-		r = read (priv->fd, &read_msg, sizeof (*response));
+		r = read (priv->fd, response, sizeof (*response));
 		if (r <= 0) {
 			if (r == -1 && errno == EINTR)
 				continue;
@@ -439,27 +438,27 @@ hidpp_device_read_resp (HidppDevice	*device,
 		hidpp_device_print_buffer (device, response);
 
 		/* validate response */
-		if (read_msg.type != HIDPP_MSG_TYPE_SHORT &&
-			read_msg.type != HIDPP_MSG_TYPE_LONG) {
+		if (response->type != HIDPP_MSG_TYPE_SHORT &&
+			response->type != HIDPP_MSG_TYPE_LONG) {
 			/* ignore key presses, mouse motions, etc. */
 			continue;
 		}
 
 		/* not our device */
-		if (read_msg.device_idx != device_index) {
+		if (response->device_idx != device_index) {
 			continue;
 		}
 
 		/* yep, this is our request */
-		if (read_msg.feature_idx == feature_index &&
-			read_msg.function_idx == function_index) {
+		if (response->feature_idx == feature_index &&
+			response->function_idx == function_index) {
 			break;
 		}
 
 		/* recognize HID++ 1.0 errors */
-		if (hidpp_is_error(&read_msg, &error_code) &&
-			read_msg.function_idx == feature_index &&
-			read_msg.s.params[0] == function_index) {
+		if (hidpp_is_error(response, &error_code) &&
+			response->function_idx == feature_index &&
+			response->s.params[0] == function_index) {
 			g_set_error (error, 1, 0,
 				"Unable to satisfy request, HID++ error %02x", error_code);
 			ret = FALSE;
@@ -470,8 +469,6 @@ hidpp_device_read_resp (HidppDevice	*device,
 	}
 
 out:
-	/* allow caller to check for protocol errors */
-	memcpy (response, &read_msg, sizeof (read_msg));
 	return ret;
 }
 
