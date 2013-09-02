@@ -60,6 +60,7 @@ struct UpDeviceSupplyPrivate
 	guint			 unknown_retries;
 	gboolean		 enable_poll;
 	gboolean		 is_power_supply;
+	gboolean		 shown_invalid_voltage_warning;
 };
 
 G_DEFINE_TYPE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
@@ -372,7 +373,7 @@ out:
  * up_device_supply_get_design_voltage:
  **/
 static gdouble
-up_device_supply_get_design_voltage (const gchar *native_path)
+up_device_supply_get_design_voltage (UpDeviceSupply *device, const gchar *native_path)
 {
 	gdouble voltage;
 	gchar *device_type = NULL;
@@ -413,8 +414,14 @@ up_device_supply_get_design_voltage (const gchar *native_path)
 		goto out;
 	}
 
+	/* no valid value found; display a warning the first time for each
+	 * device */
+	if (!device->priv->shown_invalid_voltage_warning) {
+		device->priv->shown_invalid_voltage_warning = TRUE;
+		g_warning ("no valid voltage value found for device %s, assuming 10V", native_path);
+	}
 	/* completely guess, to avoid getting zero values */
-	g_warning ("no voltage values for device %s, using 10V as approximation", native_path);
+	g_debug ("no voltage values for device %s, using 10V as approximation", native_path);
 	voltage = 10.0f;
 out:
 	g_free (device_type);
@@ -527,7 +534,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 		energy = sysfs_get_double (native_path, "energy_avg") / 1000000.0;
 
 	/* used to convert A to W later */
-	voltage_design = up_device_supply_get_design_voltage (native_path);
+	voltage_design = up_device_supply_get_design_voltage (supply, native_path);
 
 	/* initial values */
 	if (!supply->priv->has_coldplug_values ||
@@ -1018,6 +1025,8 @@ up_device_supply_init (UpDeviceSupply *supply)
 	supply->priv->energy_old = g_new (gdouble, UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH);
 	supply->priv->energy_old_timespec = g_new (GTimeVal, UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH);
 	supply->priv->energy_old_first = 0;
+
+	supply->priv->shown_invalid_voltage_warning = FALSE;
 }
 
 /**
