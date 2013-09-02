@@ -650,7 +650,6 @@ hidpp_device_refresh (HidppDevice *device,
 {
 	const HidppDeviceMap *map;
 	gboolean ret = TRUE;
-	GString *name = NULL;
 	HidppMessage msg = { };
 	guint len;
 	HidppDevicePrivate *priv = device->priv;
@@ -813,9 +812,7 @@ hidpp_device_refresh (HidppDevice *device,
 				goto out;
 
 			len = msg.l.params[1];
-			name = g_string_new ("");
-			g_string_append_len (name, msg.l.params + 2, len);
-			priv->model = g_strdup (name->str);
+			priv->model = g_strdup_printf ("%.*s", len, msg.l.params + 2);
 		}
 	}
 
@@ -837,10 +834,8 @@ hidpp_device_refresh (HidppDevice *device,
 		if (!ret)
 			goto out;
 
-		name = g_string_new ("");
 		serialp = (guint32 *) &msg.l.params[1];
-		g_string_printf (name, "%08X", g_ntohl(*serialp));
-		priv->serial = g_strdup (name->str);
+		priv->serial = g_strdup_printf ("%08X", g_ntohl(*serialp));
 	}
 
 	/* get battery status */
@@ -1011,8 +1006,6 @@ out:
 		ret = TRUE;
 		priv->is_present = FALSE;
 	}
-	if (name != NULL)
-		g_string_free (name, TRUE);
 	return ret;
 }
 
