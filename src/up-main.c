@@ -32,6 +32,7 @@
 #include <glib.h>
 #include <glib/gi18n-lib.h>
 #include <glib-object.h>
+#include <locale.h>
 
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
@@ -207,6 +208,7 @@ main (gint argc, gchar **argv)
 #if !defined(GLIB_VERSION_2_36)
 	g_type_init ();
 #endif
+	setlocale(LC_ALL, "");
 
 	context = g_option_context_new ("upower daemon");
 	g_option_context_add_main_entries (context, options, NULL);

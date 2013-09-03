@@ -30,6 +30,7 @@
 #include <sys/time.h>
 #include <glib.h>
 #include <glib/gi18n-lib.h>
+#include <locale.h>
 
 #include "up-client.h"
 #include "up-device.h"
@@ -281,6 +282,7 @@ main (int argc, char **argv)
 #if !defined(GLIB_VERSION_2_36)
 	g_type_init ();
 #endif
+	setlocale(LC_ALL, "");
 
 	context = g_option_context_new ("UPower tool");
 	g_option_context_add_main_entries (context, entries, NULL);
