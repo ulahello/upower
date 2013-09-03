@@ -441,6 +441,9 @@ up_device_supply_make_safe_string (gchar *text)
 	if (text == NULL)
 		return;
 
+	if (g_utf8_validate (text, -1, NULL))
+		return;
+
 	/* shunt up only safe chars */
 	for (i=0; text[i] != '\0'; i++) {
 		if (g_ascii_isprint (text[i])) {

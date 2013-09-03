@@ -562,7 +562,7 @@ class Tests(unittest.TestCase):
         bat0_up = devs[0]
 
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Serial'), '123ABC')
-        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Vendor'), ' Batt Inc. ')
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Vendor'), '⍾ Batt Inc. ☢')
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Model'), 'ABC123')
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Energy'), 1.5)
         self.stop_daemon()
