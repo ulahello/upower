@@ -973,12 +973,17 @@ hidpp_device_refresh (HidppDevice *device,
 					priv->batt_status = HIDPP_DEVICE_BATT_STATUS_CHARGING;
 					break;
 				case 3: /* charging complete */
+					priv->batt_percentage = 100;
 					priv->batt_status = HIDPP_DEVICE_BATT_STATUS_CHARGED;
 					break;
 				default:
 					break;
 				}
-				priv->batt_percentage = msg.s.params[0];
+
+				/* do not overwrite battery status with 0 (unknown) */
+				if (msg.s.params[0] != 0)
+					priv->batt_percentage = msg.s.params[0];
+
 				g_debug ("level=%i%%, next-level=%i%%, battery-status=%i",
 					 msg.s.params[0], msg.s.params[1], msg.s.params[2]);
 			}
