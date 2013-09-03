@@ -536,6 +536,37 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
         self.stop_daemon()
 
+    def test_vendor_strings(self):
+        '''manufacturer/model_name/serial_number with valid and invalid strings'''
+
+        bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
+                ['type', 'Battery',
+                 'present', '1',
+                 'status', 'Discharging',
+                 'energy_full', '60000000',
+                 'energy_full_design', '80000000',
+                 'energy_now', '1500000',
+                 'voltage_now', '12000000',
+                 # valid ASCII string
+                 'serial_number', '123ABC',
+                 # valid UTF-8 string
+                 'manufacturer', '⍾ Batt Inc. ☢',
+                ], [])
+
+        # string with invalid chars
+        self.testbed.set_attribute_binary(bat0, 'model_name', b'AB\xFFC12\x013')
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        bat0_up = devs[0]
+
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Serial'), '123ABC')
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Vendor'), ' Batt Inc. ')
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Model'), 'ABC123')
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Energy'), 1.5)
+        self.stop_daemon()
+
     #
     # Helper methods
     #
