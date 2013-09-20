@@ -574,8 +574,8 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Energy'), 1.5)
         self.stop_daemon()
 
-    def test_bluetooth_mouse(self):
-        '''bluetooth mouse battery'''
+    def _add_bt_mouse(self):
+        '''Add a bluetooth mouse to testbed'''
 
         btdev = self.testbed.add_device('bluetooth',
                                         'usb1/bluetooth/hci0/hci0:01',
@@ -590,7 +590,7 @@ class Tests(unittest.TestCase):
 
         mousebat0 = self.testbed.add_device(
             'power_supply',
-            'usb1/bluetooth/hci0/hci0:01/power_supply/hid-00:11:22:33:44:55-battery',
+            'usb1/bluetooth/hci0/hci0:01/1/power_supply/hid-00:11:22:33:44:55-battery',
             None,
             ['type', 'Battery',
              'scope', 'Device',
@@ -601,6 +601,13 @@ class Tests(unittest.TestCase):
              'model_name', 'Fancy BT mouse',
             ],
             [])
+
+        return mousebat0
+
+    def test_bluetooth_mouse(self):
+        '''bluetooth mouse battery'''
+
+        self._add_bt_mouse()
 
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
@@ -615,6 +622,63 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
         self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
         self.stop_daemon()
+
+    # https://launchpad.net/bugs/1112907
+    @unittest.expectedFailure
+    def test_bluetooth_mouse_reconnect(self):
+        '''bluetooth mouse powerdown/reconnect'''
+
+        mb = self._add_bt_mouse()
+
+        self.start_daemon()
+        devs_before = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs_before), 1)
+
+        self.testbed.uevent(mb, 'remove')
+        time.sleep(1)
+        self.assertEqual(self.proxy.EnumerateDevices(), [])
+        self.testbed.uevent(mb, 'add')
+        time.sleep(0.5)
+
+        devs_after = self.proxy.EnumerateDevices()
+        self.assertEqual(devs_before, devs_after)
+
+        # second add, which should be treated as change
+        self.testbed.uevent(mb, 'add')
+        time.sleep(0.5)
+
+        devs_after = self.proxy.EnumerateDevices()
+        self.assertEqual(devs_before, devs_after)
+
+        # with BT devices, original devices don't get removed on powerdown, but
+        # on wakeup we'll get a new one which ought to replace the previous;
+        # emulate that kernel bug
+        os.unlink(os.path.join(self.testbed.get_sys_dir(), 'class',
+                               'power_supply', 'hid-00:11:22:33:44:55-battery'))
+        mb1 = self.testbed.add_device(
+            'power_supply',
+            'usb1/bluetooth/hci0/hci0:01/2/power_supply/hid-00:11:22:33:44:55-battery',
+            None,
+            ['type', 'Battery',
+             'scope', 'Device',
+             'present', '1',
+             'online', '1',
+             'status', 'Discharging',
+             'capacity', '30',
+             'model_name', 'Fancy BT mouse',
+            ],
+            [])
+
+        self.testbed.uevent(mb1, 'add')
+        time.sleep(0.5)
+
+        devs_after = self.proxy.EnumerateDevices()
+        self.assertEqual(devs_before, devs_after)
+
+        mb1_up = devs_after[0]
+        self.assertEqual(self.get_dbus_dev_property(mb1_up, 'Model'), 'Fancy BT mouse')
+        self.assertEqual(self.get_dbus_dev_property(mb1_up, 'Percentage'), 30)
+        self.assertEqual(self.get_dbus_dev_property(mb1_up, 'PowerSupply'), False)
 
     def test_bluetooth_keyboard(self):
         '''bluetooth keyboard battery'''
