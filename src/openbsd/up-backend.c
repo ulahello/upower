@@ -591,7 +591,7 @@ up_backend_init (UpBackend *backend)
 		device_class->get_online = up_apm_device_get_online;
 		device_class->refresh = up_apm_device_refresh;
 		/* creates thread */
-		if((backend->priv->apm_thread = (GThread*) g_thread_create((GThreadFunc)up_backend_apm_event_thread, (void*) backend, FALSE, &err) == NULL))
+		if((backend->priv->apm_thread = (GThread*) g_thread_try_new("apm-poller",(GThreadFunc)up_backend_apm_event_thread, (void*) backend, &err) == NULL))
 		{
 			g_warning("Thread create failed: %s", err->message);
 			g_error_free (err);
