@@ -24,6 +24,8 @@
 
 #include <glib-object.h>
 
+#include "config.h"
+
 #include "up-types.h"
 #include "up-device.h"
 #include "up-daemon.h"
