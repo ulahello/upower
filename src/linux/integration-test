@@ -40,18 +40,19 @@ except ImportError:
 
 UP = 'org.freedesktop.UPower'
 
-(UP_DEVICE_STATE_UNKNOWN, 
+(UP_DEVICE_STATE_UNKNOWN,
  UP_DEVICE_STATE_CHARGING,
  UP_DEVICE_STATE_DISCHARGING,
  UP_DEVICE_STATE_EMPTY,
  UP_DEVICE_STATE_FULLY_CHARGED) = (0, 1, 2, 3, 4)
+
 
 class Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # run from local build tree if we are in one, otherwise use system instance
         builddir = os.getenv('top_builddir', '.')
-        if os.access (os.path.join(builddir, 'src', 'upowerd'), os.X_OK):
+        if os.access(os.path.join(builddir, 'src', 'upowerd'), os.X_OK):
             cls.daemon_path = os.path.join(builddir, 'src', 'upowerd')
             print('Testing binaries from local build tree')
         else:
@@ -65,8 +66,8 @@ class Tests(unittest.TestCase):
             assert cls.daemon_path, 'could not determine daemon path from D-BUS .service file'
 
         # fail on CRITICALs on client side
-        GLib.log_set_always_fatal(GLib.LogLevelFlags.LEVEL_WARNING|
-                                  GLib.LogLevelFlags.LEVEL_ERROR|
+        GLib.log_set_always_fatal(GLib.LogLevelFlags.LEVEL_WARNING |
+                                  GLib.LogLevelFlags.LEVEL_ERROR |
                                   GLib.LogLevelFlags.LEVEL_CRITICAL)
 
         # set up a fake system D-BUS
@@ -83,12 +84,12 @@ class Tests(unittest.TestCase):
 
     def setUp(self):
         '''Set up a local umockdev testbed.
-        
+
         The testbed is initially empty.
         '''
         self.testbed = UMockdev.Testbed.new()
 
-        self.proxy = None 
+        self.proxy = None
         self.log = None
         self.daemon = None
 
@@ -123,7 +124,8 @@ class Tests(unittest.TestCase):
         env['UMOCKDEV_DIR'] = self.testbed.get_root_dir()
         self.log = tempfile.NamedTemporaryFile()
         self.daemon = subprocess.Popen([self.daemon_path, '-v'],
-                env=env, stdout=self.log, stderr=subprocess.STDOUT)
+                                       env=env, stdout=self.log,
+                                       stderr=subprocess.STDOUT)
 
         # wait until the daemon gets online
         timeout = 100
@@ -138,9 +140,9 @@ class Tests(unittest.TestCase):
         else:
             self.fail('daemon did not start in 10 seconds')
 
-        self.proxy = Gio.DBusProxy.new_sync(self.dbus,
-                Gio.DBusProxyFlags.DO_NOT_AUTO_START, None,
-                UP, '/org/freedesktop/UPower', UP, None)
+        self.proxy = Gio.DBusProxy.new_sync(
+            self.dbus, Gio.DBusProxyFlags.DO_NOT_AUTO_START, None, UP,
+            '/org/freedesktop/UPower', UP, None)
 
         self.assertEqual(self.daemon.poll(), None, 'daemon crashed')
 
@@ -159,18 +161,17 @@ class Tests(unittest.TestCase):
     def get_dbus_property(self, name):
         '''Get property value from daemon D-Bus interface.'''
 
-        proxy = Gio.DBusProxy.new_sync(self.dbus,
-                Gio.DBusProxyFlags.DO_NOT_AUTO_START, None,
-                UP, '/org/freedesktop/UPower', 
-                'org.freedesktop.DBus.Properties', None)
+        proxy = Gio.DBusProxy.new_sync(
+            self.dbus, Gio.DBusProxyFlags.DO_NOT_AUTO_START, None, UP,
+            '/org/freedesktop/UPower', 'org.freedesktop.DBus.Properties', None)
         return proxy.Get('(ss)', UP, name)
 
     def get_dbus_dev_property(self, device, name):
         '''Get property value from an upower device D-Bus path.'''
 
-        proxy = Gio.DBusProxy.new_sync(self.dbus,
-                Gio.DBusProxyFlags.DO_NOT_AUTO_START, None,
-                UP, device, 'org.freedesktop.DBus.Properties', None)
+        proxy = Gio.DBusProxy.new_sync(
+            self.dbus, Gio.DBusProxyFlags.DO_NOT_AUTO_START, None, UP, device,
+            'org.freedesktop.DBus.Properties', None)
         return proxy.Get('(ss)', UP + '.Device', name)
 
     #
@@ -199,7 +200,7 @@ class Tests(unittest.TestCase):
 
         # online AC
         ac = self.testbed.add_device('power_supply', 'AC', None,
-                ['type', 'Mains', 'online', '1' ], [])
+                                     ['type', 'Mains', 'online', '1'], [])
 
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
@@ -227,13 +228,13 @@ class Tests(unittest.TestCase):
 
         # offline AC + discharging battery
         bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
-                ['type', 'Battery', 
-                 'present', '1', 
-                 'status', 'Discharging',
-                 'energy_full', '60000000',
-                 'energy_full_design', '80000000',
-                 'energy_now', '48000000',
-                 'voltage_now', '12000000'], [])
+                                       ['type', 'Battery',
+                                        'present', '1',
+                                        'status', 'Discharging',
+                                        'energy_full', '60000000',
+                                        'energy_full_design', '80000000',
+                                        'energy_now', '48000000',
+                                        'voltage_now', '12000000'], [])
 
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
@@ -283,22 +284,22 @@ class Tests(unittest.TestCase):
 
         # one well charged, one low
         bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
-                ['type', 'Battery', 
-                 'present', '1', 
-                 'status', 'Discharging',
-                 'energy_full', '60000000',
-                 'energy_full_design', '80000000',
-                 'energy_now', '48000000',
-                 'voltage_now', '12000000'], [])
+                                       ['type', 'Battery',
+                                        'present', '1',
+                                        'status', 'Discharging',
+                                        'energy_full', '60000000',
+                                        'energy_full_design', '80000000',
+                                        'energy_now', '48000000',
+                                        'voltage_now', '12000000'], [])
 
         self.testbed.add_device('power_supply', 'BAT1', None,
-                ['type', 'Battery', 
-                 'present', '1', 
-                 'status', 'Discharging',
-                 'energy_full', '60000000',
-                 'energy_full_design', '80000000',
-                 'energy_now', '1500000',
-                 'voltage_now', '12000000'], [])
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Discharging',
+                                 'energy_full', '60000000',
+                                 'energy_full_design', '80000000',
+                                 'energy_now', '1500000',
+                                 'voltage_now', '12000000'], [])
 
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
@@ -321,13 +322,13 @@ class Tests(unittest.TestCase):
         '''Unknown battery charge status'''
 
         self.testbed.add_device('power_supply', 'BAT0', None,
-                ['type', 'Battery', 
-                 'present', '1', 
-                 'status', 'unknown',
-                 'energy_full', '60000000',
-                 'energy_full_design', '80000000',
-                 'energy_now', '48000000',
-                 'voltage_now', '12000000'], [])
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'unknown',
+                                 'energy_full', '60000000',
+                                 'energy_full_design', '80000000',
+                                 'energy_now', '48000000',
+                                 'voltage_now', '12000000'], [])
 
         # with no other power sources, the OnBattery value here is really
         # arbitrary, so don't test it. The only thing we know for sure is that
@@ -338,7 +339,7 @@ class Tests(unittest.TestCase):
 
         # However, if we have an AC, we can infer
         ac = self.testbed.add_device('power_supply', 'AC', None,
-                ['type', 'Mains', 'online', '0'], [])
+                                     ['type', 'Mains', 'online', '0'], [])
         self.start_daemon()
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
         self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
@@ -352,18 +353,18 @@ class Tests(unittest.TestCase):
 
     def test_battery_charge(self):
         '''battery which reports charge instead of energy
-        
+
         energy_* is in uWh, while charge_* is in uAh.
         '''
         self.testbed.add_device('power_supply', 'BAT0', None,
-                ['type', 'Battery', 
-                 'present', '1', 
-                 'status', 'Discharging',
-                 'charge_full', '10500000',
-                 'charge_full_design', '11000000',
-                 'charge_now', '7875000',
-                 'current_now', '787000',
-                 'voltage_now', '12000000'], [])
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Discharging',
+                                 'charge_full', '10500000',
+                                 'charge_full_design', '11000000',
+                                 'charge_now', '7875000',
+                                 'current_now', '787000',
+                                 'voltage_now', '12000000'], [])
 
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
@@ -386,13 +387,13 @@ class Tests(unittest.TestCase):
         '''battery which reports current energy, but full charge'''
 
         self.testbed.add_device('power_supply', 'BAT0', None,
-                ['type', 'Battery', 
-                 'present', '1', 
-                 'status', 'Discharging',
-                 'charge_full', '10500000',
-                 'charge_full_design', '11000000',
-                 'energy_now', '50400000',
-                 'voltage_now', '12000000'], [])
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Discharging',
+                                 'charge_full', '10500000',
+                                 'charge_full_design', '11000000',
+                                 'energy_now', '50400000',
+                                 'voltage_now', '12000000'], [])
 
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
@@ -414,13 +415,13 @@ class Tests(unittest.TestCase):
         '''battery which reports capacity and charge_full'''
 
         self.testbed.add_device('power_supply', 'BAT0', None,
-                ['type', 'Battery',
-                 'present', '1',
-                 'status', 'Discharging',
-                 'charge_full', '10500000',
-                 'charge_full_design', '11000000',
-                 'capacity', '40',
-                 'voltage_now', '12000000'], [])
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Discharging',
+                                 'charge_full', '10500000',
+                                 'charge_full_design', '11000000',
+                                 'capacity', '40',
+                                 'voltage_now', '12000000'], [])
 
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
@@ -445,14 +446,14 @@ class Tests(unittest.TestCase):
         '''battery which reports temperature'''
 
         self.testbed.add_device('power_supply', 'BAT0', None,
-                ['type', 'Battery',
-                 'present', '1',
-                 'status', 'Discharging',
-                 'temp', '254',
-                 'energy_full', '60000000',
-                 'energy_full_design', '80000000',
-                 'energy_now', '1500000',
-                 'voltage_now', '12000000'], [])
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Discharging',
+                                 'temp', '254',
+                                 'energy_full', '60000000',
+                                 'energy_full_design', '80000000',
+                                 'energy_now', '1500000',
+                                 'voltage_now', '12000000'], [])
 
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
@@ -471,11 +472,11 @@ class Tests(unittest.TestCase):
 
         # add a charging UPS
         ups0 = self.testbed.add_device('usb', 'hiddev0', None, [],
-                ['DEVNAME', 'null', 'UPOWER_VENDOR', 'APC',
-                 'UPOWER_BATTERY_TYPE', 'ups',
-                 'UPOWER_FAKE_DEVICE', '1',
-                 'UPOWER_FAKE_HID_CHARGING', '1',
-                 'UPOWER_FAKE_HID_PERCENTAGE', '70'])
+                                       ['DEVNAME', 'null', 'UPOWER_VENDOR', 'APC',
+                                        'UPOWER_BATTERY_TYPE', 'ups',
+                                        'UPOWER_FAKE_DEVICE', '1',
+                                        'UPOWER_FAKE_HID_CHARGING', '1',
+                                        'UPOWER_FAKE_HID_PERCENTAGE', '70'])
 
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
@@ -518,7 +519,7 @@ class Tests(unittest.TestCase):
 
         # now add an offline AC, should still be on battery
         ac = self.testbed.add_device('power_supply', 'AC', None,
-                ['type', 'Mains', 'online', '0'], [])
+                                     ['type', 'Mains', 'online', '0'], [])
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
         self.assertEqual(len(devs), 2)
@@ -540,18 +541,18 @@ class Tests(unittest.TestCase):
         '''manufacturer/model_name/serial_number with valid and invalid strings'''
 
         bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
-                ['type', 'Battery',
-                 'present', '1',
-                 'status', 'Discharging',
-                 'energy_full', '60000000',
-                 'energy_full_design', '80000000',
-                 'energy_now', '1500000',
-                 'voltage_now', '12000000',
-                 # valid ASCII string
-                 'serial_number', '123ABC',
-                 # valid UTF-8 string
-                 'manufacturer', '⍾ Batt Inc. ☢',
-                ], [])
+                                       ['type', 'Battery',
+                                        'present', '1',
+                                        'status', 'Discharging',
+                                        'energy_full', '60000000',
+                                        'energy_full_design', '80000000',
+                                        'energy_now', '1500000',
+                                        'voltage_now', '12000000',
+                                        # valid ASCII string
+                                        'serial_number', '123ABC',
+                                        # valid UTF-8 string
+                                        'manufacturer', '⍾ Batt Inc. ☢'],
+                                       [])
 
         # string with invalid chars
         self.testbed.set_attribute_binary(bat0, 'model_name', b'AB\xFFC12\x013')
@@ -591,8 +592,7 @@ class Tests(unittest.TestCase):
              'online', '1',
              'status', 'Discharging',
              'capacity', '30',
-             'model_name', 'Fancy BT mouse',
-            ],
+             'model_name', 'Fancy BT mouse'],
             [])
 
         return mousebat0
@@ -656,8 +656,7 @@ class Tests(unittest.TestCase):
              'online', '1',
              'status', 'Discharging',
              'capacity', '30',
-             'model_name', 'Fancy BT mouse',
-            ],
+             'model_name', 'Fancy BT mouse'],
             [])
 
         self.testbed.uevent(mb1, 'add')
@@ -695,8 +694,7 @@ class Tests(unittest.TestCase):
              'online', '1',
              'status', 'Discharging',
              'capacity', '40',
-             'model_name', 'Monster Typist',
-            ],
+             'model_name', 'Monster Typist'],
             [])
 
         self.start_daemon()
@@ -731,7 +729,6 @@ class Tests(unittest.TestCase):
         self.assertIn(client.get_lid_is_closed(), [False, True])
         self.assertEqual(client.get_on_battery(), False)
         self.assertEqual(client.get_on_low_battery(), False)
-
 
     #
     # Helper methods
