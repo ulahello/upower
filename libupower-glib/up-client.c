@@ -314,10 +314,12 @@ gboolean
 up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GError **error)
 {
 	gboolean ret = TRUE;
-	gboolean allowed = FALSE;
 	gboolean prop_val;
 	GHashTable *props;
 	GValue *value;
+#ifdef ENABLE_DEPRECATED
+	gboolean allowed = FALSE;
+#endif
 
 	props = NULL;
 
@@ -343,6 +345,7 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 	g_free (client->priv->daemon_version);
 	client->priv->daemon_version = g_strdup (g_value_get_string (value));
 
+#ifdef ENABLE_DEPRECATED
 	value = g_hash_table_lookup (props, "CanSuspend");
 	if (value == NULL) {
 		g_warning ("No 'CanSuspend' property");
@@ -375,6 +378,7 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 		client->priv->can_hibernate = ret;
 		g_object_notify (G_OBJECT(client), "can-hibernate");
 	}
+#endif /* ENABLE_DEPRECATED */
 
 	value = g_hash_table_lookup (props, "LidIsClosed");
 	if (value == NULL) {
