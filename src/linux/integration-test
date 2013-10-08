@@ -22,7 +22,6 @@ import sys
 import tempfile
 import subprocess
 import unittest
-import shutil
 import time
 
 try:
@@ -292,7 +291,7 @@ class Tests(unittest.TestCase):
                  'energy_now', '48000000',
                  'voltage_now', '12000000'], [])
 
-        bat1 = self.testbed.add_device('power_supply', 'BAT1', None,
+        self.testbed.add_device('power_supply', 'BAT1', None,
                 ['type', 'Battery', 
                  'present', '1', 
                  'status', 'Discharging',
@@ -321,7 +320,7 @@ class Tests(unittest.TestCase):
     def test_unknown_battery_status(self):
         '''Unknown battery charge status'''
 
-        bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
+        self.testbed.add_device('power_supply', 'BAT0', None,
                 ['type', 'Battery', 
                  'present', '1', 
                  'status', 'unknown',
@@ -356,7 +355,7 @@ class Tests(unittest.TestCase):
         
         energy_* is in uWh, while charge_* is in uAh.
         '''
-        bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
+        self.testbed.add_device('power_supply', 'BAT0', None,
                 ['type', 'Battery', 
                  'present', '1', 
                  'status', 'Discharging',
@@ -386,7 +385,7 @@ class Tests(unittest.TestCase):
     def test_battery_energy_charge_mixed(self):
         '''battery which reports current energy, but full charge'''
 
-        bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
+        self.testbed.add_device('power_supply', 'BAT0', None,
                 ['type', 'Battery', 
                  'present', '1', 
                  'status', 'Discharging',
@@ -414,7 +413,7 @@ class Tests(unittest.TestCase):
     def test_battery_capacity_and_charge(self):
         '''battery which reports capacity and charge_full'''
 
-        bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
+        self.testbed.add_device('power_supply', 'BAT0', None,
                 ['type', 'Battery',
                  'present', '1',
                  'status', 'Discharging',
@@ -445,7 +444,7 @@ class Tests(unittest.TestCase):
     def test_battery_temperature(self):
         '''battery which reports temperature'''
 
-        bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
+        self.testbed.add_device('power_supply', 'BAT0', None,
                 ['type', 'Battery',
                  'present', '1',
                  'status', 'Discharging',
@@ -523,10 +522,6 @@ class Tests(unittest.TestCase):
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
         self.assertEqual(len(devs), 2)
-        if devs[0] == ups0_up:
-            ac_up = devs[1]
-        else:
-            ac_up = devs[0]
 
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'Percentage'), 2.0)
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
@@ -575,12 +570,12 @@ class Tests(unittest.TestCase):
     def _add_bt_mouse(self):
         '''Add a bluetooth mouse to testbed'''
 
-        btdev = self.testbed.add_device('bluetooth',
-                                        'usb1/bluetooth/hci0/hci0:01',
-                                        None,
-                                        [], [])
+        self.testbed.add_device('bluetooth',
+                                'usb1/bluetooth/hci0/hci0:01',
+                                None,
+                                [], [])
 
-        mouseinp = self.testbed.add_device(
+        self.testbed.add_device(
             'input',
             'usb1/bluetooth/hci0/hci0:01/input2/mouse3',
             None,
@@ -679,18 +674,18 @@ class Tests(unittest.TestCase):
     def test_bluetooth_keyboard(self):
         '''bluetooth keyboard battery'''
 
-        btdev = self.testbed.add_device('bluetooth',
-                                        'usb2/bluetooth/hci0/hci0:1',
-                                        None,
-                                        [], [])
+        self.testbed.add_device('bluetooth',
+                                'usb2/bluetooth/hci0/hci0:1',
+                                None,
+                                [], [])
 
-        kbdinp = self.testbed.add_device(
+        self.testbed.add_device(
             'input',
             'usb2/bluetooth/hci0/hci0:1/input3/event4',
             None,
             [], ['DEVNAME', 'input/event4', 'ID_INPUT_KEYBOARD', '1'])
 
-        kbbat0 = self.testbed.add_device(
+        self.testbed.add_device(
             'power_supply',
             'usb2/bluetooth/hci0/hci0:1/power_supply/hid-00:22:33:44:55:66-battery',
             None,
