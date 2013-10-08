@@ -328,7 +328,8 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 	if (!client->priv->prop_proxy)
 		goto out;
 
-	error = NULL;
+	if (error != NULL)
+		*error = NULL;
 	ret = dbus_g_proxy_call (client->priv->prop_proxy, "GetAll", error,
 				 G_TYPE_STRING, "org.freedesktop.UPower",
 				 G_TYPE_INVALID,
