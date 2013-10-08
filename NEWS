@@ -1,3 +1,20 @@
+Version 0.9.22
+~~~~~~~~~~~~~~
+Released: 2013-10-08
+
+New Features:
+ - Add temperature property for batteries (Seth Forshee)
+
+Bugfixes:
+ - Fix error handling in up_client_get_properties_sync() (Bastien Nocera, Martin Pitt)
+ - Make GetHistory() array order consistent (Martin Pitt)
+ - Fix crash with bluetooth input devices (Martin Pitt)
+ - Lots of fixes/rework for Logitech wireless input devices (Peter Wu)
+ - Allow valid UTF-8 encoded properties (Shih-Yuan Lee (FourDollars))
+ - Detect the battery of bluetooth input devices (Shih-Yuan Lee (FourDollars))
+ - Only one warning if no valid voltage found (Timothée Ravier)
+ - openbsd: Do not call g_thread_init() (Richard Hughes)
+
 Version 0.9.21
 ~~~~~~~~~~~~~~
 Released: 2013-07-26
