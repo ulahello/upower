@@ -360,7 +360,7 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 
 	prop_val = g_value_get_boolean (value) && allowed;
 	if (prop_val != client->priv->can_suspend) {
-		client->priv->can_suspend = ret;
+		client->priv->can_suspend = prop_val;
 		g_object_notify (G_OBJECT(client), "can-suspend");
 	}
 
@@ -376,7 +376,7 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 
 	prop_val = g_value_get_boolean (value) && allowed;
 	if (prop_val != client->priv->can_hibernate) {
-		client->priv->can_hibernate = ret;
+		client->priv->can_hibernate = prop_val;
 		g_object_notify (G_OBJECT(client), "can-hibernate");
 	}
 #endif /* ENABLE_DEPRECATED */
@@ -388,7 +388,7 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 	}
 	prop_val = g_value_get_boolean (value);
 	if (prop_val != client->priv->lid_is_closed) {
-		client->priv->lid_is_closed = ret;
+		client->priv->lid_is_closed = prop_val;
 		g_object_notify (G_OBJECT(client), "lid-is-closed");
 	}
 
@@ -399,7 +399,7 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 	}
 	prop_val = g_value_get_boolean (value);
 	if (prop_val != client->priv->on_battery) {
-		client->priv->on_battery = ret;
+		client->priv->on_battery = prop_val;
 		g_object_notify (G_OBJECT(client), "on-battery");
 	}
 
@@ -410,7 +410,7 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 	}
 	prop_val = g_value_get_boolean (value);
 	if (prop_val != client->priv->on_low_battery) {
-		client->priv->on_low_battery = ret;
+		client->priv->on_low_battery = prop_val;
 		g_object_notify (G_OBJECT(client), "on-low-battery");
 	}
 
@@ -421,7 +421,7 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 	}
 	prop_val = g_value_get_boolean (value);
 	if (prop_val != client->priv->lid_is_present) {
-		client->priv->lid_is_present = ret;
+		client->priv->lid_is_present = prop_val;
 		g_object_notify (G_OBJECT(client), "lid-is-present");
 	}
 
@@ -431,8 +431,8 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 		goto out;
 	}
 	prop_val = g_value_get_boolean (value);
-	if (ret != client->priv->is_docked) {
-		client->priv->is_docked = ret;
+	if (prop_val != client->priv->is_docked) {
+		client->priv->is_docked = prop_val;
 		g_object_notify (G_OBJECT(client), "is-docked");
 	}
 
@@ -443,7 +443,7 @@ up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GErr
 	}
 	prop_val = g_value_get_boolean (value);
 	if (prop_val != client->priv->lid_force_sleep) {
-		client->priv->lid_force_sleep = ret;
+		client->priv->lid_force_sleep = prop_val;
 		g_object_notify (G_OBJECT(client), "lid-force-sleep");
 	}
 
