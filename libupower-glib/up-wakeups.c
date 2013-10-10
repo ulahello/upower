@@ -377,6 +377,8 @@ up_wakeups_finalize (GObject *object)
 		g_object_unref (wakeups->priv->proxy);
 	if (wakeups->priv->prop_proxy != NULL)
 		g_object_unref (wakeups->priv->prop_proxy);
+	if (wakeups->priv->bus)
+		dbus_g_connection_unref (wakeups->priv->bus);
 
 	G_OBJECT_CLASS (up_wakeups_parent_class)->finalize (object);
 }
