@@ -437,6 +437,37 @@ up_daemon_set_on_low_battery (UpDaemon *daemon, gboolean on_low_battery)
 	g_object_notify (G_OBJECT (daemon), "on-low-battery");
 }
 
+UpDeviceLevel
+up_daemon_compute_warning_level(UpDaemon   *daemon,
+				gboolean    power_supply,
+				gdouble     percentage,
+				gint64      time_to_empty)
+{
+	gboolean use_percentage = TRUE;
+
+	if (!power_supply || !daemon->priv->use_percentage_for_policy)
+		use_percentage = FALSE;
+
+	if (use_percentage) {
+		if (percentage > daemon->priv->low_percentage)
+			return UP_DEVICE_LEVEL_NONE;
+		if (percentage > daemon->priv->critical_percentage)
+			return UP_DEVICE_LEVEL_LOW;
+		if (percentage > daemon->priv->action_percentage)
+			return UP_DEVICE_LEVEL_CRITICAL;
+		return UP_DEVICE_LEVEL_ACTION;
+	} else {
+		if (time_to_empty > daemon->priv->low_time)
+			return UP_DEVICE_LEVEL_NONE;
+		if (time_to_empty > daemon->priv->critical_time)
+			return UP_DEVICE_LEVEL_LOW;
+		if (time_to_empty > daemon->priv->action_time)
+			return UP_DEVICE_LEVEL_CRITICAL;
+		return UP_DEVICE_LEVEL_ACTION;
+	}
+	g_assert_not_reached ();
+}
+
 /**
  * up_daemon_refresh_battery_devices_cb:
  **/

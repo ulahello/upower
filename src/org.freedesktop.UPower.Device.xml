@@ -684,6 +684,32 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
+    <property name="WarningLevel" type="u" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Warning level of the battery:
+          </doc:para>
+          <doc:list>
+            <doc:item>
+              <doc:term>0</doc:term><doc:definition>Unknown</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>1</doc:term><doc:definition>None</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>2</doc:term><doc:definition>Low</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>3</doc:term><doc:definition>Critical</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>4</doc:term><doc:definition>Action</doc:definition>
+            </doc:item>
+          </doc:list>
+        </doc:description>
+      </doc:doc>
+    </property>
   </interface>
 
 </node>

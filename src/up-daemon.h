@@ -83,6 +83,11 @@ void		 up_daemon_set_on_battery	(UpDaemon		*daemon,
 						 gboolean		 on_battery);
 void		 up_daemon_set_on_low_battery	(UpDaemon		*daemon,
 						 gboolean		 on_low_battery);
+UpDeviceLevel	 up_daemon_compute_warning_level(UpDaemon		*daemon,
+						 gboolean		 power_supply,
+						 gdouble		 percentage,
+						 gint64			 time_to_empty);
+
 
 /* exported */
 gboolean	 up_daemon_enumerate_devices	(UpDaemon		*daemon,

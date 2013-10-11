@@ -78,6 +78,7 @@ struct UpDevicePrivate
 	gint64			 time_to_full;		/* seconds */
 	gdouble			 percentage;		/* percent */
 	gdouble			 temperature;		/* degrees C */
+	UpDeviceLevel		 warning_level;
 };
 
 static gboolean	up_device_register_device	(UpDevice *device);
@@ -110,6 +111,7 @@ enum {
 	PROP_PERCENTAGE,
 	PROP_TEMPERATURE,
 	PROP_TECHNOLOGY,
+	PROP_WARNING_LEVEL,
 	PROP_LAST
 };
 
@@ -163,6 +165,32 @@ up_device_error_get_type (void)
 		etype = g_enum_register_static ("UpDeviceError", values);
 	}
 	return etype;
+}
+
+/* This needs to be called when one of those properties changes:
+ * state
+ * power_supply
+ * percentage
+ * time_to_empty
+ */
+static void
+update_warning_level (UpDevice *device)
+{
+	UpDeviceLevel warning_level;
+
+	if (device->priv->state != UP_DEVICE_STATE_DISCHARGING)
+		warning_level = UP_DEVICE_LEVEL_NONE;
+	else
+		warning_level = up_daemon_compute_warning_level (device->priv->daemon,
+								 device->priv->power_supply,
+								 device->priv->percentage,
+								 device->priv->time_to_empty);
+
+	if (warning_level == device->priv->warning_level)
+		return;
+
+	device->priv->warning_level = warning_level;
+	g_object_notify (G_OBJECT (device), "warning-level");
 }
 
 /**
@@ -251,6 +279,9 @@ up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 	case PROP_TECHNOLOGY:
 		g_value_set_uint (value, device->priv->technology);
 		break;
+	case PROP_WARNING_LEVEL:
+		g_value_set_uint (value, device->priv->warning_level);
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -290,6 +321,7 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 		break;
 	case PROP_POWER_SUPPLY:
 		device->priv->power_supply = g_value_get_boolean (value);
+		update_warning_level (device);
 		break;
 	case PROP_ONLINE:
 		device->priv->online = g_value_get_boolean (value);
@@ -308,6 +340,7 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 		break;
 	case PROP_STATE:
 		device->priv->state = g_value_get_uint (value);
+		update_warning_level (device);
 		break;
 	case PROP_CAPACITY:
 		device->priv->capacity = g_value_get_double (value);
@@ -335,12 +368,14 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 		break;
 	case PROP_TIME_TO_EMPTY:
 		device->priv->time_to_empty = g_value_get_int64 (value);
+		update_warning_level (device);
 		break;
 	case PROP_TIME_TO_FULL:
 		device->priv->time_to_full = g_value_get_int64 (value);
 		break;
 	case PROP_PERCENTAGE:
 		device->priv->percentage = g_value_get_double (value);
+		update_warning_level (device);
 		break;
 	case PROP_TEMPERATURE:
 		device->priv->temperature = g_value_get_double (value);
@@ -1150,6 +1185,18 @@ up_device_class_init (UpDeviceClass *klass)
 					 g_param_spec_double ("temperature", NULL, NULL,
 							      0.0, G_MAXDOUBLE, 0.0,
 							      G_PARAM_READWRITE));
+
+	/**
+	 * UpDevice:warning-level:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_WARNING_LEVEL,
+					 g_param_spec_uint ("warning-level",
+							    NULL, NULL,
+							    UP_DEVICE_LEVEL_UNKNOWN,
+							    UP_DEVICE_LEVEL_LAST,
+							    UP_DEVICE_LEVEL_UNKNOWN,
+							    G_PARAM_READABLE));
 
 	dbus_g_error_domain_register (UP_DEVICE_ERROR, NULL, UP_DEVICE_TYPE_ERROR);
 }
