@@ -232,3 +232,59 @@ up_device_technology_from_string (const gchar *technology)
 		return UP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE;
 	return UP_DEVICE_TECHNOLOGY_UNKNOWN;
 }
+
+/**
+ * up_device_level_to_string:
+ *
+ * Converts a #UpDeviceLevel to a string.
+ *
+ * Return value: identifier string
+ *
+ * Since: 1.0
+ **/
+const gchar *
+up_device_level_to_string (UpDeviceLevel level_enum)
+{
+	switch (level_enum) {
+	case UP_DEVICE_LEVEL_UNKNOWN:
+		return "unknown";
+	case UP_DEVICE_LEVEL_NONE:
+		return "none";
+	case UP_DEVICE_LEVEL_LOW:
+		return "low";
+	case UP_DEVICE_LEVEL_CRITICAL:
+		return "critical";
+	case UP_DEVICE_LEVEL_ACTION:
+		return "action";
+	default:
+		return "unknown";
+	}
+	g_assert_not_reached ();
+}
+
+/**
+ * up_device_level_from_string:
+ *
+ * Converts a string to a #UpDeviceLevel.
+ *
+ * Return value: enumerated value
+ *
+ * Since: 1.0
+ **/
+UpDeviceLevel
+up_device_level_from_string (const gchar *level)
+{
+	if (level == NULL)
+		return UP_DEVICE_LEVEL_UNKNOWN;
+	if (g_strcmp0 (level, "unknown") == 0)
+		return UP_DEVICE_LEVEL_UNKNOWN;
+	if (g_strcmp0 (level, "none") == 0)
+		return UP_DEVICE_LEVEL_NONE;
+	if (g_strcmp0 (level, "low") == 0)
+		return UP_DEVICE_LEVEL_LOW;
+	if (g_strcmp0 (level, "critical") == 0)
+		return UP_DEVICE_LEVEL_CRITICAL;
+	if (g_strcmp0 (level, "action") == 0)
+		return UP_DEVICE_LEVEL_ACTION;
+	return UP_DEVICE_LEVEL_UNKNOWN;
+}

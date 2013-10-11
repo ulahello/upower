@@ -83,13 +83,28 @@ typedef enum {
 	UP_DEVICE_TECHNOLOGY_LAST
 } UpDeviceTechnology;
 
+/**
+ * UpDeviceLevel:
+ *
+ * The warning level of a battery.
+ **/
+typedef enum {
+	UP_DEVICE_LEVEL_UNKNOWN,
+	UP_DEVICE_LEVEL_NONE,
+	UP_DEVICE_LEVEL_LOW,
+	UP_DEVICE_LEVEL_CRITICAL,
+	UP_DEVICE_LEVEL_ACTION,
+	UP_DEVICE_LEVEL_LAST
+} UpDeviceLevel;
+
 const gchar	*up_device_kind_to_string		(UpDeviceKind		 type_enum);
 const gchar	*up_device_state_to_string		(UpDeviceState		 state_enum);
 const gchar	*up_device_technology_to_string		(UpDeviceTechnology	 technology_enum);
+const gchar	*up_device_level_to_string		(UpDeviceLevel		 level_enum);
 UpDeviceKind	 up_device_kind_from_string		(const gchar		*type);
 UpDeviceState	 up_device_state_from_string		(const gchar		*state);
 UpDeviceTechnology up_device_technology_from_string	(const gchar		*technology);
-
+UpDeviceLevel	 up_device_level_from_string		(const gchar		*level);
 
 G_END_DECLS
 
