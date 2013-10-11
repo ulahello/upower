@@ -91,7 +91,7 @@ gboolean	 up_client_get_lid_is_closed		(UpClient		*client);
 gboolean	 up_client_get_lid_is_present		(UpClient		*client);
 gboolean	 up_client_get_is_docked		(UpClient		*client);
 gboolean	 up_client_get_on_battery		(UpClient		*client);
-gboolean	 up_client_get_on_low_battery		(UpClient		*client);
+UpDeviceLevel	 up_client_get_warning_level		(UpClient		*client);
 
 G_END_DECLS
 

@@ -69,7 +69,7 @@ enum {
 	PROP_0,
 	PROP_DAEMON_VERSION,
 	PROP_ON_BATTERY,
-	PROP_ON_LOW_BATTERY,
+	PROP_WARNING_LEVEL,
 	PROP_LID_IS_CLOSED,
 	PROP_LID_IS_PRESENT,
 	PROP_IS_DOCKED,
@@ -227,20 +227,20 @@ up_client_get_on_battery (UpClient *client)
 }
 
 /**
- * up_client_get_on_low_battery:
+ * up_client_get_warning_level:
  * @client: a #UpClient instance.
  *
- * Get whether the system is running on low battery power.
+ * Get whether the system is low on battery, or critically low.
  *
- * Return value: TRUE if the system is currently on low battery power, FALSE other wise.
+ * Return value: The #UpDeviceLevel of the whole system.
  *
- * Since: 0.9.0
+ * Since: 1.0
  **/
-gboolean
-up_client_get_on_low_battery (UpClient *client)
+UpDeviceLevel
+up_client_get_warning_level (UpClient *client)
 {
 	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
-	return up_client_glue_get_on_low_battery (client->priv->proxy);
+	return up_client_glue_get_warning_level (client->priv->proxy);
 }
 
 /*
@@ -336,8 +336,8 @@ up_client_get_property (GObject *object,
 	case PROP_ON_BATTERY:
 		g_value_set_boolean (value, up_client_glue_get_on_battery (client->priv->proxy));
 		break;
-	case PROP_ON_LOW_BATTERY:
-		g_value_set_boolean (value, up_client_glue_get_on_low_battery (client->priv->proxy));
+	case PROP_WARNING_LEVEL:
+		g_value_set_uint (value, up_client_glue_get_warning_level (client->priv->proxy));
 		break;
 	case PROP_LID_IS_CLOSED:
 		g_value_set_boolean (value, up_client_glue_get_lid_is_closed (client->priv->proxy));
@@ -395,19 +395,20 @@ up_client_class_init (UpClientClass *klass)
 							       FALSE,
 							       G_PARAM_READABLE));
 	/**
-	 * UpClient:on-low-battery:
+	 * UpClient:warning-level:
 	 *
-	 * If the computer is on low battery power.
+	 * The warning level e.g. %UP_DEVICE_LEVEL_WARNING.
 	 *
-	 * Since: 0.9.0
-	 */
+	 * Since: 1.0
+	 **/
 	g_object_class_install_property (object_class,
-					 PROP_ON_LOW_BATTERY,
-					 g_param_spec_boolean ("on-low-battery",
-							       "If the computer is on low battery power",
-							       NULL,
-							       FALSE,
-							       G_PARAM_READABLE));
+					 PROP_WARNING_LEVEL,
+					 g_param_spec_uint ("warning-level",
+							    NULL, NULL,
+							    UP_DEVICE_LEVEL_UNKNOWN,
+							    UP_DEVICE_LEVEL_LAST,
+							    UP_DEVICE_LEVEL_UNKNOWN,
+							    G_PARAM_READABLE));
 	/**
 	 * UpClient:lid-is-closed:
 	 *
