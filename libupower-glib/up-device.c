@@ -347,7 +347,7 @@ up_device_to_text (UpDevice *device)
 			g_string_append_printf (string, "    technology:          %s\n", up_device_technology_to_string (up_device_glue_get_technology (priv->proxy_device)));
 	}
 	if (kind == UP_DEVICE_KIND_LINE_POWER)
-		g_string_append_printf (string, "    online:             %s\n", up_device_bool_to_string (up_device_glue_get_online (priv->proxy_device)));
+		g_string_append_printf (string, "    online:              %s\n", up_device_bool_to_string (up_device_glue_get_online (priv->proxy_device)));
 
 	/* if we can, get history */
 	if (up_device_glue_get_has_history (priv->proxy_device)) {
