@@ -47,46 +47,33 @@
 const gchar *
 up_device_kind_to_string (UpDeviceKind type_enum)
 {
-	const gchar *type = NULL;
 	switch (type_enum) {
 	case UP_DEVICE_KIND_LINE_POWER:
-		type = "line-power";
-		break;
+		return "line-power";
 	case UP_DEVICE_KIND_BATTERY:
-		type = "battery";
-		break;
+		return "battery";
 	case UP_DEVICE_KIND_UPS:
-		type = "ups";
-		break;
+		return "ups";
 	case UP_DEVICE_KIND_MONITOR:
-		type = "monitor";
-		break;
+		return "monitor";
 	case UP_DEVICE_KIND_MOUSE:
-		type = "mouse";
-		break;
+		return "mouse";
 	case UP_DEVICE_KIND_KEYBOARD:
-		type = "keyboard";
-		break;
+		return "keyboard";
 	case UP_DEVICE_KIND_PDA:
-		type = "pda";
-		break;
+		return "pda";
 	case UP_DEVICE_KIND_PHONE:
-		type = "phone";
-		break;
+		return "phone";
 	case UP_DEVICE_KIND_MEDIA_PLAYER:
-		type = "media-player";
-		break;
+		return "media-player";
 	case UP_DEVICE_KIND_TABLET:
-		type = "tablet";
-		break;
+		return "tablet";
 	case UP_DEVICE_KIND_COMPUTER:
-		type = "computer";
-		break;
+		return "computer";
 	default:
-		type = "unknown";
-		break;
+		return "unknown";
 	}
-	return type;
+	g_assert_not_reached ();
 }
 
 /**
@@ -138,31 +125,23 @@ up_device_kind_from_string (const gchar *type)
 const gchar *
 up_device_state_to_string (UpDeviceState state_enum)
 {
-	const gchar *state = NULL;
 	switch (state_enum) {
 	case UP_DEVICE_STATE_CHARGING:
-		state = "charging";
-		break;
+		return "charging";
 	case UP_DEVICE_STATE_DISCHARGING:
-		state = "discharging";
-		break;
+		return "discharging";
 	case UP_DEVICE_STATE_EMPTY:
-		state = "empty";
-		break;
+		return "empty";
 	case UP_DEVICE_STATE_FULLY_CHARGED:
-		state = "fully-charged";
-		break;
+		return "fully-charged";
 	case UP_DEVICE_STATE_PENDING_CHARGE:
-		state = "pending-charge";
-		break;
+		return "pending-charge";
 	case UP_DEVICE_STATE_PENDING_DISCHARGE:
-		state = "pending-discharge";
-		break;
+		return "pending-discharge";
 	default:
-		state = "unknown";
-		break;
+		return "unknown";
 	}
-	return state;
+	g_assert_not_reached ();
 }
 
 /**
@@ -206,31 +185,23 @@ up_device_state_from_string (const gchar *state)
 const gchar *
 up_device_technology_to_string (UpDeviceTechnology technology_enum)
 {
-	const gchar *technology = NULL;
 	switch (technology_enum) {
 	case UP_DEVICE_TECHNOLOGY_LITHIUM_ION:
-		technology = "lithium-ion";
-		break;
+		return "lithium-ion";
 	case UP_DEVICE_TECHNOLOGY_LITHIUM_POLYMER:
-		technology = "lithium-polymer";
-		break;
+		return "lithium-polymer";
 	case UP_DEVICE_TECHNOLOGY_LITHIUM_IRON_PHOSPHATE:
-		technology = "lithium-iron-phosphate";
-		break;
+		return "lithium-iron-phosphate";
 	case UP_DEVICE_TECHNOLOGY_LEAD_ACID:
-		technology = "lead-acid";
-		break;
+		return "lead-acid";
 	case UP_DEVICE_TECHNOLOGY_NICKEL_CADMIUM:
-		technology = "nickel-cadmium";
-		break;
+		return "nickel-cadmium";
 	case UP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE:
-		technology = "nickel-metal-hydride";
-		break;
+		return "nickel-metal-hydride";
 	default:
-		technology = "unknown";
-		break;
+		return "unknown";
 	}
-	return technology;
+	g_assert_not_reached ();
 }
 
 /**
