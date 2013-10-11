@@ -447,12 +447,26 @@ up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 }
 
 UpDeviceLevel
-up_daemon_compute_warning_level(UpDaemon   *daemon,
-				gboolean    power_supply,
-				gdouble     percentage,
-				gint64      time_to_empty)
+up_daemon_compute_warning_level (UpDaemon     *daemon,
+				 UpDeviceKind  kind,
+				 gboolean      power_supply,
+				 gdouble       percentage,
+				 gint64        time_to_empty)
 {
 	gboolean use_percentage = TRUE;
+
+	/* Keyboard and mice usually have a coarser
+	 * battery level, so this avoids falling directly
+	 * into critical (or off) before any warnings */
+	if (kind == UP_DEVICE_KIND_MOUSE ||
+	    kind == UP_DEVICE_KIND_KEYBOARD) {
+		if (percentage < 13.0f)
+			return UP_DEVICE_LEVEL_CRITICAL;
+		else if (percentage < 26.0f)
+			return  UP_DEVICE_LEVEL_LOW;
+		else
+			return UP_DEVICE_LEVEL_NONE;
+	}
 
 	if (!power_supply || !daemon->priv->use_percentage_for_policy)
 		use_percentage = FALSE;

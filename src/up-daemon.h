@@ -84,6 +84,7 @@ void		 up_daemon_set_on_battery	(UpDaemon		*daemon,
 void		 up_daemon_set_warning_level	(UpDaemon		*daemon,
 						 UpDeviceLevel		 warning_level);
 UpDeviceLevel	 up_daemon_compute_warning_level(UpDaemon		*daemon,
+						 UpDeviceKind		 kind,
 						 gboolean		 power_supply,
 						 gdouble		 percentage,
 						 gint64			 time_to_empty);

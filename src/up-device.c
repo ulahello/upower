@@ -182,6 +182,7 @@ update_warning_level (UpDevice *device)
 		warning_level = UP_DEVICE_LEVEL_NONE;
 	else
 		warning_level = up_daemon_compute_warning_level (device->priv->daemon,
+								 device->priv->type,
 								 device->priv->power_supply,
 								 device->priv->percentage,
 								 device->priv->time_to_empty);
