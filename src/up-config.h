@@ -50,6 +50,8 @@ GType		 up_config_get_type		(void);
 UpConfig	*up_config_new			(void);
 gboolean	 up_config_get_boolean		(UpConfig	*config,
 						 const gchar	*key);
+guint		 up_config_get_uint		(UpConfig	*config,
+						 const gchar	*key);
 
 G_END_DECLS
 
