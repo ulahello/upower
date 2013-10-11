@@ -85,6 +85,7 @@ enum {
 	PROP_TIME_TO_FULL,
 	PROP_PERCENTAGE,
 	PROP_TEMPERATURE,
+	PROP_WARNING_LEVEL,
 	PROP_LAST
 };
 
@@ -293,6 +294,7 @@ up_device_to_text (UpDevice *device)
 	    kind == UP_DEVICE_KIND_KEYBOARD ||
 	    kind == UP_DEVICE_KIND_UPS)
 		g_string_append_printf (string, "    state:               %s\n", up_device_state_to_string (up_device_glue_get_state (priv->proxy_device)));
+	g_string_append_printf (string, "    warning-level:       %s\n", up_device_level_to_string (up_device_glue_get_warning_level (priv->proxy_device)));
 	if (kind == UP_DEVICE_KIND_BATTERY) {
 		g_string_append_printf (string, "    energy:              %g Wh\n", up_device_glue_get_energy (priv->proxy_device));
 		g_string_append_printf (string, "    energy-empty:        %g Wh\n", up_device_glue_get_energy_empty (priv->proxy_device));
@@ -625,6 +627,9 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 	case PROP_TECHNOLOGY:
 		up_device_glue_set_technology (device->priv->proxy_device, g_value_get_uint (value));
 		break;
+	case PROP_WARNING_LEVEL:
+		up_device_glue_set_warning_level (device->priv->proxy_device, g_value_get_uint (value));
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -717,6 +722,9 @@ up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 		break;
 	case PROP_TEMPERATURE:
 		g_value_set_double (value, up_device_glue_get_temperature (device->priv->proxy_device));
+		break;
+	case PROP_WARNING_LEVEL:
+		g_value_set_uint (value, up_device_glue_get_warning_level (device->priv->proxy_device));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1087,6 +1095,21 @@ up_device_class_init (UpDeviceClass *klass)
 					 g_param_spec_double ("temperature", NULL, NULL,
 							      0.0, G_MAXDOUBLE, 0.0,
 							      G_PARAM_READWRITE));
+	/**
+	 * UpDevice:warning-level:
+	 *
+	 * The warning level e.g. %UP_DEVICE_LEVEL_WARNING.
+	 *
+	 * Since: 1.0
+	 **/
+	g_object_class_install_property (object_class,
+					 PROP_WARNING_LEVEL,
+					 g_param_spec_uint ("warning-level",
+							    NULL, NULL,
+							    UP_DEVICE_LEVEL_UNKNOWN,
+							    UP_DEVICE_LEVEL_LAST,
+							    UP_DEVICE_LEVEL_UNKNOWN,
+							    G_PARAM_READWRITE));
 
 	g_type_class_add_private (klass, sizeof (UpDevicePrivate));
 }
