@@ -36,7 +36,6 @@ UpDeviceState up_backend_apm_get_battery_state_value(u_char battery_state);
 static void	up_backend_update_acpibat_state(UpDevice*, struct sensordev);
 
 static gboolean		up_apm_device_get_on_battery	(UpDevice *device, gboolean *on_battery);
-static gboolean		up_apm_device_get_low_battery	(UpDevice *device, gboolean *low_battery);
 static gboolean		up_apm_device_get_online		(UpDevice *device, gboolean *online);
 static gboolean		up_apm_device_refresh		(UpDevice *device);
 
@@ -90,28 +89,6 @@ up_apm_device_get_on_battery (UpDevice *device, gboolean * on_battery)
 		return FALSE;
 
 	*on_battery = (state == UP_DEVICE_STATE_DISCHARGING);
-	return TRUE;
-}
-gboolean
-up_apm_device_get_low_battery (UpDevice *device, gboolean * low_battery)
-{
-	gboolean ret;
-	gboolean on_battery;
-	gdouble percentage;
-
-	g_return_val_if_fail (low_battery != NULL, FALSE);
-
-	ret = up_apm_device_get_on_battery (device, &on_battery);
-	if (!ret)
-		return FALSE;
-
-	if (!on_battery) {
-		*low_battery = FALSE;
-		return TRUE;
-	}
-
-	g_object_get (device, "percentage", &percentage, (void*) NULL);
-	*low_battery = (percentage < 10.0f);
 	return TRUE;
 }
 
@@ -509,12 +486,10 @@ up_backend_init (UpBackend *backend)
 		backend->priv->battery = UP_DEVICE(up_device_new ());
 		device_class = UP_DEVICE_GET_CLASS (backend->priv->battery);
 		device_class->get_on_battery = up_apm_device_get_on_battery;
-		device_class->get_low_battery = up_apm_device_get_low_battery;
 		device_class->get_online = up_apm_device_get_online;
 		device_class->refresh = up_apm_device_refresh;
 		device_class = UP_DEVICE_GET_CLASS (backend->priv->ac);
 		device_class->get_on_battery = up_apm_device_get_on_battery;
-		device_class->get_low_battery = up_apm_device_get_low_battery;
 		device_class->get_online = up_apm_device_get_online;
 		device_class->refresh = up_apm_device_refresh;
 		/* creates thread */

@@ -47,10 +47,10 @@ enum
 	PROP_0,
 	PROP_DAEMON_VERSION,
 	PROP_ON_BATTERY,
-	PROP_ON_LOW_BATTERY,
 	PROP_LID_IS_CLOSED,
 	PROP_LID_IS_PRESENT,
 	PROP_IS_DOCKED,
+	PROP_WARNING_LEVEL,
 	PROP_LAST
 };
 
@@ -74,7 +74,7 @@ struct UpDaemonPrivate
 	UpBackend		*backend;
 	UpDeviceList		*power_devices;
 	gboolean		 on_battery;
-	gboolean		 on_low_battery;
+	UpDeviceLevel		 warning_level;
 	gboolean		 lid_is_closed;
 	gboolean		 lid_is_present;
 	gboolean		 is_docked;
@@ -93,7 +93,7 @@ struct UpDaemonPrivate
 
 static void	up_daemon_finalize		(GObject	*object);
 static gboolean	up_daemon_get_on_battery_local	(UpDaemon	*daemon);
-static gboolean	up_daemon_get_on_low_battery_local (UpDaemon	*daemon);
+static gboolean	up_daemon_get_warning_level_local(UpDaemon	*daemon);
 static gboolean	up_daemon_get_on_ac_local 	(UpDaemon	*daemon);
 
 G_DEFINE_TYPE (UpDaemon, up_daemon, G_TYPE_OBJECT)
@@ -160,32 +160,41 @@ up_daemon_get_number_devices_of_type (UpDaemon *daemon, UpDeviceKind type)
 }
 
 /**
- * up_daemon_get_on_low_battery_local:
+ * up_daemon_get_warning_level_local:
  *
  * As soon as _all_ batteries are low, this is true
  **/
 static gboolean
-up_daemon_get_on_low_battery_local (UpDaemon *daemon)
+up_daemon_get_warning_level_local (UpDaemon *daemon)
 {
 	guint i;
-	gboolean ret;
-	gboolean result = TRUE;
-	gboolean on_low_battery;
-	UpDevice *device;
 	GPtrArray *array;
+	UpDeviceLevel level = UP_DEVICE_LEVEL_LAST;
 
 	/* ask each device */
 	array = up_device_list_get_array (daemon->priv->power_devices);
-	for (i=0; i<array->len; i++) {
-		device = (UpDevice *) g_ptr_array_index (array, i);
-		ret = up_device_get_low_battery (device, &on_low_battery);
-		if (ret && !on_low_battery) {
-			result = FALSE;
-			break;
-		}
+	for (i = 0; i < array->len; i++) {
+		UpDevice *device;
+		UpDeviceLevel device_level;
+		UpDeviceKind kind;
+
+		device = g_ptr_array_index (array, i);
+		g_object_get (G_OBJECT (device),
+			      "type", &kind,
+			      "warning-level", &device_level,
+			      NULL);
+		if (kind != UP_DEVICE_KIND_BATTERY &&
+		    kind != UP_DEVICE_KIND_UPS)
+			continue;
+		if (device_level < level)
+			level = device_level;
 	}
 	g_ptr_array_unref (array);
-	return result;
+
+	if (level == UP_DEVICE_LEVEL_LAST)
+		level = UP_DEVICE_LEVEL_NONE;
+
+	return level;
 }
 
 /**
@@ -316,7 +325,7 @@ up_daemon_startup (UpDaemon *daemon)
 {
 	gboolean ret;
 	gboolean on_battery;
-	gboolean on_low_battery;
+	UpDeviceLevel warning_level;
 	UpDaemonPrivate *priv = daemon->priv;
 
 	/* register on bus */
@@ -341,9 +350,9 @@ up_daemon_startup (UpDaemon *daemon)
 	/* get battery state */
 	on_battery = (up_daemon_get_on_battery_local (daemon) &&
 		      !up_daemon_get_on_ac_local (daemon));
-	on_low_battery = up_daemon_get_on_low_battery_local (daemon);
+	warning_level = up_daemon_get_warning_level_local (daemon);
 	up_daemon_set_on_battery (daemon, on_battery);
-	up_daemon_set_on_low_battery (daemon, on_low_battery);
+	up_daemon_set_warning_level (daemon, warning_level);
 
 	/* start signals and callbacks */
 	g_object_thaw_notify (G_OBJECT(daemon));
@@ -426,15 +435,15 @@ up_daemon_set_on_battery (UpDaemon *daemon, gboolean on_battery)
 }
 
 /**
- * up_daemon_set_on_low_battery:
+ * up_daemon_set_warning_level:
  **/
 void
-up_daemon_set_on_low_battery (UpDaemon *daemon, gboolean on_low_battery)
+up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 {
 	UpDaemonPrivate *priv = daemon->priv;
-	g_debug ("on_low_battery = %s", on_low_battery ? "yes" : "no");
-	priv->on_low_battery = on_low_battery;
-	g_object_notify (G_OBJECT (daemon), "on-low-battery");
+	g_debug ("warning_level = %s", up_device_level_to_string (warning_level));
+	priv->warning_level = warning_level;
+	g_object_notify (G_OBJECT (daemon), "warning-level");
 }
 
 UpDeviceLevel
@@ -520,6 +529,7 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 	UpDeviceKind type;
 	gboolean ret;
 	UpDaemonPrivate *priv = daemon->priv;
+	UpDeviceLevel warning_level;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 	g_return_if_fail (UP_IS_DEVICE (device));
@@ -534,14 +544,14 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 	}
 
-	/* second, check if the on_battery and on_low_battery state has changed */
+	/* second, check if the on_battery and warning_level state has changed */
 	ret = (up_daemon_get_on_battery_local (daemon) && !up_daemon_get_on_ac_local (daemon));
 	if (ret != priv->on_battery) {
 		up_daemon_set_on_battery (daemon, ret);
 	}
-	ret = up_daemon_get_on_low_battery_local (daemon);
-	if (ret != priv->on_low_battery)
-		up_daemon_set_on_low_battery (daemon, ret);
+	warning_level = up_daemon_get_warning_level_local (daemon);
+	if (warning_level != priv->warning_level)
+		up_daemon_set_warning_level (daemon, warning_level);
 
 	/* emit */
 	if (!priv->during_coldplug) {
@@ -726,7 +736,7 @@ up_daemon_init (UpDaemon *daemon)
 			  G_CALLBACK (up_daemon_properties_changed_cb), daemon);
 	g_signal_connect (daemon, "notify::on-battery",
 			  G_CALLBACK (up_daemon_properties_changed_cb), daemon);
-	g_signal_connect (daemon, "notify::on-low-battery",
+	g_signal_connect (daemon, "notify::warning-level",
 			  G_CALLBACK (up_daemon_properties_changed_cb), daemon);
 }
 
@@ -780,9 +790,6 @@ up_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 	case PROP_ON_BATTERY:
 		g_value_set_boolean (value, priv->on_battery);
 		break;
-	case PROP_ON_LOW_BATTERY:
-		g_value_set_boolean (value, priv->on_battery && priv->on_low_battery);
-		break;
 	case PROP_LID_IS_CLOSED:
 		g_value_set_boolean (value, priv->lid_is_closed);
 		break;
@@ -791,6 +798,9 @@ up_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 		break;
 	case PROP_IS_DOCKED:
 		g_value_set_boolean (value, priv->is_docked);
+		break;
+	case PROP_WARNING_LEVEL:
+		g_value_set_uint (value, priv->warning_level);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -875,12 +885,13 @@ up_daemon_class_init (UpDaemonClass *klass)
 							       G_PARAM_READABLE));
 
 	g_object_class_install_property (object_class,
-					 PROP_ON_LOW_BATTERY,
-					 g_param_spec_boolean ("on-low-battery",
-							       "On Low Battery",
-							       "Whether the system is running on battery and if the battery is critically low",
-							       FALSE,
-							       G_PARAM_READABLE));
+					 PROP_WARNING_LEVEL,
+					 g_param_spec_uint ("warning-level",
+							    NULL, NULL,
+							    UP_DEVICE_LEVEL_UNKNOWN,
+							    UP_DEVICE_LEVEL_LAST,
+							    UP_DEVICE_LEVEL_UNKNOWN,
+							    G_PARAM_READABLE));
 
 	g_object_class_install_property (object_class,
 					 PROP_LID_IS_CLOSED,

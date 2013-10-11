@@ -466,36 +466,6 @@ up_device_hid_get_on_battery (UpDevice *device, gboolean *on_battery)
 }
 
 /**
- * up_device_hid_get_low_battery:
- **/
-static gboolean
-up_device_hid_get_low_battery (UpDevice *device, gboolean *low_battery)
-{
-	gboolean ret;
-	gboolean on_battery;
-	UpDeviceHid *hid = UP_DEVICE_HID (device);
-	gdouble percentage;
-
-	g_return_val_if_fail (UP_IS_DEVICE_HID (hid), FALSE);
-	g_return_val_if_fail (low_battery != NULL, FALSE);
-
-	/* reuse the common checks */
-	ret = up_device_hid_get_on_battery (device, &on_battery);
-	if (!ret)
-		return FALSE;
-
-	/* shortcut */
-	if (!on_battery) {
-		*low_battery = FALSE;
-		return TRUE;
-	}
-
-	g_object_get (device, "percentage", &percentage, NULL);
-	*low_battery = (percentage < 10.0f);
-	return TRUE;
-}
-
-/**
  * up_device_hid_init:
  **/
 static void
@@ -544,7 +514,6 @@ up_device_hid_class_init (UpDeviceHidClass *klass)
 	object_class->finalize = up_device_hid_finalize;
 	device_class->coldplug = up_device_hid_coldplug;
 	device_class->get_on_battery = up_device_hid_get_on_battery;
-	device_class->get_low_battery = up_device_hid_get_low_battery;
 	device_class->refresh = up_device_hid_refresh;
 
 	g_type_class_add_private (klass, sizeof (UpDeviceHidPrivate));

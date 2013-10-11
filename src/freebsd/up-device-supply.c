@@ -54,7 +54,6 @@ static gboolean		up_device_supply_battery_coldplug	(UpDevice *device, UpAcpiNati
 static gboolean		up_device_supply_acline_set_properties	(UpDevice *device);
 static gboolean		up_device_supply_battery_set_properties	(UpDevice *device, UpAcpiNative *native);
 static gboolean		up_device_supply_get_on_battery	(UpDevice *device, gboolean *on_battery);
-static gboolean		up_device_supply_get_low_battery	(UpDevice *device, gboolean *low_battery);
 static gboolean		up_device_supply_get_online		(UpDevice *device, gboolean *online);
 
 /**
@@ -439,32 +438,6 @@ up_device_supply_get_on_battery (UpDevice *device, gboolean *on_battery)
 }
 
 /**
- * up_device_supply_get_low_battery:
- **/
-static gboolean
-up_device_supply_get_low_battery (UpDevice *device, gboolean *low_battery)
-{
-	gboolean ret;
-	gboolean on_battery;
-	gdouble percentage;
-
-	g_return_val_if_fail (low_battery != NULL, FALSE);
-
-	ret = up_device_supply_get_on_battery (device, &on_battery);
-	if (!ret)
-		return FALSE;
-
-	if (!on_battery) {
-		*low_battery = FALSE;
-		return TRUE;
-	}
-
-	g_object_get (device, "percentage", &percentage, NULL);
-	*low_battery = (percentage < 10.0f);
-	return TRUE;
-}
-
-/**
  * up_device_supply_get_online:
  **/
 static gboolean
@@ -506,7 +479,6 @@ up_device_supply_class_init (UpDeviceSupplyClass *klass)
 	UpDeviceClass *device_class = UP_DEVICE_CLASS (klass);
 
 	device_class->get_on_battery = up_device_supply_get_on_battery;
-	device_class->get_low_battery = up_device_supply_get_low_battery;
 	device_class->get_online = up_device_supply_get_online;
 	device_class->coldplug = up_device_supply_coldplug;
 	device_class->refresh = up_device_supply_refresh;

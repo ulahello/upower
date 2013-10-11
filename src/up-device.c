@@ -409,25 +409,6 @@ up_device_get_on_battery (UpDevice *device, gboolean *on_battery)
 }
 
 /**
- * up_device_get_low_battery:
- *
- * Note: Only implement for system devices, i.e. ones supplying the system
- **/
-gboolean
-up_device_get_low_battery (UpDevice *device, gboolean *low_battery)
-{
-	UpDeviceClass *klass = UP_DEVICE_GET_CLASS (device);
-
-	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
-
-	/* no support */
-	if (klass->get_low_battery == NULL)
-		return FALSE;
-
-	return klass->get_low_battery (device, low_battery);
-}
-
-/**
  * up_device_get_online:
  *
  * Note: Only implement for system devices, i.e. devices supplying the system

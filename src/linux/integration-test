@@ -726,7 +726,6 @@ class Tests(unittest.TestCase):
         self.assertIn(client.get_lid_is_present(), [False, True])
         self.assertIn(client.get_lid_is_closed(), [False, True])
         self.assertEqual(client.get_on_battery(), False)
-        self.assertEqual(client.get_on_low_battery(), False)
 
     #
     # Helper methods

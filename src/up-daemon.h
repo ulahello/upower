@@ -81,8 +81,8 @@ void		 up_daemon_set_is_docked	(UpDaemon		*daemon,
 						 gboolean		 is_docked);
 void		 up_daemon_set_on_battery	(UpDaemon		*daemon,
 						 gboolean		 on_battery);
-void		 up_daemon_set_on_low_battery	(UpDaemon		*daemon,
-						 gboolean		 on_low_battery);
+void		 up_daemon_set_warning_level	(UpDaemon		*daemon,
+						 UpDeviceLevel		 warning_level);
 UpDeviceLevel	 up_daemon_compute_warning_level(UpDaemon		*daemon,
 						 gboolean		 power_supply,
 						 gdouble		 percentage,
@@ -94,7 +94,7 @@ gboolean	 up_daemon_enumerate_devices	(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
 gboolean	 up_daemon_get_on_battery	(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
-gboolean	 up_daemon_get_low_battery	(UpDaemon		*daemon,
+guint		 up_daemon_get_warning_level	(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
 
 G_END_DECLS
