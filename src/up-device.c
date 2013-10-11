@@ -1222,8 +1222,6 @@ up_device_class_init (UpDeviceClass *klass)
 UpDevice *
 up_device_new (void)
 {
-	UpDevice *device;
-	device = UP_DEVICE (g_object_new (UP_TYPE_DEVICE, NULL));
-	return device;
+	return UP_DEVICE (g_object_new (UP_TYPE_DEVICE, NULL));
 }
 
