@@ -81,6 +81,14 @@ struct UpDaemonPrivate
 	gboolean		 during_coldplug;
 	guint			 battery_poll_id;
 	guint			 battery_poll_count;
+
+	gboolean		 use_percentage_for_policy;
+	guint			 low_percentage;
+	guint			 critical_percentage;
+	guint			 action_percentage;
+	guint			 low_time;
+	guint			 critical_time;
+	guint			 action_time;
 };
 
 static void	up_daemon_finalize		(GObject	*object);
@@ -616,6 +624,48 @@ up_daemon_properties_changed_cb (GObject *object, GParamSpec *pspec, UpDaemon *d
 	}
 }
 
+#define LOAD_OR_DEFAULT(val, str, def) val = (load_default ? def : up_config_get_uint (daemon->priv->config, str))
+
+static void
+load_percentage_policy (UpDaemon    *daemon,
+			gboolean     load_default)
+{
+	LOAD_OR_DEFAULT (daemon->priv->low_percentage, "PercentageLow", 10);
+	LOAD_OR_DEFAULT (daemon->priv->critical_percentage, "PercentageCritical", 3);
+	LOAD_OR_DEFAULT (daemon->priv->action_percentage, "PercentageAction", 2);
+}
+
+static void
+load_time_policy (UpDaemon    *daemon,
+		  gboolean     load_default)
+{
+	LOAD_OR_DEFAULT (daemon->priv->low_time, "TimeLow", 1200);
+	LOAD_OR_DEFAULT (daemon->priv->critical_time, "TimeCritical", 300);
+	LOAD_OR_DEFAULT (daemon->priv->action_time, "TimeAction", 120);
+}
+
+#define IS_DESCENDING(x, y, z) (x > y && y > z)
+
+static void
+policy_config_validate (UpDaemon *daemon)
+{
+	if (daemon->priv->low_percentage >= 100 ||
+	    daemon->priv->critical_percentage >= 100 ||
+	    daemon->priv->action_percentage >= 100) {
+		load_percentage_policy (daemon, TRUE);
+	} else if (!IS_DESCENDING (daemon->priv->low_percentage,
+				   daemon->priv->critical_percentage,
+				   daemon->priv->action_percentage)) {
+		load_percentage_policy (daemon, TRUE);
+	}
+
+	if (!IS_DESCENDING (daemon->priv->low_time,
+			    daemon->priv->critical_time,
+			    daemon->priv->action_time)) {
+		load_time_policy (daemon, TRUE);
+	}
+}
+
 /**
  * up_daemon_init:
  **/
@@ -626,6 +676,11 @@ up_daemon_init (UpDaemon *daemon)
 	daemon->priv->polkit = up_polkit_new ();
 	daemon->priv->config = up_config_new ();
 	daemon->priv->power_devices = up_device_list_new ();
+
+	daemon->priv->use_percentage_for_policy = up_config_get_boolean (daemon->priv->config, "UsePercentageForPolicy");
+	load_percentage_policy (daemon, FALSE);
+	load_time_policy (daemon, FALSE);
+	policy_config_validate (daemon);
 
 	daemon->priv->backend = up_backend_new ();
 	g_signal_connect (daemon->priv->backend, "device-added",
