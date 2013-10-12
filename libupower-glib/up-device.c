@@ -258,6 +258,7 @@ up_device_to_text (UpDevice *device)
 	UpDeviceKind kind;
 
 	g_return_val_if_fail (UP_IS_DEVICE (device), NULL);
+	g_return_val_if_fail (device->priv->proxy_device != NULL, NULL);
 
 	priv = device->priv;
 
