@@ -373,6 +373,21 @@ up_daemon_get_device_list (UpDaemon *daemon)
 }
 
 /**
+ * up_daemon_properties_changed_cb:
+ **/
+static void
+up_daemon_emit_properties_changed (UpDaemon *daemon)
+{
+	g_return_if_fail (UP_IS_DAEMON (daemon));
+
+	/* emit */
+	if (!daemon->priv->during_coldplug) {
+		g_debug ("emitting changed");
+		g_signal_emit (daemon, signals[SIGNAL_CHANGED], 0);
+	}
+}
+
+/**
  * up_daemon_set_lid_is_closed:
  **/
 void
@@ -389,6 +404,8 @@ up_daemon_set_lid_is_closed (UpDaemon *daemon, gboolean lid_is_closed)
 	g_debug ("lid_is_closed = %s", lid_is_closed ? "yes" : "no");
 	priv->lid_is_closed = lid_is_closed;
 	g_object_notify (G_OBJECT (daemon), "lid-is-closed");
+
+	up_daemon_emit_properties_changed (daemon);
 }
 
 /**
@@ -408,6 +425,8 @@ up_daemon_set_lid_is_present (UpDaemon *daemon, gboolean lid_is_present)
 	g_debug ("lid_is_present = %s", lid_is_present ? "yes" : "no");
 	priv->lid_is_present = lid_is_present;
 	g_object_notify (G_OBJECT (daemon), "lid-is-present");
+
+	up_daemon_emit_properties_changed (daemon);
 }
 
 /**
@@ -420,6 +439,8 @@ up_daemon_set_is_docked (UpDaemon *daemon, gboolean is_docked)
 	g_debug ("is_docked = %s", is_docked ? "yes" : "no");
 	priv->is_docked = is_docked;
 	g_object_notify (G_OBJECT (daemon), "is-docked");
+
+	up_daemon_emit_properties_changed (daemon);
 }
 
 /**
@@ -432,6 +453,8 @@ up_daemon_set_on_battery (UpDaemon *daemon, gboolean on_battery)
 	g_debug ("on_battery = %s", on_battery ? "yes" : "no");
 	priv->on_battery = on_battery;
 	g_object_notify (G_OBJECT (daemon), "on-battery");
+
+	up_daemon_emit_properties_changed (daemon);
 }
 
 /**
@@ -444,6 +467,8 @@ up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 	g_debug ("warning_level = %s", up_device_level_to_string (warning_level));
 	priv->warning_level = warning_level;
 	g_object_notify (G_OBJECT (daemon), "warning-level");
+
+	up_daemon_emit_properties_changed (daemon);
 }
 
 UpDeviceLevel
@@ -664,21 +689,6 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 	g_object_unref (device);
 }
 
-/**
- * up_daemon_properties_changed_cb:
- **/
-static void
-up_daemon_properties_changed_cb (GObject *object, GParamSpec *pspec, UpDaemon *daemon)
-{
-	g_return_if_fail (UP_IS_DAEMON (daemon));
-
-	/* emit */
-	if (!daemon->priv->during_coldplug) {
-		g_debug ("emitting changed");
-		g_signal_emit (daemon, signals[SIGNAL_CHANGED], 0);
-	}
-}
-
 #define LOAD_OR_DEFAULT(val, str, def) val = (load_default ? def : up_config_get_uint (daemon->priv->config, str))
 
 static void
@@ -742,16 +752,6 @@ up_daemon_init (UpDaemon *daemon)
 			  G_CALLBACK (up_daemon_device_added_cb), daemon);
 	g_signal_connect (daemon->priv->backend, "device-removed",
 			  G_CALLBACK (up_daemon_device_removed_cb), daemon);
-
-	/* watch when these properties change */
-	g_signal_connect (daemon, "notify::lid-is-present",
-			  G_CALLBACK (up_daemon_properties_changed_cb), daemon);
-	g_signal_connect (daemon, "notify::lid-is-closed",
-			  G_CALLBACK (up_daemon_properties_changed_cb), daemon);
-	g_signal_connect (daemon, "notify::on-battery",
-			  G_CALLBACK (up_daemon_properties_changed_cb), daemon);
-	g_signal_connect (daemon, "notify::warning-level",
-			  G_CALLBACK (up_daemon_properties_changed_cb), daemon);
 }
 
 /**
