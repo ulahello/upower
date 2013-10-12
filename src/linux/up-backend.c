@@ -137,16 +137,12 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 
 	} else if (g_strcmp0 (subsys, "tty") == 0) {
 
-		/* try to detect a Watts Up? Pro monitor */
-		ret = up_config_get_boolean (backend->priv->config,
-					     "EnableWattsUpPro");
-		if (ret) {
-			device = UP_DEVICE (up_device_wup_new ());
-			ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
-			if (ret)
-				goto out;
-			g_object_unref (device);
-		}
+		/* see if this is a Watts Up Pro device */
+		device = UP_DEVICE (up_device_wup_new ());
+		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+		if (ret)
+			goto out;
+		g_object_unref (device);
 
 		/* no valid TTY object */
 		device = NULL;
@@ -335,11 +331,15 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 	GList *l;
 	guint i;
 	gboolean ret;
-	const gchar *subsystems[] = {"power_supply", "usb", "usbmisc", "tty", "input", "hid", NULL};
+	const gchar *subsystems_wup[] = {"power_supply", "usb", "usbmisc", "tty", "input", "hid", NULL};
+	const gchar *subsystems[] = {"power_supply", "usb", "usbmisc", "input", "hid", NULL};
 
 	backend->priv->daemon = g_object_ref (daemon);
 	backend->priv->device_list = up_daemon_get_device_list (daemon);
-	backend->priv->gudev_client = g_udev_client_new (subsystems);
+	if (up_config_get_boolean (backend->priv->config, "EnableWattsUpPro"))
+		backend->priv->gudev_client = g_udev_client_new (subsystems_wup);
+	else
+		backend->priv->gudev_client = g_udev_client_new (subsystems);
 	g_signal_connect (backend->priv->gudev_client, "uevent",
 			  G_CALLBACK (up_backend_uevent_signal_handler_cb), backend);
 
