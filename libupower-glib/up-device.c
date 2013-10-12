@@ -55,6 +55,10 @@ static void	up_device_finalize	(GObject		*object);
 struct _UpDevicePrivate
 {
 	UpDeviceGlue		*proxy_device;
+
+	/* For use when a UpDevice isn't backed by a D-Bus object
+	 * by the UPower daemon */
+	GHashTable		*offline_props;
 };
 
 enum {
@@ -131,6 +135,8 @@ up_device_set_object_path_sync (UpDevice *device, const gchar *object_path, GCan
 
 	if (device->priv->proxy_device != NULL)
 		return FALSE;
+
+	g_clear_pointer (&device->priv->offline_props, g_hash_table_unref);
 
 	/* connect to the correct path for all the other methods */
 	proxy_device = up_device_glue_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
@@ -548,6 +554,16 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 {
 	UpDevice *device = UP_DEVICE (object);
 
+	if (device->priv->proxy_device == NULL) {
+		GValue *v;
+
+		v = g_memdup (value, sizeof(GValue));
+		g_value_copy (value, v);
+		g_hash_table_insert (device->priv->offline_props, GUINT_TO_POINTER (prop_id), v);
+
+		return;
+	}
+
 	switch (prop_id) {
 	case PROP_NATIVE_PATH:
 		up_device_glue_set_native_path (device->priv->proxy_device, g_value_get_string (value));
@@ -643,6 +659,18 @@ static void
 up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
 {
 	UpDevice *device = UP_DEVICE (object);
+
+	if (device->priv->proxy_device == NULL) {
+		GValue *v;
+
+		v = g_hash_table_lookup (device->priv->offline_props, GUINT_TO_POINTER(prop_id));
+		if (v)
+			g_value_copy (v, value);
+		else
+			g_warning ("Property ID %d was never set", prop_id);
+
+		return;
+	}
 
 	switch (prop_id) {
 	case PROP_UPDATE_TIME:
@@ -1114,6 +1142,13 @@ up_device_class_init (UpDeviceClass *klass)
 	g_type_class_add_private (klass, sizeof (UpDevicePrivate));
 }
 
+static void
+value_free (GValue *value)
+{
+	g_value_unset (value);
+	g_free (value);
+}
+
 /*
  * up_device_init:
  */
@@ -1121,6 +1156,10 @@ static void
 up_device_init (UpDevice *device)
 {
 	device->priv = UP_DEVICE_GET_PRIVATE (device);
+	device->priv->offline_props = g_hash_table_new_full (g_direct_hash,
+							     g_direct_equal,
+							     NULL,
+							     (GDestroyNotify) value_free);
 }
 
 /*
@@ -1137,6 +1176,8 @@ up_device_finalize (GObject *object)
 
 	if (device->priv->proxy_device != NULL)
 		g_object_unref (device->priv->proxy_device);
+
+	g_clear_pointer (&device->priv->offline_props, g_hash_table_unref);
 
 	G_OBJECT_CLASS (up_device_parent_class)->finalize (object);
 }
