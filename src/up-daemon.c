@@ -839,24 +839,24 @@ up_daemon_class_init (UpDaemonClass *klass)
 			      G_OBJECT_CLASS_TYPE (klass),
 			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
 			      0, NULL, NULL,
-			      g_cclosure_marshal_VOID__STRING,
-			      G_TYPE_NONE, 1, G_TYPE_STRING);
+			      g_cclosure_marshal_generic,
+			      G_TYPE_NONE, 1, DBUS_TYPE_G_OBJECT_PATH);
 
 	signals[SIGNAL_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_OBJECT_CLASS_TYPE (klass),
 			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
 			      0, NULL, NULL,
-			      g_cclosure_marshal_VOID__STRING,
-			      G_TYPE_NONE, 1, G_TYPE_STRING);
+			      g_cclosure_marshal_generic,
+			      G_TYPE_NONE, 1, DBUS_TYPE_G_OBJECT_PATH);
 
 	signals[SIGNAL_DEVICE_CHANGED] =
 		g_signal_new ("device-changed",
 			      G_OBJECT_CLASS_TYPE (klass),
 			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
 			      0, NULL, NULL,
-			      g_cclosure_marshal_VOID__STRING,
-			      G_TYPE_NONE, 1, G_TYPE_STRING);
+			      g_cclosure_marshal_generic,
+			      G_TYPE_NONE, 1, DBUS_TYPE_G_OBJECT_PATH);
 
 	signals[SIGNAL_CHANGED] =
 		g_signal_new ("changed",
