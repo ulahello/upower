@@ -1308,19 +1308,6 @@ up_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 }
 
 /**
- * up_daemon_set_property:
- **/
-static void
-up_daemon_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
-{
-	switch (prop_id) {
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-		break;
-	}
-}
-
-/**
  * up_daemon_class_init:
  **/
 static void
@@ -1329,7 +1316,6 @@ up_daemon_class_init (UpDaemonClass *klass)
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = up_daemon_finalize;
 	object_class->get_property = up_daemon_get_property;
-	object_class->set_property = up_daemon_set_property;
 
 	g_type_class_add_private (klass, sizeof (UpDaemonPrivate));
 
