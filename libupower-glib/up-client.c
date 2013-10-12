@@ -275,6 +275,19 @@ out:
 }
 
 /*
+ * up_client_notify_cb:
+ */
+static void
+up_client_notify_cb (GObject    *gobject,
+		     GParamSpec *pspec,
+		     UpClient   *client)
+{
+	/* Proxy the notification from the D-Bus glue object
+	 * to the real one */
+	g_object_notify (G_OBJECT (client), pspec->name);
+}
+
+/*
  * up_client_added_cb:
  */
 static void
@@ -569,6 +582,9 @@ static void
 up_client_init (UpClient *client)
 {
 	GError *error = NULL;
+	GParamSpec **specs;
+	guint n_props;
+	guint i;
 
 	client->priv = UP_CLIENT_GET_PRIVATE (client);
 	client->priv->array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -595,6 +611,18 @@ up_client_init (UpClient *client)
 			  G_CALLBACK (up_device_changed_cb), client);
 	g_signal_connect (client->priv->proxy, "changed",
 			  G_CALLBACK (up_client_changed_cb), client);
+
+	/* Proxy all the property notifications from the glue object */
+	specs = g_object_class_list_properties (G_OBJECT_GET_CLASS (client), &n_props);
+	for (i = 0; i < n_props; i++) {
+		gchar *signal_name;
+
+		signal_name = g_strdup_printf ("notify::%s", specs[i]->name);
+		g_signal_connect (client->priv->proxy, signal_name,
+				  G_CALLBACK (up_client_notify_cb), client);
+		g_free (signal_name);
+	}
+	g_free (specs);
 }
 
 /*
