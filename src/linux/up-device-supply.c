@@ -720,7 +720,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 
 	/* the battery isn't charging or discharging, it's just
 	 * sitting there half full doing nothing: try to guess a state */
-	if (state == UP_DEVICE_STATE_UNKNOWN) {
+	if (state == UP_DEVICE_STATE_UNKNOWN && supply->priv->is_power_supply) {
 		daemon = up_device_get_daemon (device);
 
 		/* If we have any online AC, assume charging, otherwise
