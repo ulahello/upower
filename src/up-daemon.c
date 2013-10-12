@@ -376,8 +376,18 @@ up_daemon_get_device_list (UpDaemon *daemon)
  * up_daemon_properties_changed_cb:
  **/
 static void
-up_daemon_emit_properties_changed (UpDaemon *daemon)
+up_daemon_emit_properties_changed (UpDaemon    *daemon,
+				   const gchar *property,
+				   GVariant    *value)
 {
+	DBusConnection *connection;
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusMessageIter subiter;
+	DBusMessageIter dict_iter;
+	DBusMessageIter v_iter;
+	const char *iface_name = "org.freedesktop.UPower";
+
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 
 	/* emit */
@@ -385,6 +395,41 @@ up_daemon_emit_properties_changed (UpDaemon *daemon)
 		g_debug ("emitting changed");
 		g_signal_emit (daemon, signals[SIGNAL_CHANGED], 0);
 	}
+
+	connection = dbus_g_connection_get_connection (daemon->priv->connection);
+	message = dbus_message_new_signal ("/org/freedesktop/UPower",
+					   "org.freedesktop.DBus.Properties",
+					   "PropertiesChanged");
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &iface_name);
+	/* changed */
+	dbus_message_iter_open_container (&iter, DBUS_TYPE_ARRAY, "{sv}", &subiter);
+	dbus_message_iter_open_container (&subiter, DBUS_TYPE_DICT_ENTRY, NULL, &dict_iter);
+
+	dbus_message_iter_append_basic (&dict_iter, DBUS_TYPE_STRING, &property);
+
+	if (g_variant_is_of_type (value, G_VARIANT_TYPE_UINT32)) {
+		guint32 val = g_variant_get_uint32 (value);
+		dbus_message_iter_open_container (&dict_iter, DBUS_TYPE_VARIANT, "u", &v_iter);
+		dbus_message_iter_append_basic (&v_iter, DBUS_TYPE_UINT32, &val);
+	} else if (g_variant_is_of_type (value, G_VARIANT_TYPE_BOOLEAN)) {
+		gboolean val = g_variant_get_boolean (value);
+		dbus_message_iter_open_container (&dict_iter, DBUS_TYPE_VARIANT, "b", &v_iter);
+		dbus_message_iter_append_basic (&v_iter, DBUS_TYPE_BOOLEAN, &val);
+	} else {
+		g_assert_not_reached ();
+	}
+
+	dbus_message_iter_close_container (&dict_iter, &v_iter);
+	dbus_message_iter_close_container (&subiter, &dict_iter);
+	dbus_message_iter_close_container (&iter, &subiter);
+	/* invalidated */
+	dbus_message_iter_open_container (&iter, DBUS_TYPE_ARRAY, "s", &subiter);
+	dbus_message_iter_close_container (&iter, &subiter);
+
+	dbus_connection_send (connection, message, NULL);
+	dbus_message_unref (message);
+	g_variant_unref (value);
 }
 
 /**
@@ -405,7 +450,7 @@ up_daemon_set_lid_is_closed (UpDaemon *daemon, gboolean lid_is_closed)
 	priv->lid_is_closed = lid_is_closed;
 	g_object_notify (G_OBJECT (daemon), "lid-is-closed");
 
-	up_daemon_emit_properties_changed (daemon);
+	up_daemon_emit_properties_changed (daemon, "LidIsClosed", g_variant_new_boolean (lid_is_closed));
 }
 
 /**
@@ -426,7 +471,7 @@ up_daemon_set_lid_is_present (UpDaemon *daemon, gboolean lid_is_present)
 	priv->lid_is_present = lid_is_present;
 	g_object_notify (G_OBJECT (daemon), "lid-is-present");
 
-	up_daemon_emit_properties_changed (daemon);
+	up_daemon_emit_properties_changed (daemon, "LidIsPresent", g_variant_new_boolean (lid_is_present));
 }
 
 /**
@@ -440,7 +485,7 @@ up_daemon_set_is_docked (UpDaemon *daemon, gboolean is_docked)
 	priv->is_docked = is_docked;
 	g_object_notify (G_OBJECT (daemon), "is-docked");
 
-	up_daemon_emit_properties_changed (daemon);
+	up_daemon_emit_properties_changed (daemon, "IsDocked", g_variant_new_boolean (is_docked));
 }
 
 /**
@@ -454,7 +499,7 @@ up_daemon_set_on_battery (UpDaemon *daemon, gboolean on_battery)
 	priv->on_battery = on_battery;
 	g_object_notify (G_OBJECT (daemon), "on-battery");
 
-	up_daemon_emit_properties_changed (daemon);
+	up_daemon_emit_properties_changed (daemon, "OnBattery", g_variant_new_boolean (on_battery));
 }
 
 /**
@@ -468,7 +513,7 @@ up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 	priv->warning_level = warning_level;
 	g_object_notify (G_OBJECT (daemon), "warning-level");
 
-	up_daemon_emit_properties_changed (daemon);
+	up_daemon_emit_properties_changed (daemon, "WarningLevel", g_variant_new_uint32 (warning_level));
 }
 
 UpDeviceLevel
