@@ -277,7 +277,7 @@ up_client_about_to_sleep_sync (UpClient *client,
 	g_return_val_if_fail (client->priv->proxy != NULL, FALSE);
 
 	ret = dbus_g_proxy_call (client->priv->proxy, "AboutToSleep", &error_local,
-				 G_TYPE_STRING, sleep_kind,
+				 G_TYPE_STRING, up_sleep_kind_to_string (sleep_kind),
 				 G_TYPE_INVALID,
 				 G_TYPE_INVALID);
 	if (!ret) {
