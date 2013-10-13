@@ -710,6 +710,16 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
         </doc:description>
       </doc:doc>
     </property>
+
+    <property name="IconName" type="s" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            An icon name, following the <a href="http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html">Icon Naming Specification</a>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </property>
   </interface>
 
 </node>

@@ -79,6 +79,7 @@ struct UpDevicePrivate
 	gdouble			 percentage;		/* percent */
 	gdouble			 temperature;		/* degrees C */
 	UpDeviceLevel		 warning_level;
+	const gchar		*icon_name;
 };
 
 static gboolean	up_device_register_device	(UpDevice *device);
@@ -112,6 +113,7 @@ enum {
 	PROP_TEMPERATURE,
 	PROP_TECHNOLOGY,
 	PROP_WARNING_LEVEL,
+	PROP_ICON_NAME,
 	PROP_LAST
 };
 
@@ -192,6 +194,67 @@ update_warning_level (UpDevice *device)
 
 	device->priv->warning_level = warning_level;
 	g_object_notify (G_OBJECT (device), "warning-level");
+}
+
+static const gchar *
+get_device_charge_icon (gdouble  percentage,
+			gboolean charging)
+{
+	if (percentage < 10)
+		return charging ? "battery-caution-charging-symbolic" : "battery-caution-symbolic";
+	else if (percentage < 30)
+		return charging ? "battery-low-charging-symbolic" : "battery-low-symbolic";
+	else if (percentage < 60)
+		return charging ? "battery-good-charging-symbolic" : "battery-good-symbolic";
+	return charging ? "battery-full-charging-symbolic" : "battery-full-symbolic";
+}
+
+/* This needs to be called when one of those properties changes:
+ * type
+ * state
+ * percentage
+ * is-present
+ */
+static void
+update_icon_name (UpDevice *device)
+{
+	const gchar *icon_name = NULL;
+
+	/* get the icon from some simple rules */
+	if (device->priv->type == UP_DEVICE_KIND_LINE_POWER) {
+		icon_name = "ac-adapter-symbolic";
+	} else {
+
+		if (!device->priv->is_present) {
+			icon_name = "battery-missing-symbolic";
+
+		} else {
+			switch (device->priv->state) {
+			case UP_DEVICE_STATE_EMPTY:
+				icon_name = "battery-empty-symbolic";
+				break;
+			case UP_DEVICE_STATE_FULLY_CHARGED:
+				icon_name = "battery-full-charged-symbolic";
+				break;
+			case UP_DEVICE_STATE_CHARGING:
+			case UP_DEVICE_STATE_PENDING_CHARGE:
+				icon_name = get_device_charge_icon (device->priv->percentage, TRUE);
+				break;
+			case UP_DEVICE_STATE_DISCHARGING:
+			case UP_DEVICE_STATE_PENDING_DISCHARGE:
+				icon_name = get_device_charge_icon (device->priv->percentage, FALSE);
+				break;
+			default:
+				icon_name = "battery-missing-symbolic";
+			}
+		}
+	}
+
+	if (g_strcmp0 (icon_name, device->priv->icon_name) == 0)
+		return;
+
+	device->priv->icon_name = icon_name;
+	g_object_notify (G_OBJECT (device), "icon-name");
 }
 
 /**
@@ -283,6 +346,9 @@ up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 	case PROP_WARNING_LEVEL:
 		g_value_set_uint (value, device->priv->warning_level);
 		break;
+	case PROP_ICON_NAME:
+		g_value_set_string (value, device->priv->icon_name);
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -319,6 +385,7 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 		break;
 	case PROP_TYPE:
 		device->priv->type = g_value_get_uint (value);
+		update_icon_name (device);
 		break;
 	case PROP_POWER_SUPPLY:
 		device->priv->power_supply = g_value_get_boolean (value);
@@ -329,6 +396,7 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 		break;
 	case PROP_IS_PRESENT:
 		device->priv->is_present = g_value_get_boolean (value);
+		update_icon_name (device);
 		break;
 	case PROP_IS_RECHARGEABLE:
 		device->priv->is_rechargeable = g_value_get_boolean (value);
@@ -342,6 +410,7 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 	case PROP_STATE:
 		device->priv->state = g_value_get_uint (value);
 		update_warning_level (device);
+		update_icon_name (device);
 		break;
 	case PROP_CAPACITY:
 		device->priv->capacity = g_value_get_double (value);
@@ -377,6 +446,7 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 	case PROP_PERCENTAGE:
 		device->priv->percentage = g_value_get_double (value);
 		update_warning_level (device);
+		update_icon_name (device);
 		break;
 	case PROP_TEMPERATURE:
 		device->priv->temperature = g_value_get_double (value);
@@ -1179,6 +1249,15 @@ up_device_class_init (UpDeviceClass *klass)
 							    UP_DEVICE_LEVEL_LAST,
 							    UP_DEVICE_LEVEL_UNKNOWN,
 							    G_PARAM_READABLE));
+
+	/**
+	 * UpDevice:icon:
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_ICON_NAME,
+					 g_param_spec_string ("icon-name",
+							      NULL, NULL, NULL,
+							      G_PARAM_READABLE));
 
 	dbus_g_error_domain_register (UP_DEVICE_ERROR, NULL, UP_DEVICE_TYPE_ERROR);
 }
