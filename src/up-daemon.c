@@ -81,6 +81,7 @@ struct UpDaemonPrivate
 	gboolean		 during_coldplug;
 	guint			 battery_poll_id;
 	guint			 battery_poll_count;
+	guint			 action_timeout_id;
 
 	gboolean		 use_percentage_for_policy;
 	guint			 low_percentage;
@@ -103,6 +104,8 @@ G_DEFINE_TYPE (UpDaemon, up_daemon, G_TYPE_OBJECT)
 /* refresh all the devices after this much time when on-battery has changed */
 #define UP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY	1 /* seconds */
 #define UP_DAEMON_POLL_BATTERY_NUMBER_TIMES		5
+
+#define UP_DAEMON_ACTION_DELAY				20 /* seconds */
 
 /**
  * up_daemon_get_on_battery_local:
@@ -502,6 +505,13 @@ up_daemon_set_on_battery (UpDaemon *daemon, gboolean on_battery)
 	up_daemon_emit_properties_changed (daemon, "OnBattery", g_variant_new_boolean (on_battery));
 }
 
+static gboolean
+take_action_timeout_cb (UpDaemon *daemon)
+{
+	up_backend_take_action (daemon->priv->backend);
+	return G_SOURCE_REMOVE;
+}
+
 /**
  * up_daemon_set_warning_level:
  **/
@@ -514,6 +524,22 @@ up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 	g_object_notify (G_OBJECT (daemon), "warning-level");
 
 	up_daemon_emit_properties_changed (daemon, "WarningLevel", g_variant_new_uint32 (warning_level));
+
+	if (daemon->priv->warning_level == UP_DEVICE_LEVEL_ACTION) {
+		if (daemon->priv->action_timeout_id == 0) {
+			g_debug ("About to take action in %d seconds", UP_DAEMON_ACTION_DELAY);
+			daemon->priv->action_timeout_id = g_timeout_add_seconds (UP_DAEMON_ACTION_DELAY,
+										 (GSourceFunc) take_action_timeout_cb,
+										 daemon);
+		} else {
+			g_debug ("Not taking action, timeout id already set");
+		}
+	} else {
+		if (daemon->priv->action_timeout_id > 0) {
+			g_debug ("Removing timeout as action level changed");
+			g_source_remove (daemon->priv->action_timeout_id);
+		}
+	}
 }
 
 UpDeviceLevel
@@ -976,6 +1002,8 @@ up_daemon_finalize (GObject *object)
 
 	if (priv->battery_poll_id != 0)
 		g_source_remove (priv->battery_poll_id);
+	if (priv->action_timeout_id != 0)
+		g_source_remove (priv->action_timeout_id);
 
 	if (priv->proxy != NULL)
 		g_object_unref (priv->proxy);

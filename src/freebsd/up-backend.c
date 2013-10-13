@@ -295,6 +295,18 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 	return TRUE;
 }
 
+/**
+ * up_backend_take_action:
+ * @backend: The %UpBackend class instance
+ *
+ * Act upon the %UP_DEVICE_LEVEL_ACTION warning-level.
+ **/
+void
+up_backend_take_action (UpBackend *backend)
+{
+	/* FIXME: Implement */
+}
+
 /* Return value: a percentage value */
 gfloat
 up_backend_get_used_swap (UpBackend *backend)

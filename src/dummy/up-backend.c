@@ -133,6 +133,18 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 }
 
 /**
+ * up_backend_take_action:
+ * @backend: The %UpBackend class instance
+ *
+ * Act upon the %UP_DEVICE_LEVEL_ACTION warning-level.
+ **/
+void
+up_backend_take_action (UpBackend *backend)
+{
+	g_debug ("Not taking any action, dummy backend is used");
+}
+
+/**
  * up_backend_class_init:
  * @klass: The UpBackendClass
  **/

@@ -53,6 +53,10 @@ static void	up_backend_class_init	(UpBackendClass	*klass);
 static void	up_backend_init	(UpBackend		*backend);
 static void	up_backend_finalize	(GObject		*object);
 
+#define LOGIND_DBUS_NAME                       "org.freedesktop.login1"
+#define LOGIND_DBUS_PATH                       "/org/freedesktop/login1"
+#define LOGIND_DBUS_INTERFACE                  "org.freedesktop.login1.Manager"
+
 #define UP_BACKEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_BACKEND, UpBackendPrivate))
 
 struct UpBackendPrivate
@@ -64,6 +68,7 @@ struct UpBackendPrivate
 	UpDock			*dock;
 	UpConfig		*config;
 	DBusConnection		*connection;
+	GDBusProxy		*logind_proxy;
 };
 
 enum {
@@ -348,6 +353,77 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 	return TRUE;
 }
 
+static gboolean
+check_action_result (GVariant *result)
+{
+	if (result) {
+		const char *s;
+
+		g_variant_get (result, "(s)", &s);
+		if (g_strcmp0 (s, "yes") != 0)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+/**
+ * up_backend_take_action:
+ * @backend: The %UpBackend class instance
+ *
+ * Act upon the %UP_DEVICE_LEVEL_ACTION warning-level.
+ **/
+void
+up_backend_take_action (UpBackend *backend)
+{
+	struct {
+		const gchar *method;
+		const gchar *can_method;
+	} actions[] = {
+		{ "HybridSleep", "CanHybridSleep" },
+		{ "Hibernate", "CanHibernate" },
+		{ "PowerOff", NULL },
+	};
+	guint i;
+
+	g_return_if_fail (backend->priv->logind_proxy != NULL);
+
+	for (i = 0; i < G_N_ELEMENTS (actions); i++) {
+		gboolean action_available = FALSE;
+		GVariant *result;
+
+		if (actions[i].can_method) {
+			/* Check whether we can use the method */
+			result = g_dbus_proxy_call_sync (backend->priv->logind_proxy,
+							 actions[i].can_method,
+							 NULL,
+							 G_DBUS_CALL_FLAGS_NONE,
+							 -1, NULL, NULL);
+			action_available = check_action_result (result);
+			g_variant_unref (result);
+
+			if (!action_available)
+				continue;
+		} else {
+			action_available = TRUE;
+		}
+
+		/* Take action */
+		g_debug ("About to call logind method %s", actions[i].method);
+		g_dbus_proxy_call (backend->priv->logind_proxy,
+				   actions[i].method,
+				   g_variant_new ("(b)", FALSE),
+				   G_DBUS_CALL_FLAGS_NONE,
+				   G_MAXINT,
+				   NULL,
+				   NULL,
+				   NULL);
+
+		return;
+	}
+
+	g_assert_not_reached ();
+}
+
 /**
  * up_backend_class_init:
  * @klass: The UpBackendClass
@@ -383,6 +459,14 @@ up_backend_init (UpBackend *backend)
 	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
 	backend->priv->config = up_config_new ();
 	backend->priv->managed_devices = up_device_list_new ();
+	backend->priv->logind_proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+								     0,
+								     NULL,
+								     LOGIND_DBUS_NAME,
+								     LOGIND_DBUS_PATH,
+								     LOGIND_DBUS_INTERFACE,
+								     NULL,
+								     NULL);
 }
 
 /**
@@ -404,6 +488,7 @@ up_backend_finalize (GObject *object)
 		g_object_unref (backend->priv->device_list);
 	if (backend->priv->gudev_client != NULL)
 		g_object_unref (backend->priv->gudev_client);
+	g_clear_object (&backend->priv->logind_proxy);
 
 	g_object_unref (backend->priv->managed_devices);
 
