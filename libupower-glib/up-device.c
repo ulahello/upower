@@ -90,6 +90,7 @@ enum {
 	PROP_PERCENTAGE,
 	PROP_TEMPERATURE,
 	PROP_WARNING_LEVEL,
+	PROP_ICON_NAME,
 	PROP_LAST
 };
 
@@ -355,6 +356,8 @@ up_device_to_text (UpDevice *device)
 	}
 	if (kind == UP_DEVICE_KIND_LINE_POWER)
 		g_string_append_printf (string, "    online:              %s\n", up_device_bool_to_string (up_device_glue_get_online (priv->proxy_device)));
+
+	g_string_append_printf (string, "    icon-name:          '%s'\n", up_device_glue_get_icon_name (priv->proxy_device));
 
 	/* if we can, get history */
 	if (up_device_glue_get_has_history (priv->proxy_device)) {
@@ -647,6 +650,9 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 	case PROP_WARNING_LEVEL:
 		up_device_glue_set_warning_level (device->priv->proxy_device, g_value_get_uint (value));
 		break;
+	case PROP_ICON_NAME:
+		up_device_glue_set_icon_name (device->priv->proxy_device, g_value_get_string (value));
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -754,6 +760,9 @@ up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 		break;
 	case PROP_WARNING_LEVEL:
 		g_value_set_uint (value, up_device_glue_get_warning_level (device->priv->proxy_device));
+		break;
+	case PROP_ICON_NAME:
+		g_value_set_string (value, up_device_glue_get_icon_name (device->priv->proxy_device));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1139,6 +1148,19 @@ up_device_class_init (UpDeviceClass *klass)
 							    UP_DEVICE_LEVEL_LAST,
 							    UP_DEVICE_LEVEL_UNKNOWN,
 							    G_PARAM_READWRITE));
+
+	/**
+	 * UpDevice:icon-name:
+	 *
+	 * The icon name, following the Icon Naming Speficiation
+	 *
+	 * Since: 1.0
+	 **/
+	g_object_class_install_property (object_class,
+					 PROP_ICON_NAME,
+					 g_param_spec_string ("icon-name",
+							      NULL, NULL, NULL,
+							      G_PARAM_READWRITE));
 
 	g_type_class_add_private (klass, sizeof (UpDevicePrivate));
 }
