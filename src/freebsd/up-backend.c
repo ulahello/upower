@@ -288,9 +288,7 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 		g_timeout_add_seconds (UP_BACKEND_REFRESH_TIMEOUT,
 			       (GSourceFunc) up_backend_refresh_devices,
 			       backend);
-#if GLIB_CHECK_VERSION(2,25,8)
 	g_source_set_name_by_id (backend->priv->poll_timer_id, "[FreeBSD:UpBackend] poll");
-#endif
 
 	return TRUE;
 }

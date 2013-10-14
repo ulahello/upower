@@ -100,9 +100,7 @@ up_backend_add_cb (UpBackend *backend)
 
 	/* setup poll */
 	timer_id = g_timeout_add_seconds (2, (GSourceFunc) up_backend_changed_time_cb, backend);
-#if GLIB_CHECK_VERSION(2,25,8)
 	g_source_set_name_by_id (timer_id, "[UpBackend] changed");
-#endif
 out:
 	return FALSE;
 }

@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #include <glib.h>
+#include <glib-unix.h>
 #include <glib/gi18n-lib.h>
 #include <glib-object.h>
 #include <locale.h>
@@ -40,10 +41,6 @@
 #include "up-daemon.h"
 #include "up-kbd-backlight.h"
 #include "up-wakeups.h"
-
-#if GLIB_CHECK_VERSION(2,29,19)
- #include <glib-unix.h>
-#endif
 
 #define DEVKIT_POWER_SERVICE_NAME "org.freedesktop.UPower"
 static GMainLoop *loop = NULL;
@@ -92,8 +89,6 @@ out:
 	return ret;
 }
 
-#if GLIB_CHECK_VERSION(2,29,19)
-
 /**
  * up_main_sigint_cb:
  **/
@@ -104,25 +99,6 @@ up_main_sigint_cb (gpointer user_data)
 	g_main_loop_quit (loop);
 	return FALSE;
 }
-
-#else
-
-/**
- * up_main_sigint_handler:
- **/
-static void
-up_main_sigint_handler (gint sig)
-{
-	g_debug ("Handling SIGINT");
-
-	/* restore default */
-	signal (SIGINT, SIG_DFL);
-
-	/* cleanup */
-	g_main_loop_quit (loop);
-}
-
-#endif
 
 /**
  * up_main_timed_exit_cb:
@@ -269,16 +245,12 @@ main (gint argc, gchar **argv)
 		goto out;
 	}
 
-#if GLIB_CHECK_VERSION(2,29,19)
 	/* do stuff on ctrl-c */
 	g_unix_signal_add_full (G_PRIORITY_DEFAULT,
 				SIGINT,
 				up_main_sigint_cb,
 				loop,
 				NULL);
-#else
-	signal (SIGINT, up_main_sigint_handler);
-#endif
 
 	g_debug ("Starting upowerd version %s", PACKAGE_VERSION);
 
@@ -295,9 +267,7 @@ main (gint argc, gchar **argv)
 	/* only timeout and close the mainloop if we have specified it on the command line */
 	if (timed_exit) {
 		timer_id = g_timeout_add_seconds (30, (GSourceFunc) up_main_timed_exit_cb, loop);
-#if GLIB_CHECK_VERSION(2,25,8)
 		g_source_set_name_by_id (timer_id, "[UpMain] idle");
-#endif
 	}
 
 	/* immediatly exit */

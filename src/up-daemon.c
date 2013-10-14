@@ -624,9 +624,7 @@ up_daemon_poll_battery_devices_for_a_little_bit (UpDaemon *daemon)
 	priv->battery_poll_id =
 		g_timeout_add_seconds (UP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
 				       (GSourceFunc) up_daemon_refresh_battery_devices_cb, daemon);
-#if GLIB_CHECK_VERSION(2,25,8)
 	g_source_set_name_by_id (priv->battery_poll_id, "[UpDaemon] poll batteries for AC event");
-#endif
 }
 
 /**

@@ -960,9 +960,8 @@ up_device_supply_setup_poll (UpDevice *device)
 		supply->priv->poll_timer_id =
 			g_timeout_add_seconds (UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT,
 					       (GSourceFunc) up_device_supply_poll_battery, supply);
-#if GLIB_CHECK_VERSION(2,25,8)
 		g_source_set_name_by_id (supply->priv->poll_timer_id, "[UpDeviceSupply] unknown poll");
-#endif
+
 		/* increase count, we don't want to poll at 0.5Hz forever */
 		supply->priv->unknown_retries++;
 		goto out;
@@ -972,9 +971,7 @@ up_device_supply_setup_poll (UpDevice *device)
 	supply->priv->poll_timer_id =
 		g_timeout_add_seconds (UP_DEVICE_SUPPLY_REFRESH_TIMEOUT,
 				       (GSourceFunc) up_device_supply_poll_battery, supply);
-#if GLIB_CHECK_VERSION(2,25,8)
 	g_source_set_name_by_id (supply->priv->poll_timer_id, "[UpDeviceSupply] normal poll");
-#endif
 out:
 	return (supply->priv->poll_timer_id != 0);
 }

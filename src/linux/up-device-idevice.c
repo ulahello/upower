@@ -153,9 +153,7 @@ up_device_idevice_coldplug (UpDevice *device)
 	idevice->priv->poll_timer_id = g_timeout_add_seconds (poll_seconds,
 							      (GSourceFunc) up_device_idevice_poll_cb, idevice);
 
-#if GLIB_CHECK_VERSION(2,25,8)
 	g_source_set_name_by_id (idevice->priv->poll_timer_id, "[UpDeviceIdevice] poll");
-#endif
 	return TRUE;
 
 out:
