@@ -543,13 +543,17 @@ up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 }
 
 UpDeviceLevel
-up_daemon_compute_warning_level (UpDaemon     *daemon,
-				 UpDeviceKind  kind,
-				 gboolean      power_supply,
-				 gdouble       percentage,
-				 gint64        time_to_empty)
+up_daemon_compute_warning_level (UpDaemon      *daemon,
+				 UpDeviceState  state,
+				 UpDeviceKind   kind,
+				 gboolean       power_supply,
+				 gdouble        percentage,
+				 gint64         time_to_empty)
 {
 	gboolean use_percentage = TRUE;
+
+	if (state != UP_DEVICE_STATE_DISCHARGING)
+		return UP_DEVICE_LEVEL_NONE;
 
 	/* Keyboard and mice usually have a coarser
 	 * battery level, so this avoids falling directly

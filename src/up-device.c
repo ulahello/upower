@@ -180,14 +180,12 @@ update_warning_level (UpDevice *device)
 {
 	UpDeviceLevel warning_level;
 
-	if (device->priv->state != UP_DEVICE_STATE_DISCHARGING)
-		warning_level = UP_DEVICE_LEVEL_NONE;
-	else
-		warning_level = up_daemon_compute_warning_level (device->priv->daemon,
-								 device->priv->type,
-								 device->priv->power_supply,
-								 device->priv->percentage,
-								 device->priv->time_to_empty);
+	warning_level = up_daemon_compute_warning_level (device->priv->daemon,
+							 device->priv->state,
+							 device->priv->type,
+							 device->priv->power_supply,
+							 device->priv->percentage,
+							 device->priv->time_to_empty);
 
 	if (warning_level == device->priv->warning_level)
 		return;
