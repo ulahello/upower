@@ -73,7 +73,6 @@ struct UpDaemonPrivate
 	UpPolkit		*polkit;
 	UpBackend		*backend;
 	UpDeviceList		*power_devices;
-	gboolean		 during_coldplug;
 	guint			 battery_poll_id;
 	guint			 battery_poll_count;
 	guint			 action_timeout_id;
@@ -334,17 +333,8 @@ up_daemon_startup (UpDaemon *daemon)
 	UpDeviceLevel warning_level;
 	UpDaemonPrivate *priv = daemon->priv;
 
-	/* register on bus */
-	ret = up_daemon_register_power_daemon (daemon);
-	if (!ret) {
-		g_warning ("failed to register");
-		goto out;
-	}
-
 	/* stop signals and callbacks */
 	g_debug ("daemon now coldplug");
-	g_object_freeze_notify (G_OBJECT(daemon));
-	priv->during_coldplug = TRUE;
 
 	/* coldplug backend backend */
 	ret = up_backend_coldplug (priv->backend, daemon);
@@ -361,9 +351,14 @@ up_daemon_startup (UpDaemon *daemon)
 	up_daemon_set_warning_level (daemon, warning_level);
 
 	/* start signals and callbacks */
-	g_object_thaw_notify (G_OBJECT(daemon));
-	priv->during_coldplug = FALSE;
 	g_debug ("daemon now not coldplug");
+
+	/* register on bus */
+	ret = up_daemon_register_power_daemon (daemon);
+	if (!ret) {
+		g_warning ("failed to register");
+		goto out;
+	}
 
 out:
 	return ret;
@@ -396,12 +391,12 @@ up_daemon_emit_properties_changed (UpDaemon    *daemon,
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 
-	if (daemon->priv->during_coldplug)
-		return;
-
 	/* GObject */
 	g_debug ("emitting changed");
 	g_signal_emit (daemon, signals[SIGNAL_CHANGED], 0);
+
+	if (daemon->priv->connection == NULL)
+		return;
 
 	/* D-Bus */
 	connection = dbus_g_connection_get_connection (daemon->priv->connection);
@@ -674,17 +669,15 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 		up_daemon_set_warning_level (daemon, warning_level);
 
 	/* emit */
-	if (!priv->during_coldplug) {
-		object_path = up_device_get_object_path (device);
-		g_debug ("emitting device-changed: %s", object_path);
+	object_path = up_device_get_object_path (device);
+	g_debug ("emitting device-changed: %s", object_path);
 
-		/* don't crash the session */
-		if (object_path == NULL) {
-			g_warning ("INTERNAL STATE CORRUPT: not sending NULL, device:%p", device);
-			return;
-		}
-		g_signal_emit (daemon, signals[SIGNAL_DEVICE_CHANGED], 0, object_path);
+	/* don't crash the session */
+	if (object_path == NULL) {
+		g_warning ("INTERNAL STATE CORRUPT: not sending NULL, device:%p", device);
+		return;
 	}
+	g_signal_emit (daemon, signals[SIGNAL_DEVICE_CHANGED], 0, object_path);
 }
 
 /**
@@ -716,17 +709,15 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
 		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */
-	if (!priv->during_coldplug) {
-		object_path = up_device_get_object_path (device);
-		g_debug ("emitting added: %s (during coldplug %i)", object_path, priv->during_coldplug);
+	object_path = up_device_get_object_path (device);
+	g_debug ("emitting added: %s", object_path);
 
-		/* don't crash the session */
-		if (object_path == NULL) {
-			g_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
-			return;
-		}
-		g_signal_emit (daemon, signals[SIGNAL_DEVICE_ADDED], 0, object_path);
+	/* don't crash the session */
+	if (object_path == NULL) {
+		g_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
+		return;
 	}
+	g_signal_emit (daemon, signals[SIGNAL_DEVICE_ADDED], 0, object_path);
 }
 
 /**
@@ -754,17 +745,15 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */
-	if (!priv->during_coldplug) {
-		object_path = up_device_get_object_path (device);
-		g_debug ("emitting device-removed: %s", object_path);
+	object_path = up_device_get_object_path (device);
+	g_debug ("emitting device-removed: %s", object_path);
 
-		/* don't crash the session */
-		if (object_path == NULL) {
-			g_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
-			return;
-		}
-		g_signal_emit (daemon, signals[SIGNAL_DEVICE_REMOVED], 0, object_path);
+	/* don't crash the session */
+	if (object_path == NULL) {
+		g_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
+		return;
 	}
+	g_signal_emit (daemon, signals[SIGNAL_DEVICE_REMOVED], 0, object_path);
 
 	/* finalise the object */
 	g_object_unref (device);

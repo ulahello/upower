@@ -49,7 +49,6 @@ struct UpDevicePrivate
 	UpHistory		*history;
 	GObject			*native;
 	gboolean		 has_ever_refresh;
-	gboolean		 during_coldplug;
 
 	/* properties */
 	guint64			 update_time;
@@ -614,10 +613,6 @@ up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 	native_path = up_native_get_native_path (native);
 	device->priv->native_path = g_strdup (native_path);
 
-	/* stop signals and callbacks */
-	g_object_freeze_notify (G_OBJECT(device));
-	device->priv->during_coldplug = TRUE;
-
 	/* coldplug source */
 	if (klass->coldplug != NULL) {
 		ret = klass->coldplug (device);
@@ -625,13 +620,6 @@ up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 			g_debug ("failed to coldplug %s", device->priv->native_path);
 			goto out;
 		}
-	}
-
-	/* only put on the bus if we succeeded */
-	ret = up_device_register_device (device);
-	if (!ret) {
-		g_warning ("failed to register device %s", device->priv->native_path);
-		goto out;
 	}
 
 	/* force a refresh, although failure isn't fatal */
@@ -647,14 +635,19 @@ up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 
 	/* get the id so we can load the old history */
 	id = up_device_get_id (device);
-	if (id != NULL)
+	if (id != NULL) {
 		up_history_set_id (device->priv->history, id);
+		g_free (id);
+	}
+
+	/* only put on the bus if we succeeded */
+	ret = up_device_register_device (device);
+	if (!ret) {
+		g_warning ("failed to register device %s", device->priv->native_path);
+		goto out;
+	}
 
 out:
-	/* start signals and callbacks */
-	g_object_thaw_notify (G_OBJECT(device));
-	device->priv->during_coldplug = FALSE;
-	g_free (id);
 	return ret;
 }
 
@@ -920,10 +913,6 @@ static void
 up_device_perhaps_changed_cb (GObject *object, GParamSpec *pspec, UpDevice *device)
 {
 	g_return_if_fail (UP_IS_DEVICE (device));
-
-	/* don't proxy during coldplug */
-	if (device->priv->during_coldplug)
-		return;
 
 	/* save new history */
 	up_history_set_state (device->priv->history, device->priv->state);
