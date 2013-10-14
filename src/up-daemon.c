@@ -73,16 +73,19 @@ struct UpDaemonPrivate
 	UpPolkit		*polkit;
 	UpBackend		*backend;
 	UpDeviceList		*power_devices;
-	gboolean		 on_battery;
-	UpDeviceLevel		 warning_level;
-	gboolean		 lid_is_closed;
-	gboolean		 lid_is_present;
-	gboolean		 is_docked;
 	gboolean		 during_coldplug;
 	guint			 battery_poll_id;
 	guint			 battery_poll_count;
 	guint			 action_timeout_id;
 
+	/* Properties */
+	gboolean		 on_battery;
+	UpDeviceLevel		 warning_level;
+	gboolean		 lid_is_closed;
+	gboolean		 lid_is_present;
+	gboolean		 is_docked;
+
+	/* WarningLevel configuration */
 	gboolean		 use_percentage_for_policy;
 	guint			 low_percentage;
 	guint			 critical_percentage;
