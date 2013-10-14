@@ -212,7 +212,11 @@ main (gint argc, gchar **argv)
 
 	context = g_option_context_new ("upower daemon");
 	g_option_context_add_main_entries (context, options, NULL);
-	g_option_context_parse (context, &argc, &argv, NULL);
+	if (!g_option_context_parse (context, &argc, &argv, &error)) {
+		g_warning ("Failed to parse command-line options: %s", error->message);
+		g_error_free (error);
+		return 1;
+	}
 	g_option_context_free (context);
 
 	/* verbose? */
