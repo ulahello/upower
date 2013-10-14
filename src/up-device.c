@@ -44,7 +44,6 @@ struct UpDevicePrivate
 {
 	gchar			*object_path;
 	DBusGConnection		*system_bus_connection;
-	DBusGProxy		*system_bus_proxy;
 	UpDaemon		*daemon;
 	UpHistory		*history;
 	GObject			*native;
@@ -891,19 +890,11 @@ up_device_compute_object_path (UpDevice *device)
 static gboolean
 up_device_register_device (UpDevice *device)
 {
-	gboolean ret = TRUE;
-
 	device->priv->object_path = up_device_compute_object_path (device);
 	g_debug ("object path = %s", device->priv->object_path);
 	dbus_g_connection_register_g_object (device->priv->system_bus_connection,
 					     device->priv->object_path, G_OBJECT (device));
-	device->priv->system_bus_proxy = dbus_g_proxy_new_for_name (device->priv->system_bus_connection,
-								    DBUS_SERVICE_DBUS, DBUS_PATH_DBUS, DBUS_INTERFACE_DBUS);
-	if (device->priv->system_bus_proxy == NULL) {
-		g_warning ("proxy invalid");
-		ret = FALSE;
-	}
-	return ret;
+	return TRUE;
 }
 
 /**
