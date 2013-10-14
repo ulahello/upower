@@ -250,6 +250,8 @@ up_device_level_to_string (UpDeviceLevel level_enum)
 		return "unknown";
 	case UP_DEVICE_LEVEL_NONE:
 		return "none";
+	case UP_DEVICE_LEVEL_DISCHARGING:
+		return "discharging";
 	case UP_DEVICE_LEVEL_LOW:
 		return "low";
 	case UP_DEVICE_LEVEL_CRITICAL:
@@ -280,6 +282,8 @@ up_device_level_from_string (const gchar *level)
 		return UP_DEVICE_LEVEL_UNKNOWN;
 	if (g_strcmp0 (level, "none") == 0)
 		return UP_DEVICE_LEVEL_NONE;
+	if (g_strcmp0 (level, "discharging") == 0)
+		return UP_DEVICE_LEVEL_DISCHARGING;
 	if (g_strcmp0 (level, "low") == 0)
 		return UP_DEVICE_LEVEL_LOW;
 	if (g_strcmp0 (level, "critical") == 0)

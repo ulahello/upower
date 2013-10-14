@@ -551,6 +551,7 @@ up_daemon_compute_warning_level (UpDaemon      *daemon,
 				 gint64         time_to_empty)
 {
 	gboolean use_percentage = TRUE;
+	UpDeviceLevel default_level = UP_DEVICE_LEVEL_NONE;
 
 	if (state != UP_DEVICE_STATE_DISCHARGING)
 		return UP_DEVICE_LEVEL_NONE;
@@ -566,6 +567,8 @@ up_daemon_compute_warning_level (UpDaemon      *daemon,
 			return  UP_DEVICE_LEVEL_LOW;
 		else
 			return UP_DEVICE_LEVEL_NONE;
+	} else if (kind == UP_DEVICE_KIND_UPS) {
+		default_level = UP_DEVICE_LEVEL_DISCHARGING;
 	}
 
 	if (!power_supply || !daemon->priv->use_percentage_for_policy)
@@ -573,7 +576,7 @@ up_daemon_compute_warning_level (UpDaemon      *daemon,
 
 	if (use_percentage) {
 		if (percentage > daemon->priv->low_percentage)
-			return UP_DEVICE_LEVEL_NONE;
+			return default_level;
 		if (percentage > daemon->priv->critical_percentage)
 			return UP_DEVICE_LEVEL_LOW;
 		if (percentage > daemon->priv->action_percentage)
@@ -581,7 +584,7 @@ up_daemon_compute_warning_level (UpDaemon      *daemon,
 		return UP_DEVICE_LEVEL_ACTION;
 	} else {
 		if (time_to_empty > daemon->priv->low_time)
-			return UP_DEVICE_LEVEL_NONE;
+			return default_level;
 		if (time_to_empty > daemon->priv->critical_time)
 			return UP_DEVICE_LEVEL_LOW;
 		if (time_to_empty > daemon->priv->action_time)

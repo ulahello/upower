@@ -698,13 +698,16 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
               <doc:term>1</doc:term><doc:definition>None</doc:definition>
             </doc:item>
             <doc:item>
-              <doc:term>2</doc:term><doc:definition>Low</doc:definition>
+              <doc:term>2</doc:term><doc:definition>Discharging (only for UPSes)</doc:definition>
             </doc:item>
             <doc:item>
-              <doc:term>3</doc:term><doc:definition>Critical</doc:definition>
+              <doc:term>3</doc:term><doc:definition>Low</doc:definition>
             </doc:item>
             <doc:item>
-              <doc:term>4</doc:term><doc:definition>Action</doc:definition>
+              <doc:term>4</doc:term><doc:definition>Critical</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>5</doc:term><doc:definition>Action</doc:definition>
             </doc:item>
           </doc:list>
         </doc:description>
