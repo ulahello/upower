@@ -396,12 +396,14 @@ up_daemon_emit_properties_changed (UpDaemon    *daemon,
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 
-	/* emit */
-	if (!daemon->priv->during_coldplug) {
-		g_debug ("emitting changed");
-		g_signal_emit (daemon, signals[SIGNAL_CHANGED], 0);
-	}
+	if (daemon->priv->during_coldplug)
+		return;
 
+	/* GObject */
+	g_debug ("emitting changed");
+	g_signal_emit (daemon, signals[SIGNAL_CHANGED], 0);
+
+	/* D-Bus */
 	connection = dbus_g_connection_get_connection (daemon->priv->connection);
 	message = dbus_message_new_signal ("/org/freedesktop/UPower",
 					   "org.freedesktop.DBus.Properties",
