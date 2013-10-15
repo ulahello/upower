@@ -305,8 +305,6 @@ up_device_queue_changed_property (UpDevice    *device,
 	dbus_prop = g_strjoinv (NULL, items);
 	g_strfreev (items);
 
-	g_message ("queueing prop %s", dbus_prop);
-
 	g_hash_table_insert (device->priv->changed_props,
 			     dbus_prop, value);
 
