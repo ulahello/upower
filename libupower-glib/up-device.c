@@ -675,7 +675,7 @@ up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 		if (v)
 			g_value_copy (v, value);
 		else
-			g_warning ("Property ID %d was never set", prop_id);
+			g_warning ("Property ID '%s' (%d) was never set", pspec->name, prop_id);
 
 		return;
 	}
