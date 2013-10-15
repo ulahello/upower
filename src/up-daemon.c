@@ -84,6 +84,16 @@ struct UpDaemonPrivate
 	gboolean		 lid_is_present;
 	gboolean		 is_docked;
 
+	/* Display battery properties */
+	UpDeviceKind kind;
+	UpDeviceState state;
+	gdouble percentage;
+	gdouble energy;
+	gdouble energy_full;
+	gdouble energy_rate;
+	gint64 time_to_empty;
+	gint64 time_to_full;
+
 	/* WarningLevel configuration */
 	gboolean		 use_percentage_for_policy;
 	guint			 low_percentage;
@@ -165,6 +175,129 @@ up_daemon_get_number_devices_of_type (UpDaemon *daemon, UpDeviceKind type)
 }
 
 /**
+ * up_daemon_update_display_battery:
+ *
+ * Update our internal state.
+ *
+ * Returns: %TRUE if the state changed.
+ **/
+static gboolean
+up_daemon_update_display_battery (UpDaemon *daemon)
+{
+	guint i;
+	GPtrArray *array;
+
+	UpDeviceKind kind_total = UP_DEVICE_KIND_UNKNOWN;
+	UpDeviceState state_total = UP_DEVICE_STATE_UNKNOWN;
+	gdouble percentage_total = 0.0;
+	gdouble energy_total = 0.0;
+	gdouble energy_full_total = 0.0;
+	gdouble energy_rate_total = 0.0;
+	gint64 time_to_empty_total = 0;
+	gint64 time_to_full_total = 0;
+	guint num_batteries = 0;
+
+	/* Gather state from each device */
+	array = up_device_list_get_array (daemon->priv->power_devices);
+	for (i = 0; i < array->len; i++) {
+		UpDevice *device;
+
+		UpDeviceState state = UP_DEVICE_STATE_UNKNOWN;
+		UpDeviceKind kind = UP_DEVICE_KIND_UNKNOWN;
+		gdouble percentage = 0.0;
+		gdouble energy = 0.0;
+		gdouble energy_full = 0.0;
+		gdouble energy_rate = 0.0;
+		gint64 time_to_empty = 0;
+		gint64 time_to_full = 0;
+
+		device = g_ptr_array_index (array, i);
+		g_object_get (device,
+			      "type", &kind,
+			      "state", &state,
+			      "percentage", &percentage,
+			      "energy", &energy,
+			      "energy-full", &energy_full,
+			      "energy-rate", &energy_rate,
+			      "time-to-empty", &time_to_empty,
+			      "time-to-full", &time_to_full,
+			      NULL);
+
+		/* When we have a UPS, it's either a desktop, and
+		 * has no batteries, or a laptop, in which case we
+		 * ignore the batteries */
+		if (kind == UP_DEVICE_KIND_UPS) {
+			kind_total = kind;
+			state_total = state;
+			energy_total = energy;
+			energy_full_total = energy_full;
+			energy_rate_total = energy_rate;
+			time_to_empty_total = time_to_empty;
+			time_to_full_total = time_to_full;
+			percentage_total = percentage;
+			break;
+		}
+		if (kind != UP_DEVICE_KIND_BATTERY)
+			continue;
+
+		/* If one battery is charging, then the composite is charging
+		 * If all batteries are discharging, then the composite is discharging
+		 * If all batteries are fully charged, then they're all fully charged
+		 * Everything else is unknown */
+		if (state == UP_DEVICE_STATE_CHARGING)
+			state_total = UP_DEVICE_STATE_CHARGING;
+		else if (state == UP_DEVICE_STATE_DISCHARGING &&
+			 state_total != UP_DEVICE_STATE_CHARGING)
+			state_total = UP_DEVICE_STATE_DISCHARGING;
+		else if (state == UP_DEVICE_STATE_FULLY_CHARGED &&
+			 state_total == UP_DEVICE_STATE_UNKNOWN)
+			state_total = UP_DEVICE_STATE_FULLY_CHARGED;
+
+		/* sum up composite */
+		energy_total += energy;
+		energy_full_total += energy_full;
+		energy_rate_total += energy_rate;
+		time_to_empty_total += time_to_empty;
+		time_to_full_total += time_to_full;
+		/* Will be recalculated for multiple batteries, no worries */
+		percentage_total += percentage;
+		num_batteries++;
+	}
+
+	/* Handle multiple batteries */
+	if (num_batteries <= 1)
+		goto out;
+
+	g_debug ("Calculating percentage and time to full/to empty for %i batteries", num_batteries);
+
+	/* use percentage weighted for each battery capacity */
+	if (energy_full_total > 0.0)
+		percentage_total = 100.0 * energy_total / energy_full_total;
+
+	/* calculate a quick and dirty time remaining value */
+	if (energy_rate_total > 0) {
+		if (state_total == UP_DEVICE_STATE_DISCHARGING && time_to_empty_total == 0)
+			time_to_empty_total = 3600 * (energy_total / energy_rate_total);
+		else if (state_total == UP_DEVICE_STATE_CHARGING && time_to_full_total == 0)
+			time_to_full_total = 3600 * ((energy_full_total - energy_total) / energy_rate_total);
+	}
+
+out:
+	daemon->priv->kind = kind_total;
+	daemon->priv->state = state_total;
+	daemon->priv->energy = energy_total;
+	daemon->priv->energy_full = energy_full_total;
+	daemon->priv->energy_rate = energy_rate_total;
+	daemon->priv->time_to_empty = time_to_empty_total;
+	daemon->priv->time_to_full = time_to_full_total;
+
+	daemon->priv->percentage = percentage_total;
+
+	/* FIXME: Return whether the above actually changed significantly */
+	return TRUE;
+}
+
+/**
  * up_daemon_get_warning_level_local:
  *
  * As soon as _all_ batteries are low, this is true
@@ -172,34 +305,21 @@ up_daemon_get_number_devices_of_type (UpDaemon *daemon, UpDeviceKind type)
 static gboolean
 up_daemon_get_warning_level_local (UpDaemon *daemon)
 {
-	guint i;
-	GPtrArray *array;
-	UpDeviceLevel level = UP_DEVICE_LEVEL_LAST;
+	up_daemon_update_display_battery (daemon);
+	if (daemon->priv->kind != UP_DEVICE_KIND_UPS &&
+	    daemon->priv->kind != UP_DEVICE_KIND_BATTERY)
+		return UP_DEVICE_LEVEL_NONE;
 
-	/* ask each device */
-	array = up_device_list_get_array (daemon->priv->power_devices);
-	for (i = 0; i < array->len; i++) {
-		UpDevice *device;
-		UpDeviceLevel device_level;
-		UpDeviceKind kind;
+	if (daemon->priv->kind == UP_DEVICE_KIND_UPS &&
+	    daemon->priv->state != UP_DEVICE_STATE_DISCHARGING)
+		return UP_DEVICE_LEVEL_NONE;
 
-		device = g_ptr_array_index (array, i);
-		g_object_get (G_OBJECT (device),
-			      "type", &kind,
-			      "warning-level", &device_level,
-			      NULL);
-		if (kind != UP_DEVICE_KIND_BATTERY &&
-		    kind != UP_DEVICE_KIND_UPS)
-			continue;
-		if (device_level < level)
-			level = device_level;
-	}
-	g_ptr_array_unref (array);
-
-	if (level == UP_DEVICE_LEVEL_LAST)
-		level = UP_DEVICE_LEVEL_NONE;
-
-	return level;
+	return up_daemon_compute_warning_level (daemon,
+						daemon->priv->state,
+						daemon->priv->kind,
+						TRUE, /* power_supply */
+						daemon->priv->percentage,
+						daemon->priv->time_to_empty);
 }
 
 /**
