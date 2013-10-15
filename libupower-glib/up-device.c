@@ -561,7 +561,7 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 	if (device->priv->proxy_device == NULL) {
 		GValue *v;
 
-		v = g_new0 (GValue, 1);
+		v = g_slice_new0 (GValue, 1);
 		g_value_init (v, G_VALUE_TYPE (value));
 		g_value_copy (value, v);
 		g_hash_table_insert (device->priv->offline_props, GUINT_TO_POINTER (prop_id), v);
@@ -1170,7 +1170,7 @@ static void
 value_free (GValue *value)
 {
 	g_value_unset (value);
-	g_free (value);
+	g_slice_free (value);
 }
 
 /*
