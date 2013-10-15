@@ -49,6 +49,10 @@ struct UpDevicePrivate
 	GObject			*native;
 	gboolean		 has_ever_refresh;
 
+	/* PropertiesChanged to be emitted */
+	GHashTable		*changed_props;
+	guint			 props_idle_id;
+
 	/* properties */
 	guint64			 update_time;
 	gchar			*vendor;
@@ -257,6 +261,59 @@ update_icon_name (UpDevice *device)
 	g_object_notify (G_OBJECT (device), "icon-name");
 }
 
+static gboolean
+changed_props_idle_cb (gpointer user_data)
+{
+	UpDevice *device = user_data;
+
+	/* D-Bus */
+	up_daemon_emit_properties_changed (device->priv->system_bus_connection,
+					   device->priv->object_path,
+					   "org.freedesktop.UPower",
+					   device->priv->changed_props);
+	g_clear_pointer (&device->priv->changed_props, g_hash_table_unref);
+	device->priv->props_idle_id = 0;
+
+	return G_SOURCE_REMOVE;
+}
+
+/**
+ * up_device_queue_changed_property:
+ **/
+static void
+up_device_queue_changed_property (UpDevice    *device,
+				  const gchar *property,
+				  GVariant    *value)
+{
+	gchar *dbus_prop;
+	gchar **items;
+	guint i;
+
+	g_return_if_fail (UP_IS_DEVICE (device));
+
+	if (device->priv->system_bus_connection == NULL)
+		return;
+
+	if (!device->priv->changed_props) {
+		device->priv->changed_props = g_hash_table_new_full (g_str_hash, g_str_equal,
+								     g_free, (GDestroyNotify) g_variant_unref);
+	}
+
+	items = g_strsplit (property, "-", -1);
+	for (i = 0; items[i] != NULL; i++)
+		*items[i] = g_ascii_toupper (*items[i]);
+	dbus_prop = g_strjoinv (NULL, items);
+	g_strfreev (items);
+
+	g_message ("queueing prop %s", dbus_prop);
+
+	g_hash_table_insert (device->priv->changed_props,
+			     dbus_prop, value);
+
+	if (device->priv->props_idle_id == 0)
+		device->priv->props_idle_id = g_idle_add (changed_props_idle_cb, device);
+}
+
 /**
  * up_device_get_property:
  **/
@@ -456,8 +513,14 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-		break;
+		return;
 	}
+
+	if (G_VALUE_TYPE (value) == G_TYPE_STRING &&
+	    g_value_get_string (value) == NULL)
+		up_device_queue_changed_property (device, pspec->name, g_variant_new_string (""));
+	else
+		up_device_queue_changed_property (device, pspec->name, dbus_g_value_build_g_variant (value));
 }
 
 /**
