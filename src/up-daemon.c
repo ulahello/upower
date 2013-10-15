@@ -519,6 +519,22 @@ changed_props_add_to_msg (gpointer key,
 		gboolean val = g_variant_get_boolean (value);
 		dbus_message_iter_open_container (&dict_iter, DBUS_TYPE_VARIANT, "b", &v_iter);
 		dbus_message_iter_append_basic (&v_iter, DBUS_TYPE_BOOLEAN, &val);
+	} else if (g_variant_is_of_type (value, G_VARIANT_TYPE_STRING)) {
+		const gchar *val = g_variant_get_string (value, NULL);
+		dbus_message_iter_open_container (&dict_iter, DBUS_TYPE_VARIANT, "s", &v_iter);
+		dbus_message_iter_append_basic (&v_iter, DBUS_TYPE_STRING, &val);
+	} else if (g_variant_is_of_type (value, G_VARIANT_TYPE_DOUBLE)) {
+		gdouble val = g_variant_get_double (value);
+		dbus_message_iter_open_container (&dict_iter, DBUS_TYPE_VARIANT, "d", &v_iter);
+		dbus_message_iter_append_basic (&v_iter, DBUS_TYPE_DOUBLE, &val);
+	} else if (g_variant_is_of_type (value, G_VARIANT_TYPE_UINT64)) {
+		guint64 val = g_variant_get_uint64 (value);
+		dbus_message_iter_open_container (&dict_iter, DBUS_TYPE_VARIANT, "t", &v_iter);
+		dbus_message_iter_append_basic (&v_iter, DBUS_TYPE_UINT64, &val);
+	} else if (g_variant_is_of_type (value, G_VARIANT_TYPE_INT64)) {
+		gint64 val = g_variant_get_int64 (value);
+		dbus_message_iter_open_container (&dict_iter, DBUS_TYPE_VARIANT, "x", &v_iter);
+		dbus_message_iter_append_basic (&v_iter, DBUS_TYPE_INT64, &val);
 	} else {
 		g_assert_not_reached ();
 	}
