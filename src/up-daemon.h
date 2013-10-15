@@ -89,7 +89,10 @@ UpDeviceLevel	 up_daemon_compute_warning_level(UpDaemon		*daemon,
 						 gboolean		 power_supply,
 						 gdouble		 percentage,
 						 gint64			 time_to_empty);
-
+void		 up_daemon_emit_properties_changed (DBusGConnection	*gconnection,
+						    const gchar		*object_path,
+						    const gchar		*interface,
+						    GHashTable		*props);
 
 /* exported */
 gboolean	 up_daemon_enumerate_devices	(UpDaemon		*daemon,

@@ -84,6 +84,10 @@ struct UpDaemonPrivate
 	gboolean		 lid_is_present;
 	gboolean		 is_docked;
 
+	/* PropertiesChanged to be emitted */
+	GHashTable		*changed_props;
+	guint			 props_idle_id;
+
 	/* Display battery properties */
 	UpDeviceKind kind;
 	UpDeviceState state;
@@ -493,42 +497,18 @@ up_daemon_get_device_list (UpDaemon *daemon)
 	return g_object_ref (daemon->priv->power_devices);
 }
 
-/**
- * up_daemon_properties_changed_cb:
- **/
 static void
-up_daemon_emit_properties_changed (UpDaemon    *daemon,
-				   const gchar *property,
-				   GVariant    *value)
+changed_props_add_to_msg (gpointer key,
+			  gpointer _value,
+			  gpointer user_data)
 {
-	DBusConnection *connection;
-	DBusMessage *message;
-	DBusMessageIter iter;
-	DBusMessageIter subiter;
-	DBusMessageIter dict_iter;
+	GVariant *value = _value;
+	const gchar *property = key;
+	DBusMessageIter *subiter = user_data;
 	DBusMessageIter v_iter;
-	const char *iface_name = "org.freedesktop.UPower";
+	DBusMessageIter dict_iter;
 
-	g_return_if_fail (UP_IS_DAEMON (daemon));
-
-	/* GObject */
-	g_debug ("emitting changed");
-	g_signal_emit (daemon, signals[SIGNAL_CHANGED], 0);
-
-	if (daemon->priv->connection == NULL)
-		return;
-
-	/* D-Bus */
-	connection = dbus_g_connection_get_connection (daemon->priv->connection);
-	message = dbus_message_new_signal ("/org/freedesktop/UPower",
-					   "org.freedesktop.DBus.Properties",
-					   "PropertiesChanged");
-	dbus_message_iter_init_append (message, &iter);
-	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &iface_name);
-	/* changed */
-	dbus_message_iter_open_container (&iter, DBUS_TYPE_ARRAY, "{sv}", &subiter);
-	dbus_message_iter_open_container (&subiter, DBUS_TYPE_DICT_ENTRY, NULL, &dict_iter);
-
+	dbus_message_iter_open_container (subiter, DBUS_TYPE_DICT_ENTRY, NULL, &dict_iter);
 	dbus_message_iter_append_basic (&dict_iter, DBUS_TYPE_STRING, &property);
 
 	if (g_variant_is_of_type (value, G_VARIANT_TYPE_UINT32)) {
@@ -542,17 +522,92 @@ up_daemon_emit_properties_changed (UpDaemon    *daemon,
 	} else {
 		g_assert_not_reached ();
 	}
-
 	dbus_message_iter_close_container (&dict_iter, &v_iter);
-	dbus_message_iter_close_container (&subiter, &dict_iter);
+	dbus_message_iter_close_container (subiter, &dict_iter);
+}
+
+void
+up_daemon_emit_properties_changed (DBusGConnection *gconnection,
+				   const gchar     *object_path,
+				   const gchar     *interface,
+				   GHashTable      *props)
+{
+	DBusConnection *connection;
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusMessageIter subiter;
+
+	g_return_if_fail (gconnection != NULL);
+	g_return_if_fail (object_path != NULL);
+	g_return_if_fail (interface != NULL);
+	g_return_if_fail (props != NULL);
+
+	connection = dbus_g_connection_get_connection (gconnection);
+	message = dbus_message_new_signal (object_path,
+					   "org.freedesktop.DBus.Properties",
+					   "PropertiesChanged");
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface);
+	/* changed */
+	dbus_message_iter_open_container (&iter, DBUS_TYPE_ARRAY, "{sv}", &subiter);
+
+	g_hash_table_foreach (props, changed_props_add_to_msg, &subiter);
+
 	dbus_message_iter_close_container (&iter, &subiter);
+
 	/* invalidated */
 	dbus_message_iter_open_container (&iter, DBUS_TYPE_ARRAY, "s", &subiter);
 	dbus_message_iter_close_container (&iter, &subiter);
 
 	dbus_connection_send (connection, message, NULL);
 	dbus_message_unref (message);
-	g_variant_unref (value);
+
+}
+
+static gboolean
+changed_props_idle_cb (gpointer user_data)
+{
+	UpDaemon *daemon = user_data;
+
+	/* GObject */
+	g_debug ("emitting changed");
+	g_signal_emit (daemon, signals[SIGNAL_CHANGED], 0);
+
+	/* D-Bus */
+	up_daemon_emit_properties_changed (daemon->priv->connection,
+					   "/org/freedesktop/UPower",
+					   "org.freedesktop.UPower",
+					   daemon->priv->changed_props);
+	g_clear_pointer (&daemon->priv->changed_props, g_hash_table_unref);
+	daemon->priv->props_idle_id = 0;
+
+	return G_SOURCE_REMOVE;
+}
+
+/**
+ * up_daemon_queue_changed_property:
+ **/
+static void
+up_daemon_queue_changed_property (UpDaemon    *daemon,
+				  const gchar *property,
+				  GVariant    *value)
+{
+	g_return_if_fail (UP_IS_DAEMON (daemon));
+
+	if (daemon->priv->connection == NULL)
+		return;
+
+	if (!daemon->priv->changed_props) {
+		daemon->priv->changed_props = g_hash_table_new_full (g_str_hash, g_str_equal,
+								     NULL, (GDestroyNotify) g_variant_unref);
+	}
+
+	g_hash_table_insert (daemon->priv->changed_props,
+			     (gpointer) property,
+			     value);
+
+	if (daemon->priv->props_idle_id == 0)
+		daemon->priv->props_idle_id = g_idle_add (changed_props_idle_cb, daemon);
 }
 
 /**
@@ -573,7 +628,7 @@ up_daemon_set_lid_is_closed (UpDaemon *daemon, gboolean lid_is_closed)
 	priv->lid_is_closed = lid_is_closed;
 	g_object_notify (G_OBJECT (daemon), "lid-is-closed");
 
-	up_daemon_emit_properties_changed (daemon, "LidIsClosed", g_variant_new_boolean (lid_is_closed));
+	up_daemon_queue_changed_property (daemon, "LidIsClosed", g_variant_new_boolean (lid_is_closed));
 }
 
 /**
@@ -594,7 +649,7 @@ up_daemon_set_lid_is_present (UpDaemon *daemon, gboolean lid_is_present)
 	priv->lid_is_present = lid_is_present;
 	g_object_notify (G_OBJECT (daemon), "lid-is-present");
 
-	up_daemon_emit_properties_changed (daemon, "LidIsPresent", g_variant_new_boolean (lid_is_present));
+	up_daemon_queue_changed_property (daemon, "LidIsPresent", g_variant_new_boolean (lid_is_present));
 }
 
 /**
@@ -608,7 +663,7 @@ up_daemon_set_is_docked (UpDaemon *daemon, gboolean is_docked)
 	priv->is_docked = is_docked;
 	g_object_notify (G_OBJECT (daemon), "is-docked");
 
-	up_daemon_emit_properties_changed (daemon, "IsDocked", g_variant_new_boolean (is_docked));
+	up_daemon_queue_changed_property (daemon, "IsDocked", g_variant_new_boolean (is_docked));
 }
 
 /**
@@ -622,7 +677,7 @@ up_daemon_set_on_battery (UpDaemon *daemon, gboolean on_battery)
 	priv->on_battery = on_battery;
 	g_object_notify (G_OBJECT (daemon), "on-battery");
 
-	up_daemon_emit_properties_changed (daemon, "OnBattery", g_variant_new_boolean (on_battery));
+	up_daemon_queue_changed_property (daemon, "OnBattery", g_variant_new_boolean (on_battery));
 }
 
 static gboolean
@@ -643,7 +698,7 @@ up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 	priv->warning_level = warning_level;
 	g_object_notify (G_OBJECT (daemon), "warning-level");
 
-	up_daemon_emit_properties_changed (daemon, "WarningLevel", g_variant_new_uint32 (warning_level));
+	up_daemon_queue_changed_property (daemon, "WarningLevel", g_variant_new_uint32 (warning_level));
 
 	if (daemon->priv->warning_level == UP_DEVICE_LEVEL_ACTION) {
 		if (daemon->priv->action_timeout_id == 0) {
@@ -1123,7 +1178,10 @@ up_daemon_finalize (GObject *object)
 		g_source_remove (priv->battery_poll_id);
 	if (priv->action_timeout_id != 0)
 		g_source_remove (priv->action_timeout_id);
+	if (priv->props_idle_id != 0)
+		g_source_remove (priv->props_idle_id);
 
+	g_clear_pointer (&daemon->priv->changed_props, g_hash_table_unref);
 	if (priv->proxy != NULL)
 		g_object_unref (priv->proxy);
 	if (priv->connection != NULL)
