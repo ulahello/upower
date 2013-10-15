@@ -178,6 +178,10 @@ update_warning_level (UpDevice *device)
 {
 	UpDeviceLevel warning_level;
 
+	/* Not finished setting up the object? */
+	if (device->priv->daemon == NULL)
+		return;
+
 	warning_level = up_daemon_compute_warning_level (device->priv->daemon,
 							 device->priv->state,
 							 device->priv->type,
