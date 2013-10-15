@@ -72,7 +72,6 @@ GQuark		 up_device_error_quark		(void);
 GType		 up_device_error_get_type	(void);
 GType		 up_device_get_type		(void);
 UpDevice	*up_device_new			(void);
-void		 up_device_test		(gpointer	 user_data);
 
 gboolean	 up_device_coldplug		(UpDevice	*device,
 						 UpDaemon	*daemon,
