@@ -258,6 +258,7 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 			state_total = UP_DEVICE_STATE_FULLY_CHARGED;
 
 		/* sum up composite */
+		kind_total = UP_DEVICE_KIND_BATTERY;
 		energy_total += energy;
 		energy_full_total += energy_full;
 		energy_rate_total += energy_rate;
