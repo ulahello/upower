@@ -292,6 +292,17 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 	}
 
 out:
+	/* Did anything change? */
+	if (daemon->priv->kind == kind_total &&
+	    daemon->priv->state == state_total &&
+	    daemon->priv->energy == energy_total &&
+	    daemon->priv->energy_full == energy_full_total &&
+	    daemon->priv->energy_rate == energy_rate_total &&
+	    daemon->priv->time_to_empty == time_to_empty_total &&
+	    daemon->priv->time_to_full == time_to_full_total &&
+	    daemon->priv->percentage == percentage_total)
+		return FALSE;
+
 	daemon->priv->kind = kind_total;
 	daemon->priv->state = state_total;
 	daemon->priv->energy = energy_total;
@@ -315,7 +326,6 @@ out:
 		      "power-supply", TRUE,
 		      NULL);
 
-	/* FIXME: Return whether the above actually changed significantly */
 	return TRUE;
 }
 
