@@ -279,7 +279,7 @@ changed_props_idle_cb (gpointer user_data)
 	/* D-Bus */
 	up_daemon_emit_properties_changed (device->priv->system_bus_connection,
 					   device->priv->object_path,
-					   "org.freedesktop.UPower",
+					   "org.freedesktop.UPower.Device",
 					   device->priv->changed_props);
 	g_clear_pointer (&device->priv->changed_props, g_hash_table_unref);
 	device->priv->props_idle_id = 0;
