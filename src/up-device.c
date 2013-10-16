@@ -519,6 +519,9 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 	case PROP_TECHNOLOGY:
 		device->priv->technology = g_value_get_uint (value);
 		break;
+	case PROP_WARNING_LEVEL:
+		device->priv->warning_level = g_value_get_uint (value);
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		return;
@@ -1317,7 +1320,7 @@ up_device_class_init (UpDeviceClass *klass)
 							    UP_DEVICE_LEVEL_UNKNOWN,
 							    UP_DEVICE_LEVEL_LAST,
 							    UP_DEVICE_LEVEL_UNKNOWN,
-							    G_PARAM_READABLE));
+							    G_PARAM_READWRITE));
 
 	/**
 	 * UpDevice:icon:
