@@ -320,6 +320,16 @@ main (int argc, char **argv)
 			}
 		}
 		g_ptr_array_unref (devices);
+		device = up_client_get_display_device (client);
+		if (opt_enumerate) {
+			g_print ("%s\n", up_device_get_object_path (device));
+		} else {
+			g_print ("Device: %s\n", up_device_get_object_path (device));
+			text = up_device_to_text (device);
+			g_print ("%s\n", text);
+			g_free (text);
+		}
+		g_object_unref (device);
 		if (opt_dump) {
 			g_print ("Daemon:\n");
 			up_client_print (client);
