@@ -93,6 +93,12 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
               <doc:item>
                 <doc:term>IsPresent</doc:term><doc:definition>Whether a status icon using this information should be presented.</doc:definition>
               </doc:item>
+              <doc:item>
+                <doc:term>IconName</doc:term><doc:definition>An icon name representing the device state.</doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>WarningLevel</doc:term><doc:definition>The same as the overall <doc:ref type="property" to="Source:WarningLevel">WarningLevel</doc:ref></doc:definition>
+              </doc:item>
             </doc:list>
           </doc:para>
         </doc:description>
