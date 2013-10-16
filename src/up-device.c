@@ -133,6 +133,8 @@ G_DEFINE_TYPE (UpDevice, up_device, G_TYPE_OBJECT)
 #define UP_DBUS_STRUCT_DOUBLE_DOUBLE (dbus_g_type_get_struct ("GValueArray", \
 	G_TYPE_DOUBLE, G_TYPE_DOUBLE, G_TYPE_INVALID))
 
+#define UP_DEVICES_DBUS_PATH "/org/freedesktop/UPower/devices"
+
 /**
  * up_device_error_quark:
  **/
@@ -941,7 +943,7 @@ up_device_compute_object_path (UpDevice *device)
 		if (id[i] == ':')
 			id[i] = 'o';
 	}
-	object_path = g_build_filename ("/org/freedesktop/UPower/devices", id, NULL);
+	object_path = g_build_filename (UP_DEVICES_DBUS_PATH, id, NULL);
 
 	g_free (basename);
 	g_free (id);
