@@ -80,8 +80,8 @@ struct UpDevicePrivate
 	gint64			 time_to_full;		/* seconds */
 	gdouble			 percentage;		/* percent */
 	gdouble			 temperature;		/* degrees C */
-	UpDeviceLevel		 warning_level;
-	const gchar		*icon_name;
+	UpDeviceLevel		 warning_level;		/* computed */
+	const gchar		*icon_name;		/* computed */
 };
 
 static gboolean	up_device_register_device	(UpDevice *device);
@@ -134,6 +134,10 @@ G_DEFINE_TYPE (UpDevice, up_device, G_TYPE_OBJECT)
 	G_TYPE_DOUBLE, G_TYPE_DOUBLE, G_TYPE_INVALID))
 
 #define UP_DEVICES_DBUS_PATH "/org/freedesktop/UPower/devices"
+
+static void up_device_queue_changed_property (UpDevice    *device,
+					      const gchar *property,
+					      GVariant    *value);
 
 /**
  * up_device_error_quark:
@@ -200,6 +204,8 @@ update_warning_level (UpDevice *device)
 
 	device->priv->warning_level = warning_level;
 	g_object_notify (G_OBJECT (device), "warning-level");
+
+	up_device_queue_changed_property (device, "warning-level", g_variant_new_uint32 (device->priv->warning_level));
 }
 
 static const gchar *
@@ -261,6 +267,8 @@ update_icon_name (UpDevice *device)
 
 	device->priv->icon_name = icon_name;
 	g_object_notify (G_OBJECT (device), "icon-name");
+
+	up_device_queue_changed_property (device, "icon-name", g_variant_new_string (device->priv->icon_name));
 }
 
 static gboolean
