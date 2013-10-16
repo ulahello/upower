@@ -180,13 +180,6 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
       </doc:para></doc:description></doc:doc>
     </property>
 
-    <property name="WarningLevel" type="u" access="read">
-      <doc:doc><doc:description><doc:para>
-            Indicates whether the system is running on battery power and if the batteries are low,
-            or critically low. This property is provided for convenience.
-      </doc:para></doc:description></doc:doc>
-    </property>
-
     <property name="LidIsClosed" type="b" access="read">
       <doc:doc>
         <doc:description>

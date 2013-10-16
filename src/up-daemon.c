@@ -50,7 +50,6 @@ enum
 	PROP_LID_IS_CLOSED,
 	PROP_LID_IS_PRESENT,
 	PROP_IS_DOCKED,
-	PROP_WARNING_LEVEL,
 	PROP_LAST
 };
 
@@ -758,9 +757,8 @@ up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 
 	g_debug ("warning_level = %s", up_device_level_to_string (warning_level));
 	priv->warning_level = warning_level;
-	g_object_notify (G_OBJECT (daemon), "warning-level");
 
-	up_daemon_queue_changed_property (daemon, "WarningLevel", g_variant_new_uint32 (warning_level));
+	g_object_set (G_OBJECT (daemon->priv->display_device), "warning-level", warning_level, NULL);
 
 	if (daemon->priv->warning_level == UP_DEVICE_LEVEL_ACTION) {
 		if (daemon->priv->action_timeout_id == 0) {
@@ -1121,9 +1119,6 @@ up_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 	case PROP_IS_DOCKED:
 		g_value_set_boolean (value, priv->is_docked);
 		break;
-	case PROP_WARNING_LEVEL:
-		g_value_set_uint (value, priv->warning_level);
-		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -1205,15 +1200,6 @@ up_daemon_class_init (UpDaemonClass *klass)
 							       "Whether the system is running on battery",
 							       FALSE,
 							       G_PARAM_READABLE));
-
-	g_object_class_install_property (object_class,
-					 PROP_WARNING_LEVEL,
-					 g_param_spec_uint ("warning-level",
-							    NULL, NULL,
-							    UP_DEVICE_LEVEL_UNKNOWN,
-							    UP_DEVICE_LEVEL_LAST,
-							    UP_DEVICE_LEVEL_UNKNOWN,
-							    G_PARAM_READABLE));
 
 	g_object_class_install_property (object_class,
 					 PROP_LID_IS_CLOSED,
