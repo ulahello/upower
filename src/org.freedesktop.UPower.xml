@@ -61,7 +61,9 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
         <doc:description>
           <doc:para>
             Get the object to the "display device", a composite device that represents the
-            status icon to show in desktop environments. The following standard org.freedesktop.UPower.Device
+            status icon to show in desktop environments. You can also access the object directly
+            as its path is guaranteed to be /org/freedesktop/UPower/devices/DisplayDevice.
+            The following standard org.freedesktop.UPower.Device
             properties will be defined (only <doc:ref type="property" to="Source:IsPresent">IsPresent</doc:ref> takes a special meaning):
             <doc:list>
               <doc:item>
