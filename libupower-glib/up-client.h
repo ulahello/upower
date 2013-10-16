@@ -80,6 +80,7 @@ UpClient	*up_client_new				(void);
 gboolean	 up_client_enumerate_devices_sync	(UpClient		*client,
 							 GCancellable		*cancellable,
 							 GError			**error);
+UpDevice *	 up_client_get_display_device		(UpClient *client);
 
 /* accessors */
 GPtrArray	*up_client_get_devices			(UpClient		*client);
