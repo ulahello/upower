@@ -89,15 +89,15 @@ struct UpDaemonPrivate
 	guint			 props_idle_id;
 
 	/* Display battery properties */
-	UpDevice *display_device;
-	UpDeviceKind kind;
-	UpDeviceState state;
-	gdouble percentage;
-	gdouble energy;
-	gdouble energy_full;
-	gdouble energy_rate;
-	gint64 time_to_empty;
-	gint64 time_to_full;
+	UpDevice		*display_device;
+	UpDeviceKind		 kind;
+	UpDeviceState		 state;
+	gdouble			 percentage;
+	gdouble			 energy;
+	gdouble			 energy_full;
+	gdouble			 energy_rate;
+	gint64			 time_to_empty;
+	gint64			 time_to_full;
 
 	/* WarningLevel configuration */
 	gboolean		 use_percentage_for_policy;
