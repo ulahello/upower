@@ -752,6 +752,10 @@ void
 up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 {
 	UpDaemonPrivate *priv = daemon->priv;
+
+	if (priv->warning_level == warning_level)
+		return;
+
 	g_debug ("warning_level = %s", up_device_level_to_string (warning_level));
 	priv->warning_level = warning_level;
 	g_object_notify (G_OBJECT (daemon), "warning-level");
