@@ -77,9 +77,6 @@ GType		 up_client_get_type			(void);
 UpClient	*up_client_new				(void);
 
 /* sync versions */
-gboolean	 up_client_get_properties_sync		(UpClient		*client,
-							 GCancellable		*cancellable,
-							 GError			**error);
 gboolean	 up_client_enumerate_devices_sync	(UpClient		*client,
 							 GCancellable		*cancellable,
 							 GError			**error);

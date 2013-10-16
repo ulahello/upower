@@ -122,26 +122,6 @@ up_client_get_devices (UpClient *client)
 }
 
 /**
- * up_client_get_properties_sync:
- * @client: a #UpClient instance.
- * @cancellable: a #GCancellable or %NULL
- * @error: a #GError, or %NULL.
- *
- * Get all the properties from UPower daemon.
- *
- * Return value: %TRUE for success, else %FALSE.
- *
- * Since: 0.9.0
- **/
-gboolean
-up_client_get_properties_sync (UpClient *client, GCancellable *cancellable, GError **error)
-{
-	/* This is not needed now that we used GDBus */
-	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
-	return TRUE;
-}
-
-/**
  * up_client_get_daemon_version:
  * @client: a #UpClient instance.
  *
@@ -339,8 +319,6 @@ up_client_get_property (GObject *object,
 {
 	UpClient *client;
 	client = UP_CLIENT (object);
-
-	up_client_get_properties_sync (client, NULL, NULL);
 
 	switch (prop_id) {
 	case PROP_DAEMON_VERSION:
