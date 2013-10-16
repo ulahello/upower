@@ -257,11 +257,14 @@ up_device_to_text (UpDevice *device)
 	const gchar *model;
 	const gchar *serial;
 	UpDeviceKind kind;
+	gboolean is_display;
 
 	g_return_val_if_fail (UP_IS_DEVICE (device), NULL);
 	g_return_val_if_fail (device->priv->proxy_device != NULL, NULL);
 
 	priv = device->priv;
+
+	is_display = (g_strcmp0 ("/org/freedesktop/UPower/devices/DisplayDevice", up_device_get_object_path (device)) == 0);
 
 	/* get a human readable time */
 	t = (time_t) up_device_glue_get_update_time (priv->proxy_device);
@@ -269,7 +272,8 @@ up_device_to_text (UpDevice *device)
 	strftime (time_buf, sizeof time_buf, "%c", time_tm);
 
 	string = g_string_new ("");
-	g_string_append_printf (string, "  native-path:          %s\n", up_device_glue_get_native_path (priv->proxy_device));
+	if (!is_display)
+		g_string_append_printf (string, "  native-path:          %s\n", up_device_glue_get_native_path (priv->proxy_device));
 	vendor = up_device_glue_get_vendor (priv->proxy_device);
 	if (vendor != NULL && vendor[0] != '\0')
 		g_string_append_printf (string, "  vendor:               %s\n", vendor);
@@ -292,10 +296,11 @@ up_device_to_text (UpDevice *device)
 	    kind == UP_DEVICE_KIND_KEYBOARD ||
 	    kind == UP_DEVICE_KIND_UPS)
 		g_string_append_printf (string, "    present:             %s\n", up_device_bool_to_string (up_device_glue_get_is_present (priv->proxy_device)));
-	if (kind == UP_DEVICE_KIND_PHONE ||
-	    kind == UP_DEVICE_KIND_BATTERY ||
-	    kind == UP_DEVICE_KIND_MOUSE ||
-	    kind == UP_DEVICE_KIND_KEYBOARD)
+	if ((kind == UP_DEVICE_KIND_PHONE ||
+	     kind == UP_DEVICE_KIND_BATTERY ||
+	     kind == UP_DEVICE_KIND_MOUSE ||
+	     kind == UP_DEVICE_KIND_KEYBOARD) &&
+	    !is_display)
 		g_string_append_printf (string, "    rechargeable:        %s\n", up_device_bool_to_string (up_device_glue_get_is_rechargeable (priv->proxy_device)));
 	if (kind == UP_DEVICE_KIND_BATTERY ||
 	    kind == UP_DEVICE_KIND_MOUSE ||
@@ -305,9 +310,11 @@ up_device_to_text (UpDevice *device)
 	g_string_append_printf (string, "    warning-level:       %s\n", up_device_level_to_string (up_device_glue_get_warning_level (priv->proxy_device)));
 	if (kind == UP_DEVICE_KIND_BATTERY) {
 		g_string_append_printf (string, "    energy:              %g Wh\n", up_device_glue_get_energy (priv->proxy_device));
-		g_string_append_printf (string, "    energy-empty:        %g Wh\n", up_device_glue_get_energy_empty (priv->proxy_device));
+		if (!is_display)
+			g_string_append_printf (string, "    energy-empty:        %g Wh\n", up_device_glue_get_energy_empty (priv->proxy_device));
 		g_string_append_printf (string, "    energy-full:         %g Wh\n", up_device_glue_get_energy_full (priv->proxy_device));
-		g_string_append_printf (string, "    energy-full-design:  %g Wh\n", up_device_glue_get_energy_full_design (priv->proxy_device));
+		if (!is_display)
+			g_string_append_printf (string, "    energy-full-design:  %g Wh\n", up_device_glue_get_energy_full_design (priv->proxy_device));
 	}
 	if (kind == UP_DEVICE_KIND_BATTERY ||
 	    kind == UP_DEVICE_KIND_MONITOR)
