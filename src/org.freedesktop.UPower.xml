@@ -51,6 +51,52 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
       </doc:doc>
     </method>
 
+    <method name="GetDisplayDevice">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="device" direction="out" type="o">
+        <doc:doc><doc:summary>An object path for the "display device.</doc:summary></doc:doc>
+      </arg>
+
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Get the object to the "display device", a composite device that represents the
+            status icon to show in desktop environments. The following standard org.freedesktop.UPower.Device
+            properties will be defined (only <doc:ref type="property" to="Source:IsPresent">IsPresent</doc:ref> takes a special meaning):
+            <doc:list>
+              <doc:item>
+                <doc:term>Type</doc:term><doc:definition>the type of the display device, UPS or Battery. Note that this value can change, as opposed to real devices.</doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>State</doc:term><doc:definition>the power state of the display device, such as Charging or Discharging.</doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>Percentage</doc:term><doc:definition>the amount of energy left on the device.</doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>Energy</doc:term><doc:definition>Amount of energy (measured in Wh) currently available in the power source.</doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>EnergyFull</doc:term><doc:definition>Amount of energy (measured in Wh) in the power source when it's considered full.</doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>EnergyRate</doc:term><doc:definition>Amount of energy being drained from the source, measured in W. If positive, the source is being discharged, if negative it's being charged.</doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>TimeToEmpty</doc:term><doc:definition>Number of seconds until the power source is considered empty.</doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>TimeToFull</doc:term><doc:definition>Number of seconds until the power source is considered full.</doc:definition>
+              </doc:item>
+              <doc:item>
+                <doc:term>IsPresent</doc:term><doc:definition>Whether a status icon using this information should be presented.</doc:definition>
+              </doc:item>
+            </doc:list>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </method>
+
     <!-- ************************************************************ -->
 
     <signal name="DeviceAdded">

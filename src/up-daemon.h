@@ -97,6 +97,8 @@ void		 up_daemon_emit_properties_changed (DBusGConnection	*gconnection,
 /* exported */
 gboolean	 up_daemon_enumerate_devices	(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);
+gboolean	 up_daemon_get_display_device   (UpDaemon		*daemon,
+						 DBusGMethodInvocation	*context);
 
 G_END_DECLS
 

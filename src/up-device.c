@@ -718,6 +718,22 @@ out:
 }
 
 /**
+ * up_device_register_display_device:
+ **/
+gboolean
+up_device_register_display_device (UpDevice *device,
+				   UpDaemon *daemon)
+{
+	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
+
+	device->priv->daemon = g_object_ref (daemon);
+	device->priv->object_path = g_build_filename (UP_DEVICES_DBUS_PATH, "DisplayDevice", NULL);
+	dbus_g_connection_register_g_object (device->priv->system_bus_connection,
+					     device->priv->object_path, G_OBJECT (device));
+	return TRUE;
+}
+
+/**
  * up_device_get_statistics:
  **/
 gboolean

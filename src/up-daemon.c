@@ -89,6 +89,7 @@ struct UpDaemonPrivate
 	guint			 props_idle_id;
 
 	/* Display battery properties */
+	UpDevice *display_device;
 	UpDeviceKind kind;
 	UpDeviceState state;
 	gdouble percentage;
@@ -199,6 +200,7 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 	gdouble energy_rate_total = 0.0;
 	gint64 time_to_empty_total = 0;
 	gint64 time_to_full_total = 0;
+	gboolean is_present_total = FALSE;
 	guint num_batteries = 0;
 
 	/* Gather state from each device */
@@ -239,6 +241,7 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 			time_to_empty_total = time_to_empty;
 			time_to_full_total = time_to_full;
 			percentage_total = percentage;
+			is_present_total = TRUE;
 			break;
 		}
 		if (kind != UP_DEVICE_KIND_BATTERY)
@@ -259,6 +262,7 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 
 		/* sum up composite */
 		kind_total = UP_DEVICE_KIND_BATTERY;
+		is_present_total = TRUE;
 		energy_total += energy;
 		energy_full_total += energy_full;
 		energy_rate_total += energy_rate;
@@ -297,6 +301,19 @@ out:
 	daemon->priv->time_to_full = time_to_full_total;
 
 	daemon->priv->percentage = percentage_total;
+
+	g_object_set (daemon->priv->display_device,
+		      "type", kind_total,
+		      "state", state_total,
+		      "energy", energy_total,
+		      "energy-full", energy_full_total,
+		      "energy-rate", energy_rate_total,
+		      "time-to-empty", time_to_empty_total,
+		      "time-to-full", time_to_full_total,
+		      "percentage", percentage_total,
+		      "is-present", is_present_total,
+		      "power-supply", TRUE,
+		      NULL);
 
 	/* FIXME: Return whether the above actually changed significantly */
 	return TRUE;
@@ -412,6 +429,17 @@ up_daemon_enumerate_devices (UpDaemon *daemon, DBusGMethodInvocation *context)
 }
 
 /**
+ * up_daemon_get_display_device:
+ **/
+gboolean
+up_daemon_get_display_device (UpDaemon			*daemon,
+			      DBusGMethodInvocation	*context)
+{
+	dbus_g_method_return (context, up_device_get_object_path (daemon->priv->display_device));
+	return TRUE;
+}
+
+/**
  * up_daemon_register_power_daemon:
  **/
 static gboolean
@@ -429,6 +457,10 @@ up_daemon_register_power_daemon (UpDaemon *daemon)
 		}
 		goto out;
 	}
+
+	/* Register the display device */
+	up_device_register_display_device (daemon->priv->display_device,
+					   daemon);
 
 	/* connect to DBUS */
 	priv->proxy = dbus_g_proxy_new_for_name (priv->connection,
@@ -1002,6 +1034,7 @@ up_daemon_init (UpDaemon *daemon)
 	daemon->priv->polkit = up_polkit_new ();
 	daemon->priv->config = up_config_new ();
 	daemon->priv->power_devices = up_device_list_new ();
+	daemon->priv->display_device = up_device_new ();
 
 	daemon->priv->use_percentage_for_policy = up_config_get_boolean (daemon->priv->config, "UsePercentageForPolicy");
 	load_percentage_policy (daemon, FALSE);
