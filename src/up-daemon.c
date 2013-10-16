@@ -577,7 +577,6 @@ up_daemon_emit_properties_changed (DBusGConnection *gconnection,
 
 	dbus_connection_send (connection, message, NULL);
 	dbus_message_unref (message);
-
 }
 
 static gboolean
