@@ -885,7 +885,6 @@ up_daemon_poll_battery_devices_for_a_little_bit (UpDaemon *daemon)
 static void
 up_daemon_device_changed_cb (UpDevice *device, GParamSpec *pspec, UpDaemon *daemon)
 {
-	const gchar *object_path;
 	UpDeviceKind type;
 	gboolean ret;
 	UpDaemonPrivate *priv = daemon->priv;
@@ -912,16 +911,6 @@ up_daemon_device_changed_cb (UpDevice *device, GParamSpec *pspec, UpDaemon *daem
 	warning_level = up_daemon_get_warning_level_local (daemon);
 	if (warning_level != priv->warning_level)
 		up_daemon_set_warning_level (daemon, warning_level);
-
-	/* emit */
-	object_path = up_device_get_object_path (device);
-	g_debug ("emitting device-changed: %s", object_path);
-
-	/* don't crash the session */
-	if (object_path == NULL) {
-		g_warning ("INTERNAL STATE CORRUPT: not sending NULL, device:%p", device);
-		return;
-	}
 }
 
 /**
