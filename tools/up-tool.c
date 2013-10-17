@@ -83,7 +83,7 @@ up_tool_device_added_cb (UpClient *client, UpDevice *device, gpointer user_data)
  * up_tool_device_changed_cb:
  **/
 static void
-up_tool_device_changed_cb (UpClient *client, UpDevice *device, gpointer user_data)
+up_tool_device_changed_cb (UpDevice *device, GParamSpec *pspec, gpointer user_data)
 {
 	gchar *timestamp;
 	gchar *text = NULL;
@@ -150,7 +150,7 @@ up_client_print (UpClient *client)
  * up_tool_changed_cb:
  **/
 static void
-up_tool_changed_cb (UpClient *client, gpointer user_data)
+up_tool_changed_cb (UpClient *client, GParamSpec *pspec, gpointer user_data)
 {
 	gchar *timestamp;
 	timestamp = up_tool_get_timestamp ();
@@ -168,12 +168,28 @@ up_tool_changed_cb (UpClient *client, gpointer user_data)
 static gboolean
 up_tool_do_monitor (UpClient *client)
 {
+	GPtrArray *devices;
+	GError *error = NULL;
+	gboolean ret;
+	guint i;
+
 	g_print ("Monitoring activity from the power daemon. Press Ctrl+C to cancel.\n");
 
 	g_signal_connect (client, "device-added", G_CALLBACK (up_tool_device_added_cb), NULL);
 	g_signal_connect (client, "device-removed", G_CALLBACK (up_tool_device_removed_cb), NULL);
-	g_signal_connect (client, "device-changed", G_CALLBACK (up_tool_device_changed_cb), NULL);
-	g_signal_connect (client, "changed", G_CALLBACK (up_tool_changed_cb), NULL);
+	g_signal_connect (client, "notify", G_CALLBACK (up_tool_changed_cb), NULL);
+
+	ret = up_client_enumerate_devices_sync (client, NULL, &error);
+	if (!ret) {
+		g_warning ("failed to enumerate: %s", error->message);
+		return FALSE;
+	}
+	devices = up_client_get_devices (client);
+	for (i=0; i < devices->len; i++) {
+		UpDevice *device;
+		device = g_ptr_array_index (devices, i);
+		g_signal_connect (device, "notify", G_CALLBACK (up_tool_device_changed_cb), NULL);
+	}
 
 	g_main_loop_run (loop);
 
