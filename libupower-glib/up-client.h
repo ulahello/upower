@@ -56,7 +56,7 @@ typedef struct
 	void			(*device_added)		(UpClient		*client,
 							 UpDevice		*device);
 	void			(*device_removed)	(UpClient		*client,
-							 UpDevice		*device);
+							 const gchar		*object_path);
 	/*< private >*/
 	/* Padding for future expansion */
 	void (*_up_client_reserved1) (void);
@@ -74,9 +74,6 @@ GType		 up_client_get_type			(void);
 UpClient	*up_client_new				(void);
 
 /* sync versions */
-gboolean	 up_client_enumerate_devices_sync	(UpClient		*client,
-							 GCancellable		*cancellable,
-							 GError			**error);
 UpDevice *	 up_client_get_display_device		(UpClient *client);
 char *		 up_client_get_critical_action		(UpClient *client);
 

@@ -53,8 +53,6 @@ static void	up_client_finalize	(GObject	*object);
 struct _UpClientPrivate
 {
 	UpClientGlue		*proxy;
-	GPtrArray		*array;
-	gboolean		 done_enumerate;
 };
 
 enum {
@@ -78,33 +76,11 @@ static gpointer up_client_object = NULL;
 
 G_DEFINE_TYPE (UpClient, up_client, G_TYPE_OBJECT)
 
-/*
- * up_client_get_device:
- */
-static UpDevice *
-up_client_get_device (UpClient *client, const gchar *object_path)
-{
-	guint i;
-	const gchar *object_path_tmp;
-	UpDevice *device;
-	UpClientPrivate *priv = client->priv;
-
-	for (i=0; i<priv->array->len; i++) {
-		device = g_ptr_array_index (priv->array, i);
-		object_path_tmp = up_device_get_object_path (device);
-		if (g_strcmp0 (object_path_tmp, object_path) == 0)
-			return device;
-	}
-	return NULL;
-}
-
 /**
  * up_client_get_devices:
  * @client: a #UpClient instance.
  *
  * Get a copy of the device objects.
- * You must have called up_client_enumerate_devices_sync() before calling this
- * function.
  *
  * Return value: (element-type UpDevice) (transfer full): an array of #UpDevice objects, free with g_ptr_array_unref()
  *
@@ -113,9 +89,41 @@ up_client_get_device (UpClient *client, const gchar *object_path)
 GPtrArray *
 up_client_get_devices (UpClient *client)
 {
+	GError *error = NULL;
+	char **devices;
+	GPtrArray *array;
+	guint i;
+
 	g_return_val_if_fail (UP_IS_CLIENT (client), NULL);
-	g_return_val_if_fail (client->priv->done_enumerate, NULL);
-	return g_ptr_array_ref (client->priv->array);
+
+	array = g_ptr_array_new ();
+
+	if (up_client_glue_call_enumerate_devices_sync (client->priv->proxy,
+							&devices,
+							NULL,
+							&error) == FALSE) {
+		g_warning ("up_client_get_devices failed: %s", error->message);
+		g_error_free (error);
+		return NULL;
+	}
+
+	for (i = 0; devices[i] != NULL; i++) {
+		UpDevice *device;
+		const char *object_path = devices[i];
+		gboolean ret;
+
+		device = up_device_new ();
+		ret = up_device_set_object_path_sync (device, object_path, NULL, NULL);
+		if (!ret) {
+			g_object_unref (device);
+			continue;
+		}
+
+		g_ptr_array_add (array, device);
+	}
+	g_strfreev (devices);
+
+	return array;
 }
 
 /**
@@ -259,15 +267,7 @@ static void
 up_client_add (UpClient *client, const gchar *object_path)
 {
 	UpDevice *device = NULL;
-	UpDevice *device_tmp;
 	gboolean ret;
-
-	/* check existing list for this object path */
-	device_tmp = up_client_get_device (client, object_path);
-	if (device_tmp != NULL) {
-		g_warning ("already added: %s", object_path);
-		goto out;
-	}
 
 	/* create new device */
 	device = up_device_new ();
@@ -276,7 +276,6 @@ up_client_add (UpClient *client, const gchar *object_path)
 		goto out;
 
 	/* add to array */
-	g_ptr_array_add (client->priv->array, g_object_ref (device));
 	g_signal_emit (client, signals [UP_CLIENT_DEVICE_ADDED], 0, device);
 out:
 	if (device != NULL)
@@ -311,12 +310,7 @@ up_device_added_cb (UpClientGlue *proxy, const gchar *object_path, UpClient *cli
 static void
 up_device_removed_cb (UpClientGlue *proxy, const gchar *object_path, UpClient *client)
 {
-	UpDevice *device;
-	device = up_client_get_device (client, object_path);
-	if (device != NULL) {
-		g_signal_emit (client, signals [UP_CLIENT_DEVICE_REMOVED], 0, device);
-		g_ptr_array_remove (client->priv->array, device);
-	}
+	g_signal_emit (client, signals [UP_CLIENT_DEVICE_REMOVED], 0, object_path);
 }
 
 static void
@@ -453,62 +447,20 @@ up_client_class_init (UpClientClass *klass)
 	/**
 	 * UpClient::device-removed:
 	 * @client: the #UpClient instance that emitted the signal
-	 * @device: the #UpDevice that was removed.
+	 * @object_path: the object path of the #UpDevice that was removed.
 	 *
-	 * The ::device-added signal is emitted when a power device is removed.
+	 * The ::device-removed signal is emitted when a power device is removed.
 	 *
-	 * Since: 0.9.0
+	 * Since: 1.0
 	 **/
 	signals [UP_CLIENT_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpClientClass, device_removed),
-			      NULL, NULL, g_cclosure_marshal_VOID__OBJECT,
-			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
+			      NULL, NULL, g_cclosure_marshal_VOID__STRING,
+			      G_TYPE_NONE, 1, G_TYPE_STRING);
 
 	g_type_class_add_private (klass, sizeof (UpClientPrivate));
-}
-
-/**
- * up_client_enumerate_devices_sync:
- * @client: a #UpClient instance.
- * @error: a #GError, or %NULL.
- *
- * Enumerates all the devices from the daemon.
- *
- * Return value: %TRUE for success, else %FALSE.
- *
- * Since: 0.9.0
- **/
-gboolean
-up_client_enumerate_devices_sync (UpClient *client, GCancellable *cancellable, GError **error)
-{
-	const gchar *object_path;
-	char **devices;
-	guint i;
-	gboolean ret = TRUE;
-
-	/* already done */
-	if (client->priv->done_enumerate)
-		goto out;
-
-	/* coldplug */
-	if (up_client_glue_call_enumerate_devices_sync (client->priv->proxy,
-							&devices,
-							NULL,
-							error) == FALSE) {
-		ret = FALSE;
-		goto out;
-	}
-	for (i = 0; devices[i] != NULL; i++) {
-		object_path = (const gchar *) devices[i];
-		up_client_add (client, object_path);
-	}
-
-	/* only do this once per instance */
-	client->priv->done_enumerate = TRUE;
-out:
-	return ret;
 }
 
 /*
@@ -521,7 +473,6 @@ up_client_init (UpClient *client)
 	GError *error = NULL;
 
 	client->priv = UP_CLIENT_GET_PRIVATE (client);
-	client->priv->array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	/* connect to main interface */
 	client->priv->proxy = up_client_glue_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
@@ -556,8 +507,6 @@ up_client_finalize (GObject *object)
 	g_return_if_fail (UP_IS_CLIENT (object));
 
 	client = UP_CLIENT (object);
-
-	g_ptr_array_unref (client->priv->array);
 
 	if (client->priv->proxy != NULL)
 		g_object_unref (client->priv->proxy);
