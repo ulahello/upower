@@ -105,6 +105,33 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
       </doc:doc>
     </method>
 
+    <method name="GetCriticalAction">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="action" direction="out" type="s">
+        <doc:doc><doc:summary>A string representing the critical action configured and available.</doc:summary></doc:doc>
+      </arg>
+
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            When the system's power supply is critical (critically low batteries or UPS),
+            the system will take this action. Possible values are:
+            <doc:list>
+              <doc:item>
+                <doc:term>HybridSleep</doc:term>
+              </doc:item>
+              <doc:item>
+                <doc:term>Hibernate</doc:term>
+              </doc:item>
+              <doc:item>
+                <doc:term>PowerOff</doc:term>
+              </doc:item>
+            </doc:list>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </method>
+
     <!-- ************************************************************ -->
 
     <signal name="DeviceAdded">

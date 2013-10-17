@@ -145,6 +145,31 @@ up_client_get_display_device (UpClient *client)
 }
 
 /**
+ * up_client_get_critical_action:
+ * @client: a #UpClient instance.
+ *
+ * Gets a string representing the configured critical action,
+ * depending on availability.
+ *
+ * Return value: the action name, or %NULL on error.
+ *
+ * Since: 1.0
+ **/
+char *
+up_client_get_critical_action (UpClient *client)
+{
+	char *action;
+
+	g_return_val_if_fail (UP_IS_CLIENT (client), NULL);
+	if (!up_client_glue_call_get_critical_action_sync (client->priv->proxy,
+							   &action,
+							   NULL, NULL)) {
+		return NULL;
+	}
+	return action;
+}
+
+/**
  * up_client_get_daemon_version:
  * @client: a #UpClient instance.
  *

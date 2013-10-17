@@ -124,6 +124,7 @@ up_client_print (UpClient *client)
 	gboolean lid_is_closed;
 	gboolean lid_is_present;
 	gboolean is_docked;
+	char *action;
 
 	g_object_get (client,
 		      "daemon-version", &daemon_version,
@@ -138,6 +139,9 @@ up_client_print (UpClient *client)
 	g_print ("  lid-is-closed:   %s\n", lid_is_closed ? "yes" : "no");
 	g_print ("  lid-is-present:  %s\n", lid_is_present ? "yes" : "no");
 	g_print ("  is-docked:       %s\n", is_docked ? "yes" : "no");
+	action = up_client_get_critical_action (client);
+	g_print ("  critical-action: %s\n", action);
+	g_free (action);
 
 	g_free (daemon_version);
 }

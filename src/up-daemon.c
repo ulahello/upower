@@ -449,6 +449,17 @@ up_daemon_get_display_device (UpDaemon			*daemon,
 }
 
 /**
+ * up_daemon_get_critical_action:
+ **/
+gboolean
+up_daemon_get_critical_action (UpDaemon			*daemon,
+			      DBusGMethodInvocation	*context)
+{
+	dbus_g_method_return (context, up_backend_get_critical_action (daemon->priv->backend));
+	return TRUE;
+}
+
+/**
  * up_daemon_register_power_daemon:
  **/
 static gboolean

@@ -149,6 +149,19 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 }
 
 /**
+ * up_backend_get_critical_action:
+ * @backend: The %UpBackend class instance
+ *
+ * Which action will be taken when %UP_DEVICE_LEVEL_ACTION
+ * warning-level occurs.
+ **/
+const char *
+up_backend_get_critical_action (UpBackend *backend)
+{
+	return "PowerOff";
+}
+
+/**
  * up_backend_take_action:
  * @backend: The %UpBackend class instance
  *

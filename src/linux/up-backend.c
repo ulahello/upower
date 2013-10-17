@@ -367,13 +367,14 @@ check_action_result (GVariant *result)
 }
 
 /**
- * up_backend_take_action:
+ * up_backend_get_critical_action:
  * @backend: The %UpBackend class instance
  *
- * Act upon the %UP_DEVICE_LEVEL_ACTION warning-level.
+ * Which action will be taken when %UP_DEVICE_LEVEL_ACTION
+ * warning-level occurs.
  **/
-void
-up_backend_take_action (UpBackend *backend)
+const char *
+up_backend_get_critical_action (UpBackend *backend)
 {
 	struct {
 		const gchar *method;
@@ -388,10 +389,11 @@ up_backend_take_action (UpBackend *backend)
 	g_return_if_fail (backend->priv->logind_proxy != NULL);
 
 	for (i = 0; i < G_N_ELEMENTS (actions); i++) {
-		gboolean action_available = FALSE;
 		GVariant *result;
 
 		if (actions[i].can_method) {
+			gboolean action_available;
+
 			/* Check whether we can use the method */
 			result = g_dbus_proxy_call_sync (backend->priv->logind_proxy,
 							 actions[i].can_method,
@@ -399,29 +401,42 @@ up_backend_take_action (UpBackend *backend)
 							 G_DBUS_CALL_FLAGS_NONE,
 							 -1, NULL, NULL);
 			action_available = check_action_result (result);
+			g_message ("got result %s", g_variant_print (result, TRUE));
 			g_variant_unref (result);
 
 			if (!action_available)
 				continue;
-		} else {
-			action_available = TRUE;
 		}
 
-		/* Take action */
-		g_debug ("About to call logind method %s", actions[i].method);
-		g_dbus_proxy_call (backend->priv->logind_proxy,
-				   actions[i].method,
-				   g_variant_new ("(b)", FALSE),
-				   G_DBUS_CALL_FLAGS_NONE,
-				   G_MAXINT,
-				   NULL,
-				   NULL,
-				   NULL);
-
-		return;
+		return actions[i].method;
 	}
-
 	g_assert_not_reached ();
+}
+
+/**
+ * up_backend_take_action:
+ * @backend: The %UpBackend class instance
+ *
+ * Act upon the %UP_DEVICE_LEVEL_ACTION warning-level.
+ **/
+void
+up_backend_take_action (UpBackend *backend)
+{
+	const char *method;
+
+	method = up_backend_get_critical_action (backend);
+	g_assert (method != NULL);
+
+	/* Take action */
+	g_debug ("About to call logind method %s", method);
+	g_dbus_proxy_call (backend->priv->logind_proxy,
+			   method,
+			   g_variant_new ("(b)", FALSE),
+			   G_DBUS_CALL_FLAGS_NONE,
+			   G_MAXINT,
+			   NULL,
+			   NULL,
+			   NULL);
 }
 
 /**

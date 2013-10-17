@@ -70,6 +70,7 @@ void		 up_backend_test			(gpointer	 user_data);
 gboolean	 up_backend_coldplug			(UpBackend	*backend,
 							 UpDaemon	*daemon);
 void		 up_backend_take_action			(UpBackend	*backend);
+const char	*up_backend_get_critical_action		(UpBackend	*backend);
 
 G_END_DECLS
 
