@@ -107,10 +107,11 @@ G_DEFINE_TYPE (UpDevice, up_device, G_TYPE_OBJECT)
  * up_device_changed_cb:
  */
 static void
-up_device_changed_cb (UpDeviceGlue *proxy, UpDevice *device)
+up_device_changed_cb (UpDeviceGlue *proxy, GParamSpec *pspec, UpDevice *device)
 {
 	g_return_if_fail (UP_IS_DEVICE (device));
 	g_signal_emit (device, signals [SIGNAL_CHANGED], 0);
+	g_object_notify (device, pspec->name);
 }
 
 /**
@@ -150,7 +151,7 @@ up_device_set_object_path_sync (UpDevice *device, const gchar *object_path, GCan
 		return FALSE;
 
 	/* listen to Changed */
-	g_signal_connect (proxy_device, "changed",
+	g_signal_connect (proxy_device, "notify",
 			  G_CALLBACK (up_device_changed_cb), device);
 
 	/* yay */
