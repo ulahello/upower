@@ -18,7 +18,8 @@ Feature Removals:
 - Remove battery recall support
 - Remove QoS support
 - Remove OnLowBattery property (use WarningLevel instead)
-- Remove DeviceChanged and Changed signals
+- Remove DeviceChanged and Changed signals (PropertiesChanged
+  signals are sent instead)
 
 Version 0.9.22
 ~~~~~~~~~~~~~~
