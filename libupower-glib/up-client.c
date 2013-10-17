@@ -59,9 +59,7 @@ struct _UpClientPrivate
 
 enum {
 	UP_CLIENT_DEVICE_ADDED,
-	UP_CLIENT_DEVICE_CHANGED,
 	UP_CLIENT_DEVICE_REMOVED,
-	UP_CLIENT_CHANGED,
 	UP_CLIENT_LAST_SIGNAL
 };
 
@@ -308,18 +306,6 @@ up_device_added_cb (UpClientGlue *proxy, const gchar *object_path, UpClient *cli
 }
 
 /*
- * up_client_changed_cb:
- */
-static void
-up_device_changed_cb (UpClientGlue *proxy, const gchar *object_path, UpClient *client)
-{
-	UpDevice *device;
-	device = up_client_get_device (client, object_path);
-	if (device != NULL)
-		g_signal_emit (client, signals [UP_CLIENT_DEVICE_CHANGED], 0, device);
-}
-
-/*
  * up_client_removed_cb:
  */
 static void
@@ -331,15 +317,6 @@ up_device_removed_cb (UpClientGlue *proxy, const gchar *object_path, UpClient *c
 		g_signal_emit (client, signals [UP_CLIENT_DEVICE_REMOVED], 0, device);
 		g_ptr_array_remove (client->priv->array, device);
 	}
-}
-
-/*
- * up_client_changed_cb:
- */
-static void
-up_client_changed_cb (UpClientGlue *proxy, UpClient *client)
-{
-	g_signal_emit (client, signals [UP_CLIENT_CHANGED], 0);
 }
 
 static void
@@ -489,37 +466,6 @@ up_client_class_init (UpClientClass *klass)
 			      NULL, NULL, g_cclosure_marshal_VOID__OBJECT,
 			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
 
-	/**
-	 * UpClient::device-changed:
-	 * @client: the #UpClient instance that emitted the signal
-	 * @device: the #UpDevice that was changed.
-	 *
-	 * The ::device-changed signal is emitted when a power device is changed.
-	 *
-	 * Since: 0.9.0
-	 **/
-	signals [UP_CLIENT_DEVICE_CHANGED] =
-		g_signal_new ("device-changed",
-			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (UpClientClass, device_changed),
-			      NULL, NULL, g_cclosure_marshal_VOID__OBJECT,
-			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
-
-	/**
-	 * UpClient::changed:
-	 * @client: the #UpClient instance that emitted the signal
-	 *
-	 * The ::changed signal is emitted when properties may have changed.
-	 *
-	 * Since: 0.9.0
-	 **/
-	signals [UP_CLIENT_CHANGED] =
-		g_signal_new ("changed",
-			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (UpClientClass, changed),
-			      NULL, NULL, g_cclosure_marshal_VOID__VOID,
-			      G_TYPE_NONE, 0);
-
 	g_type_class_add_private (klass, sizeof (UpClientPrivate));
 }
 
@@ -595,11 +541,6 @@ up_client_init (UpClient *client)
 			  G_CALLBACK (up_device_added_cb), client);
 	g_signal_connect (client->priv->proxy, "device-removed",
 			  G_CALLBACK (up_device_removed_cb), client);
-	g_signal_connect (client->priv->proxy, "device-changed",
-			  G_CALLBACK (up_device_changed_cb), client);
-	g_signal_connect (client->priv->proxy, "changed",
-			  G_CALLBACK (up_client_changed_cb), client);
-
 	g_signal_connect (client->priv->proxy, "notify",
 			  G_CALLBACK (up_client_notify_cb), client);
 }

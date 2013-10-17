@@ -119,13 +119,6 @@ enum {
 	PROP_LAST
 };
 
-enum {
-	SIGNAL_CHANGED,
-	SIGNAL_LAST,
-};
-
-static guint signals[SIGNAL_LAST] = { 0 };
-
 G_DEFINE_TYPE (UpDevice, up_device, G_TYPE_OBJECT)
 #define UP_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE, UpDevicePrivate))
 #define UP_DBUS_STRUCT_UINT_DOUBLE_UINT (dbus_g_type_get_struct ("GValueArray", \
@@ -1005,11 +998,6 @@ up_device_perhaps_changed_cb (GObject *object, GParamSpec *pspec, UpDevice *devi
 	up_history_set_rate_data (device->priv->history, device->priv->energy_rate);
 	up_history_set_time_full_data (device->priv->history, device->priv->time_to_full);
 	up_history_set_time_empty_data (device->priv->history, device->priv->time_to_empty);
-
-	/*  The order here matters; we want Device::Changed() before
-	 *  the DeviceChanged() signal on the main object */
-	g_debug ("emitting changed on %s", device->priv->native_path);
-	g_signal_emit (device, signals[SIGNAL_CHANGED], 0);
 }
 
 /**
@@ -1070,14 +1058,6 @@ up_device_class_init (UpDeviceClass *klass)
 	object_class->finalize = up_device_finalize;
 
 	g_type_class_add_private (klass, sizeof (UpDevicePrivate));
-
-	signals[SIGNAL_CHANGED] =
-		g_signal_new ("changed",
-			      G_OBJECT_CLASS_TYPE (klass),
-			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
-			      0, NULL, NULL,
-			      g_cclosure_marshal_VOID__VOID,
-			      G_TYPE_NONE, 0);
 
 	dbus_g_object_type_install_info (UP_TYPE_DEVICE, &dbus_glib_up_device_object_info);
 

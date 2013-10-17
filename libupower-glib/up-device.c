@@ -94,13 +94,6 @@ enum {
 	PROP_LAST
 };
 
-enum {
-	SIGNAL_CHANGED,
-	SIGNAL_LAST
-};
-
-static guint signals [SIGNAL_LAST] = { 0 };
-
 G_DEFINE_TYPE (UpDevice, up_device, G_TYPE_OBJECT)
 
 /*
@@ -109,8 +102,6 @@ G_DEFINE_TYPE (UpDevice, up_device, G_TYPE_OBJECT)
 static void
 up_device_changed_cb (UpDeviceGlue *proxy, GParamSpec *pspec, UpDevice *device)
 {
-	g_return_if_fail (UP_IS_DEVICE (device));
-	g_signal_emit (device, signals [SIGNAL_CHANGED], 0);
 	g_object_notify (device, pspec->name);
 }
 
@@ -789,21 +780,6 @@ up_device_class_init (UpDeviceClass *klass)
 	object_class->finalize = up_device_finalize;
 	object_class->set_property = up_device_set_property;
 	object_class->get_property = up_device_get_property;
-
-	/**
-	 * UpDevice::changed:
-	 * @device: the #UpDevice instance that emitted the signal
-	 *
-	 * The ::changed signal is emitted when the device data has changed.
-	 *
-	 * Since: 0.9.0
-	 **/
-	signals [SIGNAL_CHANGED] =
-		g_signal_new ("changed",
-			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (UpDeviceClass, changed),
-			      NULL, NULL, g_cclosure_marshal_VOID__VOID,
-			      G_TYPE_NONE, 0);
 
 	/**
 	 * UpDevice:update-time:

@@ -53,8 +53,6 @@ typedef struct
 typedef struct
 {
 	GObjectClass		 parent_class;
-	void			(*changed)		(UpDevice		*device,
-							 gpointer		*obj);
 	/*< private >*/
 	/* Padding for future expansion */
 	void (*_up_device_reserved1) (void);

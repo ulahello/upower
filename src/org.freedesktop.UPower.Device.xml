@@ -154,17 +154,6 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
     </method>
 
     <!-- ************************************************************ -->
-    <signal name="Changed">
-      <doc:doc>
-        <doc:description>
-          <doc:para>
-            Some value on the power source changed.
-          </doc:para>
-        </doc:description>
-      </doc:doc>
-    </signal>
-
-    <!-- ************************************************************ -->
     <method name="GetHistory">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
       <arg name="type" direction="in" type="s">

@@ -55,11 +55,8 @@ typedef struct
 	GObjectClass		 parent_class;
 	void			(*device_added)		(UpClient		*client,
 							 UpDevice		*device);
-	void			(*device_changed)	(UpClient		*client,
-							 UpDevice		*device);
 	void			(*device_removed)	(UpClient		*client,
 							 UpDevice		*device);
-	void			(*changed)		(UpClient		*client);
 	/*< private >*/
 	/* Padding for future expansion */
 	void (*_up_client_reserved1) (void);

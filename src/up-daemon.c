@@ -57,8 +57,6 @@ enum
 {
 	SIGNAL_DEVICE_ADDED,
 	SIGNAL_DEVICE_REMOVED,
-	SIGNAL_DEVICE_CHANGED,
-	SIGNAL_CHANGED,
 	SIGNAL_LAST,
 };
 
@@ -642,10 +640,6 @@ changed_props_idle_cb (gpointer user_data)
 {
 	UpDaemon *daemon = user_data;
 
-	/* GObject */
-	g_debug ("emitting changed");
-	g_signal_emit (daemon, signals[SIGNAL_CHANGED], 0);
-
 	/* D-Bus */
 	up_daemon_emit_properties_changed (daemon->priv->connection,
 					   "/org/freedesktop/UPower",
@@ -889,7 +883,7 @@ up_daemon_poll_battery_devices_for_a_little_bit (UpDaemon *daemon)
  * up_daemon_device_changed_cb:
  **/
 static void
-up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
+up_daemon_device_changed_cb (UpDevice *device, GParamSpec *pspec, UpDaemon *daemon)
 {
 	const gchar *object_path;
 	UpDeviceKind type;
@@ -928,7 +922,6 @@ up_daemon_device_changed_cb (UpDevice *device, UpDaemon *daemon)
 		g_warning ("INTERNAL STATE CORRUPT: not sending NULL, device:%p", device);
 		return;
 	}
-	g_signal_emit (daemon, signals[SIGNAL_DEVICE_CHANGED], 0, object_path);
 }
 
 /**
@@ -949,7 +942,7 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
 	up_device_list_insert (priv->power_devices, native, G_OBJECT (device));
 
 	/* connect, so we get changes */
-	g_signal_connect (device, "changed",
+	g_signal_connect (device, "notify",
 			  G_CALLBACK (up_daemon_device_changed_cb), daemon);
 
 	/* refresh after a short delay */
@@ -1168,22 +1161,6 @@ up_daemon_class_init (UpDaemonClass *klass)
 			      0, NULL, NULL,
 			      g_cclosure_marshal_generic,
 			      G_TYPE_NONE, 1, DBUS_TYPE_G_OBJECT_PATH);
-
-	signals[SIGNAL_DEVICE_CHANGED] =
-		g_signal_new ("device-changed",
-			      G_OBJECT_CLASS_TYPE (klass),
-			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
-			      0, NULL, NULL,
-			      g_cclosure_marshal_generic,
-			      G_TYPE_NONE, 1, DBUS_TYPE_G_OBJECT_PATH);
-
-	signals[SIGNAL_CHANGED] =
-		g_signal_new ("changed",
-			      G_OBJECT_CLASS_TYPE (klass),
-			      G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
-			      0, NULL, NULL,
-			      g_cclosure_marshal_VOID__VOID,
-			      G_TYPE_NONE, 0);
 
 	g_object_class_install_property (object_class,
 					 PROP_DAEMON_VERSION,
