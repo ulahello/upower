@@ -102,11 +102,11 @@ up_tool_device_changed_cb (UpDevice *device, GParamSpec *pspec, gpointer user_da
  * up_tool_device_removed_cb:
  **/
 static void
-up_tool_device_removed_cb (UpClient *client, UpDevice *device, gpointer user_data)
+up_tool_device_removed_cb (UpClient *client, const char *object_path, gpointer user_data)
 {
 	gchar *timestamp;
 	timestamp = up_tool_get_timestamp ();
-	g_print ("[%s]\tdevice removed:   %s\n", timestamp, up_device_get_object_path (device));
+	g_print ("[%s]\tdevice removed:   %s\n", timestamp, object_path);
 	if (opt_monitor_detail)
 		g_print ("\n");
 	g_free (timestamp);
@@ -170,7 +170,6 @@ up_tool_do_monitor (UpClient *client)
 {
 	GPtrArray *devices;
 	GError *error = NULL;
-	gboolean ret;
 	guint i;
 
 	g_print ("Monitoring activity from the power daemon. Press Ctrl+C to cancel.\n");
@@ -179,11 +178,6 @@ up_tool_do_monitor (UpClient *client)
 	g_signal_connect (client, "device-removed", G_CALLBACK (up_tool_device_removed_cb), NULL);
 	g_signal_connect (client, "notify", G_CALLBACK (up_tool_changed_cb), NULL);
 
-	ret = up_client_enumerate_devices_sync (client, NULL, &error);
-	if (!ret) {
-		g_warning ("failed to enumerate: %s", error->message);
-		return FALSE;
-	}
 	devices = up_client_get_devices (client);
 	for (i=0; i < devices->len; i++) {
 		UpDevice *device;
@@ -320,11 +314,6 @@ main (int argc, char **argv)
 
 	if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
-		ret = up_client_enumerate_devices_sync (client, NULL, &error);
-		if (!ret) {
-			g_warning ("failed to enumerate: %s", error->message);
-			goto out;
-		}
 		devices = up_client_get_devices (client);
 		for (i=0; i < devices->len; i++) {
 			device = (UpDevice*) g_ptr_array_index (devices, i);
@@ -357,11 +346,6 @@ main (int argc, char **argv)
 	}
 
 	if (opt_monitor || opt_monitor_detail) {
-		ret = up_client_enumerate_devices_sync (client, NULL, &error);
-		if (!ret) {
-			g_warning ("failed to enumerate: %s", error->message);
-			goto out;
-		}
 		if (!up_tool_do_monitor (client))
 			goto out;
 		retval = EXIT_SUCCESS;
