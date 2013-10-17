@@ -345,6 +345,11 @@ up_daemon_get_warning_level_local (UpDaemon *daemon)
 	    daemon->priv->state != UP_DEVICE_STATE_DISCHARGING)
 		return UP_DEVICE_LEVEL_NONE;
 
+	/* Check to see if the batteries have not noticed we are on AC */
+	if (daemon->priv->kind == UP_DEVICE_KIND_BATTERY &&
+	    up_daemon_get_on_ac_local (daemon))
+		return UP_DEVICE_LEVEL_NONE;
+
 	return up_daemon_compute_warning_level (daemon,
 						daemon->priv->state,
 						daemon->priv->kind,
