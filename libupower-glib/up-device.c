@@ -102,7 +102,7 @@ G_DEFINE_TYPE (UpDevice, up_device, G_TYPE_OBJECT)
 static void
 up_device_changed_cb (UpDeviceGlue *proxy, GParamSpec *pspec, UpDevice *device)
 {
-	g_object_notify (device, pspec->name);
+	g_object_notify (G_OBJECT (device), pspec->name);
 }
 
 /**
