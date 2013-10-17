@@ -62,25 +62,6 @@ sysfs_get_double (const char *dir, const char *attribute)
 	return result;
 }
 
-gboolean
-sysfs_file_contains (const char *dir, const char *attribute, const char *string)
-{
-	gboolean result;
-	char *filename;
-	char *s;
-
-	result = FALSE;
-
-	filename = g_build_filename (dir, attribute, NULL);
-	if (g_file_get_contents (filename, &s, NULL, NULL)) {
-		result = (strstr(s, string) != NULL);
-		g_free (s);
-	}
-	g_free (filename);
-
-	return result;
-}
-
 char *
 sysfs_get_string (const char *dir, const char *attribute)
 {
@@ -115,24 +96,6 @@ sysfs_get_int (const char *dir, const char *attribute)
 	return result;
 }
 
-guint
-sysfs_get_hex (const char *dir, const char *attribute)
-{
-	guint result;
-	char *contents;
-	char *filename;
-
-	result = 0;
-	filename = g_build_filename (dir, attribute, NULL);
-	if (g_file_get_contents (filename, &contents, NULL, NULL)) {
-		result = strtol (contents, (char **) NULL, 16);
-		g_free (contents);
-	}
-	g_free (filename);
-
-	return result;
-}
-
 gboolean
 sysfs_get_bool (const char *dir, const char *attribute)
 {
@@ -153,25 +116,6 @@ sysfs_get_bool (const char *dir, const char *attribute)
 	return result;
 }
 
-guint64
-sysfs_get_uint64 (const char *dir, const char *attribute)
-{
-	guint64 result;
-	char *contents;
-	char *filename;
-
-	result = 0;
-	filename = g_build_filename (dir, attribute, NULL);
-	if (g_file_get_contents (filename, &contents, NULL, NULL)) {
-		result = atoll (contents);
-		g_free (contents);
-	}
-	g_free (filename);
-
-
-	return result;
-}
-
 gboolean
 sysfs_file_exists (const char *dir, const char *attribute)
 {
@@ -186,52 +130,4 @@ sysfs_file_exists (const char *dir, const char *attribute)
 	g_free (filename);
 
 	return result;
-}
-
-char *
-_dupv8 (const char *s)
-{
-	const char *end_valid;
-
-	if (!g_utf8_validate (s,
-			     -1,
-			     &end_valid)) {
-		g_warning ("The string '%s' is not valid UTF-8. Invalid characters begins at '%s'", s, end_valid);
-		return g_strndup (s, end_valid - s);
-	} else {
-		return g_strdup (s);
-	}
-}
-
-char *
-sysfs_resolve_link (const char *dir, const char *attribute)
-{
-	char *full_path;
-	char link_path[PATH_MAX];
-	char resolved_path[PATH_MAX];
-	ssize_t num;
-	gboolean found_it;
-
-	found_it = FALSE;
-
-	full_path = g_build_filename (dir, attribute, NULL);
-
-	num = readlink (full_path, link_path, sizeof (link_path) - 1);
-	if (num != -1) {
-		char *absolute_path;
-
-		link_path[num] = '\0';
-
-		absolute_path = g_build_filename (dir, link_path, NULL);
-		if (realpath (absolute_path, resolved_path) != NULL) {
-			found_it = TRUE;
-		}
-		g_free (absolute_path);
-	}
-	g_free (full_path);
-
-	if (found_it)
-		return g_strdup (resolved_path);
-	else
-		return NULL;
 }
