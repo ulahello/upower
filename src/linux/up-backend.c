@@ -360,7 +360,7 @@ check_action_result (GVariant *result)
 		const char *s;
 
 		g_variant_get (result, "(s)", &s);
-		if (g_strcmp0 (s, "yes") != 0)
+		if (g_strcmp0 (s, "yes") == 0)
 			return TRUE;
 	}
 	return FALSE;
