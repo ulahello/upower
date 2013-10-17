@@ -1,3 +1,25 @@
+Version 0.99.0
+~~~~~~~~~~~~~~
+
+This version contains major API changes. Use the 0.9
+versions if you want to keep using the old API.
+
+New Features:
+- Add WarningLevel and IconName properties to all devices
+- Add DisplayDevice composite battery
+- Enforce critical battery policy on the daemon side
+
+Bugfixes:
+- Reduce client-side and daemon-side wake-ups
+- Emit PropertiesChanged signals
+- Register objects on the bus once they've been setup
+
+Feature Removals:
+- Remove battery recall support
+- Remove QoS support
+- Remove OnLowBattery property (use WarningLevel instead)
+- Remove DeviceChanged and Changed signals
+
 Version 0.9.22
 ~~~~~~~~~~~~~~
 Released: 2013-10-08
