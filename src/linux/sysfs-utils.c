@@ -99,16 +99,15 @@ sysfs_get_int (const char *dir, const char *attribute)
 gboolean
 sysfs_get_bool (const char *dir, const char *attribute)
 {
-	gboolean result = FALSE;
+	gboolean result;
 	char *contents;
 	char *filename;
 
-	result = 0;
+	result = FALSE;
 	filename = g_build_filename (dir, attribute, NULL);
 	if (g_file_get_contents (filename, &contents, NULL, NULL)) {
 		g_strdelimit (contents, "\n", '\0');
-		if (g_strcmp0 (contents, "1") == 0)
-			result = TRUE;
+		result = (g_strcmp0 (contents, "1") == 0);
 		g_free (contents);
 	}
 	g_free (filename);
