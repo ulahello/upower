@@ -1036,6 +1036,8 @@ up_device_finalize (GObject *object)
 		g_object_unref (device->priv->native);
 	if (device->priv->daemon != NULL)
 		g_object_unref (device->priv->daemon);
+	if (device->priv->props_idle_id != 0)
+		g_source_remove (device->priv->props_idle_id);
 	g_object_unref (device->priv->history);
 	g_free (device->priv->object_path);
 	g_free (device->priv->vendor);
