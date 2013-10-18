@@ -450,8 +450,12 @@ up_device_supply_get_state (const gchar *native_path)
 	UpDeviceState state;
 	gchar *status;
 
-	status = g_strstrip (sysfs_get_string (native_path, "status"));
-	if (g_ascii_strcasecmp (status, "charging") == 0)
+	status = up_device_supply_get_string (native_path, "status");
+	if (status == NULL ||
+	    g_ascii_strcasecmp (status, "unknown") == 0 ||
+	    *status == '\0') {
+		state = UP_DEVICE_STATE_UNKNOWN;
+	} else if (g_ascii_strcasecmp (status, "charging") == 0)
 		state = UP_DEVICE_STATE_CHARGING;
 	else if (g_ascii_strcasecmp (status, "discharging") == 0)
 		state = UP_DEVICE_STATE_DISCHARGING;
@@ -459,9 +463,6 @@ up_device_supply_get_state (const gchar *native_path)
 		state = UP_DEVICE_STATE_FULLY_CHARGED;
 	else if (g_ascii_strcasecmp (status, "empty") == 0)
 		state = UP_DEVICE_STATE_EMPTY;
-	else if (g_ascii_strcasecmp (status, "unknown") == 0 ||
-		 *status == '\0')
-		state = UP_DEVICE_STATE_UNKNOWN;
 	else if (g_ascii_strcasecmp (status, "not charging") == 0)
 		state = UP_DEVICE_STATE_PENDING_CHARGE;
 	else {
