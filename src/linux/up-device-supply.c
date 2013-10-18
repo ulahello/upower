@@ -807,6 +807,68 @@ out:
 }
 
 /**
+ * up_device_supply_refresh_device:
+ *
+ * Return %TRUE on success, %FALSE if we failed to refresh or no data
+ **/
+static gboolean
+up_device_supply_refresh_device (UpDeviceSupply *supply)
+{
+	gboolean ret = TRUE;
+	UpDeviceState state;
+	UpDevice *device = UP_DEVICE (supply);
+	const gchar *native_path;
+	GUdevDevice *native;
+	gdouble percentage = 0.0f;
+
+	native = G_UDEV_DEVICE (up_device_get_native (device));
+	native_path = g_udev_device_get_sysfs_path (native);
+
+	/* initial values */
+	if (!supply->priv->has_coldplug_values) {
+		gchar *model_name;
+
+		/* get values which may be blank */
+		model_name = up_device_supply_get_string (native_path, "model_name");
+
+		/* some vendors fill this with binary garbage */
+		up_device_supply_make_safe_string (model_name);
+
+		g_object_set (device,
+			      "is-present", TRUE,
+			      "model", model_name,
+			      "is-rechargeable", TRUE,
+			      "has-history", TRUE,
+			      "has-statistics", TRUE,
+			      "power-supply", supply->priv->is_power_supply, /* always FALSE */
+			      NULL);
+
+		/* we only coldplug once, as these values will never change */
+		supply->priv->has_coldplug_values = TRUE;
+
+		g_free (model_name);
+	}
+
+	/* get a precise percentage */
+	percentage = sysfs_get_double (native_path, "capacity");
+
+	state = up_device_supply_get_state (native_path);
+
+	/* reset unknown counter */
+	if (state != UP_DEVICE_STATE_UNKNOWN) {
+		g_debug ("resetting unknown timeout after %i retries", supply->priv->unknown_retries);
+		supply->priv->unknown_retries = 0;
+	}
+
+	g_object_set (device,
+		      "percentage", percentage,
+		      "state", state,
+		      NULL);
+
+	return ret;
+}
+
+/**
  * up_device_supply_poll_battery:
  **/
 static gboolean
@@ -1017,7 +1079,10 @@ up_device_supply_refresh (UpDevice *device)
 		ret = up_device_supply_refresh_line_power (supply);
 		break;
 	default:
-		ret = up_device_supply_refresh_battery (supply);
+		if (supply->priv->is_power_supply)
+			ret = up_device_supply_refresh_battery (supply);
+		else
+			ret = up_device_supply_refresh_device (supply);
 
 		/* Seems that we don't get change uevents from the
 		 * kernel on some BIOS types */
