@@ -203,7 +203,7 @@ class Tests(unittest.TestCase):
 
         # without any devices we should assume AC
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
 
     def test_battery_ac(self):
         '''battery properties with and without AC'''
@@ -211,7 +211,7 @@ class Tests(unittest.TestCase):
         # without any devices we should assume AC
         self.start_daemon()
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
         # online AC
@@ -224,7 +224,7 @@ class Tests(unittest.TestCase):
         ac_up = devs[0]
         self.assertTrue('line_power_AC' in ac_up)
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.assertEqual(self.get_dbus_dev_property(ac_up, 'PowerSupply'), True)
         self.assertEqual(self.get_dbus_dev_property(ac_up, 'Type'), 1)
         self.assertEqual(self.get_dbus_dev_property(ac_up, 'Online'), True)
@@ -238,7 +238,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(len(devs), 1)
         # we don't have any known online power device now, but still no battery
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.assertEqual(self.get_dbus_dev_property(ac_up, 'Online'), False)
         self.stop_daemon()
 
@@ -261,7 +261,7 @@ class Tests(unittest.TestCase):
             bat0_up = devs[0]
         # we don't have any known online power device now, but still no battery
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'IsPresent'), True)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Percentage'), 80.0)
@@ -276,7 +276,7 @@ class Tests(unittest.TestCase):
         self.testbed.set_attribute(bat0, 'energy_now', '1500000')
         self.start_daemon()
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), True)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_CRITICAL)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'IsPresent'), True)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Percentage'), 2.5)
@@ -291,7 +291,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(len(devs), 2)
         # we don't have any known online power device now, but still no battery
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.assertEqual(self.get_dbus_dev_property(ac_up, 'Online'), True)
         self.stop_daemon()
 
@@ -324,14 +324,14 @@ class Tests(unittest.TestCase):
         # as we have one which is well-charged, the summary state is "not low
         # battery"
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
         # now set both to low
         self.testbed.set_attribute(bat0, 'energy_now', '1500000')
         self.start_daemon()
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), True)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_CRITICAL)
         self.stop_daemon()
 
     def test_unknown_battery_status(self):
@@ -350,7 +350,7 @@ class Tests(unittest.TestCase):
         # arbitrary, so don't test it. The only thing we know for sure is that
         # we aren't on low battery
         self.start_daemon()
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
         # However, if we have an AC, we can infer
@@ -358,13 +358,13 @@ class Tests(unittest.TestCase):
                                      ['type', 'Mains', 'online', '0'], [])
         self.start_daemon()
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
         self.testbed.set_attribute(ac, 'online', '1')
         self.start_daemon()
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
     def test_battery_charge(self):
@@ -388,7 +388,7 @@ class Tests(unittest.TestCase):
         bat0_up = devs[0]
 
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'IsPresent'), True)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Percentage'), 75.0)
@@ -417,7 +417,7 @@ class Tests(unittest.TestCase):
         bat0_up = devs[0]
 
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'IsPresent'), True)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Energy'), 50.4)
@@ -455,7 +455,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Type'), 2)
 
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
     def test_battery_temperature(self):
@@ -480,7 +480,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Percentage'), 2.5)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Energy'), 1.5)
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), True)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_CRITICAL)
         self.stop_daemon()
 
     def test_ups_ac(self):
@@ -506,7 +506,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'Type'), 3)
 
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
         # now switch to discharging UPS
@@ -521,7 +521,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'Percentage'), 70.0)
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
         # low UPS charge
@@ -530,7 +530,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'Percentage'), 2.0)
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), True)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_CRITICAL)
         self.stop_daemon()
 
         # now add an offline AC, should still be on battery
@@ -543,14 +543,14 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'Percentage'), 2.0)
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), True)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_CRITICAL)
         self.stop_daemon()
 
         # now plug in the AC, should switch to OnBattery=False
         self.testbed.set_attribute(ac, 'online', '1')
         self.start_daemon()
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
     def test_vendor_strings(self):
@@ -629,7 +629,7 @@ class Tests(unittest.TestCase):
         # 5 == mouse
         self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Type'), 5)
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
     def test_bluetooth_mouse_reconnect(self):
@@ -724,7 +724,7 @@ class Tests(unittest.TestCase):
         # 6 == keyboard
         self.assertEqual(self.get_dbus_dev_property(kbdbat0_up, 'Type'), 6)
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
-        self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
     #
