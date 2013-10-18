@@ -861,6 +861,11 @@ up_device_supply_refresh_device (UpDeviceSupply *supply)
 
 	state = up_device_supply_get_state (native_path);
 
+	/* Override whatever the device might have told us
+	 * because a number of them are always discharging */
+	if (percentage == 100.0)
+		state = UP_DEVICE_STATE_FULLY_CHARGED;
+
 	/* reset unknown counter */
 	if (state != UP_DEVICE_STATE_UNKNOWN) {
 		g_debug ("resetting unknown timeout after %i retries", supply->priv->unknown_retries);
