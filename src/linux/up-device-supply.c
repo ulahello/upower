@@ -528,7 +528,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 		goto out;
 	}
 
-	/* get the currect charge */
+	/* get the current charge */
 	energy = sysfs_get_double (native_path, "energy_now") / 1000000.0;
 	if (energy < 0.01)
 		energy = sysfs_get_double (native_path, "energy_avg") / 1000000.0;

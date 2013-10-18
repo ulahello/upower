@@ -699,7 +699,7 @@ up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 	if (!ret) {
 		g_debug ("failed to refresh %s", device->priv->native_path);
 
-		/* TODO: refresh should really have seporate
+		/* TODO: refresh should really have separate
 		 *       success _and_ changed parameters */
 		ret = TRUE;
 		goto out;
