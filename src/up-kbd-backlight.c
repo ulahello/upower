@@ -193,7 +193,8 @@ up_kbd_backlight_find (UpKbdBacklight *kbd_backlight)
 	/* open directory */
 	dir = g_dir_open ("/sys/class/leds", 0, &error);
 	if (dir == NULL) {
-		g_warning ("failed to get directory: %s", error->message);
+		if (!g_error_matches (error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
+			g_warning ("failed to open directory: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
