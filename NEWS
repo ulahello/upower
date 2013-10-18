@@ -1,3 +1,24 @@
+Version 0.9.23
+~~~~~~~~~~~~~~
+Released: 2013-10-18
+
+Bugfixes:
+ - Add missing dbus-glib-1 to private requires (Bastien Nocera)
+ - Disable Watts-Up devices by default (Bastien Nocera)
+ - Really don't overwrite retval with prop values (Bastien Nocera)
+ - Update and correct Toshiba recall list (Bastien Nocera)
+ - daemon: Avoid trying to close fd that wasn't opened (Bastien Nocera)
+ - daemon: Fix options parsing (Bastien Nocera)
+ - daemon: Include config.h in up-backend.h (Landry Breuil)
+ - lib: Add missing "element-type" introspection metadata (Bastien Nocera)
+ - lib: Fix a small memory leak (Bastien Nocera)
+ - lib: Fix crasher calling _about_to_sleep_sync() (Bastien Nocera)
+ - linux: Don't guess discharging state for devices (Bastien Nocera)
+ - linux: Don't print a warning if the status attr is missing (Bastien Nocera)
+ - linux: Opt-out of checking Watts Up devices earlier (Bastien Nocera)
+ - openbsd: Use g_thread_try_new (Landry Breuil)
+ - openbsd: recognize when battery is absent (Jasper Lievisse Adriaanse)
+
 Version 0.9.22
 ~~~~~~~~~~~~~~
 Released: 2013-10-08
