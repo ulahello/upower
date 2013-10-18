@@ -741,6 +741,8 @@ class Tests(unittest.TestCase):
         self.assertIn(client.get_lid_is_present(), [False, True])
         self.assertIn(client.get_lid_is_closed(), [False, True])
         self.assertEqual(client.get_on_battery(), False)
+        # FIXME: When we have a fake logind
+        # self.assertEqual(client.get_critical_action(), 'PowerOff')
 
     #
     # Helper methods
