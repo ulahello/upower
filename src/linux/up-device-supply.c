@@ -851,7 +851,13 @@ up_device_supply_refresh_device (UpDeviceSupply *supply)
 	}
 
 	/* get a precise percentage */
-	percentage = sysfs_get_double (native_path, "capacity");
+	percentage = sysfs_get_double_with_error (native_path, "capacity");
+	if (percentage < 0.0) {
+		/* Probably talking to the device over Bluetooth */
+		state = UP_DEVICE_STATE_UNKNOWN;
+		g_object_set (device, "state", state, NULL);
+		return FALSE;
+	}
 
 	state = up_device_supply_get_state (native_path);
 
