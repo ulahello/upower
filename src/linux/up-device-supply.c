@@ -854,6 +854,13 @@ up_device_supply_coldplug (UpDevice *device)
 		supply->priv->is_power_supply = TRUE;
 	}
 
+	/* we don't use separate ACs for devices */
+	if (supply->priv->is_power_supply == FALSE &&
+	    !sysfs_file_exists (native_path, "capacity")) {
+		g_debug ("Ignoring device AC, we'll monitor the device battery");
+		goto out;
+	}
+
 	/* try to detect using the device type */
 	device_type = up_device_supply_get_string (native_path, "type");
 	if (device_type != NULL) {
