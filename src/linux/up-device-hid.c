@@ -372,7 +372,7 @@ up_device_hid_coldplug (UpDevice *device)
 	} else {
 		ret = up_device_hid_get_all_data (hid);
 		if (!ret) {
-			g_debug ("failed to coldplug: %s", device_file);
+			g_debug ("failed to coldplug UPS: %s", device_file);
 			goto out;
 		}
 	}
