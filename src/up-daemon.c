@@ -816,7 +816,9 @@ up_daemon_compute_warning_level (UpDaemon      *daemon,
 		default_level = UP_DEVICE_LEVEL_DISCHARGING;
 	}
 
-	if (!power_supply || !daemon->priv->use_percentage_for_policy)
+	if (power_supply &&
+	    !daemon->priv->use_percentage_for_policy &&
+	    time_to_empty > 0.0)
 		use_percentage = FALSE;
 
 	if (use_percentage) {
