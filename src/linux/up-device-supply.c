@@ -444,6 +444,36 @@ up_device_supply_units_changed (UpDeviceSupply *supply, const gchar *native_path
 	return TRUE;
 }
 
+static UpDeviceState
+up_device_supply_get_state (const gchar *native_path)
+{
+	UpDeviceState state;
+	gchar *status;
+
+	status = g_strstrip (sysfs_get_string (native_path, "status"));
+	if (g_ascii_strcasecmp (status, "charging") == 0)
+		state = UP_DEVICE_STATE_CHARGING;
+	else if (g_ascii_strcasecmp (status, "discharging") == 0)
+		state = UP_DEVICE_STATE_DISCHARGING;
+	else if (g_ascii_strcasecmp (status, "full") == 0)
+		state = UP_DEVICE_STATE_FULLY_CHARGED;
+	else if (g_ascii_strcasecmp (status, "empty") == 0)
+		state = UP_DEVICE_STATE_EMPTY;
+	else if (g_ascii_strcasecmp (status, "unknown") == 0 ||
+		 *status == '\0')
+		state = UP_DEVICE_STATE_UNKNOWN;
+	else if (g_ascii_strcasecmp (status, "not charging") == 0)
+		state = UP_DEVICE_STATE_PENDING_CHARGE;
+	else {
+		g_warning ("unknown status string: %s", status);
+		state = UP_DEVICE_STATE_UNKNOWN;
+	}
+
+	g_free (status);
+
+	return state;
+}
+
 /**
  * up_device_supply_refresh_battery:
  *
@@ -452,7 +482,6 @@ up_device_supply_units_changed (UpDeviceSupply *supply, const gchar *native_path
 static gboolean
 up_device_supply_refresh_battery (UpDeviceSupply *supply)
 {
-	gchar *status = NULL;
 	gchar *technology_native = NULL;
 	gboolean ret = TRUE;
 	gdouble voltage_design;
@@ -582,24 +611,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 			      NULL);
 	}
 
-	status = g_strstrip (sysfs_get_string (native_path, "status"));
-	if (g_ascii_strcasecmp (status, "charging") == 0)
-		state = UP_DEVICE_STATE_CHARGING;
-	else if (g_ascii_strcasecmp (status, "discharging") == 0)
-		state = UP_DEVICE_STATE_DISCHARGING;
-	else if (g_ascii_strcasecmp (status, "full") == 0)
-		state = UP_DEVICE_STATE_FULLY_CHARGED;
-	else if (g_ascii_strcasecmp (status, "empty") == 0)
-		state = UP_DEVICE_STATE_EMPTY;
-	else if (g_ascii_strcasecmp (status, "unknown") == 0 ||
-		 *status == '\0')
-		state = UP_DEVICE_STATE_UNKNOWN;
-	else if (g_ascii_strcasecmp (status, "not charging") == 0)
-		state = UP_DEVICE_STATE_PENDING_CHARGE;
-	else {
-		g_warning ("unknown status string: %s", status);
-		state = UP_DEVICE_STATE_UNKNOWN;
-	}
+	state = up_device_supply_get_state (native_path);
 
 	/* only disable the polling if the kernel tells us we're fully charged,
 	   not if we've guessed the state to be fully charged */
@@ -791,7 +803,6 @@ out:
 	g_free (manufacturer);
 	g_free (model_name);
 	g_free (serial_number);
-	g_free (status);
 	return ret;
 }
 
