@@ -949,7 +949,7 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
 
 	/* don't crash the session */
 	if (object_path == NULL) {
-		g_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
+		g_warning ("INTERNAL STATE CORRUPT (device-added): not sending NULL, native:%p, device:%p", native, device);
 		return;
 	}
 	g_signal_emit (daemon, signals[SIGNAL_DEVICE_ADDED], 0, object_path);
@@ -985,7 +985,7 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 
 	/* don't crash the session */
 	if (object_path == NULL) {
-		g_warning ("INTERNAL STATE CORRUPT: not sending NULL, native:%p, device:%p", native, device);
+		g_warning ("INTERNAL STATE CORRUPT (device-removed): not sending NULL, native:%p, device:%p", native, device);
 		return;
 	}
 	g_signal_emit (daemon, signals[SIGNAL_DEVICE_REMOVED], 0, object_path);
