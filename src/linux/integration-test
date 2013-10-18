@@ -499,6 +499,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(len(devs), 1)
         ups0_up = devs[0]
 
+        self.assertEqual(self.get_dbus_dev_property(ups0_up, 'Vendor'), 'APC')
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'IsPresent'), True)
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'Percentage'), 70.0)
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'State'), UP_DEVICE_STATE_CHARGING)
@@ -521,7 +522,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'Percentage'), 70.0)
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_DISCHARGING)
         self.stop_daemon()
 
         # low UPS charge
@@ -530,7 +531,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'Percentage'), 2.0)
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_CRITICAL)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_ACTION)
         self.stop_daemon()
 
         # now add an offline AC, should still be on battery
@@ -543,14 +544,19 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'Percentage'), 2.0)
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
-        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_CRITICAL)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_ACTION)
         self.stop_daemon()
 
         # now plug in the AC, should switch to OnBattery=False
         self.testbed.set_attribute(ac, 'online', '1')
         self.start_daemon()
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
-        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
+        # FIXME this is completely wrong
+        # The AC status doesn't change anything, the AC is what powers the UPS
+        # and the UPS powers the desktop
+        #
+        # A plugged in UPS is always the one supplying the computer
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_ACTION)
         self.stop_daemon()
 
     def test_vendor_strings(self):
