@@ -175,6 +175,8 @@ up_device_error_get_type (void)
  * power_supply
  * percentage
  * time_to_empty
+ *
+ * type should not change for non-display devices
  */
 static void
 update_warning_level (UpDevice *device)
