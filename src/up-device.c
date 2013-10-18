@@ -690,7 +690,7 @@ up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 		ret = klass->coldplug (device);
 		if (!ret) {
 			g_debug ("failed to coldplug %s", device->priv->native_path);
-			goto out;
+			goto bail;
 		}
 	}
 
@@ -701,7 +701,6 @@ up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 
 		/* TODO: refresh should really have separate
 		 *       success _and_ changed parameters */
-		ret = TRUE;
 		goto out;
 	}
 
@@ -711,15 +710,14 @@ up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 		up_history_set_id (device->priv->history, id);
 		g_free (id);
 	}
-
+out:
 	/* only put on the bus if we succeeded */
 	ret = up_device_register_device (device);
 	if (!ret) {
 		g_warning ("failed to register device %s", device->priv->native_path);
 		goto out;
 	}
-
-out:
+bail:
 	return ret;
 }
 
