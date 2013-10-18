@@ -28,5 +28,6 @@ char     *sysfs_get_string    (const char *dir, const char *attribute);
 int       sysfs_get_int       (const char *dir, const char *attribute);
 gboolean  sysfs_get_bool      (const char *dir, const char *attribute);
 gboolean  sysfs_file_exists   (const char *dir, const char *attribute);
+double    sysfs_get_double_with_error (const char *dir, const char *attribute);
 
 #endif /* __SYSFS_UTILS_H__ */

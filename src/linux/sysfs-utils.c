@@ -44,6 +44,25 @@
 #include "sysfs-utils.h"
 
 double
+sysfs_get_double_with_error (const char *dir, const char *attribute)
+{
+	double result;
+	char *contents;
+	char *filename;
+
+	filename = g_build_filename (dir, attribute, NULL);
+	if (g_file_get_contents (filename, &contents, NULL, NULL)) {
+		result = atof (contents);
+		g_free (contents);
+	} else {
+		result = -1.0;
+	}
+	g_free (filename);
+
+	return result;
+}
+
+double
 sysfs_get_double (const char *dir, const char *attribute)
 {
 	double result;
