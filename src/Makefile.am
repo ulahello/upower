@@ -124,7 +124,7 @@ upowerd_LDFLAGS =						\
 
 if UP_BUILD_TESTS
 check-local: upowerd
-	env GI_TYPELIB_PATH=$(top_builddir)/libupower-glib:$(GI_REPOSITORY_PATH) LD_LIBRARY_PATH=$(top_builddir)/libupower-glib/.libs:$(LD_LIBRARY_PATH) top_builddir=$(top_builddir) $(srcdir)/linux/integration-test -v
+	env GI_TYPELIB_PATH=$(top_builddir)/libupower-glib:$(GI_TYPELIB_PATH) LD_LIBRARY_PATH=$(top_builddir)/libupower-glib/.libs:$(LD_LIBRARY_PATH) top_builddir=$(top_builddir) $(srcdir)/linux/integration-test -v
 endif
 
 endif
