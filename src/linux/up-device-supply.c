@@ -510,7 +510,6 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	if (!supply->priv->has_coldplug_values ||
 	    up_device_supply_units_changed (supply, native_path)) {
 
-		/* when we add via sysfs power_supply class then we know this is true */
 		g_object_set (device,
 			      "power-supply", supply->priv->is_power_supply,
 			      NULL);
