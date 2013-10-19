@@ -6,6 +6,7 @@ Documentation=man:upowerd(8)
 Type=dbus
 BusName=org.freedesktop.UPower
 ExecStart=@libexecdir@/upowerd
+Restart=on-failure
 
 [Install]
 # We pull this in by graphical.target instead of waiting for the bus
