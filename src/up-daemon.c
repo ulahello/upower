@@ -282,9 +282,9 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 
 	/* calculate a quick and dirty time remaining value */
 	if (energy_rate_total > 0) {
-		if (state_total == UP_DEVICE_STATE_DISCHARGING && time_to_empty_total == 0)
+		if (state_total == UP_DEVICE_STATE_DISCHARGING)
 			time_to_empty_total = 3600 * (energy_total / energy_rate_total);
-		else if (state_total == UP_DEVICE_STATE_CHARGING && time_to_full_total == 0)
+		else if (state_total == UP_DEVICE_STATE_CHARGING)
 			time_to_full_total = 3600 * ((energy_full_total - energy_total) / energy_rate_total);
 	}
 
