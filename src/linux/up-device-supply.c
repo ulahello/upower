@@ -481,7 +481,8 @@ up_device_supply_get_state (const gchar *native_path)
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
-up_device_supply_refresh_battery (UpDeviceSupply *supply)
+up_device_supply_refresh_battery (UpDeviceSupply *supply,
+				  UpDeviceState  *out_state)
 {
 	gchar *technology_native = NULL;
 	gboolean ret = TRUE;
@@ -525,6 +526,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	g_object_set (device, "is-present", is_present, NULL);
 	if (!is_present) {
 		up_device_supply_reset_values (supply);
+		g_object_get (device, "state", out_state, NULL);
 		goto out;
 	}
 
@@ -613,6 +615,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply)
 	}
 
 	state = up_device_supply_get_state (native_path);
+	*out_state = state;
 
 	/* only disable the polling if the kernel tells us we're fully charged,
 	   not if we've guessed the state to be fully charged */
@@ -817,7 +820,8 @@ out:
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
-up_device_supply_refresh_device (UpDeviceSupply *supply)
+up_device_supply_refresh_device (UpDeviceSupply *supply,
+				 UpDeviceState  *out_state)
 {
 	gboolean ret = TRUE;
 	UpDeviceState state;
@@ -860,6 +864,7 @@ up_device_supply_refresh_device (UpDeviceSupply *supply)
 		/* Probably talking to the device over Bluetooth */
 		state = UP_DEVICE_STATE_UNKNOWN;
 		g_object_set (device, "state", state, NULL);
+		*out_state = state;
 		return FALSE;
 	}
 
@@ -880,6 +885,8 @@ up_device_supply_refresh_device (UpDeviceSupply *supply)
 		      "percentage", percentage,
 		      "state", state,
 		      NULL);
+
+	*out_state = state;
 
 	return ret;
 }
@@ -1038,12 +1045,10 @@ out:
  * up_device_supply_setup_poll:
  **/
 static gboolean
-up_device_supply_setup_poll (UpDevice *device)
+up_device_supply_setup_poll (UpDevice      *device,
+			     UpDeviceState  state)
 {
-	UpDeviceState state;
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
-
-	g_object_get (device, "state", &state, NULL);
 
 	/* don't setup the poll only if we're sure */
 	if (!supply->priv->enable_poll)
@@ -1083,6 +1088,7 @@ up_device_supply_refresh (UpDevice *device)
 	GTimeVal timeval;
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
 	UpDeviceKind type;
+	UpDeviceState state;
 
 	if (supply->priv->poll_timer_id > 0) {
 		g_source_remove (supply->priv->poll_timer_id);
@@ -1096,13 +1102,13 @@ up_device_supply_refresh (UpDevice *device)
 		break;
 	default:
 		if (supply->priv->is_power_supply)
-			ret = up_device_supply_refresh_battery (supply);
+			ret = up_device_supply_refresh_battery (supply, &state);
 		else
-			ret = up_device_supply_refresh_device (supply);
+			ret = up_device_supply_refresh_device (supply, &state);
 
 		/* Seems that we don't get change uevents from the
 		 * kernel on some BIOS types */
-		up_device_supply_setup_poll (device);
+		up_device_supply_setup_poll (device, state);
 		break;
 	}
 
