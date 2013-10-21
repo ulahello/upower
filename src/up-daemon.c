@@ -70,8 +70,6 @@ struct UpDaemonPrivate
 	UpPolkit		*polkit;
 	UpBackend		*backend;
 	UpDeviceList		*power_devices;
-	guint			 battery_poll_id;
-	guint			 battery_poll_count;
 	guint			 action_timeout_id;
 
 	/* Properties */
@@ -114,10 +112,6 @@ static gboolean	up_daemon_get_on_ac_local 	(UpDaemon	*daemon);
 G_DEFINE_TYPE (UpDaemon, up_daemon, G_TYPE_OBJECT)
 
 #define UP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DAEMON, UpDaemonPrivate))
-
-/* refresh all the devices after this much time when on-battery has changed */
-#define UP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY	1 /* seconds */
-#define UP_DAEMON_POLL_BATTERY_NUMBER_TIMES		5
 
 #define UP_DAEMON_ACTION_DELAY				20 /* seconds */
 
@@ -842,46 +836,6 @@ up_daemon_compute_warning_level (UpDaemon      *daemon,
 }
 
 /**
- * up_daemon_refresh_battery_devices_cb:
- **/
-static gboolean
-up_daemon_refresh_battery_devices_cb (UpDaemon *daemon)
-{
-	UpDaemonPrivate *priv = daemon->priv;
-
-	/* no more left to do? */
-	if (priv->battery_poll_count-- == 0) {
-		priv->battery_poll_id = 0;
-		return FALSE;
-	}
-
-	g_debug ("doing the delayed refresh (%i)", priv->battery_poll_count);
-	up_daemon_refresh_battery_devices (daemon);
-
-	/* keep going until none left to do */
-	return TRUE;
-}
-
-/**
- * up_daemon_poll_battery_devices_for_a_little_bit:
- **/
-static void
-up_daemon_poll_battery_devices_for_a_little_bit (UpDaemon *daemon)
-{
-	UpDaemonPrivate *priv = daemon->priv;
-
-	priv->battery_poll_count = UP_DAEMON_POLL_BATTERY_NUMBER_TIMES;
-
-	/* already polling */
-	if (priv->battery_poll_id != 0)
-		return;
-	priv->battery_poll_id =
-		g_timeout_add_seconds (UP_DAEMON_ON_BATTERY_REFRESH_DEVICES_DELAY,
-				       (GSourceFunc) up_daemon_refresh_battery_devices_cb, daemon);
-	g_source_set_name_by_id (priv->battery_poll_id, "[UpDaemon] poll batteries for AC event");
-}
-
-/**
  * up_daemon_device_changed_cb:
  **/
 static void
@@ -900,9 +854,8 @@ up_daemon_device_changed_cb (UpDevice *device, GParamSpec *pspec, UpDaemon *daem
 		      "type", &type,
 		      NULL);
 	if (type == UP_DEVICE_KIND_LINE_POWER) {
-		/* refresh now, and again in a little while */
+		/* refresh now */
 		up_daemon_refresh_battery_devices (daemon);
-		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 	}
 
 	/* second, check if the on_battery and warning_level state has changed */
@@ -921,7 +874,6 @@ up_daemon_device_changed_cb (UpDevice *device, GParamSpec *pspec, UpDaemon *daem
 static void
 up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device, UpDaemon *daemon)
 {
-	UpDeviceKind type;
 	const gchar *object_path;
 	UpDaemonPrivate *priv = daemon->priv;
 
@@ -935,13 +887,6 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
 	/* connect, so we get changes */
 	g_signal_connect (device, "notify",
 			  G_CALLBACK (up_daemon_device_changed_cb), daemon);
-
-	/* refresh after a short delay */
-	g_object_get (device,
-		      "type", &type,
-		      NULL);
-	if (type == UP_DEVICE_KIND_BATTERY)
-		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */
 	object_path = up_device_get_object_path (device);
@@ -961,7 +906,6 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
 static void
 up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *device, UpDaemon *daemon)
 {
-	UpDeviceKind type;
 	const gchar *object_path;
 	UpDaemonPrivate *priv = daemon->priv;
 
@@ -971,13 +915,6 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 
 	/* remove from list */
 	up_device_list_remove (priv->power_devices, G_OBJECT(device));
-
-	/* refresh after a short delay */
-	g_object_get (device,
-		      "type", &type,
-		      NULL);
-	if (type == UP_DEVICE_KIND_BATTERY)
-		up_daemon_poll_battery_devices_for_a_little_bit (daemon);
 
 	/* emit */
 	object_path = up_device_get_object_path (device);
@@ -1207,8 +1144,6 @@ up_daemon_finalize (GObject *object)
 	UpDaemon *daemon = UP_DAEMON (object);
 	UpDaemonPrivate *priv = daemon->priv;
 
-	if (priv->battery_poll_id != 0)
-		g_source_remove (priv->battery_poll_id);
 	if (priv->action_timeout_id != 0)
 		g_source_remove (priv->action_timeout_id);
 	if (priv->props_idle_id != 0)
