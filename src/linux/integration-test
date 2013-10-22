@@ -442,6 +442,39 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_property('OnLowBattery'), False)
         self.stop_daemon()
 
+    def test_battery_overfull(self):
+        '''battery which reports a > 100% percentage for a full battery'''
+
+        self.testbed.add_device('power_supply', 'BAT0', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Full',
+                                 'current_now', '1000',
+                                 'charge_now', '11000000',
+                                 'charge_full', '10000000',
+                                 'charge_full_design', '11000000',
+                                 'capacity', '110',
+                                 'voltage_now', '12000000'], [])
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        bat0_up = devs[0]
+
+        # should clamp percentage
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Percentage'), 100.0)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'IsPresent'), True)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'State'),
+                         UP_DEVICE_STATE_FULLY_CHARGED)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Energy'), 132.0)
+        # should adjust EnergyFull to reality, not what the battery claims
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'EnergyFull'), 132.0)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'EnergyFullDesign'), 132.0)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Voltage'), 12.0)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'PowerSupply'), True)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Type'), 2)
+        self.stop_daemon()
+
     def test_battery_temperature(self):
         '''battery which reports temperature'''
 
