@@ -1090,17 +1090,17 @@ up_device_supply_refresh (UpDevice *device)
 	UpDeviceKind type;
 	UpDeviceState state;
 
-	if (supply->priv->poll_timer_id > 0) {
-		g_source_remove (supply->priv->poll_timer_id);
-		supply->priv->poll_timer_id = 0;
-	}
-
 	g_object_get (device, "type", &type, NULL);
 	switch (type) {
 	case UP_DEVICE_KIND_LINE_POWER:
 		ret = up_device_supply_refresh_line_power (supply);
 		break;
 	default:
+		if (supply->priv->poll_timer_id > 0) {
+			g_source_remove (supply->priv->poll_timer_id);
+			supply->priv->poll_timer_id = 0;
+		}
+
 		if (supply->priv->is_power_supply)
 			ret = up_device_supply_refresh_battery (supply, &state);
 		else
