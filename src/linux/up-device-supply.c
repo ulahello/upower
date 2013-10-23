@@ -1076,6 +1076,17 @@ out:
 	return (supply->priv->poll_timer_id != 0);
 }
 
+static void
+up_device_supply_disable_poll (UpDevice *device)
+{
+	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
+
+	if (supply->priv->poll_timer_id > 0) {
+		g_source_remove (supply->priv->poll_timer_id);
+		supply->priv->poll_timer_id = 0;
+	}
+}
+
 /**
  * up_device_supply_refresh:
  *
@@ -1096,10 +1107,7 @@ up_device_supply_refresh (UpDevice *device)
 		ret = up_device_supply_refresh_line_power (supply);
 		break;
 	default:
-		if (supply->priv->poll_timer_id > 0) {
-			g_source_remove (supply->priv->poll_timer_id);
-			supply->priv->poll_timer_id = 0;
-		}
+		up_device_supply_disable_poll (device);
 
 		if (supply->priv->is_power_supply)
 			ret = up_device_supply_refresh_battery (supply, &state);
