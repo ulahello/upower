@@ -34,6 +34,7 @@
 #include <gudev/gudev.h>
 
 #include "sysfs-utils.h"
+#include "up-config.h"
 #include "up-types.h"
 #include "up-device-supply.h"
 
@@ -58,7 +59,8 @@ struct UpDeviceSupplyPrivate
 	guint			 energy_old_first;
 	gdouble			 rate_old;
 	guint			 unknown_retries;
-	gboolean		 enable_poll;
+	gboolean		 enable_poll; /* calculated */
+	gboolean		 disable_battery_poll; /* from configuration */
 	gboolean		 is_power_supply;
 	gboolean		 shown_invalid_voltage_warning;
 };
@@ -1110,8 +1112,10 @@ up_device_supply_refresh (UpDevice *device)
 		up_device_supply_disable_poll (device);
 		ret = up_device_supply_refresh_battery (supply, &state);
 		/* Seems that we don't get change uevents from the
-		 * kernel on some BIOS types */
-		up_device_supply_setup_poll (device, state);
+		 * kernel on some BIOS types, but if polling
+		 * is disabled in the configuration, do nothing */
+		if (!supply->priv->disable_battery_poll)
+			up_device_supply_setup_poll (device, state);
 		break;
 	default:
 		up_device_supply_disable_poll (device);
@@ -1135,6 +1139,8 @@ up_device_supply_refresh (UpDevice *device)
 static void
 up_device_supply_init (UpDeviceSupply *supply)
 {
+	UpConfig *config;
+
 	supply->priv = UP_DEVICE_SUPPLY_GET_PRIVATE (supply);
 	supply->priv->enable_poll = TRUE;
 
@@ -1143,6 +1149,10 @@ up_device_supply_init (UpDeviceSupply *supply)
 	supply->priv->energy_old_timespec = g_new (GTimeVal, UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH);
 
 	supply->priv->shown_invalid_voltage_warning = FALSE;
+
+	config = up_config_new ();
+	supply->priv->disable_battery_poll = up_config_get_boolean (config, "NoPollBatteries");
+	g_object_unref (config);
 }
 
 /**
