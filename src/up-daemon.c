@@ -770,6 +770,7 @@ up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 			daemon->priv->action_timeout_id = g_timeout_add_seconds (UP_DAEMON_ACTION_DELAY,
 										 (GSourceFunc) take_action_timeout_cb,
 										 daemon);
+			g_source_set_name_by_id (daemon->priv->action_timeout_id, "[upower] take_action_timeout_cb");
 		} else {
 			g_debug ("Not taking action, timeout id already set");
 		}

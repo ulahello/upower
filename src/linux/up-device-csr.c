@@ -209,7 +209,7 @@ up_device_csr_coldplug (UpDevice *device)
 	csr->priv->poll_timer_id = g_timeout_add_seconds (UP_DEVICE_CSR_REFRESH_TIMEOUT,
 							  (GSourceFunc) up_device_csr_poll_cb, csr);
 
-	g_source_set_name_by_id (csr->priv->poll_timer_id, "[UpDeviceCsr] poll");
+	g_source_set_name_by_id (csr->priv->poll_timer_id, "[upower] up_device_csr_poll_cb (linux)");
 out:
 	return ret;
 }

@@ -652,7 +652,7 @@ up_history_schedule_save (UpHistory *history)
 	g_debug ("saving in %i seconds", UP_HISTORY_SAVE_INTERVAL);
 	history->priv->save_id = g_timeout_add_seconds (UP_HISTORY_SAVE_INTERVAL,
 							(GSourceFunc) up_history_schedule_save_cb, history);
-	g_source_set_name_by_id (history->priv->save_id, "[UpHistory] save");
+	g_source_set_name_by_id (history->priv->save_id, "[upower] up_history_schedule_save_cb");
 	return TRUE;
 }
 

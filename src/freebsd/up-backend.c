@@ -288,7 +288,7 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 		g_timeout_add_seconds (UP_BACKEND_REFRESH_TIMEOUT,
 			       (GSourceFunc) up_backend_refresh_devices,
 			       backend);
-	g_source_set_name_by_id (backend->priv->poll_timer_id, "[FreeBSD:UpBackend] poll");
+	g_source_set_name_by_id (backend->priv->poll_timer_id, "[upower] up_backend_refresh_devices (freebsd)");
 
 	return TRUE;
 }

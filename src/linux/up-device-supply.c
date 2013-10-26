@@ -897,16 +897,34 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
  * up_device_supply_poll_battery:
  **/
 static gboolean
-up_device_supply_poll_battery (UpDeviceSupply *supply)
+up_device_supply_poll_battery (UpDeviceSupply *supply,
+			       guint           timeout)
 {
 	UpDevice *device = UP_DEVICE (supply);
 
-	g_debug ("No updates on supply %s for %i seconds; forcing update", up_device_get_object_path (device), UP_DEVICE_SUPPLY_REFRESH_TIMEOUT);
+	if (timeout == UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT)
+		g_debug ("Unknown state on supply %s; forcing update after %i seconds",
+			 up_device_get_object_path (device), timeout);
+	else
+		g_debug ("No updates on supply %s for %i seconds; forcing update",
+			 up_device_get_object_path (device), timeout);
 	supply->priv->poll_timer_id = 0;
 	up_device_supply_refresh (device);
 
 	/* never repeat */
 	return FALSE;
+}
+
+static gboolean
+up_device_supply_poll_battery_normal (UpDeviceSupply *supply)
+{
+	return up_device_supply_poll_battery (supply, UP_DEVICE_SUPPLY_REFRESH_TIMEOUT);
+}
+
+static gboolean
+up_device_supply_poll_unknown_battery (UpDeviceSupply *supply)
+{
+	return up_device_supply_poll_battery (supply, UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT);
 }
 
 /**
@@ -1061,8 +1079,8 @@ up_device_supply_setup_poll (UpDevice      *device,
 	    supply->priv->unknown_retries < UP_DEVICE_SUPPLY_UNKNOWN_RETRIES) {
 		supply->priv->poll_timer_id =
 			g_timeout_add_seconds (UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT,
-					       (GSourceFunc) up_device_supply_poll_battery, supply);
-		g_source_set_name_by_id (supply->priv->poll_timer_id, "[UpDeviceSupply] unknown poll");
+					       (GSourceFunc) up_device_supply_poll_unknown_battery, supply);
+		g_source_set_name_by_id (supply->priv->poll_timer_id, "[upower] up_device_supply_poll_unknown_battery (linux)");
 
 		/* increase count, we don't want to poll at 0.5Hz forever */
 		supply->priv->unknown_retries++;
@@ -1072,8 +1090,8 @@ up_device_supply_setup_poll (UpDevice      *device,
 	/* any other state just fall back */
 	supply->priv->poll_timer_id =
 		g_timeout_add_seconds (UP_DEVICE_SUPPLY_REFRESH_TIMEOUT,
-				       (GSourceFunc) up_device_supply_poll_battery, supply);
-	g_source_set_name_by_id (supply->priv->poll_timer_id, "[UpDeviceSupply] normal poll");
+				       (GSourceFunc) up_device_supply_poll_battery_normal, supply);
+	g_source_set_name_by_id (supply->priv->poll_timer_id, "[upower] up_device_supply_poll_battery_normal (linux)");
 out:
 	return (supply->priv->poll_timer_id != 0);
 }

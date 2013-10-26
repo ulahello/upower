@@ -153,7 +153,7 @@ up_device_idevice_coldplug (UpDevice *device)
 	idevice->priv->poll_timer_id = g_timeout_add_seconds (poll_seconds,
 							      (GSourceFunc) up_device_idevice_poll_cb, idevice);
 
-	g_source_set_name_by_id (idevice->priv->poll_timer_id, "[UpDeviceIdevice] poll");
+	g_source_set_name_by_id (idevice->priv->poll_timer_id, "[upower] up_device_idevice_poll_cb (linux)");
 	return TRUE;
 
 out:

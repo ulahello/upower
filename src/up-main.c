@@ -267,12 +267,14 @@ main (gint argc, gchar **argv)
 	/* only timeout and close the mainloop if we have specified it on the command line */
 	if (timed_exit) {
 		timer_id = g_timeout_add_seconds (30, (GSourceFunc) up_main_timed_exit_cb, loop);
-		g_source_set_name_by_id (timer_id, "[UpMain] idle");
+		g_source_set_name_by_id (timer_id, "[upower] up_main_timed_exit_cb");
 	}
 
 	/* immediatly exit */
-	if (immediate_exit)
+	if (immediate_exit) {
 		g_timeout_add (50, (GSourceFunc) up_main_timed_exit_cb, loop);
+		g_source_set_name_by_id (timer_id, "[upower] up_main_timed_exit_cb");
+	}
 
 	/* wait for input or timeout */
 	g_main_loop_run (loop);

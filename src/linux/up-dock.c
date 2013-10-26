@@ -113,6 +113,7 @@ up_dock_set_should_poll (UpDock *dock, gboolean should_poll)
 		dock->priv->poll_id = g_timeout_add_seconds (UP_DOCK_POLL_TIMEOUT,
 							     (GSourceFunc) up_dock_poll_cb,
 							     dock);
+		g_source_set_name_by_id (dock->priv->poll_id, "[upower] up_dock_poll_cb (linux)");
 	} else if (dock->priv->poll_id > 0) {
 		g_source_remove (dock->priv->poll_id);
 		dock->priv->poll_id = 0;

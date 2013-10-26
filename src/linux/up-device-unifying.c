@@ -292,6 +292,7 @@ up_device_unifying_coldplug (UpDevice *device)
 	unifying->priv->poll_timer_id = g_timeout_add_seconds (UP_DEVICE_UNIFYING_REFRESH_TIMEOUT,
 							       (GSourceFunc) up_device_unifying_refresh,
 							       device);
+	g_source_set_name_by_id (unifying->priv->poll_timer_id, "[upower] up_device_unifying_refresh (linux)");
 	ret = TRUE;
 out:
 	g_list_foreach (hidraw_list, (GFunc) g_object_unref, NULL);

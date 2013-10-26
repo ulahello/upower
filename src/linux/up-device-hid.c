@@ -475,7 +475,7 @@ up_device_hid_init (UpDeviceHid *hid)
 	hid->priv->fd = -1;
 	hid->priv->poll_timer_id = g_timeout_add_seconds (UP_DEVICE_HID_REFRESH_TIMEOUT,
 							  (GSourceFunc) up_device_hid_poll, hid);
-	g_source_set_name_by_id (hid->priv->poll_timer_id, "[UpDeviceHid] poll");
+	g_source_set_name_by_id (hid->priv->poll_timer_id, "[upower] up_device_hid_poll (linux)");
 }
 
 /**
