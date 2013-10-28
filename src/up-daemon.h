@@ -94,6 +94,10 @@ void		 up_daemon_emit_properties_changed (DBusGConnection	*gconnection,
 						    const gchar		*interface,
 						    GHashTable		*props);
 
+void		 up_daemon_start_poll		(GObject		*object,
+						 GSourceFunc		 callback);
+void		 up_daemon_stop_poll		(GObject		*object);
+
 /* exported */
 gboolean	 up_daemon_enumerate_devices	(UpDaemon		*daemon,
 						 DBusGMethodInvocation	*context);

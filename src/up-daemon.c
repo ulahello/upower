@@ -71,6 +71,7 @@ struct UpDaemonPrivate
 	UpBackend		*backend;
 	UpDeviceList		*power_devices;
 	guint			 action_timeout_id;
+	GHashTable		*poll_timeouts;
 
 	/* Properties */
 	gboolean		 on_battery;
@@ -869,6 +870,136 @@ up_daemon_device_changed_cb (UpDevice *device, GParamSpec *pspec, UpDaemon *daem
 		up_daemon_set_warning_level (daemon, warning_level);
 }
 
+typedef struct {
+	guint id;
+	guint timeout;
+	GSourceFunc callback;
+} TimeoutData;
+
+static void
+change_idle_timeout (UpDevice   *device,
+		     GParamSpec *pspec,
+		     gpointer    user_data)
+{
+	TimeoutData *data;
+	GSourceFunc callback;
+	UpDaemon *daemon;
+
+	daemon = up_device_get_daemon (device);
+
+	data = g_hash_table_lookup (daemon->priv->poll_timeouts, device);
+	callback = data->callback;
+
+	up_daemon_stop_poll (G_OBJECT (device));
+	up_daemon_start_poll (G_OBJECT (device), callback);
+}
+
+static void
+device_destroyed (gpointer  user_data,
+		  GObject  *where_the_object_was)
+{
+	UpDaemon *daemon = user_data;
+	TimeoutData *data;
+
+	data = g_hash_table_lookup (daemon->priv->poll_timeouts, where_the_object_was);
+	if (data == NULL)
+		return;
+	g_source_remove (data->id);
+	g_hash_table_remove (daemon->priv->poll_timeouts, where_the_object_was);
+}
+
+static gboolean
+fire_timeout_callback (gpointer user_data)
+{
+	UpDevice *device = user_data;
+	TimeoutData *data;
+	UpDaemon *daemon;
+
+	daemon = up_device_get_daemon (device);
+
+	data = g_hash_table_lookup (daemon->priv->poll_timeouts, device);
+	g_assert (data);
+
+	g_debug ("Firing timeout for '%s' after %u seconds",
+		 up_device_get_object_path (device), data->timeout);
+
+	/* Fire the actual callback */
+	(data->callback) (device);
+
+	return G_SOURCE_CONTINUE;
+}
+
+static guint
+calculate_timeout (UpDevice *device)
+{
+	UpDeviceLevel warning_level;
+
+	g_object_get (G_OBJECT (device), "warning-level", &warning_level, NULL);
+	if (warning_level >= UP_DEVICE_LEVEL_DISCHARGING)
+		return 30;
+	return 120;
+}
+
+void
+up_daemon_start_poll (GObject     *object,
+		      GSourceFunc  callback)
+{
+	UpDaemon *daemon;
+	UpDevice *device;
+	TimeoutData *data;
+	guint timeout;
+	char *name;
+
+	device = UP_DEVICE (object);
+	daemon = up_device_get_daemon (device);
+
+	if (g_hash_table_lookup (daemon->priv->poll_timeouts, device) != NULL) {
+		g_warning ("Poll already started for device '%s'",
+			   up_device_get_object_path (device));
+		return;
+	}
+
+	data = g_new0 (TimeoutData, 1);
+	data->callback = callback;
+
+	timeout = calculate_timeout (device);
+	data->timeout = timeout;
+
+	g_signal_connect (device, "notify::warning-level",
+			  G_CALLBACK (change_idle_timeout), NULL);
+	g_object_weak_ref (object, device_destroyed, daemon);
+
+	data->id = g_timeout_add_seconds (timeout, fire_timeout_callback, device);
+	name = g_strdup_printf ("[upower] UpDevice::poll for %s (%u secs)",
+				up_device_get_object_path (device), timeout);
+	g_source_set_name_by_id (data->id, name);
+	g_free (name);
+
+	g_hash_table_insert (daemon->priv->poll_timeouts, device, data);
+
+	g_debug ("Setup poll for '%s' every %u seconds",
+		 up_device_get_object_path (device), timeout);
+}
+
+void
+up_daemon_stop_poll (GObject *object)
+{
+	UpDevice *device;
+	TimeoutData *data;
+	UpDaemon *daemon;
+
+	device = UP_DEVICE (object);
+	daemon = up_device_get_daemon (device);
+
+	data = g_hash_table_lookup (daemon->priv->poll_timeouts, device);
+	if (data == NULL)
+		return;
+
+	g_source_remove (data->id);
+	g_object_weak_unref (object, device_destroyed, daemon);
+	g_hash_table_remove (daemon->priv->poll_timeouts, device);
+}
+
 /**
  * up_daemon_device_added_cb:
  **/
@@ -996,6 +1127,9 @@ up_daemon_init (UpDaemon *daemon)
 			  G_CALLBACK (up_daemon_device_added_cb), daemon);
 	g_signal_connect (daemon->priv->backend, "device-removed",
 			  G_CALLBACK (up_daemon_device_removed_cb), daemon);
+
+	daemon->priv->poll_timeouts = g_hash_table_new_full (g_direct_hash, g_direct_equal,
+							     NULL, g_free);
 }
 
 /**
@@ -1149,6 +1283,8 @@ up_daemon_finalize (GObject *object)
 		g_source_remove (priv->action_timeout_id);
 	if (priv->props_idle_id != 0)
 		g_source_remove (priv->props_idle_id);
+
+	g_clear_pointer (&priv->poll_timeouts, g_hash_table_destroy);
 
 	g_clear_pointer (&daemon->priv->changed_props, g_hash_table_unref);
 	if (priv->proxy != NULL)
