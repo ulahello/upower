@@ -1054,6 +1054,10 @@ up_device_supply_coldplug (UpDevice *device)
 	/* set the value */
 	g_object_set (device, "type", type, NULL);
 
+	if (type != UP_DEVICE_KIND_LINE_POWER &&
+	    type != UP_DEVICE_KIND_BATTERY)
+		up_daemon_start_poll (G_OBJECT (device), (GSourceFunc) up_device_supply_poll_battery_normal);
+
 	/* coldplug values */
 	ret = up_device_supply_refresh (device);
 out:
@@ -1136,9 +1140,7 @@ up_device_supply_refresh (UpDevice *device)
 			up_device_supply_setup_poll (device, state);
 		break;
 	default:
-		up_device_supply_disable_poll (device);
 		ret = up_device_supply_refresh_device (supply, &state);
-		up_device_supply_setup_poll (device, state);
 		break;
 	}
 
@@ -1174,6 +1176,23 @@ up_device_supply_init (UpDeviceSupply *supply)
 }
 
 /**
+ * up_device_supply_dispose:
+ **/
+static void
+up_device_supply_dispose (GObject *object)
+{
+	UpDeviceKind type;
+
+	/* Disable poll for non-batteries */
+	g_object_get (object, "type", &type, NULL);
+	if (type != UP_DEVICE_KIND_LINE_POWER &&
+	    type != UP_DEVICE_KIND_BATTERY)
+		up_daemon_stop_poll (object);
+
+	G_OBJECT_CLASS (up_device_supply_parent_class)->dispose (object);
+}
+
+/**
  * up_device_supply_finalize:
  **/
 static void
@@ -1205,6 +1224,7 @@ up_device_supply_class_init (UpDeviceSupplyClass *klass)
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	UpDeviceClass *device_class = UP_DEVICE_CLASS (klass);
 
+	object_class->dispose = up_device_supply_dispose;
 	object_class->finalize = up_device_supply_finalize;
 	device_class->get_on_battery = up_device_supply_get_on_battery;
 	device_class->get_online = up_device_supply_get_online;
