@@ -59,7 +59,6 @@ struct UpDeviceSupplyPrivate
 	guint			 energy_old_first;
 	gdouble			 rate_old;
 	guint			 unknown_retries;
-	gboolean		 enable_poll; /* calculated */
 	gboolean		 disable_battery_poll; /* from configuration */
 	gboolean		 is_power_supply;
 	gboolean		 shown_invalid_voltage_warning;
@@ -619,10 +618,6 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 	state = up_device_supply_get_state (native_path);
 	*out_state = state;
 
-	/* only disable the polling if the kernel tells us we're fully charged,
-	   not if we've guessed the state to be fully charged */
-	supply->priv->enable_poll = (state != UP_DEVICE_STATE_FULLY_CHARGED);
-
 	/* reset unknown counter */
 	if (state != UP_DEVICE_STATE_UNKNOWN) {
 		g_debug ("resetting unknown timeout after %i retries", supply->priv->unknown_retries);
@@ -893,38 +888,18 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 	return ret;
 }
 
-/**
- * up_device_supply_poll_battery:
- **/
 static gboolean
-up_device_supply_poll_battery (UpDeviceSupply *supply,
-			       guint           timeout)
+up_device_supply_poll_unknown_battery (UpDevice *device)
 {
-	UpDevice *device = UP_DEVICE (supply);
+	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
 
-	if (timeout == UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT)
-		g_debug ("Unknown state on supply %s; forcing update after %i seconds",
-			 up_device_get_object_path (device), timeout);
-	else
-		g_debug ("No updates on supply %s for %i seconds; forcing update",
-			 up_device_get_object_path (device), timeout);
+	g_debug ("Unknown state on supply %s; forcing update after %i seconds",
+		 up_device_get_object_path (device), UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT);
+
 	supply->priv->poll_timer_id = 0;
 	up_device_supply_refresh (device);
 
-	/* never repeat */
 	return FALSE;
-}
-
-static gboolean
-up_device_supply_poll_battery_normal (UpDeviceSupply *supply)
-{
-	return up_device_supply_poll_battery (supply, UP_DEVICE_SUPPLY_REFRESH_TIMEOUT);
-}
-
-static gboolean
-up_device_supply_poll_unknown_battery (UpDeviceSupply *supply)
-{
-	return up_device_supply_poll_battery (supply, UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT);
 }
 
 /**
@@ -1056,7 +1031,10 @@ up_device_supply_coldplug (UpDevice *device)
 
 	if (type != UP_DEVICE_KIND_LINE_POWER &&
 	    type != UP_DEVICE_KIND_BATTERY)
-		up_daemon_start_poll (G_OBJECT (device), (GSourceFunc) up_device_supply_poll_battery_normal);
+		up_daemon_start_poll (G_OBJECT (device), (GSourceFunc) up_device_supply_refresh);
+	else if (type == UP_DEVICE_KIND_BATTERY &&
+		 !supply->priv->disable_battery_poll)
+		up_daemon_start_poll (G_OBJECT (device), (GSourceFunc) up_device_supply_refresh);
 
 	/* coldplug values */
 	ret = up_device_supply_refresh (device);
@@ -1066,17 +1044,16 @@ out:
 }
 
 /**
- * up_device_supply_setup_poll:
+ * up_device_supply_setup_unknown_poll:
  **/
-static gboolean
-up_device_supply_setup_poll (UpDevice      *device,
-			     UpDeviceState  state)
+static void
+up_device_supply_setup_unknown_poll (UpDevice      *device,
+				     UpDeviceState  state)
 {
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
 
-	/* don't setup the poll only if we're sure */
-	if (!supply->priv->enable_poll)
-		goto out;
+	if (supply->priv->disable_battery_poll)
+		return;
 
 	/* if it's unknown, poll faster than we would normally */
 	if (state == UP_DEVICE_STATE_UNKNOWN &&
@@ -1088,20 +1065,11 @@ up_device_supply_setup_poll (UpDevice      *device,
 
 		/* increase count, we don't want to poll at 0.5Hz forever */
 		supply->priv->unknown_retries++;
-		goto out;
 	}
-
-	/* any other state just fall back */
-	supply->priv->poll_timer_id =
-		g_timeout_add_seconds (UP_DEVICE_SUPPLY_REFRESH_TIMEOUT,
-				       (GSourceFunc) up_device_supply_poll_battery_normal, supply);
-	g_source_set_name_by_id (supply->priv->poll_timer_id, "[upower] up_device_supply_poll_battery_normal (linux)");
-out:
-	return (supply->priv->poll_timer_id != 0);
 }
 
 static void
-up_device_supply_disable_poll (UpDevice *device)
+up_device_supply_disable_unknown_poll (UpDevice *device)
 {
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
 
@@ -1131,13 +1099,9 @@ up_device_supply_refresh (UpDevice *device)
 		ret = up_device_supply_refresh_line_power (supply);
 		break;
 	case UP_DEVICE_KIND_BATTERY:
-		up_device_supply_disable_poll (device);
+		up_device_supply_disable_unknown_poll (device);
 		ret = up_device_supply_refresh_battery (supply, &state);
-		/* Seems that we don't get change uevents from the
-		 * kernel on some BIOS types, but if polling
-		 * is disabled in the configuration, do nothing */
-		if (!supply->priv->disable_battery_poll)
-			up_device_supply_setup_poll (device, state);
+		up_device_supply_setup_unknown_poll (device, state);
 		break;
 	default:
 		ret = up_device_supply_refresh_device (supply, &state);
@@ -1162,7 +1126,6 @@ up_device_supply_init (UpDeviceSupply *supply)
 	UpConfig *config;
 
 	supply->priv = UP_DEVICE_SUPPLY_GET_PRIVATE (supply);
-	supply->priv->enable_poll = TRUE;
 
 	/* allocate the stats for the battery charging & discharging */
 	supply->priv->energy_old = g_new (gdouble, UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH);
@@ -1171,25 +1134,11 @@ up_device_supply_init (UpDeviceSupply *supply)
 	supply->priv->shown_invalid_voltage_warning = FALSE;
 
 	config = up_config_new ();
+	/* Seems that we don't get change uevents from the
+	 * kernel on some BIOS types, but if polling
+	 * is disabled in the configuration, do nothing */
 	supply->priv->disable_battery_poll = up_config_get_boolean (config, "NoPollBatteries");
 	g_object_unref (config);
-}
-
-/**
- * up_device_supply_dispose:
- **/
-static void
-up_device_supply_dispose (GObject *object)
-{
-	UpDeviceKind type;
-
-	/* Disable poll for non-batteries */
-	g_object_get (object, "type", &type, NULL);
-	if (type != UP_DEVICE_KIND_LINE_POWER &&
-	    type != UP_DEVICE_KIND_BATTERY)
-		up_daemon_stop_poll (object);
-
-	G_OBJECT_CLASS (up_device_supply_parent_class)->dispose (object);
 }
 
 /**
@@ -1205,6 +1154,8 @@ up_device_supply_finalize (GObject *object)
 
 	supply = UP_DEVICE_SUPPLY (object);
 	g_return_if_fail (supply->priv != NULL);
+
+	up_daemon_stop_poll (object);
 
 	if (supply->priv->poll_timer_id > 0)
 		g_source_remove (supply->priv->poll_timer_id);
@@ -1224,7 +1175,6 @@ up_device_supply_class_init (UpDeviceSupplyClass *klass)
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	UpDeviceClass *device_class = UP_DEVICE_CLASS (klass);
 
-	object_class->dispose = up_device_supply_dispose;
 	object_class->finalize = up_device_supply_finalize;
 	device_class->get_on_battery = up_device_supply_get_on_battery;
 	device_class->get_online = up_device_supply_get_online;
