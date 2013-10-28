@@ -30,11 +30,8 @@
 #include "up-device-unifying.h"
 #include "up-types.h"
 
-#define UP_DEVICE_UNIFYING_REFRESH_TIMEOUT			60 /* seconds */
-
 struct UpDeviceUnifyingPrivate
 {
-	guint			 poll_timer_id;
 	HidppDevice		*hidpp_device;
 };
 
@@ -289,10 +286,7 @@ up_device_unifying_coldplug (UpDevice *device)
 
 	/* set up a poll to send the magic packet */
 	up_device_unifying_refresh (device);
-	unifying->priv->poll_timer_id = g_timeout_add_seconds (UP_DEVICE_UNIFYING_REFRESH_TIMEOUT,
-							       (GSourceFunc) up_device_unifying_refresh,
-							       device);
-	g_source_set_name_by_id (unifying->priv->poll_timer_id, "[upower] up_device_unifying_refresh (linux)");
+	up_daemon_start_poll (G_OBJECT (device), (GSourceFunc) up_device_unifying_refresh);
 	ret = TRUE;
 out:
 	g_list_foreach (hidraw_list, (GFunc) g_object_unref, NULL);
@@ -329,8 +323,7 @@ up_device_unifying_finalize (GObject *object)
 	unifying = UP_DEVICE_UNIFYING (object);
 	g_return_if_fail (unifying->priv != NULL);
 
-	if (unifying->priv->poll_timer_id > 0)
-		g_source_remove (unifying->priv->poll_timer_id);
+	up_daemon_stop_poll (object);
 	if (unifying->priv->hidpp_device != NULL)
 		g_object_unref (unifying->priv->hidpp_device);
 
