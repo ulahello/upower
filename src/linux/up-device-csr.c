@@ -52,7 +52,6 @@
 
 struct UpDeviceCsrPrivate
 {
-	guint			 poll_timer_id;
 	gboolean		 is_dual;
 	guint			 bus_num;
 	guint			 dev_num;
@@ -206,10 +205,7 @@ up_device_csr_coldplug (UpDevice *device)
 		goto out;
 
 	/* set up a poll */
-	csr->priv->poll_timer_id = g_timeout_add_seconds (UP_DEVICE_CSR_REFRESH_TIMEOUT,
-							  (GSourceFunc) up_device_csr_poll_cb, csr);
-
-	g_source_set_name_by_id (csr->priv->poll_timer_id, "[upower] up_device_csr_poll_cb (linux)");
+	up_daemon_start_poll (G_OBJECT (device), (GSourceFunc) up_device_csr_poll_cb);
 out:
 	return ret;
 }
@@ -321,8 +317,7 @@ up_device_csr_finalize (GObject *object)
 
 	if (csr->priv->ctx != NULL)
 		libusb_exit (csr->priv->ctx);
-	if (csr->priv->poll_timer_id > 0)
-		g_source_remove (csr->priv->poll_timer_id);
+	up_daemon_stop_poll (object);
 
 	G_OBJECT_CLASS (up_device_csr_parent_class)->finalize (object);
 }
