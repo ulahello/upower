@@ -386,7 +386,7 @@ up_backend_get_critical_action (UpBackend *backend)
 	};
 	guint i;
 
-	g_return_if_fail (backend->priv->logind_proxy != NULL);
+	g_return_val_if_fail (backend->priv->logind_proxy != NULL, NULL);
 
 	for (i = 0; i < G_N_ELEMENTS (actions); i++) {
 		GVariant *result;
