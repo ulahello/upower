@@ -322,6 +322,9 @@ up_client_get_property (GObject *object,
 	UpClient *client;
 	client = UP_CLIENT (object);
 
+	if (client->priv->proxy == NULL)
+                return;
+
 	switch (prop_id) {
 	case PROP_DAEMON_VERSION:
 		g_value_set_string (value, up_client_glue_get_daemon_version (client->priv->proxy));
