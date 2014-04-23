@@ -131,7 +131,7 @@ up_client_get_devices (UpClient *client)
  * @client: a #UpClient instance.
  *
  * Get the composite display device.
- * Return value: (transfer full) a #UpClient object, or %NULL on error.
+ * Return value: (transfer full): a #UpClient object, or %NULL on error.
  *
  * Since: 1.0
  **/
