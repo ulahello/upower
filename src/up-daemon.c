@@ -208,6 +208,7 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 		gdouble energy_rate = 0.0;
 		gint64 time_to_empty = 0;
 		gint64 time_to_full = 0;
+		gboolean power_supply = FALSE;
 
 		device = g_ptr_array_index (array, i);
 		g_object_get (device,
@@ -219,6 +220,7 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 			      "energy-rate", &energy_rate,
 			      "time-to-empty", &time_to_empty,
 			      "time-to-full", &time_to_full,
+			      "power-supply", &power_supply,
 			      NULL);
 
 		/* When we have a UPS, it's either a desktop, and
@@ -236,7 +238,8 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 			is_present_total = TRUE;
 			break;
 		}
-		if (kind != UP_DEVICE_KIND_BATTERY)
+		if (kind != UP_DEVICE_KIND_BATTERY ||
+		    power_supply == FALSE)
 			continue;
 
 		/* If one battery is charging, then the composite is charging
@@ -389,17 +392,21 @@ up_daemon_refresh_battery_devices (UpDaemon *daemon)
 	guint i;
 	GPtrArray *array;
 	UpDevice *device;
-	UpDeviceKind type;
 
 	/* refresh all devices in array */
 	array = up_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
+		UpDeviceKind type;
+		gboolean power_supply;
+
 		device = (UpDevice *) g_ptr_array_index (array, i);
 		/* only refresh battery devices */
 		g_object_get (device,
 			      "type", &type,
+			      "power-supply", &power_supply,
 			      NULL);
-		if (type == UP_DEVICE_KIND_BATTERY)
+		if (type == UP_DEVICE_KIND_BATTERY &&
+		    power_supply)
 			up_device_refresh_internal (device);
 	}
 	g_ptr_array_unref (array);
