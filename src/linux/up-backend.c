@@ -40,7 +40,6 @@
 #include "up-device-wup.h"
 #include "up-device-hid.h"
 #include "up-input.h"
-#include "up-dock.h"
 #include "up-config.h"
 #ifdef HAVE_IDEVICE
 #include "up-device-idevice.h"
@@ -65,7 +64,6 @@ struct UpBackendPrivate
 	UpDeviceList		*device_list;
 	GUdevClient		*gudev_client;
 	UpDeviceList		*managed_devices;
-	UpDock			*dock;
 	UpConfig		*config;
 	DBusConnection		*connection;
 	GDBusProxy		*logind_proxy;
@@ -316,7 +314,6 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 	GList *devices;
 	GList *l;
 	guint i;
-	gboolean ret;
 	const gchar *subsystems_wup[] = {"power_supply", "usb", "usbmisc", "tty", "input", "hid", NULL};
 	const gchar *subsystems[] = {"power_supply", "usb", "usbmisc", "input", "hid", NULL};
 
@@ -340,15 +337,6 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 		g_list_foreach (devices, (GFunc) g_object_unref, NULL);
 		g_list_free (devices);
 	}
-
-	/* add dock update object */
-	backend->priv->dock = up_dock_new ();
-	ret = up_config_get_boolean (backend->priv->config, "PollDockDevices");
-	g_debug ("Polling docks: %s", ret ? "YES" : "NO");
-	up_dock_set_should_poll (backend->priv->dock, ret);
-	ret = up_dock_coldplug (backend->priv->dock, daemon);
-	if (!ret)
-		g_warning ("failed to coldplug dock devices");
 
 	return TRUE;
 }

@@ -38,8 +38,6 @@ libupshared_la_SOURCES =					\
 	up-device-wup.h						\
 	up-input.c						\
 	up-input.h						\
-	up-dock.c						\
-	up-dock.h						\
 	up-backend.c						\
 	up-native.c						\
 	hidpp-device.c						\

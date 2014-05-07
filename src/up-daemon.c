@@ -78,7 +78,6 @@ struct UpDaemonPrivate
 	UpDeviceLevel		 warning_level;
 	gboolean		 lid_is_closed;
 	gboolean		 lid_is_present;
-	gboolean		 is_docked;
 
 	/* PropertiesChanged to be emitted */
 	GHashTable		*changed_props;
@@ -722,20 +721,6 @@ up_daemon_set_lid_is_present (UpDaemon *daemon, gboolean lid_is_present)
 }
 
 /**
- * up_daemon_set_is_docked:
- **/
-void
-up_daemon_set_is_docked (UpDaemon *daemon, gboolean is_docked)
-{
-	UpDaemonPrivate *priv = daemon->priv;
-	g_debug ("is_docked = %s", is_docked ? "yes" : "no");
-	priv->is_docked = is_docked;
-	g_object_notify (G_OBJECT (daemon), "is-docked");
-
-	up_daemon_queue_changed_property (daemon, "IsDocked", g_variant_new_boolean (is_docked));
-}
-
-/**
  * up_daemon_set_on_battery:
  **/
 void
@@ -1196,7 +1181,7 @@ up_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 		g_value_set_boolean (value, priv->lid_is_present);
 		break;
 	case PROP_IS_DOCKED:
-		g_value_set_boolean (value, priv->is_docked);
+		g_value_set_boolean (value, FALSE);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
