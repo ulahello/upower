@@ -250,7 +250,7 @@ up_client_get_is_docked (UpClient *client)
  *
  * Get whether the system is running on battery power.
  *
- * Return value: TRUE if the system is currently running on battery, FALSE other wise.
+ * Return value: %TRUE if the system is currently running on battery, %FALSE otherwise.
  *
  * Since: 0.9.0
  **/
