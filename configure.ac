@@ -43,7 +43,7 @@ AC_SUBST(UP_MICRO_VERSION)
 # CURRENT	If the API or ABI interface has changed (reset REVISION to 0)
 # REVISION	If the API and ABI remains the same, but bugs are fixed.
 # AGE		Don't use.
-LT_CURRENT=2
+LT_CURRENT=3
 LT_REVISION=0
 LT_AGE=0
 AC_SUBST(LT_CURRENT)

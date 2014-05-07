@@ -49,7 +49,6 @@ enum
 	PROP_ON_BATTERY,
 	PROP_LID_IS_CLOSED,
 	PROP_LID_IS_PRESENT,
-	PROP_IS_DOCKED,
 	PROP_LAST
 };
 
@@ -1180,9 +1179,6 @@ up_daemon_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 	case PROP_LID_IS_PRESENT:
 		g_value_set_boolean (value, priv->lid_is_present);
 		break;
-	case PROP_IS_DOCKED:
-		g_value_set_boolean (value, FALSE);
-		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -1230,14 +1226,6 @@ up_daemon_class_init (UpDaemonClass *klass)
 					 g_param_spec_boolean ("lid-is-present",
 							       "Is a laptop",
 							       "If this computer is probably a laptop",
-							       FALSE,
-							       G_PARAM_READABLE));
-
-	g_object_class_install_property (object_class,
-					 PROP_IS_DOCKED,
-					 g_param_spec_boolean ("is-docked",
-							       "Is docked",
-							       "If this computer is docked",
 							       FALSE,
 							       G_PARAM_READABLE));
 

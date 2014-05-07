@@ -67,7 +67,6 @@ enum {
 	PROP_ON_BATTERY,
 	PROP_LID_IS_CLOSED,
 	PROP_LID_IS_PRESENT,
-	PROP_IS_DOCKED,
 	PROP_LAST
 };
 
@@ -227,24 +226,6 @@ up_client_get_lid_is_present (UpClient *client)
 }
 
 /**
- * up_client_get_is_docked:
- * @client: a #UpClient instance.
- *
- * Get whether the machine is docked into a docking station. This property
- * is deprecated. Use XRandR, for example, to check for external displays
- * instead.
- *
- * Return value: Always %FALSE.
- *
- * Since: 0.9.2
- */
-gboolean
-up_client_get_is_docked (UpClient *client)
-{
-	return FALSE;
-}
-
-/**
  * up_client_get_on_battery:
  * @client: a #UpClient instance.
  *
@@ -339,9 +320,6 @@ up_client_get_property (GObject *object,
 	case PROP_LID_IS_PRESENT:
 		g_value_set_boolean (value, up_client_glue_get_lid_is_present (client->priv->proxy));
 		break;
-	case PROP_IS_DOCKED:
-		g_value_set_boolean (value, FALSE);
-		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -413,21 +391,6 @@ up_client_class_init (UpClientClass *klass)
 					 PROP_LID_IS_PRESENT,
 					 g_param_spec_boolean ("lid-is-present",
 							       "If a laptop lid is present",
-							       NULL,
-							       FALSE,
-							       G_PARAM_READABLE));
-
-	/**
-	 * UpClient:is-docked:
-	 *
-	 * If the laptop is docked
-	 *
-	 * Since: 0.9.8
-	 */
-	g_object_class_install_property (object_class,
-					 PROP_IS_DOCKED,
-					 g_param_spec_boolean ("is-docked",
-							       "If a laptop is docked",
 							       NULL,
 							       FALSE,
 							       G_PARAM_READABLE));

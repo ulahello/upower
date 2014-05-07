@@ -82,7 +82,6 @@ GPtrArray	*up_client_get_devices			(UpClient		*client);
 const gchar	*up_client_get_daemon_version		(UpClient		*client);
 gboolean	 up_client_get_lid_is_closed		(UpClient		*client);
 gboolean	 up_client_get_lid_is_present		(UpClient		*client);
-gboolean	 up_client_get_is_docked		(UpClient		*client);
 gboolean	 up_client_get_on_battery		(UpClient		*client);
 
 G_END_DECLS

@@ -199,20 +199,6 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
       </doc:doc>
     </property>
 
-    <property name="IsDocked" type="b" access="read">
-      <doc:doc>
-        <doc:description>
-          <doc:para>
-            If the system is currently docked.
-            Note: the "is-docked" value is now always False.
-            Whether an external display is in use should be checked within
-            the session service applying policy on the presence or absence
-            of an external display, such as gnome-settings-daemon.
-          </doc:para>
-        </doc:description>
-      </doc:doc>
-    </property>
-
   </interface>
 
 </node>

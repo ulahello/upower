@@ -136,7 +136,6 @@ up_client_print (UpClient *client)
 	g_print ("  on-battery:      %s\n", on_battery ? "yes" : "no");
 	g_print ("  lid-is-closed:   %s\n", lid_is_closed ? "yes" : "no");
 	g_print ("  lid-is-present:  %s\n", lid_is_present ? "yes" : "no");
-	g_print ("  is-docked:       no (deprecated, always false)\n");
 	action = up_client_get_critical_action (client);
 	g_print ("  critical-action: %s\n", action);
 	g_free (action);
