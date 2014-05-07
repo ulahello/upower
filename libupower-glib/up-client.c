@@ -230,17 +230,18 @@ up_client_get_lid_is_present (UpClient *client)
  * up_client_get_is_docked:
  * @client: a #UpClient instance.
  *
- * Get whether the machine is docked into a docking station.
+ * Get whether the machine is docked into a docking station. This property
+ * is deprecated. Use XRandR, for example, to check for external displays
+ * instead.
  *
- * Return value: %TRUE if the machine is docked
+ * Return value: Always %FALSE.
  *
  * Since: 0.9.2
  */
 gboolean
 up_client_get_is_docked (UpClient *client)
 {
-	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
-	return up_client_glue_get_is_docked (client->priv->proxy);
+	return FALSE;
 }
 
 /**
@@ -339,7 +340,7 @@ up_client_get_property (GObject *object,
 		g_value_set_boolean (value, up_client_glue_get_lid_is_present (client->priv->proxy));
 		break;
 	case PROP_IS_DOCKED:
-		g_value_set_boolean (value, up_client_glue_get_is_docked (client->priv->proxy));
+		g_value_set_boolean (value, FALSE);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
