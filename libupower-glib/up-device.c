@@ -125,12 +125,21 @@ gboolean
 up_device_set_object_path_sync (UpDevice *device, const gchar *object_path, GCancellable *cancellable, GError **error)
 {
 	UpDeviceGlue *proxy_device;
+	gboolean ret = TRUE;
 
 	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 	g_return_val_if_fail (object_path != NULL, FALSE);
 
 	if (device->priv->proxy_device != NULL)
 		return FALSE;
+
+	/* check valid */
+	if (!g_variant_is_object_path (object_path)) {
+		ret = FALSE;
+		g_set_error (error, 1, 0,
+			     "Object path invalid: %s", object_path);
+		goto out;
+	}
 
 	g_clear_pointer (&device->priv->offline_props, g_hash_table_unref);
 
@@ -150,8 +159,8 @@ up_device_set_object_path_sync (UpDevice *device, const gchar *object_path, GCan
 
 	/* yay */
 	device->priv->proxy_device = proxy_device;
-
-	return TRUE;
+out:
+	return ret;
 }
 
 /**
