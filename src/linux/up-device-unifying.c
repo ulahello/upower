@@ -207,8 +207,8 @@ up_device_unifying_coldplug (UpDevice *device)
 				continue;
 
 			/* hidraw device which exposes hiddev interface is our receiver */
-			tmp = g_build_filename(g_udev_device_get_sysfs_path (g_udev_device_get_parent(native)),
-					"usbmisc", NULL);
+			tmp = g_build_filename (g_udev_device_get_sysfs_path (parent),
+					        "usbmisc", NULL);
 			dir = g_dir_open (tmp, 0, &error);
 			g_free(tmp);
 			if (error) {
