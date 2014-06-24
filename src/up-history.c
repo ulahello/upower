@@ -532,6 +532,8 @@ up_history_array_from_file (GPtrArray *list, const gchar *filename)
 		ret = up_history_item_set_from_string (item, parts[i]);
 		if (ret)
 			g_ptr_array_add (list, item);
+		else
+			g_object_unref (item);
 	}
 
 out:
