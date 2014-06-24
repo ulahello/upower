@@ -334,8 +334,7 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 			native = l->data;
 			up_backend_device_add (backend, native);
 		}
-		g_list_foreach (devices, (GFunc) g_object_unref, NULL);
-		g_list_free (devices);
+		g_list_free_full (devices, (GDestroyNotify) g_object_unref);
 	}
 
 	return TRUE;
