@@ -321,8 +321,8 @@ up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 {
 	enum sensor_type type;
 	int numt;
-	gdouble bst_volt, bst_rate, bif_lastfullcap, bst_cap, bif_lowcap;
-	/* gdouble bif_dvolt, bif_dcap, capacity; */
+	gdouble bst_volt, bst_rate, bif_cap, bif_lastfullcap, bst_cap, bif_lowcap, capacity;
+	/* gdouble bif_dvolt; */
 	struct sensor sens;
 	size_t slen = sizeof(sens);
 	int mib[] = {CTL_HW, HW_SENSORS, 0, 0, 0};
@@ -337,6 +337,9 @@ up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 			else if (slen > 0 && (sens.flags & SENSOR_FINVALID) == 0) {
 				if (sens.type == SENSOR_VOLTS_DC && !strcmp(sens.desc, "current voltage"))
 					bst_volt = sens.value / 1000000.0f;
+				if ((sens.type == SENSOR_AMPHOUR || sens.type == SENSOR_WATTHOUR) && !strcmp(sens.desc, "design capacity")) {
+					bif_cap = (sens.type == SENSOR_AMPHOUR ? bst_volt : 1) * sens.value / 1000000.0f;
+				}
 				if ((sens.type == SENSOR_AMPHOUR || sens.type == SENSOR_WATTHOUR) && !strcmp(sens.desc, "last full capacity")) {
 					bif_lastfullcap = (sens.type == SENSOR_AMPHOUR ? bst_volt : 1) * sens.value / 1000000.0f;
 				}
@@ -351,19 +354,30 @@ up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 				}
 				/*
 				bif_dvolt = "voltage" = unused ?
-				capacity = lastfull/dcap * 100 ?
 				amphour1 = warning capacity ?
 				raw0 = battery state
 				*/
 			}
 		}
 	}
+
+	capacity = 0.0f;
+	if(bif_lastfullcap > 0 && bif_cap > 0) {
+		capacity = (bif_lastfullcap / bif_cap) * 100.0f;
+		if (capacity < 0)
+			capacity = 0.0f;
+		if (capacity > 100.0)
+			capacity = 100.0f;
+	}
+
 	g_object_set (device,
 		"energy", bst_cap,
 		"energy-full", bif_lastfullcap,
+		"energy-full-design", bif_cap,
 		"energy-rate", bst_rate,
 		"energy-empty", bif_lowcap,
 		"voltage", bst_volt,
+		"capacity", capacity,
 		(void*) NULL);
 }
 
