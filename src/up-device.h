@@ -23,7 +23,6 @@
 #define __UP_DEVICE_H__
 
 #include <glib-object.h>
-#include <polkit/polkit.h>
 #include <dbus/dbus-glib.h>
 
 #include "up-daemon.h"

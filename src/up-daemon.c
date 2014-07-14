@@ -33,7 +33,6 @@
 #include <dbus/dbus-glib-lowlevel.h>
 
 #include "up-config.h"
-#include "up-polkit.h"
 #include "up-device-list.h"
 #include "up-device.h"
 #include "up-backend.h"
@@ -66,7 +65,6 @@ struct UpDaemonPrivate
 	DBusGConnection		*connection;
 	DBusGProxy		*proxy;
 	UpConfig		*config;
-	UpPolkit		*polkit;
 	UpBackend		*backend;
 	UpDeviceList		*power_devices;
 	guint			 action_timeout_id;
@@ -1103,7 +1101,6 @@ static void
 up_daemon_init (UpDaemon *daemon)
 {
 	daemon->priv = UP_DAEMON_GET_PRIVATE (daemon);
-	daemon->priv->polkit = up_polkit_new ();
 	daemon->priv->config = up_config_new ();
 	daemon->priv->power_devices = up_device_list_new ();
 	daemon->priv->display_device = up_device_new ();
@@ -1272,7 +1269,6 @@ up_daemon_finalize (GObject *object)
 	if (priv->connection != NULL)
 		dbus_g_connection_unref (priv->connection);
 	g_object_unref (priv->power_devices);
-	g_object_unref (priv->polkit);
 	g_object_unref (priv->config);
 	g_object_unref (priv->backend);
 
