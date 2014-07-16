@@ -25,6 +25,7 @@
 #include <glib/gstdio.h>
 #include <up-history-item.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <errno.h>
 #include "up-backend.h"
 #include "up-daemon.h"
