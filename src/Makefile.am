@@ -136,8 +136,6 @@ check_PROGRAMS =						\
 
 up_self_test_SOURCES =						\
 	up-self-test.c						\
-	up-polkit.h						\
-	up-polkit.c						\
 	up-config.h						\
 	up-config.c						\
 	up-daemon.h						\

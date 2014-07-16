@@ -9,7 +9,6 @@ Requirements:
    dbus-1           >= 1.0
    dbus-glib-1      >= 0.76
    gudev-1.0        >= 001
-   polkit-gobject-1 >= 0.91
    libusb
 
 UPower is an abstraction for enumerating power devices,
