@@ -283,6 +283,8 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 	}
 
 out:
+	g_ptr_array_unref (array);
+
 	/* Did anything change? */
 	if (daemon->priv->kind == kind_total &&
 	    daemon->priv->state == state_total &&
