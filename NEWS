@@ -1,3 +1,23 @@
+Version 0.99.1
+~~~~~~~~~~~~~~
+Released: 2014-08-18
+
+New Features:
+ - Expose "capacity" and "energy-full-design" properties on OpenBSD (Fabian Raetz)
+ - Remove IsDocked property (Bastien Nocera)
+ - Remove unused polkit dependency (Eric Koegel, Martin Pitt)
+
+Bugfixes:
+ - Create the history directory at runtime (Cosimo Cecchi)
+ - Do not log a critical warning when using _set_object_path_sync() (Richard Hughes)
+ - Fix API doc for up_client_get_on_battery() (Bastien Nocera)
+ - Fix possible UpHistoryItem leak on failure (Bastien Nocera)
+ - Fix segfault on getting property when daemon is not running (Martin Pitt)
+ - Fix shutdown on boot on some machines (Bastien Nocera)
+ - Fix small memleak on startup with Logitech devices (Bastien Nocera)
+ - Free the obtained device list array after use (Alexander Jesner)
+ - Update lid status when updating AC status (Jasper Lievisse Adriaanse)
+
 Version 0.99.0
 ~~~~~~~~~~~~~~
 Released: 2013-10-29
