@@ -371,11 +371,23 @@ up_backend_get_critical_action (UpBackend *backend)
 		{ "Hibernate", "CanHibernate" },
 		{ "PowerOff", NULL },
 	};
-	guint i;
+	guint i = 0;
+	char *action;
 
 	g_return_val_if_fail (backend->priv->logind_proxy != NULL, NULL);
 
-	for (i = 0; i < G_N_ELEMENTS (actions); i++) {
+	/* Find the configured action first */
+	action = up_config_get_string (backend->priv->config, "CriticalPowerAction");
+	if (action != NULL) {
+		for (i = 0; i < G_N_ELEMENTS (actions); i++)
+			if (g_str_equal (actions[i].method, action))
+				break;
+		if (i >= G_N_ELEMENTS (actions))
+			i = 0;
+		g_free (action);
+	}
+
+	for (; i < G_N_ELEMENTS (actions); i++) {
 		GVariant *result;
 
 		if (actions[i].can_method) {
