@@ -52,6 +52,8 @@ gboolean	 up_config_get_boolean		(UpConfig	*config,
 						 const gchar	*key);
 guint		 up_config_get_uint		(UpConfig	*config,
 						 const gchar	*key);
+gchar		*up_config_get_string           (UpConfig	*config,
+						 const gchar	*key);
 
 G_END_DECLS
 

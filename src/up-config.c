@@ -71,6 +71,16 @@ up_config_get_uint (UpConfig *config, const gchar *key)
 }
 
 /**
+ * up_config_get_string:
+ **/
+gchar *
+up_config_get_string (UpConfig *config, const gchar *key)
+{
+	return g_key_file_get_string (config->priv->keyfile,
+				      "UPower", key, NULL);
+}
+
+/**
  * up_config_class_init:
  **/
 static void
