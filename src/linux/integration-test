@@ -109,7 +109,8 @@ class Tests(unittest.TestCase):
         self.stop_daemon()
 
         # on failures, print daemon log
-        if not self._outcomeForDoCleanups.success and self.log:
+        errors = [x[1] for x in self._outcome.errors if x[1]]
+        if errors and self.log:
             with open(self.log.name) as f:
                 sys.stderr.write('\n-------------- daemon log: ----------------\n')
                 sys.stderr.write(f.read())
