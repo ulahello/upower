@@ -209,16 +209,17 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
 
-    def test_battery_ac(self):
-        '''battery properties with and without AC'''
+    def test_no_devices(self):
+        '''no devices'''
 
         # without any devices we should assume AC
         self.start_daemon()
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
-        self.stop_daemon()
 
-        # online AC
+    def test_props_online_ac(self):
+        '''properties with online AC'''
+
         ac = self.testbed.add_device('power_supply', 'AC', None,
                                      ['type', 'Mains', 'online', '1'], [])
 
@@ -233,20 +234,27 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(ac_up, 'Type'), 1)
         self.assertEqual(self.get_dbus_dev_property(ac_up, 'Online'), True)
         self.assertEqual(self.get_dbus_dev_property(ac_up, 'NativePath'), 'AC')
-        self.stop_daemon()
 
-        # offline AC
-        self.testbed.set_attribute(ac, 'online', '0')
+    def test_props_offline_ac(self):
+        '''properties with offline AC'''
+
+        ac = self.testbed.add_device('power_supply', 'AC', None,
+                                     ['type', 'Mains', 'online', '0'], [])
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
         self.assertEqual(len(devs), 1)
         # we don't have any known online power device now, but still no battery
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
-        self.assertEqual(self.get_dbus_dev_property(ac_up, 'Online'), False)
+        self.assertEqual(self.get_dbus_dev_property(devs[0], 'Online'), False)
         self.stop_daemon()
 
+    def test_battery_ac(self):
+        '''properties with dynamic battery/AC'''
+
         # offline AC + discharging battery
+        ac = self.testbed.add_device('power_supply', 'AC', None,
+                                     ['type', 'Mains', 'online', '0'], [])
         bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
                                        ['type', 'Battery',
                                         'present', '1',
@@ -259,10 +267,11 @@ class Tests(unittest.TestCase):
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
         self.assertEqual(len(devs), 2)
-        if devs[0] == ac_up:
-            bat0_up = devs[1]
+        if 'BAT' in devs[0] == ac_up:
+            (bat0_up, ac_up) = devs
         else:
-            bat0_up = devs[0]
+            (ac_up, bat0_up) = devs
+
         # we don't have any known online power device now, but still no battery
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
@@ -338,8 +347,8 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_CRITICAL)
         self.stop_daemon()
 
-    def test_unknown_battery_status(self):
-        '''Unknown battery charge status'''
+    def test_unknown_battery_status_no_ac(self):
+        '''Unknown battery charge status, no AC'''
 
         self.testbed.add_device('power_supply', 'BAT0', None,
                                 ['type', 'Battery',
@@ -355,9 +364,18 @@ class Tests(unittest.TestCase):
         # we aren't on low battery
         self.start_daemon()
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
-        self.stop_daemon()
 
-        # However, if we have an AC, we can infer
+    def test_unknown_battery_status_with_ac(self):
+        '''Unknown battery charge status, with AC'''
+
+        self.testbed.add_device('power_supply', 'BAT0', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'unknown',
+                                 'energy_full', '60000000',
+                                 'energy_full_design', '80000000',
+                                 'energy_now', '48000000',
+                                 'voltage_now', '12000000'], [])
         ac = self.testbed.add_device('power_supply', 'AC', None,
                                      ['type', 'Mains', 'online', '0'], [])
         self.start_daemon()
@@ -520,8 +538,8 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_CRITICAL)
         self.stop_daemon()
 
-    def test_ups_ac(self):
-        '''UPS properties with and without AC'''
+    def test_ups_no_ac(self):
+        '''UPS properties without AC'''
 
         # add a charging UPS
         ups0 = self.testbed.add_device('usb', 'hiddev0', None, [],
@@ -569,13 +587,27 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
         self.assertEqual(self.get_dbus_property('OnBattery'), True)
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_ACTION)
-        self.stop_daemon()
 
-        # now add an offline AC, should still be on battery
+    def test_ups_offline_ac(self):
+        '''UPS properties with offline AC'''
+
+        # add low charge UPS
+        ups0 = self.testbed.add_device('usb', 'hiddev0', None, [],
+                                       ['DEVNAME', 'null', 'UPOWER_VENDOR', 'APC',
+                                        'UPOWER_BATTERY_TYPE', 'ups',
+                                        'UPOWER_FAKE_DEVICE', '1',
+                                        'UPOWER_FAKE_HID_CHARGING', '0',
+                                        'UPOWER_FAKE_HID_PERCENTAGE', '2'])
+        # add an offline AC, should still be on battery
         ac = self.testbed.add_device('power_supply', 'AC', None,
                                      ['type', 'Mains', 'online', '0'], [])
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
+        if 'AC' in devs[0]:
+            ups0_up = devs[1]
+        else:
+            ups0_up = devs[0]
+
         self.assertEqual(len(devs), 2)
 
         self.assertEqual(self.get_dbus_dev_property(ups0_up, 'Percentage'), 2.0)
