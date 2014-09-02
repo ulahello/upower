@@ -81,7 +81,10 @@ class Tests(unittest.TestCase):
         # set up a fake system D-BUS
         cls.test_bus = Gio.TestDBus.new(Gio.TestDBusFlags.NONE)
         cls.test_bus.up()
-        del os.environ['DBUS_SESSION_BUS_ADDRESS']
+        try:
+            del os.environ['DBUS_SESSION_BUS_ADDRESS']
+        except KeyError:
+            pass
         os.environ['DBUS_SYSTEM_BUS_ADDRESS'] = cls.test_bus.get_bus_address()
 
         cls.dbus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
