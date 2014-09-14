@@ -283,8 +283,8 @@ up_strsplit_complete_set (const gchar *string, const gchar *delimiters, guint ma
 
 			/* find length of string */
 			len = &string[i] - start;
-			if (len > 100)
-				len = 100;
+			if (len > 99)
+				len = 99;
 			strncpy (temp_data, start, len);
 			temp_data[len] = '\0';
 
