@@ -152,7 +152,7 @@ AX_CHECK_LINK_FLAG([-Wl,-z,relro,-z,now],
 		   [RELRO_LDFLAGS="-Wl,-z,relro,-z,now"])
 AC_SUBST([RELRO_LDFLAGS])
 
-PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.29.19])
+PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.34.0])
 PKG_CHECK_MODULES(DBUS, [dbus-1 >= 1.0])
 PKG_CHECK_MODULES(DBUS_GLIB, [dbus-glib-1 >= 0.76])
 PKG_CHECK_MODULES(GIO, [gio-2.0 >= 2.16.1])
