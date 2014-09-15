@@ -213,7 +213,7 @@ up_device_wup_parse_command (UpDeviceWup *wup, const gchar *data)
 	/* replace the first ';' char with a NULL if it exists */
 	length = strlen (packet);
 	for (i=0; i<length; i++) {
-		if (packet[i] < 0x20 && packet[i] > 0x7e)
+		if (packet[i] < 0x20 || packet[i] > 0x7e)
 			packet[i] = '?';
 		if (packet[i] == ';') {
 			packet[i] = '\0';
