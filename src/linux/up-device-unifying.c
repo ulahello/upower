@@ -48,7 +48,6 @@ up_device_unifying_refresh (UpDevice *device)
 {
 	gboolean ret;
 	GError *error = NULL;
-	GTimeVal timeval;
 	HidppRefreshFlags refresh_flags;
 	UpDeviceState state = UP_DEVICE_STATE_UNKNOWN;
 	UpDeviceUnifying *unifying = UP_DEVICE_UNIFYING (device);
@@ -95,7 +94,6 @@ up_device_unifying_refresh (UpDevice *device)
 		state = UP_DEVICE_STATE_UNKNOWN;
 	}
 
-	g_get_current_time (&timeval);
 	lux = hidpp_device_get_luminosity (priv->hidpp_device);
 	if (lux >= 0) {
 		g_object_set (device, "luminosity", lux, NULL);
@@ -105,7 +103,7 @@ up_device_unifying_refresh (UpDevice *device)
 		      "is-present", hidpp_device_is_reachable (priv->hidpp_device),
 		      "percentage", (gdouble) hidpp_device_get_batt_percentage (priv->hidpp_device),
 		      "state", state,
-		      "update-time", (guint64) timeval.tv_sec,
+		      "update-time", (guint64) g_get_real_time (),
 		      NULL);
 out:
 	return TRUE;

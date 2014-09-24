@@ -393,7 +393,6 @@ up_device_hid_refresh (UpDevice *device)
 {
 	gboolean set = FALSE;
 	gboolean ret = FALSE;
-	GTimeVal timeval;
 	guint i;
 	struct hiddev_event ev[64];
 	int rd;
@@ -428,8 +427,7 @@ up_device_hid_refresh (UpDevice *device)
 	up_device_hid_fixup_state (device);
 
 	/* reset time */
-	g_get_current_time (&timeval);
-	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
+	g_object_set (device, "update-time", (guint64) g_get_real_time (), NULL);
 out:
 	return ret;
 }

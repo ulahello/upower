@@ -388,7 +388,6 @@ static gboolean
 up_device_wup_refresh (UpDevice *device)
 {
 	gboolean ret = FALSE;
-	GTimeVal timeval;
 	gchar *data = NULL;
 	UpDeviceWup *wup = UP_DEVICE_WUP (device);
 
@@ -407,8 +406,7 @@ up_device_wup_refresh (UpDevice *device)
 	}
 
 	/* reset time */
-	g_get_current_time (&timeval);
-	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
+	g_object_set (device, "update-time", (guint64) g_get_real_time (), NULL);
 
 out:
 	g_free (data);

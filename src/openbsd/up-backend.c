@@ -399,7 +399,6 @@ static gboolean
 up_apm_device_refresh(UpDevice* device)
 {
 	UpDeviceKind type;
-	GTimeVal timeval;
 	gboolean ret;
 	g_object_get (device, "type", &type, NULL);
 
@@ -415,10 +414,8 @@ up_apm_device_refresh(UpDevice* device)
 			break;
 	}
 
-	if (ret) {
-		g_get_current_time (&timeval);
-		g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
-	}
+	if (ret)
+		g_object_set (device, "update-time", (guint64) g_get_real_time (), NULL);
 
 	return ret;
 }
@@ -578,8 +575,8 @@ static void
 up_backend_init (UpBackend *backend)
 {
 	GError *err = NULL;
-	GTimeVal timeval;
 	UpDeviceClass *device_class;
+	gint64 current_time;
 
 	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
 	backend->priv->is_laptop = up_native_is_laptop();
@@ -604,7 +601,7 @@ up_backend_init (UpBackend *backend)
 		}
 
 		/* setup dummy */
-		g_get_current_time (&timeval);
+		current_time = g_get_real_time ();
 		g_object_set (backend->priv->battery,
 			      "type", UP_DEVICE_KIND_BATTERY,
 			      "power-supply", TRUE,
@@ -614,13 +611,13 @@ up_backend_init (UpBackend *backend)
 			      "state", UP_DEVICE_STATE_UNKNOWN,
 			      "percentage", 0.0f,
 			      "time-to-empty", (gint64) 0,
-			      "update-time", (guint64) timeval.tv_sec,
+			      "update-time", (guint64) current_time,
 			      (void*) NULL);
 		g_object_set (backend->priv->ac,
 			      "type", UP_DEVICE_KIND_LINE_POWER,
 			      "online", TRUE,
 			      "power-supply", TRUE,
-			      "update-time", (guint64) timeval.tv_sec,
+			      "update-time", (guint64) current_time,
 			      (void*) NULL);
 	}
 }

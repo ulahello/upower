@@ -219,7 +219,6 @@ static gboolean
 up_device_csr_refresh (UpDevice *device)
 {
 	gboolean ret = FALSE;
-	GTimeVal timeval;
 	UpDeviceCsr *csr = UP_DEVICE_CSR (device);
 	libusb_device_handle *handle = NULL;
 	guint8 buf[80];
@@ -275,8 +274,7 @@ up_device_csr_refresh (UpDevice *device)
 	}
 
 	/* reset time */
-	g_get_current_time (&timeval);
-	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
+	g_object_set (device, "update-time", (guint64) g_get_real_time (), NULL);
 
 	/* success */
 	ret = TRUE;

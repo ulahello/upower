@@ -1088,7 +1088,6 @@ static gboolean
 up_device_supply_refresh (UpDevice *device)
 {
 	gboolean ret;
-	GTimeVal timeval;
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
 	UpDeviceKind type;
 	UpDeviceState state;
@@ -1109,10 +1108,8 @@ up_device_supply_refresh (UpDevice *device)
 	}
 
 	/* reset time if we got new data */
-	if (ret) {
-		g_get_current_time (&timeval);
-		g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
-	}
+	if (ret)
+		g_object_set (device, "update-time", (guint64) g_get_real_time (), NULL);
 
 	return ret;
 }

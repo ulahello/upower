@@ -68,14 +68,12 @@ static gboolean
 up_backend_changed_time_cb (UpBackend *backend)
 {
 	UpDevice *device;
-	GTimeVal timeval;
 
 	//FIXME!
 	device = NULL;
 
 	/* reset time */
-	g_get_current_time (&timeval);
-	g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
+	g_object_set (device, "update-time", (guint64) g_get_real_time (), NULL);
 	return TRUE;
 }
 

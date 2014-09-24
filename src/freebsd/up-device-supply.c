@@ -382,7 +382,6 @@ static gboolean
 up_device_supply_refresh (UpDevice *device)
 {
 	GObject *object;
-	GTimeVal timeval;
 	UpDeviceKind type;
 	gboolean ret;
 
@@ -400,10 +399,8 @@ up_device_supply_refresh (UpDevice *device)
 			break;
 	}
 
-	if (ret) {
-		g_get_current_time (&timeval);
-		g_object_set (device, "update-time", (guint64) timeval.tv_sec, NULL);
-	}
+	if (ret)
+		g_object_set (device, "update-time", (guint64) g_get_real_time (), NULL);
 
 	return ret;
 }
