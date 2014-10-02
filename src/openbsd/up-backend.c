@@ -415,7 +415,7 @@ up_apm_device_refresh(UpDevice* device)
 	}
 
 	if (ret)
-		g_object_set (device, "update-time", (guint64) g_get_real_time (), NULL);
+		g_object_set (device, "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC, NULL);
 
 	return ret;
 }
@@ -601,7 +601,7 @@ up_backend_init (UpBackend *backend)
 		}
 
 		/* setup dummy */
-		current_time = g_get_real_time ();
+		current_time = g_get_real_time () / G_USEC_PER_SEC;
 		g_object_set (backend->priv->battery,
 			      "type", UP_DEVICE_KIND_BATTERY,
 			      "power-supply", TRUE,

@@ -103,7 +103,7 @@ up_device_unifying_refresh (UpDevice *device)
 		      "is-present", hidpp_device_is_reachable (priv->hidpp_device),
 		      "percentage", (gdouble) hidpp_device_get_batt_percentage (priv->hidpp_device),
 		      "state", state,
-		      "update-time", (guint64) g_get_real_time (),
+		      "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC,
 		      NULL);
 out:
 	return TRUE;

@@ -200,7 +200,7 @@ up_device_idevice_refresh (UpDevice *device)
 	plist_free (dict);
 
 	/* reset time */
-	g_object_set (device, "update-time", (guint64) g_get_real_time (), NULL);
+	g_object_set (device, "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC, NULL);
 
 	retval = TRUE;
 

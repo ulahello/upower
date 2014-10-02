@@ -427,7 +427,7 @@ up_device_hid_refresh (UpDevice *device)
 	up_device_hid_fixup_state (device);
 
 	/* reset time */
-	g_object_set (device, "update-time", (guint64) g_get_real_time (), NULL);
+	g_object_set (device, "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC, NULL);
 out:
 	return ret;
 }

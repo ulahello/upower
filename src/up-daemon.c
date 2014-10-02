@@ -317,7 +317,7 @@ out:
 		      "percentage", percentage_total,
 		      "is-present", is_present_total,
 		      "power-supply", TRUE,
-		      "update-time", (guint64) g_get_real_time (),
+		      "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC,
 		      NULL);
 
 	return TRUE;
@@ -757,7 +757,7 @@ up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 
 	g_object_set (G_OBJECT (daemon->priv->display_device),
 		      "warning-level", warning_level,
-		      "update-time", (guint64) g_get_real_time (),
+		      "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC,
 		      NULL);
 
 	if (daemon->priv->warning_level == UP_DEVICE_LEVEL_ACTION) {
