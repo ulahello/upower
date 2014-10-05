@@ -138,10 +138,14 @@ up_device_idevice_coldplug (UpDevice *device)
 	return TRUE;
 
 out:
-	if (client != NULL)
+	if (client != NULL) {
 		lockdownd_client_free (client);
-	if (dev != NULL)
+		idevice->priv->client = NULL;
+	}
+	if (dev != NULL) {
 		idevice_free (dev);
+		idevice->priv->dev = NULL;
+	}
 	return FALSE;
 }
 
@@ -238,7 +242,8 @@ up_device_idevice_finalize (GObject *object)
 	up_daemon_stop_poll (object);
 	if (idevice->priv->client != NULL)
 		lockdownd_client_free (idevice->priv->client);
-	idevice_free (idevice->priv->dev);
+	if (idevice->priv->dev != NULL)
+		idevice_free (idevice->priv->dev);
 
 	G_OBJECT_CLASS (up_device_idevice_parent_class)->finalize (object);
 }
