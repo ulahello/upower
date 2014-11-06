@@ -662,8 +662,10 @@ up_daemon_queue_changed_property (UpDaemon    *daemon,
 {
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 
-	if (daemon->priv->connection == NULL)
+	if (daemon->priv->connection == NULL) {
+		g_variant_unref (value);
 		return;
+	}
 
 	if (!daemon->priv->changed_props) {
 		daemon->priv->changed_props = g_hash_table_new_full (g_str_hash, g_str_equal,
