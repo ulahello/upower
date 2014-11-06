@@ -743,7 +743,7 @@ up_device_register_display_device (UpDevice *device,
 gboolean
 up_device_get_statistics (UpDevice *device, const gchar *type, DBusGMethodInvocation *context)
 {
-	GError *error;
+	GError *error = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *complex;
 	UpStatsItem *item;
@@ -781,7 +781,7 @@ up_device_get_statistics (UpDevice *device, const gchar *type, DBusGMethodInvoca
 	}
 
 	/* copy data to dbus struct */
-	complex = g_ptr_array_sized_new (array->len);
+	complex = g_ptr_array_new_full (array->len, (GDestroyNotify) g_value_array_free);
 	for (i=0; i<array->len; i++) {
 		item = (UpStatsItem *) g_ptr_array_index (array, i);
 		value = g_new0 (GValue, 1);
@@ -789,15 +789,19 @@ up_device_get_statistics (UpDevice *device, const gchar *type, DBusGMethodInvoca
 		g_value_take_boxed (value, dbus_g_type_specialized_construct (UP_DBUS_STRUCT_DOUBLE_DOUBLE));
 		dbus_g_type_struct_set (value,
 					0, up_stats_item_get_value (item),
-					1, up_stats_item_get_accuracy (item), -1);
+					1, up_stats_item_get_accuracy (item),
+					G_MAXUINT);
 		g_ptr_array_add (complex, g_value_get_boxed (value));
 		g_free (value);
 	}
 
 	dbus_g_method_return (context, complex);
+	g_ptr_array_unref (complex);
 out:
 	if (array != NULL)
 		g_ptr_array_unref (array);
+	if (error != NULL)
+		g_error_free (error);
 	return TRUE;
 }
 
@@ -807,7 +811,7 @@ out:
 gboolean
 up_device_get_history (UpDevice *device, const gchar *type_string, guint timespan, guint resolution, DBusGMethodInvocation *context)
 {
-	GError *error;
+	GError *error = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *complex;
 	UpHistoryItem *item;
@@ -847,7 +851,7 @@ up_device_get_history (UpDevice *device, const gchar *type_string, guint timespa
 	}
 
 	/* copy data to dbus struct */
-	complex = g_ptr_array_sized_new (array->len);
+	complex = g_ptr_array_new_full (array->len, (GDestroyNotify) g_value_array_free);
 	for (i=0; i<array->len; i++) {
 		item = (UpHistoryItem *) g_ptr_array_index (array, i);
 		value = g_new0 (GValue, 1);
@@ -856,15 +860,19 @@ up_device_get_history (UpDevice *device, const gchar *type_string, guint timespa
 		dbus_g_type_struct_set (value,
 					0, up_history_item_get_time (item),
 					1, up_history_item_get_value (item),
-					2, up_history_item_get_state (item), -1);
+					2, up_history_item_get_state (item),
+					G_MAXUINT);
 		g_ptr_array_add (complex, g_value_get_boxed (value));
 		g_free (value);
 	}
 
 	dbus_g_method_return (context, complex);
+	g_ptr_array_unref (complex);
 out:
 	if (array != NULL)
 		g_ptr_array_unref (array);
+	if (error != NULL)
+		g_error_free (error);
 	return TRUE;
 }
 
