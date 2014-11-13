@@ -832,6 +832,23 @@ up_daemon_compute_warning_level (UpDaemon      *daemon,
 	g_assert_not_reached ();
 }
 
+static void
+up_daemon_update_warning_level (UpDaemon *daemon)
+{
+	gboolean ret;
+	UpDaemonPrivate *priv = daemon->priv;
+	UpDeviceLevel warning_level;
+
+	/* Check if the on_battery and warning_level state has changed */
+	ret = (up_daemon_get_on_battery_local (daemon) && !up_daemon_get_on_ac_local (daemon));
+	if (ret != priv->on_battery) {
+		up_daemon_set_on_battery (daemon, ret);
+	}
+	warning_level = up_daemon_get_warning_level_local (daemon);
+	if (warning_level != priv->warning_level)
+		up_daemon_set_warning_level (daemon, warning_level);
+}
+
 /**
  * up_daemon_device_changed_cb:
  **/
@@ -839,9 +856,6 @@ static void
 up_daemon_device_changed_cb (UpDevice *device, GParamSpec *pspec, UpDaemon *daemon)
 {
 	UpDeviceKind type;
-	gboolean ret;
-	UpDaemonPrivate *priv = daemon->priv;
-	UpDeviceLevel warning_level;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 	g_return_if_fail (UP_IS_DEVICE (device));
@@ -855,14 +869,7 @@ up_daemon_device_changed_cb (UpDevice *device, GParamSpec *pspec, UpDaemon *daem
 		up_daemon_refresh_battery_devices (daemon);
 	}
 
-	/* second, check if the on_battery and warning_level state has changed */
-	ret = (up_daemon_get_on_battery_local (daemon) && !up_daemon_get_on_ac_local (daemon));
-	if (ret != priv->on_battery) {
-		up_daemon_set_on_battery (daemon, ret);
-	}
-	warning_level = up_daemon_get_warning_level_local (daemon);
-	if (warning_level != priv->warning_level)
-		up_daemon_set_warning_level (daemon, warning_level);
+	up_daemon_update_warning_level (daemon);
 }
 
 typedef struct {
