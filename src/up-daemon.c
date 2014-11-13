@@ -1070,6 +1070,9 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 
 	/* finalise the object */
 	g_object_unref (device);
+
+	/* In case a battery was removed */
+	up_daemon_refresh_battery_devices (daemon);
 }
 
 #define LOAD_OR_DEFAULT(val, str, def) val = (load_default ? def : up_config_get_uint (daemon->priv->config, str))
