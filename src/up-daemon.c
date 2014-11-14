@@ -1051,12 +1051,6 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 	/* remove from list */
 	up_device_list_remove (priv->power_devices, G_OBJECT(device));
 
-	/* update our internal state in case a battery was removed; this also
-	 * ensures that the display device contains up to date information */
-	warning_level = up_daemon_get_warning_level_local (daemon);
-	if (warning_level != priv->warning_level)
-		up_daemon_set_warning_level (daemon, warning_level);
-
 	/* emit */
 	object_path = up_device_get_object_path (device);
 	g_debug ("emitting device-removed: %s", object_path);
@@ -1073,6 +1067,7 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 
 	/* In case a battery was removed */
 	up_daemon_refresh_battery_devices (daemon);
+	up_daemon_update_warning_level (daemon);
 }
 
 #define LOAD_OR_DEFAULT(val, str, def) val = (load_default ? def : up_config_get_uint (daemon->priv->config, str))
