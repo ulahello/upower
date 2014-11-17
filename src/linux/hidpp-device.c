@@ -818,7 +818,7 @@ hidpp_device_refresh (HidppDevice *device,
 
 	/* get serial number, this can be queried from the receiver */
 	if ((refresh_flags & HIDPP_REFRESH_FLAGS_SERIAL) > 0) {
-		guint32 *serialp;
+		guint32 serial;
 
 		msg.type = HIDPP_MSG_TYPE_SHORT;
 		msg.device_idx = HIDPP_RECEIVER_ADDRESS;
@@ -834,8 +834,8 @@ hidpp_device_refresh (HidppDevice *device,
 		if (!ret)
 			goto out;
 
-		serialp = (guint32 *) &msg.l.params[1];
-		priv->serial = g_strdup_printf ("%08X", g_ntohl(*serialp));
+		memcpy (&serial, msg.l.params + 1, sizeof(serial));
+		priv->serial = g_strdup_printf ("%08X", g_ntohl(serial));
 	}
 
 	/* get battery status */
