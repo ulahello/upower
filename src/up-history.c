@@ -299,7 +299,7 @@ up_history_get_profile_data (UpHistory *history, gboolean charging)
 	g_return_val_if_fail (UP_IS_HISTORY (history), NULL);
 
 	/* create 100 item list and set to zero */
-	data = g_ptr_array_new ();
+	data = g_ptr_array_new_full (101, g_object_unref);
 	for (i=0; i<101; i++) {
 		stats = up_stats_item_new ();
 		g_ptr_array_add (data, stats);
