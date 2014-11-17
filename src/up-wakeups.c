@@ -469,6 +469,7 @@ up_wakeups_poll_userspace_cb (UpWakeups *wakeups)
 	guint pid;
 	guint interrupts;
 	gfloat interval = 5.0f;
+	gchar *cmdline;
 
 	g_debug ("event");
 
@@ -546,7 +547,9 @@ up_wakeups_poll_userspace_cb (UpWakeups *wakeups)
 				up_wakeup_item_set_is_userspace (item, FALSE);
 			} else {
 				/* try to get a better command line */
-				up_wakeup_item_set_cmdline (item, up_wakeups_get_cmdline (pid));
+				cmdline = up_wakeups_get_cmdline (pid);
+				up_wakeup_item_set_cmdline (item, cmdline);
+				g_free (cmdline);
 				if (up_wakeup_item_get_cmdline (item) == NULL ||
 				    up_wakeup_item_get_cmdline (item)[0] == '\0')
 					up_wakeup_item_set_cmdline (item, string);
