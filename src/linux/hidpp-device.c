@@ -1015,6 +1015,17 @@ out:
 }
 
 /**
+ * hidpp_device_free_feature:
+ **/
+static void
+hidpp_device_free_feature (gpointer data)
+{
+	HidppDeviceMap *map = data;
+	g_free (map->name);
+	g_free (map);
+}
+
+/**
  * hidpp_device_init:
  **/
 static void
@@ -1024,7 +1035,7 @@ hidpp_device_init (HidppDevice *device)
 
 	device->priv = HIDPP_DEVICE_GET_PRIVATE (device);
 	device->priv->fd = -1;
-	device->priv->feature_index = g_ptr_array_new_with_free_func (g_free);
+	device->priv->feature_index = g_ptr_array_new_with_free_func (hidpp_device_free_feature);
 	device->priv->batt_status = HIDPP_DEVICE_BATT_STATUS_UNKNOWN;
 	device->priv->kind = HIDPP_DEVICE_KIND_UNKNOWN;
 	device->priv->lux = -1;
