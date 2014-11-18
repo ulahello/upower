@@ -69,6 +69,7 @@ struct UpDaemonPrivate
 	UpDeviceList		*power_devices;
 	guint			 action_timeout_id;
 	GHashTable		*poll_timeouts;
+	GHashTable		*idle_signals;
 
 	/* Properties */
 	gboolean		 on_battery;
@@ -952,6 +953,7 @@ up_daemon_start_poll (GObject     *object,
 	UpDevice *device;
 	TimeoutData *data;
 	guint timeout;
+	ulong handler_id;
 	char *name;
 
 	device = UP_DEVICE (object);
@@ -969,8 +971,10 @@ up_daemon_start_poll (GObject     *object,
 	timeout = calculate_timeout (device);
 	data->timeout = timeout;
 
-	g_signal_connect (device, "notify::warning-level",
-			  G_CALLBACK (change_idle_timeout), NULL);
+	handler_id = g_signal_connect (device, "notify::warning-level",
+				       G_CALLBACK (change_idle_timeout), NULL);
+	g_hash_table_insert (daemon->priv->idle_signals, device,
+			     GUINT_TO_POINTER (handler_id));
 	g_object_weak_ref (object, device_destroyed, daemon);
 
 	data->id = g_timeout_add_seconds (timeout, fire_timeout_callback, device);
@@ -991,9 +995,19 @@ up_daemon_stop_poll (GObject *object)
 	UpDevice *device;
 	TimeoutData *data;
 	UpDaemon *daemon;
+	gpointer value;
+	gulong handle_id;
 
 	device = UP_DEVICE (object);
 	daemon = up_device_get_daemon (device);
+
+	value = g_hash_table_lookup (daemon->priv->idle_signals, device);
+	if (value != NULL) {
+		handle_id = GPOINTER_TO_UINT (value);
+		if (g_signal_handler_is_connected (device, handle_id))
+			g_signal_handler_disconnect (device, handle_id);
+		g_hash_table_remove (daemon->priv->idle_signals, device);
+	}
 
 	data = g_hash_table_lookup (daemon->priv->poll_timeouts, device);
 	if (data == NULL)
@@ -1137,6 +1151,7 @@ up_daemon_init (UpDaemon *daemon)
 
 	daemon->priv->poll_timeouts = g_hash_table_new_full (g_direct_hash, g_direct_equal,
 							     NULL, g_free);
+	daemon->priv->idle_signals = g_hash_table_new (g_direct_hash, g_direct_equal);
 }
 
 /**
@@ -1281,6 +1296,7 @@ up_daemon_finalize (GObject *object)
 		g_source_remove (priv->props_idle_id);
 
 	g_clear_pointer (&priv->poll_timeouts, g_hash_table_destroy);
+	g_clear_pointer (&priv->idle_signals, g_hash_table_destroy);
 
 	g_clear_pointer (&daemon->priv->changed_props, g_hash_table_unref);
 	if (priv->proxy != NULL)
