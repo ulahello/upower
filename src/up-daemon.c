@@ -1042,7 +1042,6 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 {
 	const gchar *object_path;
 	UpDaemonPrivate *priv = daemon->priv;
-	UpDeviceLevel warning_level;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 	g_return_if_fail (UP_IS_DEVICE (device));
