@@ -897,6 +897,7 @@ change_idle_timeout (UpDevice   *device,
 
 	up_daemon_stop_poll (G_OBJECT (device));
 	up_daemon_start_poll (G_OBJECT (device), callback);
+	g_object_unref (daemon);
 }
 
 static void
@@ -930,6 +931,7 @@ fire_timeout_callback (gpointer user_data)
 
 	/* Fire the actual callback */
 	(data->callback) (device);
+	g_object_unref (daemon);
 
 	return G_SOURCE_CONTINUE;
 }
@@ -962,7 +964,7 @@ up_daemon_start_poll (GObject     *object,
 	if (g_hash_table_lookup (daemon->priv->poll_timeouts, device) != NULL) {
 		g_warning ("Poll already started for device '%s'",
 			   up_device_get_object_path (device));
-		return;
+		goto out;
 	}
 
 	data = g_new0 (TimeoutData, 1);
@@ -987,6 +989,8 @@ up_daemon_start_poll (GObject     *object,
 
 	g_debug ("Setup poll for '%s' every %u seconds",
 		 up_device_get_object_path (device), timeout);
+out:
+	g_object_unref (daemon);
 }
 
 void
@@ -1011,11 +1015,13 @@ up_daemon_stop_poll (GObject *object)
 
 	data = g_hash_table_lookup (daemon->priv->poll_timeouts, device);
 	if (data == NULL)
-		return;
+		goto out;
 
 	g_source_remove (data->id);
 	g_object_weak_unref (object, device_destroyed, daemon);
 	g_hash_table_remove (daemon->priv->poll_timeouts, device);
+out:
+	g_object_unref (daemon);
 }
 
 /**
@@ -1304,6 +1310,7 @@ up_daemon_finalize (GObject *object)
 	if (priv->connection != NULL)
 		dbus_g_connection_unref (priv->connection);
 	g_object_unref (priv->power_devices);
+	g_object_unref (priv->display_device);
 	g_object_unref (priv->config);
 	g_object_unref (priv->backend);
 
