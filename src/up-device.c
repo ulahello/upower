@@ -722,6 +722,22 @@ bail:
 }
 
 /**
+ * up_device_unplug:
+ *
+ * Initiates destruction of %UpDevice, undoing the effects of
+ * up_device_coldplug.
+ */
+void
+up_device_unplug (UpDevice *device)
+{
+	/* break circular dependency */
+	if (device->priv->daemon != NULL) {
+		g_object_unref (device->priv->daemon);
+		device->priv->daemon = NULL;
+	}
+}
+
+/**
  * up_device_register_display_device:
  **/
 gboolean

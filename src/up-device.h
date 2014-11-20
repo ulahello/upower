@@ -75,6 +75,7 @@ UpDevice	*up_device_new			(void);
 gboolean	 up_device_coldplug		(UpDevice	*device,
 						 UpDaemon	*daemon,
 						 GObject	*native);
+void		 up_device_unplug		(UpDevice	*device);
 gboolean	 up_device_register_display_device (UpDevice	*device,
 						    UpDaemon	*daemon);
 UpDaemon	*up_device_get_daemon		(UpDevice	*device);

@@ -340,6 +340,33 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 	return TRUE;
 }
 
+/**
+ * up_backend_unplug:
+ * @backend: The %UpBackend class instance
+ *
+ * Forget about all learned devices, effectively undoing up_backend_coldplug.
+ * Resources are released without emitting signals.
+ */
+void
+up_backend_unplug (UpBackend *backend)
+{
+	if (backend->priv->gudev_client != NULL) {
+		g_object_unref (backend->priv->gudev_client);
+		backend->priv->gudev_client = NULL;
+	}
+	if (backend->priv->device_list != NULL) {
+		g_object_unref (backend->priv->device_list);
+		backend->priv->device_list = NULL;
+	}
+	/* set in init, clear the list to remove reference to UpDaemon */
+	if (backend->priv->managed_devices != NULL)
+		up_device_list_clear (backend->priv->managed_devices, FALSE);
+	if (backend->priv->daemon != NULL) {
+		g_object_unref (backend->priv->daemon);
+		backend->priv->daemon = NULL;
+	}
+}
+
 static gboolean
 check_action_result (GVariant *result)
 {

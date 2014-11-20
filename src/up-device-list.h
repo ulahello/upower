@@ -61,6 +61,8 @@ gboolean	 up_device_list_insert			(UpDeviceList		*list,
 							 GObject		*device);
 gboolean	 up_device_list_remove			(UpDeviceList		*list,
 							 GObject		*device);
+void		 up_device_list_clear			(UpDeviceList		*list,
+							 gboolean unref_it);
 GPtrArray	*up_device_list_get_array		(UpDeviceList		*list);
 
 G_END_DECLS

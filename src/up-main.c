@@ -278,6 +278,7 @@ main (gint argc, gchar **argv)
 
 	/* wait for input or timeout */
 	g_main_loop_run (loop);
+	up_daemon_shutdown (daemon);
 	retval = 0;
 out:
 	if (kbd_backlight != NULL)

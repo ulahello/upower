@@ -547,6 +547,24 @@ out:
 }
 
 /**
+ * up_daemon_shutdown:
+ *
+ * Stop the daemon, release all devices and resources.
+ **/
+void
+up_daemon_shutdown (UpDaemon *daemon)
+{
+	/* stop accepting new devices and clear backend state */
+	up_backend_unplug (daemon->priv->backend);
+
+	/* forget about discovered devices and release UpDaemon reference */
+	up_device_list_clear (daemon->priv->power_devices, TRUE);
+
+	/* release UpDaemon reference */
+	up_device_unplug (daemon->priv->display_device);
+}
+
+/**
  * up_daemon_get_device_list:
  **/
 UpDeviceList *

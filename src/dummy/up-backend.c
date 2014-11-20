@@ -129,6 +129,26 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 }
 
 /**
+ * up_backend_unplug:
+ * @backend: The %UpBackend class instance
+ *
+ * Forget about all learned devices, effectively undoing up_backend_coldplug.
+ * Resources are released without emitting signals.
+ */
+void
+up_backend_unplug (UpBackend *backend)
+{
+	if (backend->priv->device_list != NULL) {
+		g_object_unref (backend->priv->device_list);
+		backend->priv->device_list = NULL;
+	}
+	if (backend->priv->daemon != NULL) {
+		g_object_unref (backend->priv->daemon);
+		backend->priv->daemon = NULL;
+	}
+}
+
+/**
  * up_backend_get_critical_action:
  * @backend: The %UpBackend class instance
  *
