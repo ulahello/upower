@@ -158,7 +158,7 @@ main (gint argc, gchar **argv)
 	UpKbdBacklight *kbd_backlight = NULL;
 	UpWakeups *wakeups = NULL;
 	GOptionContext *context;
-	DBusGProxy *bus_proxy;
+	DBusGProxy *bus_proxy = NULL;
 	DBusGConnection *bus;
 	gboolean ret;
 	gint retval = 1;
@@ -289,6 +289,8 @@ out:
 		g_object_unref (daemon);
 	if (loop != NULL)
 		g_main_loop_unref (loop);
+	if (bus_proxy != NULL)
+		g_object_unref (bus_proxy);
 	return retval;
 }
 
