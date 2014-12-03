@@ -973,7 +973,7 @@ up_daemon_start_poll (GObject     *object,
 	UpDevice *device;
 	TimeoutData *data;
 	guint timeout;
-	ulong handler_id;
+	gulong handler_id;
 	char *name;
 
 	device = UP_DEVICE (object);
