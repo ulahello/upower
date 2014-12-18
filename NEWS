@@ -1,3 +1,24 @@
+Version 0.99.2
+~~~~~~~~~~~~~~
+Released: 2014-12-18
+
+Bugfixes:
+ - Avoid unaligned memory access in hidpp-device (Peter Wu)
+ - Bump GLib min req to 2.34 (Eric Koegel)
+ - Correct check to prevent the display of invalid ASCII codes (Eric Koegel)
+ - Fencepost array access error (Eric Koegel)
+ - Fix cleanup in up_device_idevice_coldplug/finalize (Nikolay Martynov)
+ - Fix crash if there is no session D-BUS (Martin Pitt)
+ - Fix error handling for Python 3.4 (Martin Pitt)
+ - Fix various memory and reference leaks (Peter Wu)
+ - Release resources at shutdown (Peter Wu)
+ - Respect the CriticalPowerAction config option (Bastien Nocera)
+ - Set update-time on the aggregate device (Bastien Nocera)
+ - Split out updating on_battery and warning_level (Bastien Nocera)
+ - Update aggregate device on battery removal (Evangelos Foutras)
+ - Update display device when battery is removed (Bastien Nocera)
+ - Use g_get_real_time() when possible (Bastien Nocera)
+
 Version 0.99.1
 ~~~~~~~~~~~~~~
 Released: 2014-08-18
