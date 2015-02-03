@@ -208,7 +208,7 @@ if test x$with_backend = xlinux; then
 	      [PKG_CHECK_MODULES(IDEVICE, libimobiledevice-1.0 >= 0.9.7 libplist >= 0.12, have_idevice=yes, have_idevice=no)],
 	      [have_idevice=no])
 	AS_IF([test "x$have_idevice" = "xyes"],
-	      [AC_DEFINE(HAVE_IDEVICE, 1, [Define to 1 if AFC is going to be built])])
+	      [AC_DEFINE(HAVE_IDEVICE, 1, [Define to 1 if iDevice is going to be built])])
 fi
 
 AM_CONDITIONAL(HAVE_IDEVICE, [test x$have_idevice = xyes])
