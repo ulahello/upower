@@ -193,6 +193,10 @@ up_device_idevice_refresh (UpDevice *device)
 
 	/* get battery status */
 	node = plist_dict_get_item (dict, "BatteryCurrentCapacity");
+	if (!node) {
+		plist_free (dict);
+		goto out;
+	}
 	plist_get_uint_val (node, &percentage);
 
 	g_object_set (device, "percentage", (double) percentage, NULL);
