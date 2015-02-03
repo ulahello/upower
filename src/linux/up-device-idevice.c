@@ -88,16 +88,17 @@ start_poll_cb (UpDeviceIdevice *idevice)
 	if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake (dev, &client, "upower"))
 		goto out;
 
-	/* Set up struct */
-	idevice->priv->dev = dev;
-	idevice->priv->client = client;
-
 	/* coldplug */
-	if (up_device_idevice_refresh (device) == FALSE)
+	idevice->priv->client = client;
+	if (up_device_idevice_refresh (device) == FALSE) {
+		idevice->priv->client = NULL;
 		goto out;
+	}
+	idevice->priv->dev = dev;
 
-	/* disconnect */
-	g_clear_pointer (&idevice->priv->client, lockdownd_client_free);
+	/* _refresh will reopen a new lockdownd client */
+	idevice->priv->client = NULL;
+	g_clear_pointer (&client, lockdownd_client_free);
 
 	g_object_set (G_OBJECT (idevice), "is-present", TRUE, NULL);
 
