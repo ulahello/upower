@@ -422,7 +422,7 @@ GPtrArray *
 up_device_get_history_sync (UpDevice *device, const gchar *type, guint timespec, guint resolution, GCancellable *cancellable, GError **error)
 {
 	GError *error_local = NULL;
-	GVariant *gva;
+	GVariant *gva = NULL;
 	guint i;
 	GPtrArray *array = NULL;
 	gboolean ret;
@@ -502,7 +502,7 @@ GPtrArray *
 up_device_get_statistics_sync (UpDevice *device, const gchar *type, GCancellable *cancellable, GError **error)
 {
 	GError *error_local = NULL;
-	GVariant *gva;
+	GVariant *gva = NULL;
 	guint i;
 	GPtrArray *array = NULL;
 	gboolean ret;
