@@ -932,9 +932,12 @@ up_device_supply_coldplug (UpDevice *device)
 	const gchar *scope;
 	gchar *device_type = NULL;
 	gchar *input_path = NULL;
+	gchar *subdir = NULL;
 	GDir *dir = NULL;
 	GError *error = NULL;
 	UpDeviceKind type = UP_DEVICE_KIND_UNKNOWN;
+	guint i;
+	const char *class[] = { "hid", "bluetooth" };
 
 	up_device_supply_reset_values (supply);
 
@@ -970,28 +973,39 @@ up_device_supply_coldplug (UpDevice *device)
 		if (g_ascii_strcasecmp (device_type, "mains") == 0) {
 			type = UP_DEVICE_KIND_LINE_POWER;
 		} else if (g_ascii_strcasecmp (device_type, "battery") == 0) {
+			for (i = 0; i < G_N_ELEMENTS(class) && type == UP_DEVICE_KIND_UNKNOWN; i++) {
+				/* Detect if the battery comes from bluetooth keyboard or mouse. */
+				bluetooth = g_udev_device_get_parent_with_subsystem (native, class[i], NULL);
+				if (bluetooth != NULL) {
+					device_path = g_udev_device_get_sysfs_path (bluetooth);
 
-			/* Detect if the battery comes from bluetooth keyboard or mouse. */
-			bluetooth = g_udev_device_get_parent_with_subsystem (native, "bluetooth", NULL);
-			if (bluetooth != NULL) {
-				device_path = g_udev_device_get_sysfs_path (bluetooth);
-				if ((dir = g_dir_open (device_path, 0, &error))) {
-					while ((file = g_dir_read_name (dir))) {
-						/* Check if it is an input device. */
-						if (g_str_has_prefix (file, "input")) {
-							input_path = g_build_filename (device_path, file, NULL);
-							break;
-						}
+					/* There may be an extra subdirectory here */
+					subdir = g_build_filename (device_path, "input", NULL);
+					if (!g_file_test (subdir, G_FILE_TEST_IS_DIR)) {
+						g_free(subdir);
+						subdir = g_strdup (device_path);
 					}
-					g_dir_close (dir);
-				} else {
-					g_warning ("Can not open folder %s: %s", device_path, error->message);
-					g_error_free (error);
-				}
-				g_object_unref (bluetooth);
-			}
 
-			if (input_path != NULL) {
+					if ((dir = g_dir_open (subdir, 0, &error))) {
+						while ((file = g_dir_read_name (dir))) {
+							/* Check if it is an input device. */
+							if (g_str_has_prefix (file, "input")) {
+								input_path = g_build_filename (subdir, file, NULL);
+								break;
+							}
+						}
+						g_dir_close (dir);
+					} else {
+						g_warning ("Can not open folder %s: %s", device_path, error->message);
+						g_error_free (error);
+					}
+					g_free (subdir);
+					g_object_unref (bluetooth);
+				}
+
+				if (input_path == NULL)
+					continue;
+
 				if ((dir = g_dir_open (input_path, 0, &error))) {
 					while ((file = g_dir_read_name (dir))) {
 						/* Check if it is a mouse device. */
