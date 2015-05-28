@@ -1,3 +1,17 @@
+Version 0.99.3
+~~~~~~~~~~~~~~
+Released: 2015-05-28
+
+Bugfixes:
+ - Bail out when iDevice state is malformed (Bastien Nocera)
+ - Defer getting iDevice info until ready (Bastien Nocera)
+ - Fix crash on uninitialized variant (Vlad Orlov)
+ - Fix libimobiledevice msg in configure (Bastien Nocera)
+ - More memory handling fixes in iDevice (Bastien Nocera)
+ - Properly detect bluetooth mice and keyboards that are HID devices (Marc Deslauriers)
+ - Support Logitech Unifying in Linux 3.19 (Peter Wu)
+ - Work-around broken battery on the Onda v975w (Bastien Nocera)
+
 Version 0.99.2
 ~~~~~~~~~~~~~~
 Released: 2014-12-18
