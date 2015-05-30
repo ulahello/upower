@@ -29,7 +29,6 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)						\
 	$(GIO_CFLAGS)						\
 	$(GIO_UNIX_CFLAGS)					\
-	$(DBUS_GLIB_CFLAGS)					\
 	$(GUDEV_CFLAGS)						\
 	$(GLIB_CFLAGS)
 
@@ -120,7 +119,6 @@ upowerd_LDADD =							\
 	$(USB_LIBS)						\
 	$(GIO_LIBS)						\
 	$(GIO_UNIX_LIBS)					\
-	$(DBUS_GLIB_LIBS)					\
 	$(UPOWER_LIBS)
 
 if BACKEND_TYPE_DUMMY
@@ -193,7 +191,6 @@ up_self_test_LDADD =						\
 	dummy/libuptest.la					\
 	$(GLIB_LIBS)						\
 	$(GIO_CFLAGS)						\
-	$(DBUS_GLIB_LIBS)					\
 	$(POLKIT_LIBS)						\
 	$(UPOWER_LIBS)
 
