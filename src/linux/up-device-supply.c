@@ -584,16 +584,6 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 			supply->priv->coldplug_units = UP_DEVICE_SUPPLY_COLDPLUG_UNITS_CHARGE;
 		}
 
-		/* Fix broken batteries without energy-full information */
-		if (energy_full < 0.01 && energy_full_design < 0.01) {
-			gdouble old_energy_full_design;
-
-			g_object_get (device, "energy-full-design", &old_energy_full_design, NULL);
-			energy_full_design = MAX(old_energy_full_design, energy);
-			/* Make following warning quiet */
-			energy_full = energy_full_design;
-		}
-
 		/* the last full should not be bigger than the design */
 		if (energy_full > energy_full_design)
 			g_warning ("energy_full (%f) is greater than energy_full_design (%f)",
@@ -689,14 +679,9 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
         if (sysfs_file_exists (native_path, "capacity")) {
 		percentage = sysfs_get_double (native_path, "capacity");
 		percentage = CLAMP(percentage, 0.0f, 100.0f);
-		/* for devices which provide capacity, but not {energy,charge}_now */
-		if (energy < 0.1f && energy_full > 0.0f) {
-			energy = energy_full * percentage / 100;
-		} else if (energy > 0.0f && percentage < 0.01) {
-			/* capacity isn't set but present */
-			percentage = 100.0 * energy / energy_full;
-			percentage = CLAMP(percentage, 0.0f, 100.0f);
-		}
+                /* for devices which provide capacity, but not {energy,charge}_now */
+                if (energy < 0.1f && energy_full > 0.0f)
+                    energy = energy_full * percentage / 100;
         } else if (energy_full > 0.0f) {
 		percentage = 100.0 * energy / energy_full;
 		percentage = CLAMP(percentage, 0.0f, 100.0f);
