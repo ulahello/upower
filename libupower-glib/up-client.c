@@ -95,8 +95,6 @@ up_client_get_devices (UpClient *client)
 
 	g_return_val_if_fail (UP_IS_CLIENT (client), NULL);
 
-	array = g_ptr_array_new ();
-
 	if (up_client_glue_call_enumerate_devices_sync (client->priv->proxy,
 							&devices,
 							NULL,
@@ -105,6 +103,8 @@ up_client_get_devices (UpClient *client)
 		g_error_free (error);
 		return NULL;
 	}
+
+	array = g_ptr_array_new ();
 
 	for (i = 0; devices[i] != NULL; i++) {
 		UpDevice *device;
