@@ -74,7 +74,7 @@ start_poll_cb (UpDeviceIdevice *idevice)
 	UpDevice *device = UP_DEVICE (idevice);
 	idevice_t dev = NULL;
 	lockdownd_client_t client = NULL;
-	char *uuid;
+	char *uuid = NULL;
 
 	g_object_get (G_OBJECT (idevice), "serial", &uuid, NULL);
 	g_assert (uuid);
@@ -83,7 +83,7 @@ start_poll_cb (UpDeviceIdevice *idevice)
 	if (idevice_new (&dev, uuid) != IDEVICE_E_SUCCESS)
 		goto out;
 
-	g_free (uuid);
+	g_clear_pointer (&uuid, g_free);
 
 	if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake (dev, &client, "upower"))
 		goto out;
@@ -111,7 +111,7 @@ start_poll_cb (UpDeviceIdevice *idevice)
 out:
 	g_clear_pointer (&client, lockdownd_client_free);
 	g_clear_pointer (&dev, idevice_free);
-	g_free (uuid);
+	g_clear_pointer (&uuid, g_free);
 	return G_SOURCE_CONTINUE;
 }
 
