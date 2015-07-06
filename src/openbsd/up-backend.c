@@ -49,6 +49,8 @@ struct UpBackendPrivate
 	UpDevice		*battery;
 	GThread			*apm_thread;
 	gboolean		is_laptop;
+	UpConfig		*config;
+	GDBusProxy		*seat_manager_proxy;
 };
 
 enum {
@@ -166,29 +168,33 @@ up_backend_unplug (UpBackend *backend)
 }
 
 /**
- * up_backend_get_critical_action:
+ * up_backend_get_seat_manager_proxy:
  * @backend: The %UpBackend class instance
  *
- * Which action will be taken when %UP_DEVICE_LEVEL_ACTION
- * warning-level occurs.
- **/
-const char *
-up_backend_get_critical_action (UpBackend *backend)
+ * Returns the seat manager object or NULL on error. [transfer none]
+ */
+GDBusProxy *
+up_backend_get_seat_manager_proxy (UpBackend  *backend)
 {
-	return "PowerOff";
+	g_return_val_if_fail (UP_IS_BACKEND (backend), NULL);
+
+	return backend->priv->seat_manager_proxy;
 }
 
 /**
- * up_backend_take_action:
+ * up_backend_get_config:
  * @backend: The %UpBackend class instance
  *
- * Act upon the %UP_DEVICE_LEVEL_ACTION warning-level.
- **/
-void
-up_backend_take_action (UpBackend *backend)
+ * Returns the UpConfig object or NULL on error. [transfer none]
+ */
+UpConfig *
+up_backend_get_config (UpBackend  *backend)
 {
-	/* FIXME: Implement */
+	g_return_val_if_fail (UP_IS_BACKEND (backend), NULL);
+
+	return backend->priv->config;
 }
+
 
 /**
  * OpenBSD specific code
@@ -636,6 +642,16 @@ up_backend_init (UpBackend *backend)
 			      "update-time", (guint64) current_time,
 			      (void*) NULL);
 	}
+
+	backend->priv->config = up_config_new ();
+	backend->priv->seat_manager_proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+									   0,
+									   NULL,
+									   CONSOLEKIT2_DBUS_NAME,
+									   CONSOLEKIT2_DBUS_PATH,
+									   CONSOLEKIT2_DBUS_INTERFACE,
+									   NULL,
+									   NULL);
 }
 /**
  * up_backend_finalize:
@@ -649,12 +665,14 @@ up_backend_finalize (GObject *object)
 
 	backend = UP_BACKEND (object);
 
+	g_object_unref (backend->priv->config);
 	if (backend->priv->daemon != NULL)
 		g_object_unref (backend->priv->daemon);
 	if (backend->priv->battery != NULL)
 		g_object_unref (backend->priv->battery);
 	if (backend->priv->ac != NULL)
 		g_object_unref (backend->priv->ac);
+	g_clear_object (&backend->priv->seat_manager_proxy);
 	/* XXX stop apm_thread ? */
 
 	G_OBJECT_CLASS (up_backend_parent_class)->finalize (object);

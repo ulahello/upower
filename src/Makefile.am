@@ -1,6 +1,15 @@
 ## Process this file with automake to produce Makefile.in
 
+DIST_SUBDIRS = dummy freebsd linux openbsd bsd
 SUBDIRS = dummy freebsd linux openbsd
+
+if BACKEND_TYPE_FREEBSD
+SUBDIRS += bsd
+endif
+
+if BACKEND_TYPE_OPENBSD
+SUBDIRS += bsd
+endif
 
 AM_CPPFLAGS = \
 	$(PIE_CFLAGS)						\
@@ -78,6 +87,7 @@ upowerd_SOURCES =						\
 	up-backend.h						\
 	up-native.h						\
 	up-main.c						\
+	up-backend-bsd-private.h			\
 	$(BUILT_SOURCES)
 
 upowerd_CPPFLAGS =						\
@@ -98,12 +108,14 @@ endif
 
 if BACKEND_TYPE_FREEBSD
 upowerd_LDADD +=						\
-	freebsd/libupshared.la
+	freebsd/libupshared.la				\
+	bsd/libupsharedcommon.la
 endif
 
 if BACKEND_TYPE_OPENBSD
 upowerd_LDADD +=						\
-	openbsd/libupshared.la
+	openbsd/libupshared.la				\
+	bsd/libupsharedcommon.la
 endif
 
 if BACKEND_TYPE_LINUX

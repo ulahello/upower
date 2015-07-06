@@ -249,6 +249,7 @@ src/dummy/Makefile
 src/freebsd/Makefile
 src/openbsd/Makefile
 src/linux/Makefile
+src/bsd/Makefile
 tools/Makefile
 doc/Makefile
 doc/version.xml
