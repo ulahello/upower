@@ -29,4 +29,5 @@ ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c532", DRIVER=="logitech-djdevice", 
 ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c52b", DRIVER=="logitech-hidpp-device", ENV{UPOWER_BATTERY_TYPE}="unifying"
 ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c532", DRIVER=="logitech-hidpp-device", ENV{UPOWER_BATTERY_TYPE}="unifying"
 ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c52f", ENV{UPOWER_BATTERY_TYPE}="lg-wireless"
+ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c531", ENV{UPOWER_BATTERY_TYPE}="lg-wireless"
 LABEL="up_unifying_end"
