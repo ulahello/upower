@@ -25,6 +25,7 @@ upower_LDFLAGS =
 	$(PIE_LDFLAGS)
 
 upower_LDADD = 						\
+	$(GLIB_LIBS)					\
 	$(UPOWER_LIBS)					\
 	$(POLKIT_DBUS_LIBS)
 

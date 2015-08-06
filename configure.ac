@@ -152,7 +152,7 @@ AX_CHECK_LINK_FLAG([-Wl,-z,relro,-z,now],
 		   [RELRO_LDFLAGS="-Wl,-z,relro,-z,now"])
 AC_SUBST([RELRO_LDFLAGS])
 
-PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.34.0])
+PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.34.0 gobject-2.0])
 PKG_CHECK_MODULES(GIO, [gio-2.0 >= 2.16.1])
 PKG_CHECK_MODULES(GIO_UNIX, [gio-unix-2.0])
 
