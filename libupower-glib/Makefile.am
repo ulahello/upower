@@ -21,6 +21,7 @@ lib_LTLIBRARIES =						\
 libupower_glib_includedir = $(includedir)/libupower-glib
 libupower_glib_include_HEADERS =				\
 	upower.h						\
+	up-autocleanups.h					\
 	up-version.h						\
 	up-types.h						\
 	up-device.h						\

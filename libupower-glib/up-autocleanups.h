@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2015 Kalev Lember <klember@redhat.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -19,33 +19,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/**
- * SECTION:upower
- * @short_description: Client objects for accessing UPower
- *
- * These objects allow client programs to trivially get details about the power
- * state, and about devices on the system.
- *
- * See also: #UpClient, #UpDevice
- */
+#if !defined (__UPOWER_H_INSIDE__) && !defined (UP_COMPILATION)
+#error "Only <upower.h> can be included directly."
+#endif
 
-#ifndef __UPOWER_H__
-#define __UPOWER_H__
+#ifndef __UP_AUTOCLEANUPS_H
+#define __UP_AUTOCLEANUPS_H
 
-#define __UPOWER_H_INSIDE__
+#ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
 
-#include <libupower-glib/up-version.h>
-#include <libupower-glib/up-types.h>
-#include <libupower-glib/up-client.h>
-#include <libupower-glib/up-device.h>
-#include <libupower-glib/up-history-item.h>
-#include <libupower-glib/up-stats-item.h>
-#include <libupower-glib/up-wakeup-item.h>
-#include <libupower-glib/up-wakeups.h>
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(UpClient, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(UpDevice, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(UpHistoryItem, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(UpStatsItem, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(UpWakeupItem, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(UpWakeups, g_object_unref)
 
-#include <libupower-glib/up-autocleanups.h>
+#endif
 
-#undef __UPOWER_H_INSIDE__
-
-#endif /* __UPOWER_H__ */
-
+#endif /* __UP_AUTOCLEANUPS_H */
