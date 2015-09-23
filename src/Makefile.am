@@ -166,9 +166,10 @@ dbusconf_DATA = $(dbusconf_in_files:.conf.in=.conf)
 $(dbusconf_DATA): $(dbusconf_in_files) Makefile
 	cp $< $@
 
+systemdservice_in_files = upower.service.in
+
 if HAVE_SYSTEMDSYSTEMUNITDIR
 systemdservicedir       = $(systemdsystemunitdir)
-systemdservice_in_files = upower.service.in
 systemdservice_DATA     = $(systemdservice_in_files:.service.in=.service)
 
 $(systemdservice_DATA): $(systemdservice_in_files) Makefile
