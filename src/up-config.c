@@ -114,13 +114,13 @@ up_config_init (UpConfig *config)
 					 G_KEY_FILE_NONE,
 					 &error);
 
-	g_free (filename);
-
 	if (!ret) {
-		g_warning ("failed to load config file: %s",
-			   error->message);
+		g_warning ("failed to load config file '%s': %s",
+			   filename, error->message);
 		g_error_free (error);
 	}
+
+	g_free (filename);
 }
 
 /**
