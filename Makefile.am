@@ -52,8 +52,9 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = upower-glib.pc
 
 # xsltproc barfs on 'make distcheck'; disable for now
-DISTCHECK_CONFIGURE_FLAGS=--disable-man-pages --enable-gtk-doc \
-	--with-systemdsystemunitdir=$$dc_install_base/$(systemdsystemunitdir)
+DISTCHECK_CONFIGURE_FLAGS=--disable-man-pages --enable-gtk-doc			\
+	--with-systemdsystemunitdir=$$dc_install_base/$(systemdsystemunitdir)	\
+	--with-udevrulesdir='$${libdir}/udev/rules.d-distcheck'
 
 clean-local :
 	rm -f *~
