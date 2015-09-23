@@ -25,14 +25,17 @@ import unittest
 import time
 
 try:
+    import gi
     from gi.repository import GLib
     from gi.repository import Gio
+    gi.require_version('UPowerGlib', '1.0')
     from gi.repository import UPowerGlib
 except ImportError as e:
     sys.stderr.write('Skipping tests, PyGobject not available for Python 3, or missing GI typelibs: %s\n' % str(e))
     sys.exit(0)
 
 try:
+    gi.require_version('UMockdev', '1.0')
     from gi.repository import UMockdev
 except ImportError:
     sys.stderr.write('Skipping tests, umockdev not available (https://launchpad.net/umockdev/)\n')
