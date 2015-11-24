@@ -371,6 +371,8 @@ up_device_compute_object_path (UpDevice *device)
 			id[i] = 'x';
 		if (id[i] == ':')
 			id[i] = 'o';
+		if (id[i] == '@')
+			id[i] = '_';
 	}
 	object_path = g_build_filename (UP_DEVICES_DBUS_PATH, id, NULL);
 
