@@ -1,3 +1,20 @@
+Version 0.99.4
+~~~~~~~~~~~~~~
+Released: 2016-02-16
+
+New Features:
+ - Add support for Logitech G700s/G700 Gaming Mouse (muzena)
+ - Port to GDBus (Cosimo Cecchi)
+ - Support g_autoptr() for all libupower-glib object types (Kalev Lember)
+
+Bugfixes:
+ - Add critical action support for *BSD (Eric Koegel)
+ - Change the default low battery policy to percentage (Bastien Nocera)
+ - Fix deprecation warning in integration-test (Bastien Nocera)
+ - Fix memory leak in up_client_get_devices() (Bastien Nocera)
+ - Fix possible double-free (Bastien Nocera)
+ - Update HID rules and fix build regression (Arnaud Quette)
+
 Version 0.99.3
 ~~~~~~~~~~~~~~
 Released: 2015-05-28
