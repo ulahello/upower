@@ -435,8 +435,8 @@ up_daemon_get_critical_action (UpExportedDaemon *skeleton,
 			       GDBusMethodInvocation *invocation,
 			       UpDaemon *daemon)
 {
-	up_exported_daemon_complete_get_display_device (skeleton, invocation,
-							up_backend_get_critical_action (daemon->priv->backend));
+	up_exported_daemon_complete_get_critical_action (skeleton, invocation,
+							 up_backend_get_critical_action (daemon->priv->backend));
 	return TRUE;
 }
 
