@@ -461,7 +461,7 @@ up_backend_update_lid_status(UpDaemon *daemon) {
 	/* go through all acpibtn devices, and check if one of the values match "lid"
 	   if so, use that device.
 	*/
-	for (dev = 0; SENSOR_MAX_TYPES; dev++) {
+	for (dev = 0; ; dev++) {
 		mib[2] = dev;
 		if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
 			if (errno == ENXIO)
