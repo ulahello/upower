@@ -285,7 +285,12 @@ main (int argc, char **argv)
 	g_option_context_free (context);
 
 	loop = g_main_loop_new (NULL, FALSE);
-	client = up_client_new ();
+	client = up_client_new_full (NULL, &error);
+	if (client == NULL) {
+		g_warning ("Cannot connect to upowerd: %s", error->message);
+		g_error_free (error);
+		return EXIT_FAILURE;
+	}
 
 	if (opt_version) {
 		gchar *daemon_version;
