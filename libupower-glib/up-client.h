@@ -72,6 +72,7 @@ typedef struct
 /* general */
 GType		 up_client_get_type			(void);
 UpClient	*up_client_new				(void);
+UpClient	*up_client_new_full			(GCancellable *cancellable, GError **error);
 
 /* sync versions */
 UpDevice *	 up_client_get_display_device		(UpClient *client);
