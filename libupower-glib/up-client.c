@@ -72,7 +72,6 @@ enum {
 };
 
 static guint signals [UP_CLIENT_LAST_SIGNAL] = { 0 };
-static gpointer up_client_object = NULL;
 
 G_DEFINE_TYPE_WITH_CODE (UpClient, up_client, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE(G_TYPE_INITABLE, up_client_initable_iface_init))
@@ -511,14 +510,7 @@ up_client_finalize (GObject *object)
 UpClient *
 up_client_new_full (GCancellable *cancellable, GError **error)
 {
-	if (up_client_object != NULL) {
-		g_object_ref (up_client_object);
-	} else {
-		up_client_object = g_initable_new (UP_TYPE_CLIENT, cancellable, error, NULL);
-		if (up_client_object)
-			g_object_add_weak_pointer (up_client_object, &up_client_object);
-	}
-	return UP_CLIENT (up_client_object);
+	return g_initable_new (UP_TYPE_CLIENT, cancellable, error, NULL);
 }
 
 /**
