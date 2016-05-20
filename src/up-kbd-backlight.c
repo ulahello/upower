@@ -43,11 +43,41 @@ static void     up_kbd_backlight_finalize   (GObject	*object);
 struct UpKbdBacklightPrivate
 {
 	gint			 fd;
-	gint			 brightness;
 	gint			 max_brightness;
 };
 
 G_DEFINE_TYPE (UpKbdBacklight, up_kbd_backlight, UP_TYPE_EXPORTED_KBD_BACKLIGHT_SKELETON)
+
+/**
+ * up_kbd_backlight_brightness_read:
+ **/
+static gint
+up_kbd_backlight_brightness_read (UpKbdBacklight *kbd_backlight)
+{
+	gchar buf[16];
+	gchar *end = NULL;
+	ssize_t len;
+	gint64 brightness = -1;
+
+	g_return_val_if_fail (kbd_backlight->priv->fd >= 0, brightness);
+
+	lseek (kbd_backlight->priv->fd, 0, SEEK_SET);
+	len = read (kbd_backlight->priv->fd, buf, G_N_ELEMENTS (buf) - 1);
+
+	if (len > 0) {
+		buf[len] = '\0';
+		brightness = g_ascii_strtoll (buf, &end, 10);
+
+		if (brightness < 0 ||
+		    brightness > kbd_backlight->priv->max_brightness ||
+		    end == buf || *end != '\0') {
+			brightness = -1;
+			g_warning ("failed to convert brightness: %s", buf);
+		}
+	}
+
+	return brightness;
+}
 
 /**
  * up_kbd_backlight_brightness_write:
@@ -84,9 +114,8 @@ up_kbd_backlight_brightness_write (UpKbdBacklight *kbd_backlight, gint value)
 	}
 
 	/* emit signal */
-	kbd_backlight->priv->brightness = value;
 	up_exported_kbd_backlight_emit_brightness_changed (UP_EXPORTED_KBD_BACKLIGHT (kbd_backlight),
-							   kbd_backlight->priv->brightness);
+							   value);
 
 out:
 	g_free (text);
@@ -103,8 +132,19 @@ up_kbd_backlight_get_brightness (UpExportedKbdBacklight *skeleton,
 				 GDBusMethodInvocation *invocation,
 				 UpKbdBacklight *kbd_backlight)
 {
-	up_exported_kbd_backlight_complete_get_brightness (skeleton, invocation,
-							   kbd_backlight->priv->brightness);
+	gint brightness;
+
+	brightness = up_kbd_backlight_brightness_read (kbd_backlight);
+
+	if (brightness >= 0) {
+		up_exported_kbd_backlight_complete_get_brightness (skeleton, invocation,
+								   brightness);
+	} else {
+		g_dbus_method_invocation_return_error (invocation,
+						       UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL,
+						       "error reading brightness");
+	}
+
 	return TRUE;
 }
 
@@ -216,23 +256,12 @@ up_kbd_backlight_find (UpKbdBacklight *kbd_backlight)
 		goto out;
 	}
 
-	/* read brightness */
+	/* open the brightness file for read and write operations */
 	path_now = g_build_filename (dir_path, "brightness", NULL);
-	ret = g_file_get_contents (path_now, &buf_now, NULL, &error);
-	if (!ret) {
-		g_warning ("failed to get brightness: %s", error->message);
-		g_error_free (error);
-		goto out;
-	}
-	kbd_backlight->priv->brightness = g_ascii_strtoull (buf_now, &end, 10);
-	if (kbd_backlight->priv->brightness == 0 && end == buf_now) {
-		g_warning ("failed to convert brightness: %s", buf_now);
-		goto out;
-	}
-
-	/* open the file for writing */
 	kbd_backlight->priv->fd = open (path_now, O_RDWR);
-	if (kbd_backlight->priv->fd < 0)
+
+	/* read brightness and check if it has an acceptable value */
+	if (up_kbd_backlight_brightness_read (kbd_backlight) < 0)
 		goto out;
 
 	/* success */
