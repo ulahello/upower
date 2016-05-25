@@ -70,7 +70,7 @@ up_kbd_backlight_brightness_read (UpKbdBacklight *kbd_backlight)
 
 		if (brightness < 0 ||
 		    brightness > kbd_backlight->priv->max_brightness ||
-		    end == buf || *end != '\0') {
+		    end == buf) {
 			brightness = -1;
 			g_warning ("failed to convert brightness: %s", buf);
 		}
