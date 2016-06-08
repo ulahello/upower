@@ -69,7 +69,7 @@ up_device_idevice_poll_cb (UpDeviceIdevice *idevice)
 }
 
 static gboolean
-start_poll_cb (UpDeviceIdevice *idevice)
+up_device_idevice_start_poll_cb (UpDeviceIdevice *idevice)
 {
 	UpDevice *device = UP_DEVICE (idevice);
 	idevice_t dev = NULL;
@@ -160,7 +160,10 @@ up_device_idevice_coldplug (UpDevice *device)
 		      "has-history", TRUE,
 		      NULL);
 
-	idevice->priv->start_id = g_timeout_add_seconds (1, (GSourceFunc) start_poll_cb, idevice);
+	idevice->priv->start_id = g_timeout_add_seconds (1, (GSourceFunc) up_device_idevice_start_poll_cb,
+							 idevice);
+	g_source_set_name_by_id (idevice->priv->start_id,
+				 "[upower] up_device_idevice_start_poll_cb (linux)");
 
 	return TRUE;
 }
