@@ -247,7 +247,7 @@ up_device_idevice_coldplug (UpDevice *device)
 		      "has-history", TRUE,
 		      NULL);
 
-	idevice->priv->start_id = g_timeout_add_seconds (1, (GSourceFunc) up_device_idevice_start_poll_cb,
+	idevice->priv->start_id = g_timeout_add_seconds (5, (GSourceFunc) up_device_idevice_start_poll_cb,
 							 idevice);
 	g_source_set_name_by_id (idevice->priv->start_id,
 				 "[upower] up_device_idevice_start_poll_cb (linux)");
