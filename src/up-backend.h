@@ -65,7 +65,6 @@ typedef struct
 
 GType		 up_backend_get_type			(void);
 UpBackend	*up_backend_new				(void);
-void		 up_backend_test			(gpointer	 user_data);
 
 gboolean	 up_backend_coldplug			(UpBackend	*backend,
 							 UpDaemon	*daemon);

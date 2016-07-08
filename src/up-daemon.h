@@ -60,7 +60,6 @@ typedef enum
 GQuark		 up_daemon_error_quark		(void);
 GType		 up_daemon_get_type		(void);
 UpDaemon	*up_daemon_new			(void);
-void		 up_daemon_test		(gpointer	 user_data);
 
 /* private */
 guint		 up_daemon_get_number_devices_of_type (UpDaemon	*daemon,

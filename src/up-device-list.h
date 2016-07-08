@@ -52,7 +52,6 @@ typedef struct
 
 GType		 up_device_list_get_type		(void);
 UpDeviceList	*up_device_list_new			(void);
-void		 up_device_list_test			(gpointer		 user_data);
 
 GObject		*up_device_list_lookup			(UpDeviceList		*list,
 							 GObject		*native);
