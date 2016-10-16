@@ -43,6 +43,8 @@ static void     up_kbd_backlight_finalize   (GObject	*object);
 struct UpKbdBacklightPrivate
 {
 	gint			 fd;
+	gint			 fd_hw_changed;
+	GIOChannel		*channel_hw_changed;
 	gint			 max_brightness;
 };
 
@@ -210,6 +212,24 @@ up_kbd_backlight_class_init (UpKbdBacklightClass *klass)
 }
 
 /**
+ * up_kbd_backlight_event_io:
+ **/
+static gboolean
+up_kbd_backlight_event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
+{
+	UpKbdBacklight *kbd_backlight = (UpKbdBacklight*) data;
+	gint brightness;
+
+	if (!(condition & G_IO_PRI))
+		return FALSE;
+
+	brightness = up_kbd_backlight_brightness_read (kbd_backlight, kbd_backlight->priv->fd_hw_changed);
+	up_kbd_backlight_emit_change (kbd_backlight, brightness, "internal");
+
+	return TRUE;
+}
+
+/**
  * up_kbd_backlight_find:
  **/
 static gboolean
@@ -223,6 +243,7 @@ up_kbd_backlight_find (UpKbdBacklight *kbd_backlight)
 	gchar *dir_path = NULL;
 	gchar *path_max = NULL;
 	gchar *path_now = NULL;
+	gchar *path_hw_changed = NULL;
 	gchar *buf_max = NULL;
 	gchar *buf_now = NULL;
 	GError *error = NULL;
@@ -273,6 +294,14 @@ up_kbd_backlight_find (UpKbdBacklight *kbd_backlight)
 	if (up_kbd_backlight_brightness_read (kbd_backlight, kbd_backlight->priv->fd) < 0)
 		goto out;
 
+	path_hw_changed = g_build_filename (dir_path, "brightness_hw_changed", NULL);
+	kbd_backlight->priv->fd_hw_changed = open (path_hw_changed, O_RDONLY);
+	if (kbd_backlight->priv->fd_hw_changed >= 0) {
+		kbd_backlight->priv->channel_hw_changed = g_io_channel_unix_new (kbd_backlight->priv->fd_hw_changed);
+		g_io_add_watch (kbd_backlight->priv->channel_hw_changed,
+				G_IO_PRI, up_kbd_backlight_event_io, kbd_backlight);
+	}
+
 	/* success */
 	found = TRUE;
 out:
@@ -281,6 +310,7 @@ out:
 	g_free (dir_path);
 	g_free (path_max);
 	g_free (path_now);
+	g_free (path_hw_changed);
 	g_free (buf_max);
 	g_free (buf_now);
 	return found;
@@ -315,6 +345,14 @@ up_kbd_backlight_finalize (GObject *object)
 
 	kbd_backlight = UP_KBD_BACKLIGHT (object);
 	kbd_backlight->priv = UP_KBD_BACKLIGHT_GET_PRIVATE (kbd_backlight);
+
+	if (kbd_backlight->priv->channel_hw_changed) {
+		g_io_channel_shutdown (kbd_backlight->priv->channel_hw_changed, FALSE, NULL);
+		g_io_channel_unref (kbd_backlight->priv->channel_hw_changed);
+	}
+
+	if (kbd_backlight->priv->fd_hw_changed >= 0)
+		close (kbd_backlight->priv->fd_hw_changed);
 
 	/* close file */
 	if (kbd_backlight->priv->fd >= 0)
