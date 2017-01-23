@@ -22,6 +22,8 @@ LABEL="up_csr_end"
 
 # Unifying HID++ devices
 SUBSYSTEM!="hid", GOTO="up_unifying_end"
+# Kernel provides the battery information already
+ATTRS{idVendor}=="046d", TEST=="builtin_power_supply", GOTO="up_unifying_end"
 ATTRS{idVendor}=="046d", ENV{UPOWER_VENDOR}="Logitech, Inc."
 ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c52b", DRIVER=="logitech-djdevice", ENV{UPOWER_BATTERY_TYPE}="unifying"
 ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c532", DRIVER=="logitech-djdevice", ENV{UPOWER_BATTERY_TYPE}="unifying"
