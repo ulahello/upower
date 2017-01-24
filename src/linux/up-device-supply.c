@@ -1007,7 +1007,6 @@ static gboolean
 up_device_supply_coldplug (UpDevice *device)
 {
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
-	gboolean ret = FALSE;
 	GUdevDevice *native;
 	const gchar *native_path;
 	const gchar *scope;
@@ -1020,7 +1019,7 @@ up_device_supply_coldplug (UpDevice *device)
 	native_path = g_udev_device_get_sysfs_path (native);
 	if (native_path == NULL) {
 		g_warning ("could not get native path for %p", device);
-		goto out;
+		return FALSE;
 	}
 
 	/* try to work out if the device is powering the system */
@@ -1038,7 +1037,7 @@ up_device_supply_coldplug (UpDevice *device)
 	if (supply->priv->is_power_supply == FALSE &&
 	    !sysfs_file_exists (native_path, "capacity")) {
 		g_debug ("Ignoring device AC, we'll monitor the device battery");
-		goto out;
+		return FALSE;
 	}
 
 	/* try to detect using the device type */
@@ -1065,9 +1064,7 @@ up_device_supply_coldplug (UpDevice *device)
 		up_daemon_start_poll (G_OBJECT (device), (GSourceFunc) up_device_supply_refresh);
 
 	/* coldplug values */
-	ret = up_device_supply_refresh (device);
-out:
-	return ret;
+	return up_device_supply_refresh (device);
 }
 
 /**
