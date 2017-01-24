@@ -804,6 +804,7 @@ class Tests(unittest.TestCase):
              'online', '1',
              'status', 'Discharging',
              'capacity', '30',
+             'serial_number', '123456',
              'model_name', 'Fancy Logitech mouse'],
             [])
 
@@ -817,6 +818,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'PowerSupply'), False)
         # 5 == mouse
         self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Type'), 5)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Serial'), '123456')
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
