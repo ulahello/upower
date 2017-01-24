@@ -724,7 +724,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
-    def test_bluetooth_mouse_reconnect(self):
+    def _test_bluetooth_mouse_reconnect(self):
         '''bluetooth mouse powerdown/reconnect'''
 
         mb = self._add_bt_mouse()
