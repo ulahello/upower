@@ -830,16 +830,20 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 	/* initial values */
 	if (!supply->priv->has_coldplug_values) {
 		gchar *model_name;
+		gchar *serial_number;
 
 		/* get values which may be blank */
 		model_name = up_device_supply_get_string (native_path, "model_name");
+		serial_number = up_device_supply_get_string (native_path, "serial_number");
 
 		/* some vendors fill this with binary garbage */
 		up_device_supply_make_safe_string (model_name);
+		up_device_supply_make_safe_string (serial_number);
 
 		g_object_set (device,
 			      "is-present", TRUE,
 			      "model", model_name,
+			      "serial", serial_number,
 			      "is-rechargeable", TRUE,
 			      "has-history", TRUE,
 			      "has-statistics", TRUE,
