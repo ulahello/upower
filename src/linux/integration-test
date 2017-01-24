@@ -828,6 +828,63 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
+    def test_bluetooth_hid_mouse_no_legacy_subdevice(self):
+        '''bluetooth HID mouse battery'''
+
+        dev = self.testbed.add_device(
+            'bluetooth',
+            '/devices/pci0000:00/0000:00:14.0/usb2/2-7/2-7:1.0/bluetooth/hci0',
+            None,
+            [], [])
+
+        parent = dev
+        dev = self.testbed.add_device(
+            'bluetooth',
+            'hci0:256',
+            parent,
+            [], ['DEVTYPE', 'link'])
+
+        parent = dev
+        dev = self.testbed.add_device(
+            'hid',
+            '0005:046D:B00D.0002',
+            parent,
+            [], ['HID_NAME', 'Fancy BT Mouse'])
+
+        parent = dev
+        self.testbed.add_device(
+            'power_supply',
+            'power_supply/hid-00:1f:20:96:33:47-battery',
+            parent,
+            ['type', 'Battery',
+             'scope', 'Device',
+             'present', '1',
+             'online', '1',
+             'status', 'Discharging',
+             'capacity', '30',
+             'model_name', 'Fancy BT mouse'],
+            [])
+
+        self.testbed.add_device(
+            'input',
+            'input/input22',
+            parent,
+            [], ['ID_INPUT_MOUSE', '1'])
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        mousebat0_up = devs[0]
+
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Model'), 'Fancy BT mouse')
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Percentage'), 30)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'PowerSupply'), False)
+        # 5 == mouse
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Type'), 5)
+        self.assertEqual(self.get_dbus_property('OnBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
+        self.stop_daemon()
+
     def test_bluetooth_keyboard(self):
         '''bluetooth keyboard battery'''
 
