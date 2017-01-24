@@ -899,51 +899,13 @@ up_device_supply_poll_unknown_battery (UpDevice *device)
 	return FALSE;
 }
 
-/**
- * up_device_supply_coldplug:
- *
- * Return %TRUE on success, %FALSE if we failed to get data and should be removed
- **/
-static gboolean
-up_device_supply_coldplug (UpDevice *device)
+static UpDeviceKind
+up_device_supply_guess_type (GUdevDevice *native,
+			     const char *native_path)
 {
-	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
-	gboolean ret = FALSE;
-	GUdevDevice *native;
-	const gchar *native_path;
-	const gchar *scope;
-	gchar *device_type = NULL;
+	gchar *device_type;
 	UpDeviceKind type = UP_DEVICE_KIND_UNKNOWN;
 
-	up_device_supply_reset_values (supply);
-
-	/* detect what kind of device we are */
-	native = G_UDEV_DEVICE (up_device_get_native (device));
-	native_path = g_udev_device_get_sysfs_path (native);
-	if (native_path == NULL) {
-		g_warning ("could not get native path for %p", device);
-		goto out;
-	}
-
-	/* try to work out if the device is powering the system */
-	scope = g_udev_device_get_sysfs_attr (native, "scope");
-	if (scope != NULL && g_ascii_strcasecmp (scope, "device") == 0) {
-		supply->priv->is_power_supply = FALSE;
-	} else if (scope != NULL && g_ascii_strcasecmp (scope, "system") == 0) {
-		supply->priv->is_power_supply = TRUE;
-	} else {
-		g_debug ("taking a guess for power supply scope");
-		supply->priv->is_power_supply = TRUE;
-	}
-
-	/* we don't use separate ACs for devices */
-	if (supply->priv->is_power_supply == FALSE &&
-	    !sysfs_file_exists (native_path, "capacity")) {
-		g_debug ("Ignoring device AC, we'll monitor the device battery");
-		goto out;
-	}
-
-	/* try to detect using the device type */
 	device_type = up_device_supply_get_string (native_path, "type");
 	if (device_type != NULL) {
 		if (g_ascii_strcasecmp (device_type, "mains") == 0) {
@@ -1029,7 +991,58 @@ up_device_supply_coldplug (UpDevice *device)
 		} else {
 			g_warning ("did not recognise type %s, please report", device_type);
 		}
+
+		g_free (device_type);
 	}
+
+	return type;
+}
+
+/**
+ * up_device_supply_coldplug:
+ *
+ * Return %TRUE on success, %FALSE if we failed to get data and should be removed
+ **/
+static gboolean
+up_device_supply_coldplug (UpDevice *device)
+{
+	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
+	gboolean ret = FALSE;
+	GUdevDevice *native;
+	const gchar *native_path;
+	const gchar *scope;
+	UpDeviceKind type;
+
+	up_device_supply_reset_values (supply);
+
+	/* detect what kind of device we are */
+	native = G_UDEV_DEVICE (up_device_get_native (device));
+	native_path = g_udev_device_get_sysfs_path (native);
+	if (native_path == NULL) {
+		g_warning ("could not get native path for %p", device);
+		goto out;
+	}
+
+	/* try to work out if the device is powering the system */
+	scope = g_udev_device_get_sysfs_attr (native, "scope");
+	if (scope != NULL && g_ascii_strcasecmp (scope, "device") == 0) {
+		supply->priv->is_power_supply = FALSE;
+	} else if (scope != NULL && g_ascii_strcasecmp (scope, "system") == 0) {
+		supply->priv->is_power_supply = TRUE;
+	} else {
+		g_debug ("taking a guess for power supply scope");
+		supply->priv->is_power_supply = TRUE;
+	}
+
+	/* we don't use separate ACs for devices */
+	if (supply->priv->is_power_supply == FALSE &&
+	    !sysfs_file_exists (native_path, "capacity")) {
+		g_debug ("Ignoring device AC, we'll monitor the device battery");
+		goto out;
+	}
+
+	/* try to detect using the device type */
+	type = up_device_supply_guess_type (native, native_path);
 
 	/* if reading the device type did not work, use the previous method */
 	if (type == UP_DEVICE_KIND_UNKNOWN) {
@@ -1054,7 +1067,6 @@ up_device_supply_coldplug (UpDevice *device)
 	/* coldplug values */
 	ret = up_device_supply_refresh (device);
 out:
-	g_free (device_type);
 	return ret;
 }
 
