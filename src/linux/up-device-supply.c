@@ -907,94 +907,98 @@ up_device_supply_guess_type (GUdevDevice *native,
 	UpDeviceKind type = UP_DEVICE_KIND_UNKNOWN;
 
 	device_type = up_device_supply_get_string (native_path, "type");
-	if (device_type != NULL) {
-		if (g_ascii_strcasecmp (device_type, "mains") == 0) {
-			type = UP_DEVICE_KIND_LINE_POWER;
-		} else if (g_ascii_strcasecmp (device_type, "battery") == 0) {
-			guint i;
-			const char *class[] = { "hid", "bluetooth" };
+	if (device_type == NULL)
+		return type;
 
-			for (i = 0; i < G_N_ELEMENTS(class) && type == UP_DEVICE_KIND_UNKNOWN; i++) {
-				/* Detect if the battery comes from bluetooth keyboard or mouse. */
-				GUdevDevice *bluetooth;
-				GDir *dir;
-				gchar *input_path = NULL;
-				GError *error = NULL;
+	if (g_ascii_strcasecmp (device_type, "mains") == 0) {
+		type = UP_DEVICE_KIND_LINE_POWER;
+		goto out;
+	}
 
-				bluetooth = g_udev_device_get_parent_with_subsystem (native, class[i], NULL);
-				if (bluetooth != NULL) {
-					const gchar *device_path;
-					gchar *subdir;
+	if (g_ascii_strcasecmp (device_type, "battery") == 0) {
+		guint i;
+		const char *class[] = { "hid", "bluetooth" };
 
-					device_path = g_udev_device_get_sysfs_path (bluetooth);
+		for (i = 0; i < G_N_ELEMENTS(class) && type == UP_DEVICE_KIND_UNKNOWN; i++) {
+			/* Detect if the battery comes from bluetooth keyboard or mouse. */
+			GUdevDevice *bluetooth;
+			GDir *dir;
+			gchar *input_path = NULL;
+			GError *error = NULL;
 
-					/* There may be an extra subdirectory here */
-					subdir = g_build_filename (device_path, "input", NULL);
-					if (!g_file_test (subdir, G_FILE_TEST_IS_DIR)) {
-						g_free(subdir);
-						subdir = g_strdup (device_path);
-					}
+			bluetooth = g_udev_device_get_parent_with_subsystem (native, class[i], NULL);
+			if (bluetooth != NULL) {
+				const gchar *device_path;
+				gchar *subdir;
 
-					if ((dir = g_dir_open (subdir, 0, &error))) {
-						const char *file;
-						while ((file = g_dir_read_name (dir))) {
-							/* Check if it is an input device. */
-							if (g_str_has_prefix (file, "input")) {
-								input_path = g_build_filename (subdir, file, NULL);
-								break;
-							}
-						}
-						g_dir_close (dir);
-					} else {
-						g_warning ("Can not open folder %s: %s", device_path, error->message);
-						g_error_free (error);
-					}
-					g_free (subdir);
-					g_object_unref (bluetooth);
+				device_path = g_udev_device_get_sysfs_path (bluetooth);
+
+				/* There may be an extra subdirectory here */
+				subdir = g_build_filename (device_path, "input", NULL);
+				if (!g_file_test (subdir, G_FILE_TEST_IS_DIR)) {
+					g_free(subdir);
+					subdir = g_strdup (device_path);
 				}
 
-				if (input_path == NULL)
-					continue;
-
-				if ((dir = g_dir_open (input_path, 0, &error))) {
+				if ((dir = g_dir_open (subdir, 0, &error))) {
 					const char *file;
 					while ((file = g_dir_read_name (dir))) {
-						/* Check if it is a mouse device. */
-						if (g_str_has_prefix (file, "mouse")) {
-							type = UP_DEVICE_KIND_MOUSE;
+						/* Check if it is an input device. */
+						if (g_str_has_prefix (file, "input")) {
+							input_path = g_build_filename (subdir, file, NULL);
 							break;
 						}
 					}
 					g_dir_close (dir);
 				} else {
-					g_warning ("Can not open folder %s: %s", input_path, error->message);
+					g_warning ("Can not open folder %s: %s", device_path, error->message);
 					g_error_free (error);
 				}
-				g_free (input_path);
-				if (type == UP_DEVICE_KIND_UNKNOWN) {
-					type = UP_DEVICE_KIND_KEYBOARD;
+				g_free (subdir);
+				g_object_unref (bluetooth);
+			}
+
+			if (input_path == NULL)
+				continue;
+
+			if ((dir = g_dir_open (input_path, 0, &error))) {
+				const char *file;
+				while ((file = g_dir_read_name (dir))) {
+					/* Check if it is a mouse device. */
+					if (g_str_has_prefix (file, "mouse")) {
+						type = UP_DEVICE_KIND_MOUSE;
+						break;
+					}
 				}
-			}
-
-			if (type == UP_DEVICE_KIND_UNKNOWN) {
-				type = UP_DEVICE_KIND_BATTERY;
-			}
-		} else if (g_ascii_strcasecmp (device_type, "USB") == 0) {
-
-			/* use a heuristic to find the device type */
-			if (g_strstr_len (native_path, -1, "wacom_") != NULL) {
-				type = UP_DEVICE_KIND_TABLET;
+				g_dir_close (dir);
 			} else {
-				g_warning ("did not recognise USB path %s, please report",
-					   native_path);
+				g_warning ("Can not open folder %s: %s", input_path, error->message);
+				g_error_free (error);
 			}
-		} else {
-			g_warning ("did not recognise type %s, please report", device_type);
+			g_free (input_path);
+			if (type == UP_DEVICE_KIND_UNKNOWN) {
+				type = UP_DEVICE_KIND_KEYBOARD;
+			}
 		}
 
-		g_free (device_type);
+		if (type == UP_DEVICE_KIND_UNKNOWN) {
+			type = UP_DEVICE_KIND_BATTERY;
+		}
+	} else if (g_ascii_strcasecmp (device_type, "USB") == 0) {
+
+		/* use a heuristic to find the device type */
+		if (g_strstr_len (native_path, -1, "wacom_") != NULL) {
+			type = UP_DEVICE_KIND_TABLET;
+		} else {
+			g_warning ("did not recognise USB path %s, please report",
+				   native_path);
+		}
+	} else {
+		g_warning ("did not recognise type %s, please report", device_type);
 	}
 
+out:
+	g_free (device_type);
 	return type;
 }
 
