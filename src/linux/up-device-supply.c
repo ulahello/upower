@@ -909,20 +909,11 @@ up_device_supply_coldplug (UpDevice *device)
 {
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
 	gboolean ret = FALSE;
-	GUdevDevice *bluetooth;
 	GUdevDevice *native;
-	const gchar *file;
-	const gchar *device_path = NULL;
 	const gchar *native_path;
 	const gchar *scope;
 	gchar *device_type = NULL;
-	gchar *input_path = NULL;
-	gchar *subdir = NULL;
-	GDir *dir = NULL;
-	GError *error = NULL;
 	UpDeviceKind type = UP_DEVICE_KIND_UNKNOWN;
-	guint i;
-	const char *class[] = { "hid", "bluetooth" };
 
 	up_device_supply_reset_values (supply);
 
@@ -958,10 +949,21 @@ up_device_supply_coldplug (UpDevice *device)
 		if (g_ascii_strcasecmp (device_type, "mains") == 0) {
 			type = UP_DEVICE_KIND_LINE_POWER;
 		} else if (g_ascii_strcasecmp (device_type, "battery") == 0) {
+			guint i;
+			const char *class[] = { "hid", "bluetooth" };
+
 			for (i = 0; i < G_N_ELEMENTS(class) && type == UP_DEVICE_KIND_UNKNOWN; i++) {
 				/* Detect if the battery comes from bluetooth keyboard or mouse. */
+				GUdevDevice *bluetooth;
+				GDir *dir;
+				gchar *input_path = NULL;
+				GError *error = NULL;
+
 				bluetooth = g_udev_device_get_parent_with_subsystem (native, class[i], NULL);
 				if (bluetooth != NULL) {
+					const gchar *device_path;
+					gchar *subdir;
+
 					device_path = g_udev_device_get_sysfs_path (bluetooth);
 
 					/* There may be an extra subdirectory here */
@@ -972,6 +974,7 @@ up_device_supply_coldplug (UpDevice *device)
 					}
 
 					if ((dir = g_dir_open (subdir, 0, &error))) {
+						const char *file;
 						while ((file = g_dir_read_name (dir))) {
 							/* Check if it is an input device. */
 							if (g_str_has_prefix (file, "input")) {
@@ -992,6 +995,7 @@ up_device_supply_coldplug (UpDevice *device)
 					continue;
 
 				if ((dir = g_dir_open (input_path, 0, &error))) {
+					const char *file;
 					while ((file = g_dir_read_name (dir))) {
 						/* Check if it is a mouse device. */
 						if (g_str_has_prefix (file, "mouse")) {
