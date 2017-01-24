@@ -888,21 +888,22 @@ class Tests(unittest.TestCase):
     def test_bluetooth_keyboard(self):
         '''bluetooth keyboard battery'''
 
-        self.testbed.add_device('bluetooth',
-                                'usb2/bluetooth/hci0/hci0:1',
-                                None,
-                                [], [])
+        dev = self.testbed.add_device('bluetooth',
+                                      'usb2/bluetooth/hci0/hci0:1',
+                                      None,
+                                      [], [])
 
+        parent = dev
         self.testbed.add_device(
             'input',
-            'usb2/bluetooth/hci0/hci0:1/input3/event4',
-            None,
+            'input3/event4',
+            parent,
             [], ['DEVNAME', 'input/event4', 'ID_INPUT_KEYBOARD', '1'])
 
         self.testbed.add_device(
             'power_supply',
-            'usb2/bluetooth/hci0/hci0:1/power_supply/hid-00:22:33:44:55:66-battery',
-            None,
+            'power_supply/hid-00:22:33:44:55:66-battery',
+            parent,
             ['type', 'Battery',
              'scope', 'Device',
              'present', '1',
