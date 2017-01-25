@@ -62,17 +62,17 @@ up_kbd_backlight_emit_change(UpKbdBacklight *kbd_backlight, int value, const cha
  * up_kbd_backlight_brightness_read:
  **/
 static gint
-up_kbd_backlight_brightness_read (UpKbdBacklight *kbd_backlight)
+up_kbd_backlight_brightness_read (UpKbdBacklight *kbd_backlight, int fd)
 {
 	gchar buf[16];
 	gchar *end = NULL;
 	ssize_t len;
 	gint64 brightness = -1;
 
-	g_return_val_if_fail (kbd_backlight->priv->fd >= 0, brightness);
+	g_return_val_if_fail (fd >= 0, brightness);
 
-	lseek (kbd_backlight->priv->fd, 0, SEEK_SET);
-	len = read (kbd_backlight->priv->fd, buf, G_N_ELEMENTS (buf) - 1);
+	lseek (fd, 0, SEEK_SET);
+	len = read (fd, buf, G_N_ELEMENTS (buf) - 1);
 
 	if (len > 0) {
 		buf[len] = '\0';
@@ -143,7 +143,7 @@ up_kbd_backlight_get_brightness (UpExportedKbdBacklight *skeleton,
 {
 	gint brightness;
 
-	brightness = up_kbd_backlight_brightness_read (kbd_backlight);
+	brightness = up_kbd_backlight_brightness_read (kbd_backlight, kbd_backlight->priv->fd);
 
 	if (brightness >= 0) {
 		up_exported_kbd_backlight_complete_get_brightness (skeleton, invocation,
@@ -270,7 +270,7 @@ up_kbd_backlight_find (UpKbdBacklight *kbd_backlight)
 	kbd_backlight->priv->fd = open (path_now, O_RDWR);
 
 	/* read brightness and check if it has an acceptable value */
-	if (up_kbd_backlight_brightness_read (kbd_backlight) < 0)
+	if (up_kbd_backlight_brightness_read (kbd_backlight, kbd_backlight->priv->fd) < 0)
 		goto out;
 
 	/* success */
