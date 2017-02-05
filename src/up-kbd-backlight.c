@@ -49,6 +49,16 @@ struct UpKbdBacklightPrivate
 G_DEFINE_TYPE (UpKbdBacklight, up_kbd_backlight, UP_TYPE_EXPORTED_KBD_BACKLIGHT_SKELETON)
 
 /**
+ * up_kbd_backlight_emit_change:
+ **/
+static void
+up_kbd_backlight_emit_change(UpKbdBacklight *kbd_backlight, int value, const char *source)
+{
+	up_exported_kbd_backlight_emit_brightness_changed (UP_EXPORTED_KBD_BACKLIGHT (kbd_backlight), value);
+	up_exported_kbd_backlight_emit_brightness_changed_with_source (UP_EXPORTED_KBD_BACKLIGHT (kbd_backlight), value, source);
+}
+
+/**
  * up_kbd_backlight_brightness_read:
  **/
 static gint
@@ -114,8 +124,7 @@ up_kbd_backlight_brightness_write (UpKbdBacklight *kbd_backlight, gint value)
 	}
 
 	/* emit signal */
-	up_exported_kbd_backlight_emit_brightness_changed (UP_EXPORTED_KBD_BACKLIGHT (kbd_backlight),
-							   value);
+	up_kbd_backlight_emit_change (kbd_backlight, value, "external");
 
 out:
 	g_free (text);
