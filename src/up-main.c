@@ -178,6 +178,8 @@ main (gint argc, gchar **argv)
 	guint timer_id = 0;
 	gboolean verbose = FALSE;
 	UpState *state;
+	GBusNameOwnerFlags bus_flags;
+	gboolean replace = FALSE;
 
 	const GOptionEntry options[] = {
 		{ "timed-exit", '\0', 0, G_OPTION_ARG_NONE, &timed_exit,
@@ -186,6 +188,8 @@ main (gint argc, gchar **argv)
 		{ "immediate-exit", '\0', 0, G_OPTION_ARG_NONE, &immediate_exit,
 		  /* TRANSLATORS: exit straight away, used for automatic profiling */
 		  _("Exit after the engine has loaded"), NULL },
+		{ "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,
+		  _("Replace the old daemon"), NULL},
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
 		  _("Show extra debugging information"), NULL },
 		{ NULL}
@@ -245,9 +249,12 @@ main (gint argc, gchar **argv)
 				NULL);
 
 	/* acquire name */
+	bus_flags = G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT;
+	if (replace)
+		bus_flags |= G_BUS_NAME_OWNER_FLAGS_REPLACE;
 	g_bus_own_name (G_BUS_TYPE_SYSTEM,
 			DEVKIT_POWER_SERVICE_NAME,
-			G_BUS_NAME_OWNER_FLAGS_NONE,
+			bus_flags,
 			up_main_bus_acquired,
 			NULL,
 			up_main_name_lost,
