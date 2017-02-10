@@ -62,6 +62,7 @@ struct UpBackendPrivate
 	UpDeviceList		*managed_devices;
 	UpConfig		*config;
 	GDBusProxy		*logind_proxy;
+	guint                    logind_sleep_id;
 };
 
 enum {
@@ -460,6 +461,57 @@ up_backend_take_action (UpBackend *backend)
 }
 
 /**
+ * up_backend_prepare_for_sleep:
+ *
+ * Callback for logind's PrepareForSleep signal. It receives
+ * a boolean that indicates if we are about to sleep (TRUE)
+ * or waking up (FALSE).
+ * In case of the waking up we refresh the devices so we are
+ * up to date, especially w.r.t. battery levels, since they
+ * might have changed drastically.
+ **/
+static void
+up_backend_prepare_for_sleep (GDBusConnection *connection,
+			      const gchar     *sender_name,
+			      const gchar     *object_path,
+			      const gchar     *interface_name,
+			      const gchar     *signal_name,
+			      GVariant        *parameters,
+			      gpointer         user_data)
+{
+	UpBackend *backend = user_data;
+	gboolean will_sleep;
+	GPtrArray *array;
+	guint i;
+
+	if (!g_variant_is_of_type (parameters, G_VARIANT_TYPE ("(b)"))) {
+		g_warning ("logind PrepareForSleep has unexpected parameter(s)");
+		return;
+	}
+
+	g_variant_get (parameters, "(b)", &will_sleep);
+
+	if (will_sleep) {
+		up_daemon_pause_poll (backend->priv->daemon);
+		return;
+	}
+
+	/* we are waking up, lets refresh all battery devices */
+	g_debug ("Woke up from sleep; about to refresh devices");
+	array = up_device_list_get_array (backend->priv->device_list);
+
+	for (i = 0; i < array->len; i++) {
+		UpDevice *device = UP_DEVICE (g_ptr_array_index (array, i));
+		up_device_refresh_internal (device);
+	}
+
+	g_ptr_array_unref (array);
+
+	up_daemon_resume_poll (backend->priv->daemon);
+}
+
+
+/**
  * up_backend_class_init:
  * @klass: The UpBackendClass
  **/
@@ -491,6 +543,9 @@ up_backend_class_init (UpBackendClass *klass)
 static void
 up_backend_init (UpBackend *backend)
 {
+	GDBusConnection *bus;
+	guint sleep_id;
+
 	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
 	backend->priv->config = up_config_new ();
 	backend->priv->managed_devices = up_device_list_new ();
@@ -502,6 +557,19 @@ up_backend_init (UpBackend *backend)
 								     LOGIND_DBUS_INTERFACE,
 								     NULL,
 								     NULL);
+
+	bus = g_dbus_proxy_get_connection (backend->priv->logind_proxy);
+	sleep_id = g_dbus_connection_signal_subscribe (bus,
+						       LOGIND_DBUS_NAME,
+						       LOGIND_DBUS_INTERFACE,
+						       "PrepareForSleep",
+						       LOGIND_DBUS_PATH,
+						       NULL,
+						       G_DBUS_SIGNAL_FLAGS_NONE,
+						       up_backend_prepare_for_sleep,
+						       backend,
+						       NULL);
+	backend->priv->logind_sleep_id = sleep_id;
 }
 
 /**
@@ -511,6 +579,7 @@ static void
 up_backend_finalize (GObject *object)
 {
 	UpBackend *backend;
+	GDBusConnection *bus;
 
 	g_return_if_fail (UP_IS_BACKEND (object));
 
@@ -523,6 +592,11 @@ up_backend_finalize (GObject *object)
 		g_object_unref (backend->priv->device_list);
 	if (backend->priv->gudev_client != NULL)
 		g_object_unref (backend->priv->gudev_client);
+
+	bus = g_dbus_proxy_get_connection (backend->priv->logind_proxy);
+	g_dbus_connection_signal_unsubscribe (bus,
+					      backend->priv->logind_sleep_id);
+
 	g_clear_object (&backend->priv->logind_proxy);
 
 	g_object_unref (backend->priv->managed_devices);
