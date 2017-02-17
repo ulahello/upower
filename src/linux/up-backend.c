@@ -27,6 +27,7 @@
 #include <sys/wait.h>
 #include <glib/gi18n.h>
 #include <gio/gio.h>
+#include <gio/gunixfdlist.h>
 #include <gudev/gudev.h>
 
 #include "up-backend.h"
@@ -63,6 +64,7 @@ struct UpBackendPrivate
 	UpConfig		*config;
 	GDBusProxy		*logind_proxy;
 	guint                    logind_sleep_id;
+	int                      logind_inhibitor_fd;
 };
 
 enum {
@@ -461,6 +463,78 @@ up_backend_take_action (UpBackend *backend)
 }
 
 /**
+ * up_backend_inhibitor_lock_take:
+ * @backend: The %UpBackend class instance
+ *
+ * Acquire a sleep 'delay lock' via systemd's logind that will
+ * inhibit going to sleep until the lock is released again via
+ * up_backend_inhibitor_lock_release().
+ * Does nothing if the lock was already acquired.
+ */
+static void
+up_backend_inhibitor_lock_take (UpBackend *backend)
+{
+	GVariant *out, *input;
+	GUnixFDList *fds;
+	GError *error = NULL;
+
+	if (backend->priv->logind_inhibitor_fd > -1) {
+		return;
+	}
+
+	input = g_variant_new ("(ssss)",
+			       "sleep",                /* what */
+			       "UPower",               /* who */
+			       "Pause device polling", /* why */
+			       "delay");               /* mode */
+
+	out = g_dbus_proxy_call_with_unix_fd_list_sync (backend->priv->logind_proxy,
+							"Inhibit",
+							input,
+							G_DBUS_CALL_FLAGS_NONE,
+							-1,
+							NULL,
+							&fds,
+							NULL,
+							&error);
+	if (out == NULL) {
+		g_warning ("Could not acquire inhibitor lock: %s", error->message);
+		return;
+	}
+
+	if (g_unix_fd_list_get_length (fds) != 1) {
+		g_warning ("Unexpected values returned by logind's 'Inhibit'");
+		g_variant_unref (out);
+		return;
+	}
+
+	backend->priv->logind_inhibitor_fd = g_unix_fd_list_get (fds, 0, NULL);
+	g_variant_unref (out);
+
+	g_debug ("Acquired inhibitor lock (%i)", backend->priv->logind_inhibitor_fd);
+}
+
+/**
+ * up_backend_inhibitor_lock_release:
+ * @backend: The %UpBackend class instance
+ *
+ * Releases a previously acquired inhibitor lock or does nothing
+ * if no lock is held;
+ */
+static void
+up_backend_inhibitor_lock_release (UpBackend *backend)
+{
+	if (backend->priv->logind_inhibitor_fd == -1) {
+		return;
+	}
+
+	close (backend->priv->logind_inhibitor_fd);
+	backend->priv->logind_inhibitor_fd = -1;
+
+	g_debug ("Released inhibitor lock");
+}
+
+/**
  * up_backend_prepare_for_sleep:
  *
  * Callback for logind's PrepareForSleep signal. It receives
@@ -493,8 +567,11 @@ up_backend_prepare_for_sleep (GDBusConnection *connection,
 
 	if (will_sleep) {
 		up_daemon_pause_poll (backend->priv->daemon);
+		up_backend_inhibitor_lock_release (backend);
 		return;
 	}
+
+	up_backend_inhibitor_lock_take (backend);
 
 	/* we are waking up, lets refresh all battery devices */
 	g_debug ("Woke up from sleep; about to refresh devices");
@@ -570,6 +647,9 @@ up_backend_init (UpBackend *backend)
 						       backend,
 						       NULL);
 	backend->priv->logind_sleep_id = sleep_id;
+	backend->priv->logind_inhibitor_fd = -1;
+
+	up_backend_inhibitor_lock_take (backend);
 }
 
 /**
@@ -596,6 +676,8 @@ up_backend_finalize (GObject *object)
 	bus = g_dbus_proxy_get_connection (backend->priv->logind_proxy);
 	g_dbus_connection_signal_unsubscribe (bus,
 					      backend->priv->logind_sleep_id);
+
+	up_backend_inhibitor_lock_release (backend);
 
 	g_clear_object (&backend->priv->logind_proxy);
 

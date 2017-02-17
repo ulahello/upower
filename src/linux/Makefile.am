@@ -9,6 +9,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/libupower-glib				\
 	$(USB_CFLAGS)						\
 	$(GIO_CFLAGS)						\
+	$(GIO_UNIX_CFLAGS)					\
 	$(GUDEV_CFLAGS)						\
 	$(POLKIT_CFLAGS)					\
 	$(GLIB_CFLAGS)						\
@@ -56,7 +57,9 @@ hidpp_test_SOURCES =						\
 hidpp_test_LDADD =						\
 	-lm							\
 	$(GLIB_LIBS)						\
-	$(GIO_LIBS)
+	$(GIO_LIBS)						\
+	$(GIO_UNIX_LIBS)
+
 hidpp_test_CFLAGS = $(AM_CFLAGS) $(WARNINGFLAGS_C)
 
 EXTRA_DIST = $(libupshared_la_SOURCES) 			\
