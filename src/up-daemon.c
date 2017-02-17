@@ -43,6 +43,7 @@ struct UpDaemonPrivate
 	UpDeviceList		*power_devices;
 	guint			 action_timeout_id;
 	GHashTable		*poll_timeouts;
+	gboolean                 poll_paused;
 	GHashTable		*idle_signals;
 
 	/* Properties */
@@ -791,6 +792,54 @@ calculate_timeout (UpDevice *device)
 	return 120;
 }
 
+static void
+enable_poll_for_device (UpDevice *device, TimeoutData *data)
+{
+	const char *path;
+	guint timeout;
+	char *name;
+
+	path = up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device));
+
+	timeout = calculate_timeout (device);
+	data->timeout = timeout;
+
+	data->id = g_timeout_add_seconds (timeout, fire_timeout_callback, device);
+	name = g_strdup_printf ("[upower] UpDevice::poll for %s (%u secs)",
+				path, timeout);
+	g_source_set_name_by_id (data->id, name);
+	g_free (name);
+}
+
+static void
+enable_warning_level_notifications (UpDaemon *daemon, UpDevice *device)
+{
+	gulong handler_id;
+
+	handler_id = g_signal_connect (device, "notify::warning-level",
+				       G_CALLBACK (change_idle_timeout), NULL);
+	g_hash_table_insert (daemon->priv->idle_signals, device,
+			     GUINT_TO_POINTER (handler_id));
+	g_object_weak_ref (G_OBJECT (device), device_destroyed, daemon);
+}
+
+static void
+disable_warning_level_notifications (UpDaemon *daemon, UpDevice *device)
+{
+	gulong handler_id;
+	gpointer value;
+
+	value = g_hash_table_lookup (daemon->priv->idle_signals, device);
+	if (value == NULL)
+		return;
+
+	handler_id = GPOINTER_TO_UINT (value);
+	if (g_signal_handler_is_connected (device, handler_id))
+		g_signal_handler_disconnect (device, handler_id);
+
+	g_hash_table_remove (daemon->priv->idle_signals, device);
+}
+
 void
 up_daemon_start_poll (GObject     *object,
 		      GSourceFunc  callback)
@@ -798,10 +847,7 @@ up_daemon_start_poll (GObject     *object,
 	UpDaemon *daemon;
 	UpDevice *device;
 	TimeoutData *data;
-	guint timeout;
-	gulong handler_id;
 	const char *path;
-	char *name;
 
 	device = UP_DEVICE (object);
 	daemon = up_device_get_daemon (device);
@@ -816,24 +862,15 @@ up_daemon_start_poll (GObject     *object,
 	data = g_new0 (TimeoutData, 1);
 	data->callback = callback;
 
-	timeout = calculate_timeout (device);
-	data->timeout = timeout;
-
-	handler_id = g_signal_connect (device, "notify::warning-level",
-				       G_CALLBACK (change_idle_timeout), NULL);
-	g_hash_table_insert (daemon->priv->idle_signals, device,
-			     GUINT_TO_POINTER (handler_id));
-	g_object_weak_ref (object, device_destroyed, daemon);
-
-	data->id = g_timeout_add_seconds (timeout, fire_timeout_callback, device);
-	name = g_strdup_printf ("[upower] UpDevice::poll for %s (%u secs)",
-				path, timeout);
-	g_source_set_name_by_id (data->id, name);
-	g_free (name);
-
 	g_hash_table_insert (daemon->priv->poll_timeouts, device, data);
 
-	g_debug ("Setup poll for '%s' every %u seconds", path, timeout);
+	if (daemon->priv->poll_paused)
+		goto out;
+
+	enable_warning_level_notifications (daemon, device);
+	enable_poll_for_device (device, data);
+
+	g_debug ("Setup poll for '%s' every %u seconds", path, data->timeout);
 out:
 	g_object_unref (daemon);
 }
@@ -844,19 +881,11 @@ up_daemon_stop_poll (GObject *object)
 	UpDevice *device;
 	TimeoutData *data;
 	UpDaemon *daemon;
-	gpointer value;
-	gulong handle_id;
 
 	device = UP_DEVICE (object);
 	daemon = up_device_get_daemon (device);
 
-	value = g_hash_table_lookup (daemon->priv->idle_signals, device);
-	if (value != NULL) {
-		handle_id = GPOINTER_TO_UINT (value);
-		if (g_signal_handler_is_connected (device, handle_id))
-			g_signal_handler_disconnect (device, handle_id);
-		g_hash_table_remove (daemon->priv->idle_signals, device);
-	}
+	disable_warning_level_notifications (daemon, device);
 
 	data = g_hash_table_lookup (daemon->priv->poll_timeouts, device);
 	if (data == NULL)
@@ -867,6 +896,66 @@ up_daemon_stop_poll (GObject *object)
 	g_hash_table_remove (daemon->priv->poll_timeouts, device);
 out:
 	g_object_unref (daemon);
+}
+
+/**
+ * up_daemon_pause_poll:
+ *
+ * Pause, i.e. stop, all registered poll sources. They can be
+ * restarted via up_daemon_resume_poll().
+ **/
+void
+up_daemon_pause_poll (UpDaemon *daemon)
+{
+	GHashTableIter iter;
+	gpointer key, value;
+
+	g_debug ("Polling will be paused");
+
+	daemon->priv->poll_paused = TRUE;
+
+	g_hash_table_iter_init (&iter, daemon->priv->poll_timeouts);
+	while (g_hash_table_iter_next (&iter, &key, &value)) {
+		UpDevice *device = key;
+		TimeoutData *data = value;
+
+		if (data->id != 0) {
+			g_source_remove (data->id);
+			data->id = 0;
+		}
+
+		disable_warning_level_notifications (daemon, device);
+
+		g_debug ("Poll paused '%s'", up_device_get_object_path (device));
+	}
+}
+
+/**
+ * up_daemon_resume_poll:
+ *
+ * Resume all poll sources; the timeout will be recalculated.
+ **/
+void
+up_daemon_resume_poll (UpDaemon *daemon)
+{
+	GHashTableIter iter;
+	gpointer key, value;
+
+	g_debug ("Polling will be resumed");
+
+	g_hash_table_iter_init (&iter, daemon->priv->poll_timeouts);
+	while (g_hash_table_iter_next (&iter, &key, &value)) {
+		UpDevice *device = key;
+		TimeoutData *data = value;
+
+		enable_poll_for_device (device, data);
+		enable_warning_level_notifications (daemon, device);
+
+		g_debug ("Poll resumed for '%s' every %u seconds",
+			 up_device_get_object_path (device), data->timeout);
+	}
+
+	daemon->priv->poll_paused = FALSE;
 }
 
 /**

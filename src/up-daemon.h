@@ -86,6 +86,8 @@ UpDeviceLevel	 up_daemon_compute_warning_level(UpDaemon		*daemon,
 void		 up_daemon_start_poll		(GObject		*object,
 						 GSourceFunc		 callback);
 void		 up_daemon_stop_poll		(GObject		*object);
+void             up_daemon_pause_poll           (UpDaemon               *daemon);
+void             up_daemon_resume_poll          (UpDaemon               *daemon);
 
 G_END_DECLS
 
