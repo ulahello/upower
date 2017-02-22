@@ -777,9 +777,9 @@ change_idle_timeout (UpDevice   *device,
 		g_debug ("Resetting for polling for '%s' (warning-level change)",
 			 up_device_get_object_path (device));
 
+		g_source_remove (data->id);
 		data->timeout = timeout;
-		up_daemon_stop_poll (G_OBJECT (device));
-		up_daemon_start_poll (G_OBJECT (device), callback);
+		enable_poll_for_device (device, data);
 	}
 
 	g_object_unref (daemon);
