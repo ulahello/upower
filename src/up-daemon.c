@@ -76,6 +76,8 @@ static gboolean	up_daemon_get_on_battery_local	(UpDaemon	*daemon);
 static gboolean	up_daemon_get_warning_level_local(UpDaemon	*daemon);
 static gboolean	up_daemon_get_on_ac_local 	(UpDaemon	*daemon);
 
+static guint    calculate_timeout               (UpDevice *device);
+
 G_DEFINE_TYPE (UpDaemon, up_daemon, UP_TYPE_EXPORTED_DAEMON_SKELETON)
 
 #define UP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DAEMON, UpDaemonPrivate))
@@ -734,14 +736,27 @@ change_idle_timeout (UpDevice   *device,
 	TimeoutData *data;
 	GSourceFunc callback;
 	UpDaemon *daemon;
+	guint timeout;
 
 	daemon = up_device_get_daemon (device);
 
 	data = g_hash_table_lookup (daemon->priv->poll_timeouts, device);
 	callback = data->callback;
 
-	up_daemon_stop_poll (G_OBJECT (device));
-	up_daemon_start_poll (G_OBJECT (device), callback);
+	g_debug ("change_idle_timeout called for: %s",
+		 up_device_get_object_path (device));
+
+	timeout = calculate_timeout (device);
+
+	if (timeout != data->timeout) {
+		g_debug ("Resetting for polling for '%s' (warning-level change)",
+			 up_device_get_object_path (device));
+
+		data->timeout = timeout;
+		up_daemon_stop_poll (G_OBJECT (device));
+		up_daemon_start_poll (G_OBJECT (device), callback);
+	}
+
 	g_object_unref (daemon);
 }
 
