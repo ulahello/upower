@@ -76,8 +76,6 @@ static gboolean	up_daemon_get_on_battery_local	(UpDaemon	*daemon);
 static gboolean	up_daemon_get_warning_level_local(UpDaemon	*daemon);
 static gboolean	up_daemon_get_on_ac_local 	(UpDaemon	*daemon);
 
-static guint    calculate_timeout               (UpDevice *device);
-
 G_DEFINE_TYPE (UpDaemon, up_daemon, UP_TYPE_EXPORTED_DAEMON_SKELETON)
 
 #define UP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DAEMON, UpDaemonPrivate))
@@ -728,6 +726,33 @@ typedef struct {
 	GSourceFunc callback;
 } TimeoutData;
 
+static guint
+calculate_timeout (UpDevice *device)
+{
+	UpDeviceLevel warning_level;
+
+	g_object_get (G_OBJECT (device), "warning-level", &warning_level, NULL);
+	if (warning_level >= UP_DEVICE_LEVEL_DISCHARGING)
+		return 30;
+	return 120;
+}
+
+static void
+enable_poll_for_device (UpDevice *device, TimeoutData *data)
+{
+	guint timeout;
+	char *name;
+
+	timeout = calculate_timeout (device);
+	data->timeout = timeout;
+
+	data->id = g_timeout_add_seconds (timeout, fire_timeout_callback, device);
+	name = g_strdup_printf ("[upower] UpDevice::poll for %s (%u secs)",
+				up_device_get_object_path (device), timeout);
+	g_source_set_name_by_id (data->id, name);
+	g_free (name);
+}
+
 static void
 change_idle_timeout (UpDevice   *device,
 		     GParamSpec *pspec,
@@ -795,36 +820,6 @@ fire_timeout_callback (gpointer user_data)
 	g_object_unref (daemon);
 
 	return G_SOURCE_CONTINUE;
-}
-
-static guint
-calculate_timeout (UpDevice *device)
-{
-	UpDeviceLevel warning_level;
-
-	g_object_get (G_OBJECT (device), "warning-level", &warning_level, NULL);
-	if (warning_level >= UP_DEVICE_LEVEL_DISCHARGING)
-		return UP_DAEMON_SHORT_TIMEOUT;
-	return UP_DAEMON_LONG_TIMEOUT;
-}
-
-static void
-enable_poll_for_device (UpDevice *device, TimeoutData *data)
-{
-	const char *path;
-	guint timeout;
-	char *name;
-
-	path = up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device));
-
-	timeout = calculate_timeout (device);
-	data->timeout = timeout;
-
-	data->id = g_timeout_add_seconds (timeout, fire_timeout_callback, device);
-	name = g_strdup_printf ("[upower] UpDevice::poll for %s (%u secs)",
-				path, timeout);
-	g_source_set_name_by_id (data->id, name);
-	g_free (name);
 }
 
 static void
