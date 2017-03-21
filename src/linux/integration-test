@@ -41,6 +41,13 @@ except ImportError:
     sys.stderr.write('Skipping tests, umockdev not available (https://launchpad.net/umockdev/)\n')
     sys.exit(0)
 
+try:
+    import dbusmock
+except ImportError:
+    sys.stderr.write('Skipping tests, python-dbusmock not available (http://pypi.python.org/pypi/python-dbusmock).\n')
+    sys.exit(0)
+
+
 UP = 'org.freedesktop.UPower'
 UP_DEVICE = 'org.freedesktop.UPower.Device'
 UP_DISPLAY_OBJECT_PATH = '/org/freedesktop/UPower/devices/DisplayDevice'
@@ -58,7 +65,7 @@ UP_DISPLAY_OBJECT_PATH = '/org/freedesktop/UPower/devices/DisplayDevice'
  UP_DEVICE_LEVEL_CRITICAL,
  UP_DEVICE_LEVEL_ACTION) = (0, 1, 2, 3, 4, 5)
 
-class Tests(unittest.TestCase):
+class Tests(dbusmock.DBusTestCase):
     @classmethod
     def setUpClass(cls):
         # run from local build tree if we are in one, otherwise use system instance
@@ -97,6 +104,7 @@ class Tests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.test_bus.down()
+        dbusmock.DBusTestCase.tearDownClass()
 
     def setUp(self):
         '''Set up a local umockdev testbed.
@@ -108,10 +116,16 @@ class Tests(unittest.TestCase):
         self.proxy = None
         self.log = None
         self.daemon = None
+        self.logind = None
 
     def tearDown(self):
         del self.testbed
         self.stop_daemon()
+
+        if self.logind:
+            self.logind.stdout.close()
+            self.logind.terminate()
+            self.logind.wait()
 
         # on failures, print daemon log
         errors = [x[1] for x in self._outcome.errors if x[1]]
@@ -205,6 +219,11 @@ class Tests(unittest.TestCase):
             self.dbus, Gio.DBusProxyFlags.DO_NOT_AUTO_START, None, UP, device,
             'org.freedesktop.DBus.Properties', None)
         return proxy.Get('(ss)', UP + '.Device', name)
+
+    def start_logind(self, parameters=None):
+        self.logind, self.logind_obj = self.spawn_server_template('logind',
+                                                                  parameters or {},
+                                                                  stdout=subprocess.PIPE)
 
     #
     # Actual test cases
