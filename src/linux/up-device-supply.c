@@ -476,6 +476,36 @@ up_device_supply_get_state (const gchar *native_path)
 	return state;
 }
 
+static gdouble
+sysfs_get_capacity_level (const char *native_path)
+{
+	char *level;
+	gdouble ret = -1.0;
+	guint i;
+	struct {
+		const char *level;
+		gdouble percentage;
+	} levels[] = {
+		/* In order of most likely to least likely */
+		{ "Normal",    55.0 },
+		{ "High",      70.0 },
+		{ "Low",       20.0 },
+		{ "Critical",   5.0 },
+		{ "Full",     100.0 }
+	};
+
+	level = sysfs_get_string (native_path, "capacity_level");
+	for (i = 0; i < G_N_ELEMENTS(levels); i++) {
+		if (g_ascii_strncasecmp (levels[i].level, level, strlen (levels[i].level)) == 0) {
+			ret = levels[i].percentage;
+			break;
+		}
+	}
+
+	g_free (level);
+	return ret;
+}
+
 /**
  * up_device_supply_refresh_battery:
  *
@@ -858,6 +888,9 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 
 	/* get a precise percentage */
 	percentage = sysfs_get_double_with_error (native_path, "capacity");
+	if (percentage < 0.0)
+		percentage = sysfs_get_capacity_level (native_path);
+
 	if (percentage < 0.0) {
 		/* Probably talking to the device over Bluetooth */
 		state = UP_DEVICE_STATE_UNKNOWN;
@@ -1036,7 +1069,8 @@ up_device_supply_coldplug (UpDevice *device)
 
 	/* we don't use separate ACs for devices */
 	if (supply->priv->is_power_supply == FALSE &&
-	    !sysfs_file_exists (native_path, "capacity")) {
+	    !sysfs_file_exists (native_path, "capacity") &&
+	    !sysfs_file_exists (native_path, "capacity_level")) {
 		g_debug ("Ignoring device AC, we'll monitor the device battery");
 		return FALSE;
 	}
