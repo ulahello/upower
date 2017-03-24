@@ -770,7 +770,8 @@ fire_timeout_callback (gpointer user_data)
 	g_assert (data);
 
 	g_debug ("Firing timeout for '%s' after %u seconds",
-		 up_device_get_object_path (device), data->timeout);
+		 up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device)),
+		 data->timeout);
 
 	/* Fire the actual callback */
 	(data->callback) (device);
@@ -799,14 +800,16 @@ up_daemon_start_poll (GObject     *object,
 	TimeoutData *data;
 	guint timeout;
 	gulong handler_id;
+	const char *path;
 	char *name;
 
 	device = UP_DEVICE (object);
 	daemon = up_device_get_daemon (device);
 
+	path = up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device));
+
 	if (g_hash_table_lookup (daemon->priv->poll_timeouts, device) != NULL) {
-		g_warning ("Poll already started for device '%s'",
-			   up_device_get_object_path (device));
+		g_warning ("Poll already started for device '%s'", path);
 		goto out;
 	}
 
@@ -824,14 +827,13 @@ up_daemon_start_poll (GObject     *object,
 
 	data->id = g_timeout_add_seconds (timeout, fire_timeout_callback, device);
 	name = g_strdup_printf ("[upower] UpDevice::poll for %s (%u secs)",
-				up_device_get_object_path (device), timeout);
+				path, timeout);
 	g_source_set_name_by_id (data->id, name);
 	g_free (name);
 
 	g_hash_table_insert (daemon->priv->poll_timeouts, device, data);
 
-	g_debug ("Setup poll for '%s' every %u seconds",
-		 up_device_get_object_path (device), timeout);
+	g_debug ("Setup poll for '%s' every %u seconds", path, timeout);
 out:
 	g_object_unref (daemon);
 }
