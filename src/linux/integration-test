@@ -916,6 +916,30 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
+    def test_virtual_unparented_device(self):
+        '''Unparented virtual input device'''
+
+        dev = self.testbed.add_device(
+            'input',
+            '/sys/devices/virtual/input/input18',
+            None,
+            [], [])
+
+        acpi = self.testbed.add_device('acpi', 'PNP0C0A:00', None, [], [])
+        bat0 = self.testbed.add_device('power_supply', 'BAT0', acpi,
+                                       ['type', 'Battery',
+                                        'present', '1',
+                                        'status', 'Discharging',
+                                        'energy_full', '60000000',
+                                        'energy_full_design', '80000000',
+                                        'energy_now', '48000000',
+                                        'voltage_now', '12000000'], [])
+
+        # Generated a critical in older versions of upower
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.stop_daemon()
+
     def test_bluetooth_hid_mouse_no_legacy_subdevice(self):
         '''bluetooth HID mouse battery'''
 
