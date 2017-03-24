@@ -641,7 +641,7 @@ up_device_refresh_internal (UpDevice *device)
 
 	/* the first time, print all properties */
 	if (!device->priv->has_ever_refresh) {
-		g_debug ("added native-path: %s\n", up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device)));
+		g_debug ("added native-path: %s", up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device)));
 		device->priv->has_ever_refresh = TRUE;
 		goto out;
 	}
