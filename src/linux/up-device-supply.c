@@ -910,7 +910,7 @@ up_device_supply_get_sibling_with_subsystem (GUdevDevice *device,
 	GUdevDevice *parent;
 	GUdevClient *client;
 	GUdevDevice *sibling;
-	const char const *class[] = { NULL, NULL };
+	const char * class[] = { NULL, NULL };
 	const char *parent_path;
 	GList *devices, *l;
 
