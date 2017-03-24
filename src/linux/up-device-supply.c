@@ -932,6 +932,8 @@ up_device_supply_get_sibling_with_subsystem (GUdevDevice *device,
 		const char *p_path;
 
 		p = g_udev_device_get_parent (d);
+		if (!p)
+			continue;
 		p_path = g_udev_device_get_sysfs_path (p);
 		if (g_strcmp0 (p_path, parent_path) == 0)
 			sibling = g_object_ref (d);
