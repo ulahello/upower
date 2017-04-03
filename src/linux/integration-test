@@ -1020,7 +1020,7 @@ class Tests(dbusmock.DBusTestCase):
 
         dev = self.testbed.add_device(
             'input',
-            '/sys/devices/virtual/input/input18',
+            'virtual/input/input18',
             None,
             [], [])
 
