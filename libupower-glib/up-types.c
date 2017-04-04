@@ -258,6 +258,12 @@ up_device_level_to_string (UpDeviceLevel level_enum)
 		return "critical";
 	case UP_DEVICE_LEVEL_ACTION:
 		return "action";
+	case UP_DEVICE_LEVEL_NORMAL:
+		return "normal";
+	case UP_DEVICE_LEVEL_HIGH:
+		return "high";
+	case UP_DEVICE_LEVEL_FULL:
+		return "full";
 	default:
 		return "unknown";
 	}
@@ -290,5 +296,11 @@ up_device_level_from_string (const gchar *level)
 		return UP_DEVICE_LEVEL_CRITICAL;
 	if (g_strcmp0 (level, "action") == 0)
 		return UP_DEVICE_LEVEL_ACTION;
+	if (g_strcmp0 (level, "normal") == 0)
+		return UP_DEVICE_LEVEL_NORMAL;
+	if (g_strcmp0 (level, "high") == 0)
+		return UP_DEVICE_LEVEL_HIGH;
+	if (g_strcmp0 (level, "full") == 0)
+		return UP_DEVICE_LEVEL_FULL;
 	return UP_DEVICE_LEVEL_UNKNOWN;
 }
