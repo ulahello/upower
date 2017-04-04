@@ -477,32 +477,44 @@ up_device_supply_get_state (const gchar *native_path)
 }
 
 static gdouble
-sysfs_get_capacity_level (const char *native_path)
+sysfs_get_capacity_level (const char    *native_path,
+			  UpDeviceLevel *level)
 {
-	char *level;
+	char *str;
 	gdouble ret = -1.0;
 	guint i;
 	struct {
-		const char *level;
+		const char *str;
 		gdouble percentage;
+		UpDeviceLevel level;
 	} levels[] = {
-		/* In order of most likely to least likely */
-		{ "Normal",    55.0 },
-		{ "High",      70.0 },
-		{ "Low",       20.0 },
-		{ "Critical",   5.0 },
-		{ "Full",     100.0 }
+		/* In order of most likely to least likely,
+		 * Keep in sync with up_daemon_compute_warning_level() */
+		{ "Normal",    55.0, UP_DEVICE_LEVEL_NORMAL },
+		{ "High",      70.0, UP_DEVICE_LEVEL_HIGH },
+		{ "Low",       10.0, UP_DEVICE_LEVEL_LOW },
+		{ "Critical",   5.0, UP_DEVICE_LEVEL_CRITICAL },
+		{ "Full",     100.0, UP_DEVICE_LEVEL_FULL }
 	};
 
-	level = sysfs_get_string (native_path, "capacity_level");
+	g_return_val_if_fail (level != NULL, -1.0);
+
+	if (!sysfs_file_exists (native_path, "capacity_level")) {
+		*level = UP_DEVICE_LEVEL_NONE;
+		return -1.0;
+	}
+
+	*level = UP_DEVICE_LEVEL_UNKNOWN;
+	str = sysfs_get_string (native_path, "capacity_level");
 	for (i = 0; i < G_N_ELEMENTS(levels); i++) {
-		if (g_ascii_strncasecmp (levels[i].level, level, strlen (levels[i].level)) == 0) {
+		if (g_ascii_strncasecmp (levels[i].str, str, strlen (levels[i].str)) == 0) {
 			ret = levels[i].percentage;
+			*level = levels[i].level;
 			break;
 		}
 	}
 
-	g_free (level);
+	g_free (str);
 	return ret;
 }
 
@@ -853,6 +865,7 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 	const gchar *native_path;
 	GUdevDevice *native;
 	gdouble percentage = 0.0f;
+	UpDeviceLevel level = UP_DEVICE_LEVEL_NONE;
 
 	native = G_UDEV_DEVICE (up_device_get_native (device));
 	native_path = g_udev_device_get_sysfs_path (native);
@@ -889,7 +902,7 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 	/* get a precise percentage */
 	percentage = sysfs_get_double_with_error (native_path, "capacity");
 	if (percentage < 0.0)
-		percentage = sysfs_get_capacity_level (native_path);
+		percentage = sysfs_get_capacity_level (native_path, &level);
 
 	if (percentage < 0.0) {
 		/* Probably talking to the device over Bluetooth */
@@ -914,6 +927,7 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 
 	g_object_set (device,
 		      "percentage", percentage,
+		      "battery-level", level,
 		      "state", state,
 		      NULL);
 

@@ -54,25 +54,38 @@ G_DEFINE_TYPE (UpDevice, up_device, UP_TYPE_EXPORTED_DEVICE_SKELETON)
  * power_supply
  * percentage
  * time_to_empty
+ * battery_level
  *
  * type should not change for non-display devices
  */
 static void
 update_warning_level (UpDevice *device)
 {
-	UpDeviceLevel warning_level;
+	UpDeviceLevel warning_level, battery_level;
 	UpExportedDevice *skeleton = UP_EXPORTED_DEVICE (device);
 
 	/* Not finished setting up the object? */
 	if (device->priv->daemon == NULL)
 		return;
 
-	warning_level = up_daemon_compute_warning_level (device->priv->daemon,
-							 up_exported_device_get_state (skeleton),
-							 up_exported_device_get_type_ (skeleton),
-							 up_exported_device_get_power_supply (skeleton),
-							 up_exported_device_get_percentage (skeleton),
-							 up_exported_device_get_time_to_empty (skeleton));
+	/* If the battery level is available, and is critical,
+	 * we need to fallback to calculations to get the warning
+	 * level, as that might be "action" at this point */
+	battery_level = up_exported_device_get_battery_level (skeleton);
+	if (battery_level != UP_DEVICE_LEVEL_NONE &&
+	    battery_level != UP_DEVICE_LEVEL_CRITICAL) {
+		if (battery_level == UP_DEVICE_LEVEL_LOW)
+			warning_level = battery_level;
+		else
+			warning_level = UP_DEVICE_LEVEL_NONE;
+	} else {
+		warning_level = up_daemon_compute_warning_level (device->priv->daemon,
+								 up_exported_device_get_state (skeleton),
+								 up_exported_device_get_type_ (skeleton),
+								 up_exported_device_get_power_supply (skeleton),
+								 up_exported_device_get_percentage (skeleton),
+								 up_exported_device_get_time_to_empty (skeleton));
+	}
 
 	up_exported_device_set_warning_level (skeleton, warning_level);
 }
@@ -165,7 +178,8 @@ up_device_notify (GObject *object, GParamSpec *pspec)
 		   g_strcmp0 (pspec->name, "time-to-empty") == 0) {
 		update_warning_level (device);
 	} else if (g_strcmp0 (pspec->name, "state") == 0 ||
-		   g_strcmp0 (pspec->name, "percentage") == 0) {
+		   g_strcmp0 (pspec->name, "percentage") == 0 ||
+		   g_strcmp0 (pspec->name, "battery-level") == 0) {
 		update_warning_level (device);
 		update_icon_name (device);
 	} else if (g_strcmp0 (pspec->name, "update-time") == 0) {
@@ -672,8 +686,13 @@ up_device_get_native (UpDevice *device)
 static void
 up_device_init (UpDevice *device)
 {
+	UpExportedDevice *skeleton;
+
 	device->priv = UP_DEVICE_GET_PRIVATE (device);
 	device->priv->history = up_history_new ();
+
+	skeleton = UP_EXPORTED_DEVICE (device);
+	up_exported_device_set_battery_level (skeleton, UP_DEVICE_LEVEL_NONE);
 
 	g_signal_connect (device, "handle-get-history",
 			  G_CALLBACK (up_device_get_history), device);

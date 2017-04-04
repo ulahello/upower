@@ -86,7 +86,8 @@ typedef enum {
 /**
  * UpDeviceLevel:
  *
- * The level of a battery.
+ * The level of a battery. Some values are only relevant to the WarningLevel
+ * property, some others to the BatteryLevel property.
  **/
 typedef enum {
 	UP_DEVICE_LEVEL_UNKNOWN,

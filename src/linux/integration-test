@@ -566,6 +566,7 @@ class Tests(dbusmock.DBusTestCase):
                                 ['type', 'Battery',
                                  'present', '1',
                                  'status', 'Full',
+                                 'capacity_level', 'Normal\n',
                                  'current_now', '1000',
                                  'charge_now', '11000000',
                                  'charge_full', '10000000',
@@ -590,6 +591,8 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Voltage'), 12.0)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'PowerSupply'), True)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Type'), 2)
+        # capacity_level is unused because a 'capacity' attribute is present and used instead
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'BatteryLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
     def test_battery_temperature(self):
@@ -999,26 +1002,33 @@ class Tests(dbusmock.DBusTestCase):
 
         # Now test all the levels
         self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Percentage'), 100)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'BatteryLevel'), UP_DEVICE_LEVEL_FULL)
 
         self.testbed.set_attribute(dev, 'capacity_level', 'Critical\n')
         self.testbed.uevent(dev, 'change')
         time.sleep(0.5)
         self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Percentage'), 5)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'BatteryLevel'), UP_DEVICE_LEVEL_CRITICAL)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'WarningLevel'), UP_DEVICE_LEVEL_CRITICAL)
 
         self.testbed.set_attribute(dev, 'capacity_level', 'Low\n')
         self.testbed.uevent(dev, 'change')
         time.sleep(0.5)
         self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Percentage'), 10)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'BatteryLevel'), UP_DEVICE_LEVEL_LOW)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'WarningLevel'), UP_DEVICE_LEVEL_LOW)
 
         self.testbed.set_attribute(dev, 'capacity_level', 'High\n')
         self.testbed.uevent(dev, 'change')
         time.sleep(0.5)
         self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Percentage'), 70)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'BatteryLevel'), UP_DEVICE_LEVEL_HIGH)
 
         self.testbed.set_attribute(dev, 'capacity_level', 'Normal\n')
         self.testbed.uevent(dev, 'change')
         time.sleep(0.5)
         self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Percentage'), 55)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'BatteryLevel'), UP_DEVICE_LEVEL_NORMAL)
 
         self.stop_daemon()
 

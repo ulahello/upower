@@ -703,6 +703,39 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
+    <property name="BatteryLevel" type="u" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Level of the battery:
+          </doc:para>
+          <doc:list>
+            <doc:item>
+              <doc:term>0</doc:term><doc:definition>Unknown</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>1</doc:term><doc:definition>None (the battery does not use a coarse level of battery reporting)</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>3</doc:term><doc:definition>Low</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>4</doc:term><doc:definition>Critical</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>6</doc:term><doc:definition>Normal</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>7</doc:term><doc:definition>High</doc:definition>
+            </doc:item>
+            <doc:item>
+              <doc:term>8</doc:term><doc:definition>Full</doc:definition>
+            </doc:item>
+          </doc:list>
+        </doc:description>
+      </doc:doc>
+    </property>
+
     <property name="IconName" type="s" access="read">
       <doc:doc>
         <doc:description>
