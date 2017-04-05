@@ -41,6 +41,7 @@ UPOWER_LIBS = \
 libexec_PROGRAMS = upowerd
 
 upowerd_SOURCES =						\
+	up-constants.h						\
 	up-daemon.h						\
 	up-daemon.c						\
 	up-device.h						\

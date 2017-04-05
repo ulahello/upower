@@ -36,11 +36,9 @@
 #include "sysfs-utils.h"
 #include "up-config.h"
 #include "up-types.h"
+#include "up-constants.h"
 #include "up-device-supply.h"
 
-#define UP_DEVICE_SUPPLY_REFRESH_TIMEOUT	30	/* seconds */
-#define UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT	1	/* seconds */
-#define UP_DEVICE_SUPPLY_UNKNOWN_RETRIES	5
 #define UP_DEVICE_SUPPLY_CHARGED_THRESHOLD	90.0f	/* % */
 
 #define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_CHARGE		TRUE
@@ -278,7 +276,7 @@ up_device_supply_calculate_rate (UpDeviceSupply *supply, gdouble energy)
 		return supply->priv->rate_old;
 
 	/* Compute the discharge per hour, and not per second */
-	rate /= sum_x / 3600.0f;
+	rate /= sum_x / SECONDS_PER_HOUR_F;
 
 	/* if the rate is zero, use the old rate. It will usually happens if no
 	 * data is in the buffer yet. If the rate is too high, i.e. more than,
@@ -942,7 +940,7 @@ up_device_supply_poll_unknown_battery (UpDevice *device)
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
 
 	g_debug ("Unknown state on supply %s; forcing update after %i seconds",
-		 up_device_get_object_path (device), UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT);
+		 up_device_get_object_path (device), UP_DAEMON_UNKNOWN_TIMEOUT);
 
 	supply->priv->poll_timer_id = 0;
 	up_device_supply_refresh (device);
@@ -1130,9 +1128,9 @@ up_device_supply_setup_unknown_poll (UpDevice      *device,
 
 	/* if it's unknown, poll faster than we would normally */
 	if (state == UP_DEVICE_STATE_UNKNOWN &&
-	    supply->priv->unknown_retries < UP_DEVICE_SUPPLY_UNKNOWN_RETRIES) {
+	    supply->priv->unknown_retries < UP_DAEMON_UNKNOWN_RETRIES) {
 		supply->priv->poll_timer_id =
-			g_timeout_add_seconds (UP_DEVICE_SUPPLY_UNKNOWN_TIMEOUT,
+			g_timeout_add_seconds (UP_DAEMON_UNKNOWN_TIMEOUT,
 					       (GSourceFunc) up_device_supply_poll_unknown_battery, supply);
 		g_source_set_name_by_id (supply->priv->poll_timer_id, "[upower] up_device_supply_poll_unknown_battery (linux)");
 

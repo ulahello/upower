@@ -31,6 +31,7 @@
 #include <glib-object.h>
 
 #include "up-config.h"
+#include "up-constants.h"
 #include "up-device-list.h"
 #include "up-device.h"
 #include "up-backend.h"
@@ -247,9 +248,9 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 	/* calculate a quick and dirty time remaining value */
 	if (energy_rate_total > 0) {
 		if (state_total == UP_DEVICE_STATE_DISCHARGING)
-			time_to_empty_total = 3600 * (energy_total / energy_rate_total);
+			time_to_empty_total = SECONDS_PER_HOUR * (energy_total / energy_rate_total);
 		else if (state_total == UP_DEVICE_STATE_CHARGING)
-			time_to_full_total = 3600 * ((energy_full_total - energy_total) / energy_rate_total);
+			time_to_full_total = SECONDS_PER_HOUR * ((energy_full_total - energy_total) / energy_rate_total);
 	}
 
 out:
@@ -788,8 +789,8 @@ calculate_timeout (UpDevice *device)
 
 	g_object_get (G_OBJECT (device), "warning-level", &warning_level, NULL);
 	if (warning_level >= UP_DEVICE_LEVEL_DISCHARGING)
-		return 30;
-	return 120;
+		return UP_DAEMON_SHORT_TIMEOUT;
+	return UP_DAEMON_LONG_TIMEOUT;
 }
 
 static void

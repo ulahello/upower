@@ -50,6 +50,7 @@
 #include "sysfs-utils.h"
 #include "up-types.h"
 #include "up-device-hid.h"
+#include "up-constants.h"
 
 #define UP_DEVICE_HID_REFRESH_TIMEOUT			30l
 
@@ -289,9 +290,9 @@ up_device_hid_fixup_state (UpDevice *device)
 
 	/* map states the UPS cannot express */
 	g_object_get (device, "percentage", &percentage, NULL);
-	if (percentage < 0.01)
+	if (percentage < UP_DAEMON_EPSILON)
 		g_object_set (device, "state", UP_DEVICE_STATE_EMPTY, NULL);
-	if (percentage > 99.9)
+	if (percentage > (100.0 - UP_DAEMON_EPSILON))
 		g_object_set (device, "state", UP_DEVICE_STATE_FULLY_CHARGED, NULL);
 }
 
