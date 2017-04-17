@@ -249,8 +249,11 @@ class Tests(dbusmock.DBusTestCase):
                                                                   stdout=subprocess.PIPE)
 
     def have_text_in_log(self, text):
+        return self.count_text_in_log(text) > 0
+
+    def count_text_in_log(self, text):
         with open(self.log.name) as f:
-            return text in f.read()
+            return f.read().count(text)
 
     def assertEventually(self, condition, message=None, timeout=50):
         '''Assert that condition function eventually returns True.
@@ -759,6 +762,63 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Energy'), 40.0)
 
         self.stop_daemon()
+
+    def test_critical_action_is_taken_repeatedly(self):
+        '''check that critical action works repeatedly (eg. after resume)'''
+
+        bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
+                                       ['type', 'Battery',
+                                        'present', '1',
+                                        'status', 'Discharging',
+                                        'energy_full', '60000000',
+                                        'energy_full_design', '80000000',
+                                        'energy_now', '50000000',
+                                        'voltage_now', '12000000'], [])
+
+        config = tempfile.NamedTemporaryFile(delete=False, mode='w')
+        config.write("[UPower]\n")
+        config.write("UsePercentageForPolicy=true\n")
+        config.write("PercentageAction=5\n")
+        config.write("CriticalPowerAction=Hibernate\n")
+        config.close()
+
+        self.start_logind()
+        self.start_daemon(cfgfile=config.name)
+
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        bat0_up = devs[0]
+
+        # simulate that battery has 1% (less than PercentageAction)
+        self.testbed.set_attribute(bat0, 'energy_now', '600000')
+        self.testbed.uevent(bat0, 'change')
+
+        time.sleep(0.5)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_ACTION)
+
+        time.sleep(20.5) # wait for UP_DAEMON_ACTION_DELAY
+        self.assertEqual(self.count_text_in_log("About to call logind method Hibernate"), 1)
+
+        # simulate that battery was charged to 100% during sleep
+        self.testbed.set_attribute(bat0, 'energy_now', '60000000')
+        self.testbed.uevent(bat0, 'change')
+
+        time.sleep(0.5)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
+
+        # simulate that battery was drained to 1% again
+        self.testbed.set_attribute(bat0, 'energy_now', '600000')
+        self.testbed.uevent(bat0, 'change')
+
+        time.sleep(0.5)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_ACTION)
+
+        time.sleep(20.5) # wait for UP_DAEMON_ACTION_DELAY
+        self.assertEqual(self.count_text_in_log("About to call logind method Hibernate"), 2)
+
+        self.stop_daemon()
+
+        os.unlink(config.name)
 
     def test_no_poll_batteries(self):
         ''' setting NoPollBatteries option should disable polling'''

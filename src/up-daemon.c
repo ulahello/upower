@@ -587,6 +587,10 @@ static gboolean
 take_action_timeout_cb (UpDaemon *daemon)
 {
 	up_backend_take_action (daemon->priv->backend);
+
+	g_debug ("Backend was notified to take action. The timeout will be removed.");
+	daemon->priv->action_timeout_id = 0;
+
 	return G_SOURCE_REMOVE;
 }
 
