@@ -626,6 +626,13 @@ up_wakeups_timerstats_enable (UpWakeups *wakeups)
 
 	g_debug ("enabling timer stats");
 
+	/* enable timer stats */
+	file = fopen (UP_WAKEUPS_SOURCE_USERSPACE, "w");
+	if (file == NULL)
+		return FALSE;
+	fprintf (file, "1\n");
+	fclose (file);
+
 	/* setup polls */
 	wakeups->priv->poll_kernel_id =
 		g_timeout_add_seconds (UP_WAKEUPS_POLL_INTERVAL_KERNEL,
@@ -637,11 +644,6 @@ up_wakeups_timerstats_enable (UpWakeups *wakeups)
 				       (GSourceFunc) up_wakeups_poll_userspace_cb, wakeups);
 	g_source_set_name_by_id (wakeups->priv->poll_userspace_id, "[upower] up_wakeups_poll_userspace_cb");
 
-	file = fopen (UP_WAKEUPS_SOURCE_USERSPACE, "w");
-	if (file == NULL)
-		return FALSE;
-	fprintf (file, "1\n");
-	fclose (file);
 	wakeups->priv->polling_enabled = TRUE;
 	return TRUE;
 }
