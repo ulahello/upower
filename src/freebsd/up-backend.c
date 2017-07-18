@@ -226,7 +226,7 @@ up_backend_lid_coldplug (UpBackend *backend)
 	gchar *lid_state;
 
 	lid_state = up_get_string_sysctl (NULL, "hw.acpi.lid_switch_state");
-	if (lid_state && strcmp (lid_state, "NONE")) {
+	if (lid_state) {
 		up_daemon_set_lid_is_present (backend->priv->daemon, TRUE);
 	}
 	g_free (lid_state);
