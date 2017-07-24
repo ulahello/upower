@@ -6,7 +6,7 @@ git shortlog UPOWER_0_99_4.. | grep -i -v trivial | grep -v Merge > NEWS.new
 
 Version 0.99.5
 ~~~~~~~~~~~~~~
-Released: 2015-xx-xx
+Released: 2017-xx-xx
 
 New Features:
 Bugfixes:

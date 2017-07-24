@@ -1,3 +1,24 @@
+Version 0.99.5
+~~~~~~~~~~~~~~
+Released: 2017-07-24
+
+New Features:
+ - Add a more complete self test for HID++ devices (Bastien Nocera)
+ - Add BatteryLevel property for devices with a finite number of power levels (Bastien Nocera)
+ - Add support for pausing and resuming of the daemon poll (Christian Kellner, Bastien Nocera)
+ - Get a serial number for device batteries (Bastien Nocera)
+ - Refresh devices after waking up from sleep (Christian Kellner)
+
+Bugfixes:
+ - Add proper error and cancellable handling to UpClient constructor (Martin Pitt)
+ - Do not spin in a loop when /proc/timer_stats cannot be written (Richard Hughes)
+ - Exit early from up-tool when connecting to upower fails (Martin Pitt)
+ - Expand the integration-tests to run in more environments (Bastien Nocera, Christian Kellner)
+ - Fix reading and writing the keyboard brightness level (Hans de Goede, Marco Trevisan)
+ - Fix -Wformat-y2k compilation errors (Bastien Nocera)
+ - Lower initial power usage when iDevice isn't accessible (Bastien Nocera)
+ - Simplify string checks in upower-glib (Bastien Nocera)
+
 Version 0.99.4
 ~~~~~~~~~~~~~~
 Released: 2016-02-16
