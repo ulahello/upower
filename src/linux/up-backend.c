@@ -475,7 +475,7 @@ static void
 up_backend_inhibitor_lock_take (UpBackend *backend)
 {
 	GVariant *out, *input;
-	GUnixFDList *fds;
+	GUnixFDList *fds = NULL;
 	GError *error = NULL;
 
 	if (backend->priv->logind_inhibitor_fd > -1) {
@@ -505,11 +505,13 @@ up_backend_inhibitor_lock_take (UpBackend *backend)
 	if (g_unix_fd_list_get_length (fds) != 1) {
 		g_warning ("Unexpected values returned by logind's 'Inhibit'");
 		g_variant_unref (out);
+		g_object_unref (fds);
 		return;
 	}
 
 	backend->priv->logind_inhibitor_fd = g_unix_fd_list_get (fds, 0, NULL);
 	g_variant_unref (out);
+	g_object_unref (fds);
 
 	g_debug ("Acquired inhibitor lock (%i)", backend->priv->logind_inhibitor_fd);
 }
