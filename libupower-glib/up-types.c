@@ -70,6 +70,8 @@ up_device_kind_to_string (UpDeviceKind type_enum)
 		return "tablet";
 	case UP_DEVICE_KIND_COMPUTER:
 		return "computer";
+	case UP_DEVICE_KIND_GAMING_INPUT:
+		return "gaming-input";
 	default:
 		return "unknown";
 	}
@@ -110,6 +112,8 @@ up_device_kind_from_string (const gchar *type)
 		return UP_DEVICE_KIND_MEDIA_PLAYER;
 	if (g_str_equal (type, "tablet"))
 		return UP_DEVICE_KIND_TABLET;
+	if (g_str_equal (type, "gaming-input"))
+		return UP_DEVICE_KIND_GAMING_INPUT;
 	return UP_DEVICE_KIND_UNKNOWN;
 }
 
