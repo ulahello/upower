@@ -921,6 +921,20 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 		/* get values which may be blank */
 		model_name = up_device_supply_get_string (native_path, "model_name");
 		serial_number = up_device_supply_get_string (native_path, "serial_number");
+		if (model_name == NULL && serial_number == NULL) {
+			GUdevDevice *sibling;
+
+			sibling = up_device_supply_get_sibling_with_subsystem (native, "input");
+			if (sibling != NULL) {
+				const char *path;
+				path = g_udev_device_get_sysfs_path (sibling);
+
+				model_name = up_device_supply_get_string (path, "name");
+				serial_number = up_device_supply_get_string (path, "uniq");
+
+				g_object_unref (sibling);
+			}
+		}
 
 		/* some vendors fill this with binary garbage */
 		up_device_supply_make_safe_string (model_name);
