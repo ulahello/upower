@@ -990,8 +990,8 @@ class Tests(dbusmock.DBusTestCase):
         joypadbat0_up = devs[0]
 
         self.assertEqual(self.get_dbus_dev_property(joypadbat0_up, 'PowerSupply'), False)
-        # 6 == mouse FIXME
-        self.assertEqual(self.get_dbus_dev_property(joypadbat0_up, 'Type'), 6)
+        # 12 == gaming input
+        self.assertEqual(self.get_dbus_dev_property(joypadbat0_up, 'Type'), 12)
         self.assertEqual(self.get_dbus_property('OnBattery'), False)
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
 

@@ -1017,6 +1017,8 @@ up_device_supply_guess_type (GUdevDevice *native,
 			if (g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_MOUSE") ||
 			    g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_TOUCHPAD")) {
 				type = UP_DEVICE_KIND_MOUSE;
+			} else if (g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_JOYSTICK")) {
+				type = UP_DEVICE_KIND_GAMING_INPUT;
 			} else {
 				type = UP_DEVICE_KIND_KEYBOARD;
 			}
