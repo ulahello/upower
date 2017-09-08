@@ -495,23 +495,35 @@ sysfs_get_capacity_level (const char    *native_path,
 		{ "Critical",   5.0, UP_DEVICE_LEVEL_CRITICAL },
 		{ "Full",     100.0, UP_DEVICE_LEVEL_FULL }
 	};
+	guint len;
 
 	g_return_val_if_fail (level != NULL, -1.0);
 
 	if (!sysfs_file_exists (native_path, "capacity_level")) {
+		g_debug ("capacity_level doesn't exist, skipping");
 		*level = UP_DEVICE_LEVEL_NONE;
 		return -1.0;
 	}
 
 	*level = UP_DEVICE_LEVEL_UNKNOWN;
 	str = sysfs_get_string (native_path, "capacity_level");
+	if (!str) {
+		g_debug ("Failed to read capacity_level!");
+		return ret;
+	}
+
+	len = strlen(str);
+	str[len -1] = '\0';
 	for (i = 0; i < G_N_ELEMENTS(levels); i++) {
-		if (g_ascii_strncasecmp (levels[i].str, str, strlen (levels[i].str)) == 0) {
+		if (strcmp (levels[i].str, str) == 0) {
 			ret = levels[i].percentage;
 			*level = levels[i].level;
 			break;
 		}
 	}
+
+	if (ret < 0.0)
+		g_debug ("Could not find a percentage for capacity level '%s'", str);
 
 	g_free (str);
 	return ret;
