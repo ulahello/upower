@@ -91,3 +91,9 @@ Coding Style
    heuristically parse a file and accept not-well-formed
    data). Avoiding heuristics is also important for security reasons;
    if it looks funny, ignore it (or exit, or disconnect).
+
+Testing
+===
+
+Under Linux, with the umockdev package installed, you can run "make check"
+in the root build directory to run an automated test suite.
