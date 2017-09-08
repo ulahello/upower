@@ -620,6 +620,22 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_CRITICAL)
         self.stop_daemon()
 
+    def test_battery_broken_name(self):
+        '''Battery with funky kernel name'''
+
+        self.testbed.add_device('power_supply', 'bq24735@5-0009', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'unknown',
+                                 'energy_full', '60000000',
+                                 'energy_full_design', '80000000',
+                                 'energy_now', '48000000',
+                                 'voltage_now', '12000000'], [])
+
+        self.start_daemon()
+        self.assertEqual(self.get_dbus_display_property('IsPresent'), True)
+        self.stop_daemon()
+
     def test_ups_no_ac(self):
         '''UPS properties without AC'''
 
