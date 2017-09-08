@@ -1147,7 +1147,7 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:warning-level:
 	 *
-	 * The warning level e.g. %UP_DEVICE_LEVEL_WARNING.
+	 * The warning level e.g. %UP_DEVICE_LEVEL_CRITICAL.
 	 *
 	 * Since: 1.0
 	 **/
@@ -1163,7 +1163,7 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:battery-level:
 	 *
-	 * The battery level.
+	 * The battery level, e.g. %UP_DEVICE_LEVEL_CRITICAL.
 	 *
 	 * Since: 1.0
 	 **/
