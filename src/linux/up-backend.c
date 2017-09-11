@@ -553,11 +553,12 @@ up_backend_get_critical_action (UpBackend *backend)
 		const gchar *method;
 		const gchar *can_method;
 	} actions[] = {
+		{ "Suspend", "CanSuspend" },
 		{ "HybridSleep", "CanHybridSleep" },
 		{ "Hibernate", "CanHibernate" },
 		{ "PowerOff", NULL },
 	};
-	guint i = 0;
+	guint i = 1;
 	char *action;
 
 	g_return_val_if_fail (backend->priv->logind_proxy != NULL, NULL);
@@ -569,7 +570,7 @@ up_backend_get_critical_action (UpBackend *backend)
 			if (g_str_equal (actions[i].method, action))
 				break;
 		if (i >= G_N_ELEMENTS (actions))
-			i = 0;
+			i = 1;
 		g_free (action);
 	}
 
