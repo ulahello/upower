@@ -86,8 +86,10 @@ lockdownd_error_to_string (lockdownd_error_t lerr)
 		return "LOCKDOWN_E_SSL_ERROR";
 	case LOCKDOWN_E_DICT_ERROR:
 		return "LOCKDOWN_E_DICT_ERROR";
-	case LOCKDOWN_E_NOT_ENOUGH_DATA:
-		return "LOCKDOWN_E_NOT_ENOUGH_DATA";
+	case -7:
+		/* Either LOCKDOWN_E_NOT_ENOUGH_DATA or
+		 * LOCKDOWN_E_RECEIVE_TIMEOUT depending on version */
+		return "LOCKDOWN_E_RECEIVE_TIMEOUT";
 	case LOCKDOWN_E_MUX_ERROR:
 		return "LOCKDOWN_E_MUX_ERROR";
 	case LOCKDOWN_E_NO_RUNNING_SESSION:
