@@ -288,12 +288,9 @@ up_device_unifying_coldplug (UpDevice *device)
 	ret = TRUE;
 out:
 	g_list_free_full (hidraw_list, (GDestroyNotify) g_object_unref);
-	if (parent != NULL)
-		g_object_unref (parent);
-	if (receiver != NULL)
-		g_object_unref (receiver);
-	if (client != NULL)
-		g_object_unref (client);
+	g_clear_object (&parent);
+	g_clear_object (&receiver);
+	g_clear_object (&client);
 	return ret;
 }
 
@@ -321,8 +318,7 @@ up_device_unifying_finalize (GObject *object)
 	g_return_if_fail (unifying->priv != NULL);
 
 	up_daemon_stop_poll (object);
-	if (unifying->priv->hidpp_device != NULL)
-		g_object_unref (unifying->priv->hidpp_device);
+	g_clear_object (&unifying->priv->hidpp_device);
 
 	G_OBJECT_CLASS (up_device_unifying_parent_class)->finalize (object);
 }

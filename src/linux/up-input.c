@@ -285,8 +285,7 @@ up_input_finalize (GObject *object)
 	input = UP_INPUT (object);
 	g_return_if_fail (input->priv != NULL);
 
-	if (input->priv->daemon != NULL)
-		g_object_unref (input->priv->daemon);
+	g_clear_object (&input->priv->daemon);
 	if (input->priv->eventfp >= 0)
 		close (input->priv->eventfp);
 	if (input->priv->channel) {

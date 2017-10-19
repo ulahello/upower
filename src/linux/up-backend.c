@@ -97,10 +97,9 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
 		if (ret)
 			goto out;
-		g_object_unref (device);
 
 		/* no valid power supply object */
-		device = NULL;
+		g_clear_object (&device);
 
 	} else if (g_strcmp0 (subsys, "hid") == 0) {
 
@@ -109,10 +108,8 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
 		if (ret)
 			goto out;
-		g_object_unref (device);
-
 		/* no valid power supply object */
-		device = NULL;
+		g_clear_object (&device);
 
 	} else if (g_strcmp0 (subsys, "tty") == 0) {
 
@@ -121,10 +118,9 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
 		if (ret)
 			goto out;
-		g_object_unref (device);
 
 		/* no valid TTY object */
-		device = NULL;
+		g_clear_object (&device);
 
 	} else if (g_strcmp0 (subsys, "usb") == 0 || g_strcmp0 (subsys, "usbmisc") == 0) {
 
@@ -149,10 +145,9 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
 		if (ret)
 			goto out;
-		g_object_unref (device);
 
 		/* no valid USB object */
-		device = NULL;
+		g_clear_object (&device);
 
 	} else if (g_strcmp0 (subsys, "input") == 0) {
 
@@ -201,8 +196,7 @@ up_backend_device_changed (UpBackend *backend, GUdevDevice *native)
 		goto out;
 	}
 out:
-	if (object != NULL)
-		g_object_unref (object);
+	g_clear_object (&object);
 }
 
 static gboolean
@@ -232,8 +226,7 @@ up_backend_device_add (UpBackend *backend, GUdevDevice *native)
 	/* emit */
 	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, native, device);
 out:
-	if (object != NULL)
-		g_object_unref (object);
+	g_clear_object (&object);
 	return ret;
 }
 
@@ -256,8 +249,7 @@ up_backend_device_remove (UpBackend *backend, GUdevDevice *native)
 	g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, native, device);
 
 out:
-	if (object != NULL)
-		g_object_unref (object);
+	g_clear_object (&object);
 }
 
 static void
@@ -333,21 +325,12 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 void
 up_backend_unplug (UpBackend *backend)
 {
-	if (backend->priv->gudev_client != NULL) {
-		g_object_unref (backend->priv->gudev_client);
-		backend->priv->gudev_client = NULL;
-	}
-	if (backend->priv->device_list != NULL) {
-		g_object_unref (backend->priv->device_list);
-		backend->priv->device_list = NULL;
-	}
+	g_clear_object (&backend->priv->gudev_client);
+	g_clear_object (&backend->priv->device_list);
 	/* set in init, clear the list to remove reference to UpDaemon */
 	if (backend->priv->managed_devices != NULL)
 		up_device_list_clear (backend->priv->managed_devices, FALSE);
-	if (backend->priv->daemon != NULL) {
-		g_object_unref (backend->priv->daemon);
-		backend->priv->daemon = NULL;
-	}
+	g_clear_object (&backend->priv->daemon);
 }
 
 static gboolean
@@ -642,13 +625,10 @@ up_backend_finalize (GObject *object)
 
 	backend = UP_BACKEND (object);
 
-	g_object_unref (backend->priv->config);
-	if (backend->priv->daemon != NULL)
-		g_object_unref (backend->priv->daemon);
-	if (backend->priv->device_list != NULL)
-		g_object_unref (backend->priv->device_list);
-	if (backend->priv->gudev_client != NULL)
-		g_object_unref (backend->priv->gudev_client);
+	g_clear_object (&backend->priv->config);
+	g_clear_object (&backend->priv->daemon);
+	g_clear_object (&backend->priv->device_list);
+	g_clear_object (&backend->priv->gudev_client);
 
 	bus = g_dbus_proxy_get_connection (backend->priv->logind_proxy);
 	g_dbus_connection_signal_unsubscribe (bus,
