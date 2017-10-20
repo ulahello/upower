@@ -39,6 +39,7 @@
 #include "up-device-unifying.h"
 #include "up-device-wup.h"
 #include "up-device-hid.h"
+#include "up-device-bluez.h"
 #include "up-input.h"
 #include "up-config.h"
 #ifdef HAVE_IDEVICE
@@ -65,6 +66,10 @@ struct UpBackendPrivate
 	GDBusProxy		*logind_proxy;
 	guint                    logind_sleep_id;
 	int                      logind_inhibitor_fd;
+
+	/* BlueZ */
+	guint			 bluez_watch_id;
+	GDBusObjectManager	*bluez_client;
 };
 
 enum {
@@ -272,6 +277,190 @@ up_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 	}
 }
 
+static gboolean
+is_battery_iface_proxy (GDBusProxy *interface_proxy)
+{
+	const char *iface;
+
+	iface = g_dbus_proxy_get_interface_name (interface_proxy);
+	return g_str_equal (iface, "org.bluez.Battery1");
+}
+
+static gboolean
+has_battery_iface (GDBusObject *object)
+{
+	GDBusInterface *iface;
+
+	iface = g_dbus_object_get_interface (object, "org.bluez.Battery1");
+	if (!iface)
+		return FALSE;
+	g_object_unref (iface);
+	return TRUE;
+}
+
+static void
+bluez_proxies_changed (GDBusObjectManagerClient *manager,
+		       GDBusObjectProxy         *object_proxy,
+		       GDBusProxy               *interface_proxy,
+		       GVariant                 *changed_properties,
+		       GStrv                     invalidated_properties,
+		       gpointer                  user_data)
+{
+	UpBackend *backend = user_data;
+	GObject *object;
+	UpDeviceBluez *bluez;
+
+	if (!is_battery_iface_proxy (interface_proxy))
+		return;
+
+	object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (object_proxy));
+	if (!object)
+		return;
+
+	bluez = UP_DEVICE_BLUEZ (object);
+	up_device_bluez_update (bluez, changed_properties);
+	g_object_unref (object);
+}
+
+static void
+bluez_interface_removed (GDBusObjectManager *manager,
+			 GDBusObject        *bus_object,
+			 GDBusInterface     *interface,
+			 gpointer            user_data)
+{
+	UpBackend *backend = user_data;
+	GObject *object;
+
+	/* It might be another iface on another device that got removed */
+	if (has_battery_iface (bus_object))
+		return;
+
+	object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (bus_object));
+	if (!object)
+		return;
+
+	g_debug ("emitting device-removed: %s", g_dbus_object_get_object_path (bus_object));
+	g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, bus_object, UP_DEVICE (object));
+
+	g_object_unref (object);
+}
+
+static void
+bluez_interface_added (GDBusObjectManager *manager,
+		       GDBusObject        *bus_object,
+		       GDBusInterface     *interface,
+		       gpointer            user_data)
+{
+	UpBackend *backend = user_data;
+	UpDevice *device;
+	GObject *object;
+	gboolean ret;
+
+	if (!has_battery_iface (bus_object))
+		return;
+
+	object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (bus_object));
+	if (object != NULL) {
+		g_object_unref (object);
+		return;
+	}
+
+	device = UP_DEVICE (up_device_bluez_new ());
+	ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (bus_object));
+	if (!ret) {
+		g_object_unref (device);
+		return;
+	}
+
+	g_debug ("emitting device-added: %s", g_dbus_object_get_object_path (bus_object));
+	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, bus_object, device);
+}
+
+static void
+bluez_appeared (GDBusConnection *connection,
+		const gchar     *name,
+		const gchar     *name_owner,
+		gpointer         user_data)
+{
+	UpBackend *backend = user_data;
+	GError *error = NULL;
+	GList *objects, *l;
+
+	g_assert (backend->priv->bluez_client == NULL);
+
+	backend->priv->bluez_client = g_dbus_object_manager_client_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+										     G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_DO_NOT_AUTO_START,
+										     "org.bluez",
+										     "/",
+										     NULL, NULL, NULL,
+										     NULL, &error);
+	if (!backend->priv->bluez_client) {
+		g_warning ("Failed to create object manager for BlueZ: %s",
+			   error->message);
+		g_error_free (error);
+		return;
+	}
+
+	g_debug ("BlueZ appeared");
+
+	g_signal_connect (backend->priv->bluez_client, "interface-proxy-properties-changed",
+			  G_CALLBACK (bluez_proxies_changed), backend);
+	g_signal_connect (backend->priv->bluez_client, "interface-removed",
+			  G_CALLBACK (bluez_interface_removed), backend);
+	g_signal_connect (backend->priv->bluez_client, "interface-added",
+			  G_CALLBACK (bluez_interface_added), backend);
+
+	objects = g_dbus_object_manager_get_objects (backend->priv->bluez_client);
+	for (l = objects; l != NULL; l = l->next) {
+		GDBusObject *object = l->data;
+		GList *interfaces, *k;
+
+		interfaces = g_dbus_object_get_interfaces (object);
+
+		for (k = interfaces; k != NULL; k = k->next) {
+			GDBusInterface *iface = k->data;
+
+			bluez_interface_added (backend->priv->bluez_client,
+					       object,
+					       iface,
+					       backend);
+			g_object_unref (iface);
+		}
+		g_list_free (interfaces);
+		g_object_unref (object);
+	}
+	g_list_free (objects);
+}
+
+static void
+bluez_vanished (GDBusConnection *connection,
+		const gchar     *name,
+		gpointer         user_data)
+{
+	UpBackend *backend = user_data;
+	GPtrArray *array;
+	guint i;
+
+	g_debug ("BlueZ disappeared");
+
+	array = up_device_list_get_array (backend->priv->device_list);
+
+	for (i = 0; i < array->len; i++) {
+		UpDevice *device = UP_DEVICE (g_ptr_array_index (array, i));
+		if (UP_IS_DEVICE_BLUEZ (device)) {
+			GDBusObject *object;
+
+			object = G_DBUS_OBJECT (up_device_get_native (device));
+			g_debug ("emitting device-removed: %s", g_dbus_object_get_object_path (object));
+			g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, object, UP_DEVICE (object));
+		}
+	}
+
+	g_ptr_array_unref (array);
+
+	g_clear_object (&backend->priv->bluez_client);
+}
+
 /**
  * up_backend_coldplug:
  * @backend: The %UpBackend class instance
@@ -312,6 +501,14 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 		g_list_free_full (devices, (GDestroyNotify) g_object_unref);
 	}
 
+	backend->priv->bluez_watch_id = g_bus_watch_name (G_BUS_TYPE_SYSTEM,
+							  "org.bluez",
+							  G_BUS_NAME_WATCHER_FLAGS_NONE,
+							  bluez_appeared,
+							  bluez_vanished,
+							  backend,
+							  NULL);
+
 	return TRUE;
 }
 
@@ -331,6 +528,11 @@ up_backend_unplug (UpBackend *backend)
 	if (backend->priv->managed_devices != NULL)
 		up_device_list_clear (backend->priv->managed_devices, FALSE);
 	g_clear_object (&backend->priv->daemon);
+	if (backend->priv->bluez_watch_id > 0) {
+		g_bus_unwatch_name (backend->priv->bluez_watch_id);
+		backend->priv->bluez_watch_id = 0;
+	}
+	g_clear_object (&backend->priv->bluez_client);
 }
 
 static gboolean
@@ -624,6 +826,12 @@ up_backend_finalize (GObject *object)
 	g_return_if_fail (UP_IS_BACKEND (object));
 
 	backend = UP_BACKEND (object);
+
+	if (backend->priv->bluez_watch_id > 0) {
+		g_bus_unwatch_name (backend->priv->bluez_watch_id);
+		backend->priv->bluez_watch_id = 0;
+	}
+	g_clear_object (&backend->priv->bluez_client);
 
 	g_clear_object (&backend->priv->config);
 	g_clear_object (&backend->priv->daemon);

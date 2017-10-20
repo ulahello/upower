@@ -19,6 +19,7 @@
  */
 
 #include <glib.h>
+#include <gio/gio.h>
 #include <gudev/gudev.h>
 
 #include "up-native.h"
@@ -29,7 +30,9 @@
  *
  * This converts a GObject used as the device data into a native path.
  * This would be implemented on a Linux system using:
- *  g_udev_device_get_sysfs_path (G_UDEV_DEVICE (object))
+ *  g_udev_device_get_sysfs_path (G_UDEV_DEVICE (object)) or
+ *  g_dbus_object_get_object_path (G_DBUS_OBJECT (object)) for Bluetooth LE
+ *  devices (handled by BlueZ).
  *
  * Return value: Device name for devices of subsystem "power_supply", otherwise
  * the native path for the device which is unique.
@@ -37,16 +40,23 @@
 const gchar *
 up_native_get_native_path (GObject *object)
 {
+	GUdevDevice *device;
+
+	/* That's a UpBluez */
+	if (G_IS_DBUS_OBJECT (object))
+		return g_dbus_object_get_object_path (G_DBUS_OBJECT (object));
+
+	device = G_UDEV_DEVICE (object);
 	/* Device names within the same subsystem must be unique. To avoid
 	 * treating the same power supply device on variable buses as different
 	 * only because e. g. the USB or bluetooth tree layout changed, only
 	 * use their name as identification. Also see
 	 * http://bugzilla.kernel.org/show_bug.cgi?id=62041 */
-	if (g_strcmp0 (g_udev_device_get_subsystem (G_UDEV_DEVICE (object)), "power_supply") == 0)
-		return g_udev_device_get_name (G_UDEV_DEVICE (object));
+	if (g_strcmp0 (g_udev_device_get_subsystem (device), "power_supply") == 0)
+		return g_udev_device_get_name (device);
 
 	/* we do not expect other devices than power_supply, but provide this
 	 * fallback for completeness */
-	return g_udev_device_get_sysfs_path (G_UDEV_DEVICE (object));
+	return g_udev_device_get_sysfs_path (device);
 }
 
