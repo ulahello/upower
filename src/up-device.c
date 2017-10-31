@@ -464,10 +464,7 @@ void
 up_device_unplug (UpDevice *device)
 {
 	/* break circular dependency */
-	if (device->priv->daemon != NULL) {
-		g_object_unref (device->priv->daemon);
-		device->priv->daemon = NULL;
-	}
+	g_clear_object (&device->priv->daemon);
 }
 
 /**
@@ -717,10 +714,8 @@ up_device_finalize (GObject *object)
 
 	device = UP_DEVICE (object);
 	g_return_if_fail (device->priv != NULL);
-	if (device->priv->native != NULL)
-		g_object_unref (device->priv->native);
-	if (device->priv->daemon != NULL)
-		g_object_unref (device->priv->daemon);
+	g_clear_object (&device->priv->native);
+	g_clear_object (&device->priv->daemon);
 	g_object_unref (device->priv->history);
 
 	G_OBJECT_CLASS (up_device_parent_class)->finalize (object);
