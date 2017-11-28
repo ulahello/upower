@@ -1,3 +1,15 @@
+Version 0.99.7
+~~~~~~~~~~~~~~
+Released: 2017-11-28
+
+New Features:
+ - Add support for Bluetooth LE device batteries (Bastien Nocera)
+ - Allow to be replaced via --replace,-r (Christian Kellner)
+
+Bugfixes:
+ - Fix critical action after resume from hibernate (Miroslav Sustek)
+ - Fix compilation with libimobiledevice git (Bastien Nocera)
+
 Version 0.99.6
 ~~~~~~~~~~~~~~
 Released: 2017-09-11

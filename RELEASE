@@ -14,7 +14,7 @@ Bugfixes:
 2. Commit changes to git:
 
 git commit -a -m "Released UPower 0.99.7"
-git tag -s -f -m "Released UPower 0.99.7" UPOWER_0_99_6
+git tag -s -f -m "Released UPower 0.99.7" UPOWER_0_99_7
 <wait>
 git push --tags
 git push
