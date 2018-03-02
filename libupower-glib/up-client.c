@@ -274,7 +274,12 @@ up_client_notify_cb (GObject    *gobject,
 		     UpClient   *client)
 {
 	/* Proxy the notification from the D-Bus glue object
-	 * to the real one */
+	 * to the real one, but only if the property exists
+	 * for UpClient */
+	if (!g_object_class_find_property (G_OBJECT_GET_CLASS (client),
+					  pspec->name))
+		return;
+
 	g_object_notify (G_OBJECT (client), pspec->name);
 }
 

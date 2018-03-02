@@ -103,6 +103,13 @@ G_DEFINE_TYPE (UpDevice, up_device, G_TYPE_OBJECT)
 static void
 up_device_changed_cb (UpExportedDevice *proxy, GParamSpec *pspec, UpDevice *device)
 {
+	/* Proxy the notification from the D-Bus glue object
+	 * to the real one, but only if the property exists
+	 * for UpClient */
+	if (!g_object_class_find_property (G_OBJECT_GET_CLASS (device), pspec->name) &&
+	    !g_str_equal (pspec->name, "type"))
+		return;
+
 	if (g_strcmp0 (pspec->name, "type") == 0)
 		g_object_notify (G_OBJECT (device), "kind");
 	else
