@@ -297,6 +297,10 @@ up_device_idevice_refresh (UpDevice *device)
 
 	/* get charging status */
 	node = plist_dict_get_item (dict, "BatteryIsCharging");
+	if (!node) {
+		plist_free(dict);
+		goto out;
+	}
 	plist_get_bool_val (node, &charging);
 
 	if (percentage == 100)
