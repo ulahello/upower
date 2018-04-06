@@ -273,7 +273,7 @@ up_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 		g_debug ("SYSFS change %s", g_udev_device_get_sysfs_path (device));
 		up_backend_device_changed (backend, device);
 	} else {
-		g_warning ("unhandled action '%s' on %s", action, g_udev_device_get_sysfs_path (device));
+		g_debug ("unhandled action '%s' on %s", action, g_udev_device_get_sysfs_path (device));
 	}
 }
 
