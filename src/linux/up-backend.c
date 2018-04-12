@@ -670,6 +670,7 @@ up_backend_inhibitor_lock_take (UpBackend *backend)
 	if (out == NULL) {
 		g_warning ("Could not acquire inhibitor lock: %s",
 			   error ? error->message : "Unknown reason");
+		g_clear_error (&error);
 		return;
 	}
 
