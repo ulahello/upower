@@ -176,7 +176,7 @@ systemdservicedir       = $(systemdsystemunitdir)
 systemdservice_DATA     = $(systemdservice_in_files:.service.in=.service)
 
 $(systemdservice_DATA): $(systemdservice_in_files) Makefile
-	@sed -e "s|\@libexecdir\@|$(libexecdir)|" $< > $@
+	@sed -e "s|\@libexecdir\@|$(libexecdir)|" -e "s|\@historydir\@|$(historydir)|" $< > $@
 endif
 
 install-data-hook:

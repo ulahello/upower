@@ -8,5 +8,28 @@ BusName=org.freedesktop.UPower
 ExecStart=@libexecdir@/upowerd
 Restart=on-failure
 
+# Filesystem lockdown
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectControlGroups=true
+ReadWritePaths=@historydir@
+ProtectHome=true
+PrivateTmp=true
+
+# Network
+PrivateNetwork=true
+
+# Execute Mappings
+MemoryDenyWriteExecute=true
+
+# Modules
+ProtectKernelModules=true
+
+# Real-time
+RestrictRealtime=true
+
+# Privilege escalation
+NoNewPrivileges=true
+
 [Install]
 WantedBy=graphical.target
