@@ -153,8 +153,7 @@ up_wakeups_get_data_sync (UpWakeups *wakeups, GCancellable *cancellable, GError 
 	}
 	g_variant_iter_free (iter);
 out:
-	if (gva != NULL)
-		g_variant_unref (gva);
+	g_clear_pointer (&gva, g_variant_unref);
 	return array;
 }
 
@@ -279,8 +278,7 @@ up_wakeups_finalize (GObject *object)
 	g_return_if_fail (UP_IS_WAKEUPS (object));
 
 	wakeups = UP_WAKEUPS (object);
-	if (wakeups->priv->proxy != NULL)
-		g_object_unref (wakeups->priv->proxy);
+	g_clear_object (&wakeups->priv->proxy);
 
 	G_OBJECT_CLASS (up_wakeups_parent_class)->finalize (object);
 }

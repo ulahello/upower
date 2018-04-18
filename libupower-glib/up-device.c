@@ -495,8 +495,7 @@ up_device_get_history_sync (UpDevice *device, const gchar *type, guint timespec,
 	g_variant_iter_free (iter);
 
 out:
-	if (gva != NULL)
-		g_variant_unref (gva);
+	g_clear_pointer (&gva, g_variant_unref);
 	return array;
 }
 
@@ -571,8 +570,7 @@ up_device_get_statistics_sync (UpDevice *device, const gchar *type, GCancellable
 	g_variant_iter_free (iter);
 
 out:
-	if (gva != NULL)
-		g_variant_unref (gva);
+	g_clear_pointer (&gva, g_variant_unref);
 	return array;
 }
 
@@ -1231,9 +1229,7 @@ up_device_finalize (GObject *object)
 
 	device = UP_DEVICE (object);
 
-	if (device->priv->proxy_device != NULL)
-		g_object_unref (device->priv->proxy_device);
-
+	g_clear_object (&device->priv->proxy_device);
 	g_clear_pointer (&device->priv->offline_props, g_hash_table_unref);
 
 	G_OBJECT_CLASS (up_device_parent_class)->finalize (object);

@@ -261,8 +261,7 @@ up_client_add (UpClient *client, const gchar *object_path)
 	/* add to array */
 	g_signal_emit (client, signals [UP_CLIENT_DEVICE_ADDED], 0, device);
 out:
-	if (device != NULL)
-		g_object_unref (device);
+	g_clear_object (&device);
 }
 
 /*
@@ -494,8 +493,7 @@ up_client_finalize (GObject *object)
 
 	client = UP_CLIENT (object);
 
-	if (client->priv->proxy != NULL)
-		g_object_unref (client->priv->proxy);
+	g_clear_object (&client->priv->proxy);
 
 	G_OBJECT_CLASS (up_client_parent_class)->finalize (object);
 }
