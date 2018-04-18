@@ -1166,6 +1166,24 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Percentage'), 55)
         self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'BatteryLevel'), UP_DEVICE_LEVEL_NORMAL)
 
+        self.testbed.set_attribute(dev, 'capacity_level', 'Unknown\n')
+        self.testbed.set_attribute(dev, 'status', 'Charging\n')
+        self.testbed.uevent(dev, 'change')
+        time.sleep(0.5)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Percentage'), 50.0)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'BatteryLevel'), UP_DEVICE_LEVEL_UNKNOWN)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'State'), UP_DEVICE_STATE_CHARGING)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'IconName'), 'battery-good-charging-symbolic')
+
+        self.testbed.set_attribute(dev, 'capacity_level', 'Full\n')
+        self.testbed.set_attribute(dev, 'status', 'Full\n')
+        self.testbed.uevent(dev, 'change')
+        time.sleep(0.5)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Percentage'), 100)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'BatteryLevel'), UP_DEVICE_LEVEL_FULL)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'State'), UP_DEVICE_STATE_FULLY_CHARGED)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'IconName'), 'battery-full-charged-symbolic')
+
         self.stop_daemon()
 
     def test_bluetooth_hid_mouse(self):
