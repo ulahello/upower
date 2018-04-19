@@ -493,7 +493,8 @@ sysfs_get_capacity_level (const char    *native_path,
 		{ "High",      70.0, UP_DEVICE_LEVEL_HIGH },
 		{ "Low",       10.0, UP_DEVICE_LEVEL_LOW },
 		{ "Critical",   5.0, UP_DEVICE_LEVEL_CRITICAL },
-		{ "Full",     100.0, UP_DEVICE_LEVEL_FULL }
+		{ "Full",     100.0, UP_DEVICE_LEVEL_FULL },
+		{ "Unknown",   50.0, UP_DEVICE_LEVEL_UNKNOWN }
 	};
 	guint len;
 
