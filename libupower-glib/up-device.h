@@ -44,16 +44,14 @@ G_BEGIN_DECLS
 
 typedef struct _UpDevicePrivate UpDevicePrivate;
 
-typedef struct
-{
+typedef struct {
 	 GObject		 parent;
 	 UpDevicePrivate	*priv;
 } UpDevice;
 
-typedef struct
-{
-	GObjectClass		 parent_class;
+typedef struct {
 	/*< private >*/
+	GObjectClass		 parent_class;
 	/* Padding for future expansion */
 	void (*_up_device_reserved1) (void);
 	void (*_up_device_reserved2) (void);

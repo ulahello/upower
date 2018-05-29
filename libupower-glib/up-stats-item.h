@@ -39,14 +39,12 @@ G_BEGIN_DECLS
 
 typedef struct UpStatsItemPrivate UpStatsItemPrivate;
 
-typedef struct
-{
+typedef struct {
 	 GObject		 parent;
 	 UpStatsItemPrivate	*priv;
 } UpStatsItem;
 
-typedef struct
-{
+typedef struct {
 	GObjectClass		 parent_class;
 } UpStatsItemClass;
 

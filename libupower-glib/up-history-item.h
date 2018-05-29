@@ -40,14 +40,12 @@ G_BEGIN_DECLS
 
 typedef struct UpHistoryItemPrivate UpHistoryItemPrivate;
 
-typedef struct
-{
+typedef struct {
 	 GObject		 parent;
 	 UpHistoryItemPrivate	*priv;
 } UpHistoryItem;
 
-typedef struct
-{
+typedef struct {
 	GObjectClass		 parent_class;
 } UpHistoryItemClass;
 

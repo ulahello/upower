@@ -40,14 +40,12 @@ G_BEGIN_DECLS
 
 typedef struct UpWakeupItemPrivate UpWakeupItemPrivate;
 
-typedef struct
-{
+typedef struct {
 	 GObject		 parent;
 	 UpWakeupItemPrivate	*priv;
 } UpWakeupItem;
 
-typedef struct
-{
+typedef struct {
 	GObjectClass		 parent_class;
 } UpWakeupItemClass;
 

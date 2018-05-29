@@ -44,15 +44,15 @@ G_BEGIN_DECLS
 
 typedef struct _UpClientPrivate UpClientPrivate;
 
-typedef struct
-{
+typedef struct {
 	 GObject		 parent;
 	 UpClientPrivate	*priv;
 } UpClient;
 
-typedef struct
-{
+typedef struct {
+	/*< private >*/
 	GObjectClass		 parent_class;
+	/*< public >*/
 	void			(*device_added)		(UpClient		*client,
 							 UpDevice		*device);
 	void			(*device_removed)	(UpClient		*client,
