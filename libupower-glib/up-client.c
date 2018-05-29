@@ -524,7 +524,7 @@ up_client_finalize (GObject *object)
  * @error: Return location for error or %NULL.
  *
  * Creates a new #UpClient object. If connecting to upowerd on D-Bus fails,
- % this returns %NULL and sets @error.
+ * this returns %NULL and sets @error.
  *
  * Return value: a new UpClient object, or %NULL on failure.
  *
