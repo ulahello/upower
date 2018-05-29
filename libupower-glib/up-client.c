@@ -22,11 +22,10 @@
 /**
  * SECTION:up-client
  * @short_description: Main client object for accessing the UPower daemon
+ * @see_also: #UpDevice
  *
  * A helper GObject to use for accessing UPower information, and to be notified
  * when it is changed.
- *
- * See also: #UpDevice
  */
 
 #include "config.h"

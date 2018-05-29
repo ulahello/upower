@@ -22,11 +22,10 @@
 /**
  * SECTION:up-history-item
  * @short_description: Helper object representing one item of historical data.
+ * @see_also: #UpDevice, #UpClient
  *
  * This object represents one item of data which may be returned from the
  * daemon in response to a query.
- *
- * See also: #UpDevice, #UpClient
  */
 
 #include "config.h"

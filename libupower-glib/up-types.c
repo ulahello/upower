@@ -22,11 +22,10 @@
 /**
  * SECTION:up-types
  * @short_description: Types used by UPower and libupower-glib
+ * @see_also: #UpClient, #UpDevice
  *
  * These helper functions provide a way to marshal enumerated values to
  * text and back again.
- *
- * See also: #UpClient, #UpDevice
  */
 
 #include "config.h"

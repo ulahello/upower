@@ -22,11 +22,10 @@
 /**
  * SECTION:upower
  * @short_description: Client objects for accessing UPower
+ * @see_also: #UpClient, #UpDevice
  *
  * These objects allow client programs to trivially get details about the power
  * state, and about devices on the system.
- *
- * See also: #UpClient, #UpDevice
  */
 
 #ifndef __UPOWER_H__
