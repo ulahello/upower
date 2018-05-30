@@ -173,7 +173,7 @@ up_tool_do_monitor (UpClient *client)
 	g_signal_connect (client, "device-removed", G_CALLBACK (up_tool_device_removed_cb), NULL);
 	g_signal_connect (client, "notify", G_CALLBACK (up_tool_changed_cb), NULL);
 
-	devices = up_client_get_devices (client);
+	devices = up_client_get_devices2 (client);
 	for (i=0; i < devices->len; i++) {
 		UpDevice *device;
 		device = g_ptr_array_index (devices, i);
@@ -314,7 +314,7 @@ main (int argc, char **argv)
 
 	if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
-		devices = up_client_get_devices (client);
+		devices = up_client_get_devices2 (client);
 		for (i=0; i < devices->len; i++) {
 			device = (UpDevice*) g_ptr_array_index (devices, i);
 			if (opt_enumerate) {

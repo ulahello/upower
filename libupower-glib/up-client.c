@@ -80,14 +80,35 @@ G_DEFINE_TYPE_WITH_CODE (UpClient, up_client, G_TYPE_OBJECT,
  * up_client_get_devices:
  * @client: a #UpClient instance.
  *
- * Get a copy of the device objects.
+ * Get a copy of the device objects. This function does not set the free
+ * function for the #GPtrArray so you need use g_object_unref on all
+ * elements when you are finished with the array.
  *
  * Return value: (element-type UpDevice) (transfer full): an array of #UpDevice objects, free with g_ptr_array_unref()
  *
  * Since: 0.9.0
+ * Deprecated: 0.99.8
  **/
 GPtrArray *
 up_client_get_devices (UpClient *client)
+{
+	GPtrArray *array = up_client_get_devices2 (client);
+	g_ptr_array_set_free_func (array, NULL);
+	return array;
+}
+
+/**
+ * up_client_get_devices2:
+ * @client: a #UpClient instance.
+ *
+ * Get a copy of the device objects.
+ *
+ * Return value: (element-type UpDevice) (transfer full): an array of #UpDevice objects, free with g_ptr_array_unref()
+ *
+ * Since: 0.99.8
+ **/
+GPtrArray *
+up_client_get_devices2 (UpClient *client)
 {
 	GError *error = NULL;
 	char **devices;
@@ -105,7 +126,7 @@ up_client_get_devices (UpClient *client)
 		return NULL;
 	}
 
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	for (i = 0; devices[i] != NULL; i++) {
 		UpDevice *device;
