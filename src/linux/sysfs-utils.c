@@ -85,7 +85,6 @@ sysfs_get_double (const char *dir, const char *attribute)
 	}
 	g_free (filename);
 
-
 	return result;
 }
 
