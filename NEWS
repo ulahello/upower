@@ -1,3 +1,21 @@
+Version 0.99.8
+~~~~~~~~~~~~~~
+Released: 2018-06-18
+
+New Features:
+ - Lock down systemd service file
+ - Add support for "Unknown" capacity level, and clarify handling
+   of devices with coarse battery levels
+ - Add a new version of up_client_get_devices() which unrefs contents
+
+Bugfixes:
+ - Fix warnings when D-Bus related properties change
+ - Prevent crash after attaching an Apple TV, and support newer
+   versions of iOS
+ - Lower severity of "unhandled action" messages
+ - Fix battery status on MacBooks after a plug or unplug event
+ - Fix double-close on exit
+
 Version 0.99.7
 ~~~~~~~~~~~~~~
 Released: 2017-11-28
