@@ -75,4 +75,10 @@ libupshared_la_LIBADD = $(GIO_LIBS)
 clean-local :
 	rm -f *~
 
+uninstall-hook:
+	rm -f $(DESTDIR)$(localstatedir)/lib/upower/history-* && \
+	rmdir $(DESTDIR)$(localstatedir)/lib/upower && \
+	rmdir $(DESTDIR)$(localstatedir)/lib && \
+	rmdir $(DESTDIR)$(localstatedir)
+
 -include $(top_srcdir)/git.mk
