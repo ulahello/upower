@@ -959,8 +959,7 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 	}
 
 	/* get a precise percentage */
-	percentage = sysfs_get_double_with_error (native_path, "capacity");
-	if (percentage < 0.0)
+	if (!sysfs_get_double_with_error (native_path, "capacity", &percentage))
 		percentage = sysfs_get_capacity_level (native_path, &level);
 
 	if (percentage < 0.0) {

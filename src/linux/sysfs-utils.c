@@ -43,23 +43,31 @@
 
 #include "sysfs-utils.h"
 
-double
-sysfs_get_double_with_error (const char *dir, const char *attribute)
+gboolean
+sysfs_get_double_with_error (const char *dir,
+			     const char *attribute,
+			     double     *value)
 {
-	double result;
 	char *contents;
 	char *filename;
+	gboolean ret = FALSE;
+	double parsed;
+
+	g_return_val_if_fail (value != NULL, FALSE);
 
 	filename = g_build_filename (dir, attribute, NULL);
 	if (g_file_get_contents (filename, &contents, NULL, NULL)) {
-		result = g_ascii_strtod (contents, NULL);
+		parsed = g_ascii_strtod (contents, NULL);
+		if (errno == 0)
+			ret = TRUE;
 		g_free (contents);
-	} else {
-		result = -1.0;
 	}
 	g_free (filename);
 
-	return result;
+	if (ret)
+		*value = parsed;
+
+	return ret;
 }
 
 double
