@@ -38,6 +38,7 @@
 #include "up-types.h"
 #include "up-constants.h"
 #include "up-device-supply.h"
+#include "up-backend-linux-private.h"
 
 #define UP_DEVICE_SUPPLY_CHARGED_THRESHOLD	90.0f	/* % */
 
@@ -1146,8 +1147,8 @@ up_device_supply_setup_unknown_poll (UpDevice      *device,
 		return;
 
 	/* if it's unknown, poll faster than we would normally */
-	if (state == UP_DEVICE_STATE_UNKNOWN &&
-	    supply->priv->unknown_retries < UP_DAEMON_UNKNOWN_RETRIES) {
+	if (supply->priv->unknown_retries < UP_DAEMON_UNKNOWN_RETRIES &&
+	    (state == UP_DEVICE_STATE_UNKNOWN || up_backend_needs_poll_after_uevent ())) {
 		gint64 now;
 		supply->priv->poll_timer_id =
 			g_timeout_add_seconds (UP_DAEMON_UNKNOWN_TIMEOUT,
