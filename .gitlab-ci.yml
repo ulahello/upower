@@ -1,0 +1,19 @@
+image: fedora:rawhide
+
+variables:
+  DEPENDENCIES: gettext libtool intltool gtk-doc
+                autoconf automake
+                gcc redhat-rpm-config gcc-c++ glibc-devel make
+                systemd sqlite-devel gobject-introspection-devel
+                libusbx-devel libgudev-devel libimobiledevice-devel
+                glib2-devel
+                umockdev python3-dbusmock
+
+build_stable:
+  before_script:
+    - dnf update -y --nogpgcheck && dnf install -y --nogpgcheck $DEPENDENCIES
+  script:
+    - ./autogen.sh
+    - make
+    - make install
+    - make check
