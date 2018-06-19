@@ -63,6 +63,7 @@ struct UpDeviceSupplyPrivate
 	guint			 energy_old_first;
 	gdouble			 rate_old;
 	guint			 unknown_retries;
+	gint64			 last_unknown_retry;
 	gboolean		 disable_battery_poll; /* from configuration */
 	gboolean		 is_power_supply;
 	gboolean		 shown_invalid_voltage_warning;
@@ -72,6 +73,8 @@ G_DEFINE_TYPE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
 #define UP_DEVICE_SUPPLY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE_SUPPLY, UpDeviceSupplyPrivate))
 
 static gboolean		 up_device_supply_refresh	 	(UpDevice *device);
+static void		 up_device_supply_setup_unknown_poll	(UpDevice      *device,
+								 UpDeviceState  state);
 
 static RefreshResult
 up_device_supply_refresh_line_power (UpDeviceSupply *supply)
@@ -667,12 +670,6 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 	state = up_device_supply_get_state (native_path);
 	*out_state = state;
 
-	/* reset unknown counter */
-	if (state != UP_DEVICE_STATE_UNKNOWN) {
-		g_debug ("resetting unknown timeout after %i retries", supply->priv->unknown_retries);
-		supply->priv->unknown_retries = 0;
-	}
-
 	/* this is the new value in uW */
 	energy_rate = fabs (sysfs_get_double (native_path, "power_now") / 1000000.0);
 	if (energy_rate < 0.01) {
@@ -847,6 +844,9 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 		      "time-to-full", time_to_full,
 		      "temperature", temp,
 		      NULL);
+
+	/* Setup unknown poll again if needed */
+	up_device_supply_setup_unknown_poll (device, state);
 
 out:
 	g_free (technology_native);
@@ -1148,13 +1148,20 @@ up_device_supply_setup_unknown_poll (UpDevice      *device,
 	/* if it's unknown, poll faster than we would normally */
 	if (state == UP_DEVICE_STATE_UNKNOWN &&
 	    supply->priv->unknown_retries < UP_DAEMON_UNKNOWN_RETRIES) {
+		gint64 now;
 		supply->priv->poll_timer_id =
 			g_timeout_add_seconds (UP_DAEMON_UNKNOWN_TIMEOUT,
 					       (GSourceFunc) up_device_supply_poll_unknown_battery, supply);
 		g_source_set_name_by_id (supply->priv->poll_timer_id, "[upower] up_device_supply_poll_unknown_battery (linux)");
 
 		/* increase count, we don't want to poll at 0.5Hz forever */
-		supply->priv->unknown_retries++;
+		now = g_get_monotonic_time ();
+		if (now - supply->priv->last_unknown_retry > G_USEC_PER_SEC)
+			supply->priv->unknown_retries++;
+		supply->priv->last_unknown_retry = now;
+	} else {
+		/* reset unknown counter */
+		supply->priv->unknown_retries = 0;
 	}
 }
 
@@ -1185,7 +1192,6 @@ up_device_supply_refresh (UpDevice *device)
 	case UP_DEVICE_KIND_BATTERY:
 		up_device_supply_disable_unknown_poll (device);
 		ret = up_device_supply_refresh_battery (supply, &state);
-		up_device_supply_setup_unknown_poll (device, state);
 		break;
 	default:
 		ret = up_device_supply_refresh_device (supply, &state);
