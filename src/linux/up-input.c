@@ -286,12 +286,13 @@ up_input_finalize (GObject *object)
 	g_return_if_fail (input->priv != NULL);
 
 	g_clear_object (&input->priv->daemon);
-	if (input->priv->eventfp >= 0)
-		close (input->priv->eventfp);
 	if (input->priv->channel) {
 		g_io_channel_shutdown (input->priv->channel, FALSE, NULL);
+		input->priv->eventfp = -1;
 		g_io_channel_unref (input->priv->channel);
 	}
+	if (input->priv->eventfp >= 0)
+		close (input->priv->eventfp);
 	G_OBJECT_CLASS (up_input_parent_class)->finalize (object);
 }
 
