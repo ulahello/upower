@@ -42,6 +42,7 @@ libupshared_la_SOURCES =					\
 	up-input.c						\
 	up-input.h						\
 	up-backend.c						\
+	up-backend-linux-private.h				\
 	up-native.c						\
 	hidpp-device.c						\
 	hidpp-device.h						\

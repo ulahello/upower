@@ -31,8 +31,11 @@
 #include <gudev/gudev.h>
 
 #include "up-backend.h"
+#include "up-backend-linux-private.h"
 #include "up-daemon.h"
 #include "up-device.h"
+
+#include "sysfs-utils.h"
 
 #include "up-device-supply.h"
 #include "up-device-csr.h"
@@ -275,6 +278,28 @@ up_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 	} else {
 		g_debug ("unhandled action '%s' on %s", action, g_udev_device_get_sysfs_path (device));
 	}
+}
+
+static gpointer
+is_macbook (gpointer data)
+{
+	char *product;
+	gboolean ret = FALSE;
+
+	product = sysfs_get_string ("/sys/devices/virtual/dmi/id/", "product_name");
+	if (product == NULL)
+		return GINT_TO_POINTER(ret);
+	ret = g_str_has_prefix (product, "MacBook");
+	g_free (product);
+	return GINT_TO_POINTER(ret);
+}
+
+gboolean
+up_backend_needs_poll_after_uevent (void)
+{
+	static GOnce dmi_once = G_ONCE_INIT;
+	g_once (&dmi_once, is_macbook, NULL);
+	return GPOINTER_TO_INT(dmi_once.retval);
 }
 
 static gboolean
