@@ -17,7 +17,8 @@ ProtectHome=true
 PrivateTmp=true
 
 # Network
-PrivateNetwork=true
+# PrivateNetwork=true would block udev's netlink socket
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
 
 # Execute Mappings
 MemoryDenyWriteExecute=true
