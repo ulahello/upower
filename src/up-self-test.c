@@ -295,11 +295,7 @@ main (int argc, char **argv)
 #endif
 	g_test_init (&argc, &argv, NULL);
 
-	/* make check, vs. make distcheck */
-	if (g_file_test ("../etc/UPower.conf", G_FILE_TEST_EXISTS))
-		g_setenv ("UPOWER_CONF_FILE_NAME", "../etc/UPower.conf", TRUE);
-	else
-		g_setenv ("UPOWER_CONF_FILE_NAME", "../../../etc/UPower.conf", TRUE);
+	g_setenv ("UPOWER_CONF_FILE_NAME", UPOWER_CONF_PATH, TRUE);
 
 	/* tests go here */
 	g_test_add_func ("/power/backend", up_test_backend_func);

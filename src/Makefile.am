@@ -15,6 +15,7 @@ AM_CPPFLAGS = \
 	$(PIE_CFLAGS)						\
 	-I$(top_builddir)/src -I$(top_srcdir)/src		\
 	-I$(top_builddir)/ -I$(top_srcdir)/			\
+	-DUPOWER_CONF_PATH=\""$(top_srcdir)/etc/UPower.conf"\"	\
 	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\"		\
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\"		\
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\"			\
