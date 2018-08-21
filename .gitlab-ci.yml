@@ -13,7 +13,9 @@ build_stable:
   before_script:
     - dnf update -y --nogpgcheck && dnf install -y --nogpgcheck $DEPENDENCIES
   script:
-    - ./autogen.sh
+    - mkdir _build
+    - cd _build
+    - ../autogen.sh
     - make
     - make install
     - make check
