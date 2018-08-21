@@ -7,7 +7,7 @@ variables:
                 systemd sqlite-devel gobject-introspection-devel
                 libusbx-devel libgudev-devel libimobiledevice-devel
                 glib2-devel
-                umockdev python3-dbusmock
+                umockdev python3-dbus python3-dbusmock
 
 build_stable:
   before_script:
