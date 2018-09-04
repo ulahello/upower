@@ -10,7 +10,8 @@ Restart=on-failure
 
 # Filesystem lockdown
 ProtectSystem=strict
-ProtectKernelTunables=true
+# Needed by keyboard backlight support
+ProtectKernelTunables=false
 ProtectControlGroups=true
 ReadWritePaths=@historydir@
 ProtectHome=true
