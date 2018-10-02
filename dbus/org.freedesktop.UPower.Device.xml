@@ -745,7 +745,8 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       <doc:doc>
         <doc:description>
           <doc:para>
-            An icon name, following the <a href="http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html">Icon Naming Specification</a>
+            <p>An icon name, following the <a href="http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html">Icon Naming Specification</a></p>
+            <p>Note that the icons might not match end-user expectations in terms of presentation relative to the amount of battery left or perceived to be left. It is recommended that front-ends use the BatteryLevel property first, if available, followed by the Percentage, to present a more realistic battery level to the user.</p>
           </doc:para>
         </doc:description>
       </doc:doc>
