@@ -180,7 +180,7 @@ up_device_hid_convert_device_technology (const gchar *type)
  * up_device_hid_set_values:
  **/
 static gboolean
-up_device_hid_set_values (UpDeviceHid *hid, int code, int value)
+up_device_hid_set_values (UpDeviceHid *hid, guint32 code, gint32 value)
 {
 	const gchar *type;
 	gboolean ret = TRUE;
