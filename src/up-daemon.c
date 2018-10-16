@@ -210,14 +210,18 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 			continue;
 
 		/* If one battery is charging, the composite is charging
-		 * If all batteries are discharging, the composite is discharging
+		 * If all batteries are discharging or pending-charge, the composite is discharging
 		 * If all batteries are fully charged, the composite is fully charged
+		 * If one battery is pending-charge and no other is charging or discharging, then the composite is pending-charge
 		 * Everything else is unknown */
 		if (state == UP_DEVICE_STATE_CHARGING)
 			state_total = UP_DEVICE_STATE_CHARGING;
 		else if (state == UP_DEVICE_STATE_DISCHARGING &&
 			 state_total != UP_DEVICE_STATE_CHARGING)
 			state_total = UP_DEVICE_STATE_DISCHARGING;
+		else if (state == UP_DEVICE_STATE_PENDING_CHARGE &&
+			 (state_total == UP_DEVICE_STATE_UNKNOWN || state_total == UP_DEVICE_STATE_PENDING_CHARGE))
+			state_total = UP_DEVICE_STATE_PENDING_CHARGE;
 		else if (state == UP_DEVICE_STATE_FULLY_CHARGED &&
 			 state_total == UP_DEVICE_STATE_UNKNOWN)
 			state_total = UP_DEVICE_STATE_FULLY_CHARGED;
