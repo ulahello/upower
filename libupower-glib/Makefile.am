@@ -3,6 +3,7 @@ AM_CPPFLAGS = \
 	$(GIO_UNIX_CFLAGS)					\
 	-I$(top_builddir)					\
 	-I$(top_srcdir)						\
+	-I$(top_srcdir)/dbus					\
 	-I$(top_builddir)/dbus					\
 	-I$(top_srcdir)/libupower-glib				\
 	-DUP_COMPILATION					\
@@ -53,6 +54,7 @@ libupower_glib_la_LDFLAGS =					\
 	-export-symbols-regex '^up_.*'
 
 libupower_glib_la_CFLAGS =					\
+	$(AM_CPPFLAGS)						\
 	$(WARNINGFLAGS_C)					\
 	$(NULL)
 
