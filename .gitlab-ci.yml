@@ -19,3 +19,4 @@ build_stable:
     - make
     - make install
     - make check
+    - make distcheck
