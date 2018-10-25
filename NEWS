@@ -1,3 +1,13 @@
+Version 0.99.9
+~~~~~~~~~~~~~~
+Released: 2018-10-25
+
+Bugfixes:
+ - Fix lack of update after AC status changes, and broken keyboard
+   backlight, following the daemon lockdown added in 0.99.8
+ - Multiple API documentation fixes
+ - Out-of-tree build fixes
+
 Version 0.99.8
 ~~~~~~~~~~~~~~
 Released: 2018-06-18
