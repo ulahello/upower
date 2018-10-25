@@ -64,9 +64,9 @@
 	UPower daemon.
       </para>
     </partintro>
-    <xi:include href="dbus/org.freedesktop.UPower.ref.xml"/>
-    <xi:include href="dbus/org.freedesktop.UPower.Device.ref.xml"/>
-    <xi:include href="dbus/org.freedesktop.UPower.KbdBacklight.ref.xml"/>
+    <xi:include href="org.freedesktop.UPower.ref.xml"/>
+    <xi:include href="org.freedesktop.UPower.Device.ref.xml"/>
+    <xi:include href="org.freedesktop.UPower.KbdBacklight.ref.xml"/>
   </reference>
 
   <reference id="libupower-glib">

@@ -253,7 +253,6 @@ tools/Makefile
 doc/Makefile
 doc/version.xml
 doc/man/Makefile
-doc/dbus/Makefile
 rules/Makefile
 libupower-glib/Makefile
 libupower-glib/up-version.h
