@@ -209,9 +209,9 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 		    power_supply == FALSE)
 			continue;
 
-		/* If one battery is charging, then the composite is charging
-		 * If all batteries are discharging, then the composite is discharging
-		 * If all batteries are fully charged, then they're all fully charged
+		/* If one battery is charging, the composite is charging
+		 * If all batteries are discharging, the composite is discharging
+		 * If all batteries are fully charged, the composite is fully charged
 		 * Everything else is unknown */
 		if (state == UP_DEVICE_STATE_CHARGING)
 			state_total = UP_DEVICE_STATE_CHARGING;
