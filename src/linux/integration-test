@@ -525,6 +525,78 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
+    def test_display_pending_charge_one_battery(self):
+        '''One battery pending-charge'''
+
+        self.testbed.add_device('power_supply', 'BAT0', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Not charging',
+                                 'charge_full', '10500000',
+                                 'charge_full_design', '11000000',
+                                 'capacity', '40',
+                                 'voltage_now', '12000000'], [])
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        self.assertEqual(self.get_dbus_display_property('State'), UP_DEVICE_STATE_PENDING_CHARGE)
+        self.stop_daemon()
+
+    def test_display_pending_charge_other_battery_discharging(self):
+        '''One battery pending-charge and another one discharging'''
+
+        self.testbed.add_device('power_supply', 'BAT0', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Not charging',
+                                 'charge_full', '10500000',
+                                 'charge_full_design', '11000000',
+                                 'capacity', '40',
+                                 'voltage_now', '12000000'], [])
+        self.testbed.add_device('power_supply', 'BAT1', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Discharging',
+                                 'charge_full', '10500000',
+                                 'charge_full_design', '11000000',
+                                 'capacity', '40',
+                                 'voltage_now', '12000000'], [])
+
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 2)
+        self.assertEqual(self.get_dbus_display_property('State'), UP_DEVICE_STATE_DISCHARGING)
+        self.stop_daemon()
+
+    def test_display_pending_charge_other_battery_charging(self):
+        '''One battery pending-charge and another one charging'''
+
+        self.testbed.add_device('power_supply', 'BAT0', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Not charging',
+                                 'charge_full', '10500000',
+                                 'charge_full_design', '11000000',
+                                 'capacity', '40',
+                                 'voltage_now', '12000000'], [])
+        self.testbed.add_device('power_supply', 'BAT1', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Charging',
+                                 'charge_full', '10500000',
+                                 'charge_full_design', '11000000',
+                                 'capacity', '40',
+                                 'voltage_now', '12000000'], [])
+
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 2)
+        self.assertEqual(self.get_dbus_display_property('State'), UP_DEVICE_STATE_CHARGING)
+        self.stop_daemon()
+
     def test_battery_charge(self):
         '''battery which reports charge instead of energy
 
