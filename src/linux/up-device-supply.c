@@ -669,7 +669,6 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 	}
 
 	state = up_device_supply_get_state (native_path);
-	*out_state = state;
 
 	/* this is the new value in uW */
 	energy_rate = fabs (sysfs_get_double (native_path, "power_now") / 1000000.0);
@@ -832,6 +831,8 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 		}
 		supply->priv->energy_old_first = 0;
 	}
+
+	*out_state = state;
 
 	g_object_set (device,
 		      "energy", energy,
