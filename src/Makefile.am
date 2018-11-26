@@ -163,7 +163,7 @@ dbusservice_DATA     = $(dbusservice_in_files:.service.in=.service)
 $(dbusservice_DATA): $(dbusservice_in_files) Makefile
 	@sed -e "s|\@libexecdir\@|$(libexecdir)|" $< > $@
 
-dbusconfdir = $(sysconfdir)/dbus-1/system.d
+dbusconfdir = $(datadir)/dbus-1/system.d
 dbusconf_in_files = org.freedesktop.UPower.conf.in
 dbusconf_DATA = $(dbusconf_in_files:.conf.in=.conf)
 
