@@ -732,6 +732,12 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 		percentage = CLAMP(percentage, 0.0f, 100.0f);
 	}
 
+	/* Some devices report "Not charging" when the battery is full and AC
+	 * power is connected. In this situation we should report fully-charged
+	 * instead of pending-charge. */
+	if (state == UP_DEVICE_STATE_PENDING_CHARGE && percentage == 100.0)
+		state = UP_DEVICE_STATE_FULLY_CHARGED;
+
 	/* the battery isn't charging or discharging, it's just
 	 * sitting there half full doing nothing: try to guess a state */
 	if (state == UP_DEVICE_STATE_UNKNOWN && supply->priv->is_power_supply) {
