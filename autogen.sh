@@ -13,21 +13,14 @@ if test -z $AUTORECONF; then
         exit 1
 fi
 
-INTLTOOLIZE=`which intltoolize`
-if test -z $INTLTOOLIZE; then
-        echo "*** No intltoolize found, please install the intltool package ***"
-        exit 1
-fi
-
 GTKDOCIZE=`which gtkdocize`
 if test -z $GTKDOCIZE; then
         echo "*** No GTK-Doc found, please install it ***"
         exit 1
 fi
 
-gtkdocize
-autopoint --force
-AUTOPOINT='intltoolize --automake --copy' autoreconf --force --install --verbose
+gtkdocize --copy || exit 1
+autoreconf --verbose --force --install || exit 1
 
 cd $olddir
 test -n "$NOCONFIGURE" || "$srcdir/configure" "$@"

@@ -1,8 +1,7 @@
 image: fedora:rawhide
 
 variables:
-  DEPENDENCIES: gettext libtool intltool gtk-doc
-                autoconf automake
+  DEPENDENCIES: libtool gtk-doc autoconf automake gettext-devel
                 gcc redhat-rpm-config gcc-c++ glibc-devel make
                 systemd sqlite-devel gobject-introspection-devel
                 libusbx-devel libgudev-devel libimobiledevice-devel

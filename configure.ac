@@ -229,9 +229,7 @@ if test "x$GCC" = "xyes"; then
 fi
 
 # i18n support
-IT_PROG_INTLTOOL([0.40.0])
-
-AM_GNU_GETTEXT_VERSION([0.17])
+AM_GNU_GETTEXT_VERSION([0.19.8])
 AM_GNU_GETTEXT([external])
 
 AC_SUBST([GETTEXT_PACKAGE],[${PACKAGE_TARNAME}])
