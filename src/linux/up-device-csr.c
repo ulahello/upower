@@ -60,7 +60,7 @@ struct UpDeviceCsrPrivate
 	libusb_device		*device;
 };
 
-G_DEFINE_TYPE (UpDeviceCsr, up_device_csr, UP_TYPE_DEVICE)
+G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceCsr, up_device_csr, UP_TYPE_DEVICE)
 #define UP_DEVICE_CSR_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE_CSR, UpDeviceCsrPrivate))
 
 static gboolean		 up_device_csr_refresh	 	(UpDevice *device);
@@ -332,8 +332,6 @@ up_device_csr_class_init (UpDeviceCsrClass *klass)
 	object_class->finalize = up_device_csr_finalize;
 	device_class->coldplug = up_device_csr_coldplug;
 	device_class->refresh = up_device_csr_refresh;
-
-	g_type_class_add_private (klass, sizeof (UpDeviceCsrPrivate));
 }
 
 /**

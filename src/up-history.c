@@ -61,7 +61,7 @@ enum {
 	UP_HISTORY_LAST_SIGNAL
 };
 
-G_DEFINE_TYPE (UpHistory, up_history, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (UpHistory, up_history, G_TYPE_OBJECT)
 
 /**
  * up_history_set_max_data_age:
@@ -874,7 +874,6 @@ up_history_class_init (UpHistoryClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = up_history_finalize;
-	g_type_class_add_private (klass, sizeof (UpHistoryPrivate));
 }
 
 /**

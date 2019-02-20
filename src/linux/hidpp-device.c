@@ -163,7 +163,7 @@ typedef struct {
 	gchar			*name;
 } HidppDeviceMap;
 
-G_DEFINE_TYPE (HidppDevice, hidpp_device, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (HidppDevice, hidpp_device, G_TYPE_OBJECT)
 #define HIDPP_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), HIDPP_TYPE_DEVICE, HidppDevicePrivate))
 
 /**
@@ -1089,7 +1089,6 @@ hidpp_device_class_init (HidppDeviceClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = hidpp_device_finalize;
-	g_type_class_add_private (klass, sizeof (HidppDevicePrivate));
 }
 
 /**

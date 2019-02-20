@@ -94,7 +94,7 @@ enum {
 	PROP_LAST
 };
 
-G_DEFINE_TYPE (UpDevice, up_device, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (UpDevice, up_device, G_TYPE_OBJECT)
 
 /*
  * up_device_changed_cb:
@@ -1202,8 +1202,6 @@ up_device_class_init (UpDeviceClass *klass)
 					 g_param_spec_string ("icon-name",
 							      NULL, NULL, NULL,
 							      G_PARAM_READWRITE));
-
-	g_type_class_add_private (klass, sizeof (UpDevicePrivate));
 }
 
 static void

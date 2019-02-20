@@ -61,7 +61,7 @@ enum {
 	PROP_LAST
 };
 
-G_DEFINE_TYPE (UpWakeupItem, up_wakeup_item, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (UpWakeupItem, up_wakeup_item, G_TYPE_OBJECT)
 
 /**
  * up_wakeup_item_get_is_userspace:
@@ -409,8 +409,6 @@ up_wakeup_item_class_init (UpWakeupItemClass *klass)
 					 g_param_spec_string ("details", NULL, NULL,
 							      NULL,
 							      G_PARAM_READWRITE));
-
-	g_type_class_add_private (klass, sizeof (UpWakeupItemPrivate));
 }
 
 /**

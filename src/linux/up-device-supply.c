@@ -70,7 +70,7 @@ struct UpDeviceSupplyPrivate
 	gboolean		 shown_invalid_voltage_warning;
 };
 
-G_DEFINE_TYPE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
+G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
 #define UP_DEVICE_SUPPLY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE_SUPPLY, UpDeviceSupplyPrivate))
 
 static gboolean		 up_device_supply_refresh	 	(UpDevice *device);
@@ -1276,8 +1276,6 @@ up_device_supply_class_init (UpDeviceSupplyClass *klass)
 	device_class->get_online = up_device_supply_get_online;
 	device_class->coldplug = up_device_supply_coldplug;
 	device_class->refresh = up_device_supply_refresh;
-
-	g_type_class_add_private (klass, sizeof (UpDeviceSupplyPrivate));
 }
 
 /**

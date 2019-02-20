@@ -53,7 +53,7 @@ enum {
 	PROP_LAST
 };
 
-G_DEFINE_TYPE (UpStatsItem, up_stats_item, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (UpStatsItem, up_stats_item, G_TYPE_OBJECT)
 
 /**
  * up_stats_item_set_value:
@@ -193,8 +193,6 @@ up_stats_item_class_init (UpStatsItemClass *klass)
 					 g_param_spec_double ("accuracy", NULL, NULL,
 							      0.0, G_MAXDOUBLE, 0.0,
 							      G_PARAM_READWRITE));
-
-	g_type_class_add_private (klass, sizeof (UpStatsItemPrivate));
 }
 
 /**

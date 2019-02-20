@@ -38,7 +38,7 @@ struct UpDeviceListPrivate
 	GHashTable		*map_native_path_to_device;
 };
 
-G_DEFINE_TYPE (UpDeviceList, up_device_list, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceList, up_device_list, G_TYPE_OBJECT)
 
 /**
  * up_device_list_lookup:
@@ -183,7 +183,6 @@ up_device_list_class_init (UpDeviceListClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = up_device_list_finalize;
-	g_type_class_add_private (klass, sizeof (UpDeviceListPrivate));
 }
 
 /**

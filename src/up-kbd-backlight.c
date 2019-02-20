@@ -48,7 +48,7 @@ struct UpKbdBacklightPrivate
 	gint			 max_brightness;
 };
 
-G_DEFINE_TYPE (UpKbdBacklight, up_kbd_backlight, UP_TYPE_EXPORTED_KBD_BACKLIGHT_SKELETON)
+G_DEFINE_TYPE_WITH_PRIVATE (UpKbdBacklight, up_kbd_backlight, UP_TYPE_EXPORTED_KBD_BACKLIGHT_SKELETON)
 
 /**
  * up_kbd_backlight_emit_change:
@@ -207,8 +207,6 @@ up_kbd_backlight_class_init (UpKbdBacklightClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = up_kbd_backlight_finalize;
-
-	g_type_class_add_private (klass, sizeof (UpKbdBacklightPrivate));
 }
 
 /**

@@ -56,7 +56,7 @@ enum {
 	PROP_LAST
 };
 
-G_DEFINE_TYPE (UpHistoryItem, up_history_item, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (UpHistoryItem, up_history_item, G_TYPE_OBJECT)
 
 /**
  * up_history_item_set_value:
@@ -321,8 +321,6 @@ up_history_item_class_init (UpHistoryItemClass *klass)
 							    0, G_MAXUINT,
 							    UP_DEVICE_STATE_UNKNOWN,
 							    G_PARAM_READWRITE));
-
-	g_type_class_add_private (klass, sizeof (UpHistoryItemPrivate));
 }
 
 /**

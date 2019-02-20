@@ -48,7 +48,7 @@ struct UpDeviceIdevicePrivate
 	lockdownd_client_t	 client;
 };
 
-G_DEFINE_TYPE (UpDeviceIdevice, up_device_idevice, UP_TYPE_DEVICE)
+G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceIdevice, up_device_idevice, UP_TYPE_DEVICE)
 #define UP_DEVICE_IDEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE_IDEVICE, UpDeviceIdevicePrivate))
 
 static gboolean		 up_device_idevice_refresh		(UpDevice *device);
@@ -390,8 +390,6 @@ up_device_idevice_class_init (UpDeviceIdeviceClass *klass)
 	object_class->finalize = up_device_idevice_finalize;
 	device_class->coldplug = up_device_idevice_coldplug;
 	device_class->refresh = up_device_idevice_refresh;
-
-	g_type_class_add_private (klass, sizeof (UpDeviceIdevicePrivate));
 }
 
 /**

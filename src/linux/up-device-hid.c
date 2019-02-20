@@ -90,7 +90,7 @@ struct UpDeviceHidPrivate
 	int			 fd;
 };
 
-G_DEFINE_TYPE (UpDeviceHid, up_device_hid, UP_TYPE_DEVICE)
+G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceHid, up_device_hid, UP_TYPE_DEVICE)
 #define UP_DEVICE_HID_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE_HID, UpDeviceHidPrivate))
 
 static gboolean		 up_device_hid_refresh	 	(UpDevice *device);
@@ -512,8 +512,6 @@ up_device_hid_class_init (UpDeviceHidClass *klass)
 	device_class->coldplug = up_device_hid_coldplug;
 	device_class->get_on_battery = up_device_hid_get_on_battery;
 	device_class->refresh = up_device_hid_refresh;
-
-	g_type_class_add_private (klass, sizeof (UpDeviceHidPrivate));
 }
 
 /**

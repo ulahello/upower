@@ -47,7 +47,7 @@ enum {
 
 static guint signals [UP_WAKEUPS_LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (UpWakeups, up_wakeups, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (UpWakeups, up_wakeups, G_TYPE_OBJECT)
 
 /**
  * up_wakeups_get_total_sync:
@@ -233,8 +233,6 @@ up_wakeups_class_init (UpWakeupsClass *klass)
 			      G_STRUCT_OFFSET (UpWakeupsClass, data_changed),
 			      NULL, NULL, g_cclosure_marshal_VOID__UINT,
 			      G_TYPE_NONE, 1, G_TYPE_UINT);
-
-	g_type_class_add_private (klass, sizeof (UpWakeupsPrivate));
 }
 
 /**

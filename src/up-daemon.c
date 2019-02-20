@@ -76,7 +76,7 @@ static gboolean	up_daemon_get_on_battery_local	(UpDaemon	*daemon);
 static gboolean	up_daemon_get_warning_level_local(UpDaemon	*daemon);
 static gboolean	up_daemon_get_on_ac_local 	(UpDaemon	*daemon);
 
-G_DEFINE_TYPE (UpDaemon, up_daemon, UP_TYPE_EXPORTED_DAEMON_SKELETON)
+G_DEFINE_TYPE_WITH_PRIVATE (UpDaemon, up_daemon, UP_TYPE_EXPORTED_DAEMON_SKELETON)
 
 #define UP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DAEMON, UpDaemonPrivate))
 
@@ -1141,8 +1141,6 @@ up_daemon_class_init (UpDaemonClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = up_daemon_finalize;
-
-	g_type_class_add_private (klass, sizeof (UpDaemonPrivate));
 }
 
 /**

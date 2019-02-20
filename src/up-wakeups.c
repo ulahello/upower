@@ -54,7 +54,7 @@ struct UpWakeupsPrivate
 	gboolean		 polling_enabled;
 };
 
-G_DEFINE_TYPE (UpWakeups, up_wakeups, UP_TYPE_EXPORTED_WAKEUPS_SKELETON)
+G_DEFINE_TYPE_WITH_PRIVATE (UpWakeups, up_wakeups, UP_TYPE_EXPORTED_WAKEUPS_SKELETON)
 
 /**
  * up_wakeups_get_cmdline:
@@ -656,8 +656,6 @@ up_wakeups_class_init (UpWakeupsClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = up_wakeups_finalize;
-
-	g_type_class_add_private (klass, sizeof (UpWakeupsPrivate));
 }
 
 /**

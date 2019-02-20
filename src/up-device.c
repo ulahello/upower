@@ -44,7 +44,7 @@ struct UpDevicePrivate
 	gboolean		 has_ever_refresh;
 };
 
-G_DEFINE_TYPE (UpDevice, up_device, UP_TYPE_EXPORTED_DEVICE_SKELETON)
+G_DEFINE_TYPE_WITH_PRIVATE (UpDevice, up_device, UP_TYPE_EXPORTED_DEVICE_SKELETON)
 #define UP_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE, UpDevicePrivate))
 
 #define UP_DEVICES_DBUS_PATH "/org/freedesktop/UPower/devices"
@@ -754,8 +754,6 @@ up_device_class_init (UpDeviceClass *klass)
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->notify = up_device_notify;
 	object_class->finalize = up_device_finalize;
-
-	g_type_class_add_private (klass, sizeof (UpDevicePrivate));
 }
 
 /**

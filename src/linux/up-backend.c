@@ -83,7 +83,7 @@ enum {
 
 static guint signals [SIGNAL_LAST] = { 0 };
 
-G_DEFINE_TYPE (UpBackend, up_backend, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (UpBackend, up_backend, G_TYPE_OBJECT)
 
 static gboolean up_backend_device_add (UpBackend *backend, GUdevDevice *native);
 static void up_backend_device_remove (UpBackend *backend, GUdevDevice *native);
@@ -805,8 +805,6 @@ up_backend_class_init (UpBackendClass *klass)
 			      G_STRUCT_OFFSET (UpBackendClass, device_removed),
 			      NULL, NULL, NULL,
 			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
-
-	g_type_class_add_private (klass, sizeof (UpBackendPrivate));
 }
 
 static void

@@ -72,7 +72,7 @@ struct UpDeviceWupPrivate
 	int			 fd;
 };
 
-G_DEFINE_TYPE (UpDeviceWup, up_device_wup, UP_TYPE_DEVICE)
+G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceWup, up_device_wup, UP_TYPE_DEVICE)
 #define UP_DEVICE_WUP_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE_WUP, UpDeviceWupPrivate))
 
 static gboolean		 up_device_wup_refresh	 	(UpDevice *device);
@@ -461,8 +461,6 @@ up_device_wup_class_init (UpDeviceWupClass *klass)
 	object_class->finalize = up_device_wup_finalize;
 	device_class->coldplug = up_device_wup_coldplug;
 	device_class->refresh = up_device_wup_refresh;
-
-	g_type_class_add_private (klass, sizeof (UpDeviceWupPrivate));
 }
 
 /**

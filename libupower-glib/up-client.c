@@ -73,6 +73,7 @@ enum {
 static guint signals [UP_CLIENT_LAST_SIGNAL] = { 0 };
 
 G_DEFINE_TYPE_WITH_CODE (UpClient, up_client, G_TYPE_OBJECT,
+			 G_ADD_PRIVATE(UpClient)
                          G_IMPLEMENT_INTERFACE(G_TYPE_INITABLE, up_client_initable_iface_init))
 
 /**
@@ -451,8 +452,6 @@ up_client_class_init (UpClientClass *klass)
 			      G_STRUCT_OFFSET (UpClientClass, device_removed),
 			      NULL, NULL, g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
-
-	g_type_class_add_private (klass, sizeof (UpClientPrivate));
 }
 
 /*
