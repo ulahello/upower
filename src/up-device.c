@@ -45,7 +45,6 @@ struct UpDevicePrivate
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDevice, up_device, UP_TYPE_EXPORTED_DEVICE_SKELETON)
-#define UP_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE, UpDevicePrivate))
 
 #define UP_DEVICES_DBUS_PATH "/org/freedesktop/UPower/devices"
 
@@ -711,7 +710,7 @@ up_device_init (UpDevice *device)
 {
 	UpExportedDevice *skeleton;
 
-	device->priv = UP_DEVICE_GET_PRIVATE (device);
+	device->priv = up_device_get_instance_private (device);
 	device->priv->history = up_history_new ();
 
 	skeleton = UP_EXPORTED_DEVICE (device);

@@ -28,7 +28,6 @@
 #include "up-device-bluez.h"
 
 G_DEFINE_TYPE (UpDeviceBluez, up_device_bluez, UP_TYPE_DEVICE)
-#define UP_DEVICE_BLUEZ_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE_BLUEZ, UpDeviceBluezPrivate))
 
 static UpDeviceKind
 appearance_to_kind (guint16 appearance)

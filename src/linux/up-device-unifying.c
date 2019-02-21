@@ -36,7 +36,6 @@ struct UpDeviceUnifyingPrivate
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceUnifying, up_device_unifying, UP_TYPE_DEVICE)
-#define UP_DEVICE_UNIFYING_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE_UNIFYING, UpDeviceUnifyingPrivate))
 
 /**
  * up_device_unifying_refresh:
@@ -300,7 +299,7 @@ out:
 static void
 up_device_unifying_init (UpDeviceUnifying *unifying)
 {
-	unifying->priv = UP_DEVICE_UNIFYING_GET_PRIVATE (unifying);
+	unifying->priv = up_device_unifying_get_instance_private (unifying);
 }
 
 /**

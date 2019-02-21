@@ -39,8 +39,6 @@ static gboolean		up_apm_device_get_on_battery	(UpDevice *device, gboolean *on_ba
 static gboolean		up_apm_device_get_online		(UpDevice *device, gboolean *online);
 static gboolean		up_apm_device_refresh		(UpDevice *device);
 
-#define UP_BACKEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_BACKEND, UpBackendPrivate))
-
 struct UpBackendPrivate
 {
 	UpDaemon		*daemon;
@@ -597,7 +595,7 @@ up_backend_init (UpBackend *backend)
 	UpDeviceClass *device_class;
 	gint64 current_time;
 
-	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
+	backend->priv = up_backend_get_instance_private (backend);
 	backend->priv->is_laptop = up_native_is_laptop();
 	g_debug("is_laptop:%d",backend->priv->is_laptop);
 	if (backend->priv->is_laptop)

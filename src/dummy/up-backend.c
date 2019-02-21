@@ -35,8 +35,6 @@ static void	up_backend_class_init	(UpBackendClass	*klass);
 static void	up_backend_init	(UpBackend		*backend);
 static void	up_backend_finalize	(GObject		*object);
 
-#define UP_BACKEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_BACKEND, UpBackendPrivate))
-
 struct UpBackendPrivate
 {
 	UpDaemon		*daemon;
@@ -202,7 +200,7 @@ up_backend_class_init (UpBackendClass *klass)
 static void
 up_backend_init (UpBackend *backend)
 {
-	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
+	backend->priv = up_backend_get_instance_private (backend);
 	backend->priv->daemon = NULL;
 	backend->priv->device_list = NULL;
 #ifdef EGG_TEST

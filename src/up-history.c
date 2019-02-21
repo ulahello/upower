@@ -33,8 +33,6 @@
 
 static void	up_history_finalize	(GObject		*object);
 
-#define UP_HISTORY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_HISTORY, UpHistoryPrivate))
-
 #define UP_HISTORY_FILE_HEADER		"PackageKit Profile"
 #define UP_HISTORY_SAVE_INTERVAL	(10*60)		/* seconds */
 #define UP_HISTORY_DEFAULT_MAX_DATA_AGE	(7*24*60*60)	/* seconds */
@@ -883,7 +881,7 @@ up_history_class_init (UpHistoryClass *klass)
 static void
 up_history_init (UpHistory *history)
 {
-	history->priv = UP_HISTORY_GET_PRIVATE (history);
+	history->priv = up_history_get_instance_private (history);
 	history->priv->data_rate = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	history->priv->data_charge = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	history->priv->data_time_full = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);

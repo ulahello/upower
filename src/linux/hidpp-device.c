@@ -164,7 +164,6 @@ typedef struct {
 } HidppDeviceMap;
 
 G_DEFINE_TYPE_WITH_PRIVATE (HidppDevice, hidpp_device, G_TYPE_OBJECT)
-#define HIDPP_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), HIDPP_TYPE_DEVICE, HidppDevicePrivate))
 
 /**
  * hidpp_is_error:
@@ -1033,7 +1032,7 @@ hidpp_device_init (HidppDevice *device)
 {
 	HidppDeviceMap *map;
 
-	device->priv = HIDPP_DEVICE_GET_PRIVATE (device);
+	device->priv = hidpp_device_get_instance_private (device);
 	device->priv->fd = -1;
 	device->priv->feature_index = g_ptr_array_new_with_free_func (hidpp_device_free_feature);
 	device->priv->batt_status = HIDPP_DEVICE_BATT_STATUS_UNKNOWN;

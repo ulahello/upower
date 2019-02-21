@@ -28,8 +28,6 @@
 
 static void     up_config_finalize	(GObject     *object);
 
-#define UP_CONFIG_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_CONFIG, UpConfigPrivate))
-
 /**
  * UpConfigPrivate:
  *
@@ -100,7 +98,7 @@ up_config_init (UpConfig *config)
 	GError *error = NULL;
 	gchar *filename;
 
-	config->priv = UP_CONFIG_GET_PRIVATE (config);
+	config->priv = up_config_get_instance_private (config);
 	config->priv->keyfile = g_key_file_new ();
 
 	filename = g_strdup (g_getenv ("UPOWER_CONF_FILE_NAME"));

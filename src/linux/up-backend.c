@@ -57,8 +57,6 @@ static void	up_backend_finalize	(GObject		*object);
 #define LOGIND_DBUS_PATH                       "/org/freedesktop/login1"
 #define LOGIND_DBUS_INTERFACE                  "org.freedesktop.login1.Manager"
 
-#define UP_BACKEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_BACKEND, UpBackendPrivate))
-
 struct UpBackendPrivate
 {
 	UpDaemon		*daemon;
@@ -813,7 +811,7 @@ up_backend_init (UpBackend *backend)
 	GDBusConnection *bus;
 	guint sleep_id;
 
-	backend->priv = UP_BACKEND_GET_PRIVATE (backend);
+	backend->priv = up_backend_get_instance_private (backend);
 	backend->priv->config = up_config_new ();
 	backend->priv->managed_devices = up_device_list_new ();
 	backend->priv->logind_proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,

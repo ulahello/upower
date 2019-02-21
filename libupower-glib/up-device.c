@@ -44,8 +44,6 @@ static void	up_device_class_init	(UpDeviceClass	*klass);
 static void	up_device_init		(UpDevice	*device);
 static void	up_device_finalize	(GObject		*object);
 
-#define UP_DEVICE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE, UpDevicePrivate))
-
 /**
  * UpDevicePrivate:
  *
@@ -1217,7 +1215,7 @@ value_free (GValue *value)
 static void
 up_device_init (UpDevice *device)
 {
-	device->priv = UP_DEVICE_GET_PRIVATE (device);
+	device->priv = up_device_get_instance_private (device);
 	device->priv->offline_props = g_hash_table_new_full (g_direct_hash,
 							     g_direct_equal,
 							     NULL,

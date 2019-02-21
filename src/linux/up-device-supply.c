@@ -71,7 +71,6 @@ struct UpDeviceSupplyPrivate
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
-#define UP_DEVICE_SUPPLY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE_SUPPLY, UpDeviceSupplyPrivate))
 
 static gboolean		 up_device_supply_refresh	 	(UpDevice *device);
 static void		 up_device_supply_setup_unknown_poll	(UpDevice      *device,
@@ -1221,7 +1220,7 @@ up_device_supply_init (UpDeviceSupply *supply)
 {
 	UpConfig *config;
 
-	supply->priv = UP_DEVICE_SUPPLY_GET_PRIVATE (supply);
+	supply->priv = up_device_supply_get_instance_private (supply);
 
 	/* allocate the stats for the battery charging & discharging */
 	supply->priv->energy_old = g_new (gdouble, UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH);

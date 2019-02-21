@@ -61,7 +61,6 @@ struct UpDeviceCsrPrivate
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceCsr, up_device_csr, UP_TYPE_DEVICE)
-#define UP_DEVICE_CSR_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE_CSR, UpDeviceCsrPrivate))
 
 static gboolean		 up_device_csr_refresh	 	(UpDevice *device);
 
@@ -291,7 +290,7 @@ static void
 up_device_csr_init (UpDeviceCsr *csr)
 {
 	gint retval;
-	csr->priv = UP_DEVICE_CSR_GET_PRIVATE (csr);
+	csr->priv = up_device_csr_get_instance_private (csr);
 
 	csr->priv->raw_value = -1;
 	retval = libusb_init (&csr->priv->ctx);

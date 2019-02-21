@@ -38,8 +38,6 @@ static void	up_wakeup_item_class_init	(UpWakeupItemClass	*klass);
 static void	up_wakeup_item_init		(UpWakeupItem		*wakeup_item);
 static void	up_wakeup_item_finalize		(GObject		*object);
 
-#define UP_WAKEUP_ITEM_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_WAKEUP_ITEM, UpWakeupItemPrivate))
-
 struct UpWakeupItemPrivate
 {
 	gboolean		 is_userspace;
@@ -418,7 +416,7 @@ up_wakeup_item_class_init (UpWakeupItemClass *klass)
 static void
 up_wakeup_item_init (UpWakeupItem *wakeup_item)
 {
-	wakeup_item->priv = UP_WAKEUP_ITEM_GET_PRIVATE (wakeup_item);
+	wakeup_item->priv = up_wakeup_item_get_instance_private (wakeup_item);
 }
 
 /**

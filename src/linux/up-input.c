@@ -55,7 +55,6 @@ struct UpInputPrivate
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpInput, up_input, G_TYPE_OBJECT)
-#define UP_INPUT_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_INPUT, UpInputPrivate))
 
 /* we must use this kernel-compatible implementation */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -267,7 +266,7 @@ out:
 static void
 up_input_init (UpInput *input)
 {
-	input->priv = UP_INPUT_GET_PRIVATE (input);
+	input->priv = up_input_get_instance_private (input);
 	input->priv->eventfp = -1;
 }
 

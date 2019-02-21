@@ -38,8 +38,6 @@
 
 static void     up_kbd_backlight_finalize   (GObject	*object);
 
-#define UP_KBD_BACKLIGHT_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_KBD_BACKLIGHT, UpKbdBacklightPrivate))
-
 struct UpKbdBacklightPrivate
 {
 	gint			 fd;
@@ -320,7 +318,7 @@ out:
 static void
 up_kbd_backlight_init (UpKbdBacklight *kbd_backlight)
 {
-	kbd_backlight->priv = UP_KBD_BACKLIGHT_GET_PRIVATE (kbd_backlight);
+	kbd_backlight->priv = up_kbd_backlight_get_instance_private (kbd_backlight);
 
 	g_signal_connect (kbd_backlight, "handle-get-brightness",
 			  G_CALLBACK (up_kbd_backlight_get_brightness), kbd_backlight);
@@ -342,7 +340,7 @@ up_kbd_backlight_finalize (GObject *object)
 	g_return_if_fail (UP_IS_KBD_BACKLIGHT (object));
 
 	kbd_backlight = UP_KBD_BACKLIGHT (object);
-	kbd_backlight->priv = UP_KBD_BACKLIGHT_GET_PRIVATE (kbd_backlight);
+	kbd_backlight->priv = up_kbd_backlight_get_instance_private (kbd_backlight);
 
 	if (kbd_backlight->priv->channel_hw_changed) {
 		g_io_channel_shutdown (kbd_backlight->priv->channel_hw_changed, FALSE, NULL);

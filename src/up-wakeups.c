@@ -33,8 +33,6 @@
 static void     up_wakeups_finalize   (GObject		*object);
 static gboolean	up_wakeups_timerstats_enable (UpWakeups *wakeups);
 
-#define UP_WAKEUPS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_WAKEUPS, UpWakeupsPrivate))
-
 #define UP_WAKEUPS_POLL_INTERVAL_KERNEL	2 /* seconds */
 #define UP_WAKEUPS_POLL_INTERVAL_USERSPACE	2 /* seconds */
 #define UP_WAKEUPS_DISABLE_INTERVAL		30 /* seconds */
@@ -664,7 +662,7 @@ up_wakeups_class_init (UpWakeupsClass *klass)
 static void
 up_wakeups_init (UpWakeups *wakeups)
 {
-	wakeups->priv = UP_WAKEUPS_GET_PRIVATE (wakeups);
+	wakeups->priv = up_wakeups_get_instance_private (wakeups);
 	wakeups->priv->data = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	/* test if we have an interface */
@@ -691,7 +689,7 @@ up_wakeups_finalize (GObject *object)
 	g_return_if_fail (UP_IS_WAKEUPS (object));
 
 	wakeups = UP_WAKEUPS (object);
-	wakeups->priv = UP_WAKEUPS_GET_PRIVATE (wakeups);
+	wakeups->priv = up_wakeups_get_instance_private (wakeups);
 
 	/* stop timerstats */
 	up_wakeups_timerstats_disable (wakeups);

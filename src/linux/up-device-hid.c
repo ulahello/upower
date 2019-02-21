@@ -91,7 +91,6 @@ struct UpDeviceHidPrivate
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceHid, up_device_hid, UP_TYPE_DEVICE)
-#define UP_DEVICE_HID_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DEVICE_HID, UpDeviceHidPrivate))
 
 static gboolean		 up_device_hid_refresh	 	(UpDevice *device);
 
@@ -470,7 +469,7 @@ up_device_hid_get_on_battery (UpDevice *device, gboolean *on_battery)
 static void
 up_device_hid_init (UpDeviceHid *hid)
 {
-	hid->priv = UP_DEVICE_HID_GET_PRIVATE (hid);
+	hid->priv = up_device_hid_get_instance_private (hid);
 	hid->priv->fd = -1;
 	hid->priv->poll_timer_id = g_timeout_add_seconds (UP_DEVICE_HID_REFRESH_TIMEOUT,
 							  (GSourceFunc) up_device_hid_poll, hid);

@@ -32,8 +32,6 @@ static void	up_wakeups_class_init	(UpWakeupsClass	*klass);
 static void	up_wakeups_init		(UpWakeups	*wakeups);
 static void	up_wakeups_finalize	(GObject	*object);
 
-#define UP_WAKEUPS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_WAKEUPS, UpWakeupsPrivate))
-
 struct UpWakeupsPrivate
 {
 	UpExportedWakeups *proxy;
@@ -243,7 +241,7 @@ up_wakeups_init (UpWakeups *wakeups)
 {
 	GError *error = NULL;
 
-	wakeups->priv = UP_WAKEUPS_GET_PRIVATE (wakeups);
+	wakeups->priv = up_wakeups_get_instance_private (wakeups);
 
 	/* connect to main interface */
 	wakeups->priv->proxy = up_exported_wakeups_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,

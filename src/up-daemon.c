@@ -78,8 +78,6 @@ static gboolean	up_daemon_get_on_ac_local 	(UpDaemon	*daemon);
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDaemon, up_daemon, UP_TYPE_EXPORTED_DAEMON_SKELETON)
 
-#define UP_DAEMON_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), UP_TYPE_DAEMON, UpDaemonPrivate))
-
 #define UP_DAEMON_ACTION_DELAY				20 /* seconds */
 #define UP_INTERFACE_PREFIX				"org.freedesktop.UPower."
 
@@ -1082,7 +1080,7 @@ policy_config_validate (UpDaemon *daemon)
 static void
 up_daemon_init (UpDaemon *daemon)
 {
-	daemon->priv = UP_DAEMON_GET_PRIVATE (daemon);
+	daemon->priv = up_daemon_get_instance_private (daemon);
 	daemon->priv->config = up_config_new ();
 	daemon->priv->power_devices = up_device_list_new ();
 	daemon->priv->display_device = up_device_new ();
