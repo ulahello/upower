@@ -336,6 +336,12 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
               <doc:term>8</doc:term><doc:definition>Phone</doc:definition>
             </doc:item>
           </doc:list>
+          <doc:para>
+            If the value is set to "Battery", you will need to verify that the
+            property <doc:ref type="property" to="Source:PowerSupply">power-supply</doc:ref>
+            has the value "true" before considering it as a laptop battery. Otherwise it
+            will likely be the battery for a device of an unknown type.
+          </doc:para>
         </doc:description>
       </doc:doc>
     </property>
