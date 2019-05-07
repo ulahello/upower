@@ -1143,7 +1143,7 @@ up_device_supply_coldplug (UpDevice *device)
 	    type != UP_DEVICE_KIND_BATTERY)
 		up_daemon_start_poll (G_OBJECT (device), (GSourceFunc) up_device_supply_refresh);
 	else if (type == UP_DEVICE_KIND_BATTERY &&
-		 !supply->priv->disable_battery_poll)
+		 (!supply->priv->disable_battery_poll || !supply->priv->is_power_supply))
 		up_daemon_start_poll (G_OBJECT (device), (GSourceFunc) up_device_supply_refresh);
 
 	/* coldplug values */
