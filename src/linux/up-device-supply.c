@@ -75,6 +75,8 @@ G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
 static gboolean		 up_device_supply_refresh	 	(UpDevice *device);
 static void		 up_device_supply_setup_unknown_poll	(UpDevice      *device,
 								 UpDeviceState  state);
+static UpDeviceKind	 up_device_supply_guess_type		(GUdevDevice *native,
+								 const char *native_path);
 
 static RefreshResult
 up_device_supply_refresh_line_power (UpDeviceSupply *supply)
@@ -918,9 +920,18 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 	GUdevDevice *native;
 	gdouble percentage = 0.0f;
 	UpDeviceLevel level = UP_DEVICE_LEVEL_NONE;
+	UpDeviceKind type;
 
 	native = G_UDEV_DEVICE (up_device_get_native (device));
 	native_path = g_udev_device_get_sysfs_path (native);
+
+	/* Try getting a more precise type again */
+	g_object_get (device, "type", &type, NULL);
+	if (type == UP_DEVICE_KIND_BATTERY) {
+		type = up_device_supply_guess_type (native, native_path);
+		if (type != UP_DEVICE_KIND_BATTERY)
+			g_object_set (device, "type", type, NULL);
+	}
 
 	/* initial values */
 	if (!supply->priv->has_coldplug_values) {
