@@ -1192,17 +1192,14 @@ up_device_supply_refresh (UpDevice *device)
 	UpDeviceState state;
 
 	g_object_get (device, "type", &type, NULL);
-	switch (type) {
-	case UP_DEVICE_KIND_LINE_POWER:
+	if (type == UP_DEVICE_KIND_LINE_POWER) {
 		ret = up_device_supply_refresh_line_power (supply);
-		break;
-	case UP_DEVICE_KIND_BATTERY:
+	} else if (type == UP_DEVICE_KIND_BATTERY &&
+		   supply->priv->is_power_supply) {
 		up_device_supply_disable_unknown_poll (device);
 		ret = up_device_supply_refresh_battery (supply, &state);
-		break;
-	default:
+	} else {
 		ret = up_device_supply_refresh_device (supply, &state);
-		break;
 	}
 
 	/* reset time if we got new data */
