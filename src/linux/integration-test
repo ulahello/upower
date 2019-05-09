@@ -85,7 +85,8 @@ BATTERY_IFACE = 'org.bluez.Battery1'
  UP_DEVICE_KIND_PHONE,
  UP_DEVICE_KIND_MEDIA_PLAYER,
  UP_DEVICE_KIND_TABLET,
- UP_DEVICE_KIND_COMPUTER) = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+ UP_DEVICE_KIND_COMPUTER,
+ UP_DEVICE_KIND_GAMING_INPUT) = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
 
 class Tests(dbusmock.DBusTestCase):
     @classmethod
