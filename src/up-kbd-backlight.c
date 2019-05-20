@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <dirent.h>
+#include <errno.h>
 
 #include "up-kbd-backlight.h"
 #include "up-daemon.h"
@@ -220,7 +221,11 @@ up_kbd_backlight_event_io (GIOChannel *channel, GIOCondition condition, gpointer
 		return FALSE;
 
 	brightness = up_kbd_backlight_brightness_read (kbd_backlight, kbd_backlight->priv->fd_hw_changed);
-	up_kbd_backlight_emit_change (kbd_backlight, brightness, "internal");
+	if (brightness < 0 && errno == ENODEV)
+		return FALSE;
+
+	if (brightness >= 0)
+		up_kbd_backlight_emit_change (kbd_backlight, brightness, "internal");
 
 	return TRUE;
 }
