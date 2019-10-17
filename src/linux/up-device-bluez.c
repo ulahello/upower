@@ -71,7 +71,6 @@ up_device_bluez_coldplug (UpDevice *device)
 	GDBusProxy *proxy;
 	GError *error = NULL;
 	UpDeviceKind kind;
-	guint16 appearance;
 	const char *uuid;
 	const char *model;
 	GVariant *v;
@@ -95,9 +94,15 @@ up_device_bluez_coldplug (UpDevice *device)
 	}
 
 	v = g_dbus_proxy_get_cached_property (proxy, "Appearance");
-	appearance = g_variant_get_uint16 (v);
-	kind = appearance_to_kind (appearance);
-	g_variant_unref (v);
+	if (v) {
+		guint16 appearance;
+
+		appearance = g_variant_get_uint16 (v);
+		kind = appearance_to_kind (appearance);
+		g_variant_unref (v);
+	} else {
+		kind = UP_DEVICE_KIND_UNKNOWN;
+	}
 
 	v = g_dbus_proxy_get_cached_property (proxy, "Address");
 	uuid = g_variant_get_string (v, NULL);
