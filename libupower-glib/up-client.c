@@ -21,11 +21,12 @@
 
 /**
  * SECTION:up-client
- * @short_description: Main client object for accessing the UPower daemon
+ * @short_description: Main client object for accessing UPower data
  * @see_also: #UpDevice
  *
- * A helper GObject to use for accessing UPower information, and to be notified
- * when it is changed.
+ * A helper GObject to use for accessing UPower information, whether on the
+ * system bus (from the UPower daemon) or from the session (from session services),
+ * and to be notified when it is changed.
  */
 
 #include "config.h"
@@ -51,6 +52,7 @@ static void	up_client_finalize		(GObject	*object);
 struct _UpClientPrivate
 {
 	UpExportedDaemon *proxy;
+	GBusType bus_type;
 };
 
 enum {
@@ -65,6 +67,7 @@ enum {
 	PROP_ON_BATTERY,
 	PROP_LID_IS_CLOSED,
 	PROP_LID_IS_PRESENT,
+	PROP_BUS_TYPE,
 	PROP_LAST
 };
 
@@ -73,6 +76,12 @@ static guint signals [UP_CLIENT_LAST_SIGNAL] = { 0 };
 G_DEFINE_TYPE_WITH_CODE (UpClient, up_client, G_TYPE_OBJECT,
 			 G_ADD_PRIVATE(UpClient)
                          G_IMPLEMENT_INTERFACE(G_TYPE_INITABLE, up_client_initable_iface_init))
+
+static inline gboolean
+is_system (UpClient *client)
+{
+	return client->priv->bus_type == G_BUS_TYPE_SYSTEM;
+}
 
 /**
  * up_client_get_devices:
@@ -315,6 +324,33 @@ up_device_removed_cb (UpExportedDaemon *proxy, const gchar *object_path, UpClien
 }
 
 static void
+up_client_set_property (GObject        *object,
+			guint           prop_id,
+			const GValue   *value,
+			GParamSpec     *pspec)
+{
+	UpClient *client;
+	GBusType bus_type;
+
+	client = UP_CLIENT (object);
+
+	switch (prop_id) {
+	case PROP_BUS_TYPE:
+		bus_type = g_value_get_enum (value);
+		if (bus_type == G_BUS_TYPE_SYSTEM ||
+		    bus_type == G_BUS_TYPE_SESSION) {
+			client->priv->bus_type = bus_type;
+		} else {
+			g_warning ("Invalid value '%d' property for \'bus-type\'", bus_type);
+		}
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
+}
+
+static void
 up_client_get_property (GObject *object,
 			 guint prop_id,
 			 GValue *value,
@@ -323,21 +359,35 @@ up_client_get_property (GObject *object,
 	UpClient *client;
 	client = UP_CLIENT (object);
 
-	if (client->priv->proxy == NULL)
-                return;
+	if (is_system (client) && client->priv->proxy == NULL)
+		return;
 
 	switch (prop_id) {
 	case PROP_DAEMON_VERSION:
-		g_value_set_string (value, up_exported_daemon_get_daemon_version (client->priv->proxy));
+		g_value_set_string (value, is_system (client) ?
+				    up_exported_daemon_get_daemon_version (client->priv->proxy) :
+				    VERSION);
 		break;
 	case PROP_ON_BATTERY:
-		g_value_set_boolean (value, up_exported_daemon_get_on_battery (client->priv->proxy));
+		if (is_system (client))
+			g_value_set_boolean (value, up_exported_daemon_get_on_battery (client->priv->proxy));
+		else
+			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
 	case PROP_LID_IS_CLOSED:
-		g_value_set_boolean (value, up_exported_daemon_get_lid_is_closed (client->priv->proxy));
+		if (is_system (client))
+			g_value_set_boolean (value, up_exported_daemon_get_lid_is_closed (client->priv->proxy));
+		else
+			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
 	case PROP_LID_IS_PRESENT:
-		g_value_set_boolean (value, up_exported_daemon_get_lid_is_present (client->priv->proxy));
+		if (is_system (client))
+			g_value_set_boolean (value, up_exported_daemon_get_lid_is_present (client->priv->proxy));
+		else
+			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	case PROP_BUS_TYPE:
+		g_value_set_enum (value, client->priv->bus_type);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -350,6 +400,7 @@ up_client_class_init (UpClientClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
+	object_class->set_property = up_client_set_property;
 	object_class->get_property = up_client_get_property;
 	object_class->finalize = up_client_finalize;
 
@@ -409,6 +460,22 @@ up_client_class_init (UpClientClass *klass)
 							       NULL,
 							       FALSE,
 							       G_PARAM_READABLE));
+	/**
+	 * UpClient:bus-type:
+	 *
+	 * Whether the #UpClient will gather data from the session or the system bus.
+	 * Note that only %G_BUS_TYPE_SYSTEM and %G_BUS_TYPE_SESSION are valid values.
+	 *
+	 * Since: 0.9.11
+	 */
+	g_object_class_install_property (object_class,
+					 PROP_BUS_TYPE,
+					 g_param_spec_enum ("bus-type",
+							    "The D-Bus bus on which to gather data",
+							    NULL,
+							    G_TYPE_BUS_TYPE,
+							    G_BUS_TYPE_SYSTEM,
+							    G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 
 	/**
 	 * UpClient::device-added:
@@ -447,6 +514,12 @@ static gboolean
 up_client_initable_init (GInitable *initable, GCancellable *cancellable, GError **error)
 {
 	UpClient *client = UP_CLIENT (initable);
+
+	if (!is_system (client)) {
+		g_set_error_literal (error, G_FILE_ERROR, G_FILE_ERROR_NOSYS,
+				     "Not implemented yet.");
+		return FALSE;
+	}
 
 	/* connect to main interface */
 	client->priv->proxy = up_exported_daemon_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
