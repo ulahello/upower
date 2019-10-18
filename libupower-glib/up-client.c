@@ -611,3 +611,20 @@ up_client_new (void)
 	return client;
 }
 
+/**
+ * up_client_new_session:
+ *
+ * Creates a new #UpClient object that will listen to UPower data on the session
+ * bus rather than on the system bus.
+ *
+ * Return value: a new UpClient object, or %NULL on failure.
+ *
+ * Since: 0.9.11
+ **/
+UpClient *
+up_client_new_session (GCancellable *cancellable, GError **error)
+{
+	return g_initable_new (UP_TYPE_CLIENT, cancellable, error,
+			       "bus-type", G_BUS_TYPE_SESSION,
+			       NULL);
+}
