@@ -30,7 +30,8 @@ libupower_glib_include_HEADERS =				\
 	up-stats-item.h						\
 	up-history-item.h					\
 	up-wakeups.h						\
-	up-client.h
+	up-client.h						\
+	bus-watch-namespace.h
 
 libupower_glib_la_SOURCES =					\
 	up-types.c						\
@@ -39,7 +40,8 @@ libupower_glib_la_SOURCES =					\
 	up-wakeup-item.c					\
 	up-stats-item.c						\
 	up-history-item.c					\
-	up-device.c
+	up-device.c						\
+	bus-watch-namespace.c
 
 libupower_glib_la_LIBADD =					\
 	$(INTLLIBS)						\
