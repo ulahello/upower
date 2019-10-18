@@ -460,7 +460,6 @@ static gboolean
 up_client_initable_init (GInitable *initable, GCancellable *cancellable, GError **error)
 {
 	UpClient *client = UP_CLIENT (initable);
-	client->priv = up_client_get_instance_private (client);
 
 	/* connect to main interface */
 	client->priv->proxy = up_exported_daemon_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
@@ -496,6 +495,7 @@ up_client_initable_iface_init (GInitableIface *iface)
 static void
 up_client_init (UpClient *client)
 {
+	client->priv = up_client_get_instance_private (client);
 }
 
 /*
