@@ -254,6 +254,7 @@ main (int argc, char **argv)
 	gboolean opt_wakeups = FALSE;
 	gboolean opt_enumerate = FALSE;
 	gboolean opt_monitor = FALSE;
+	gboolean opt_session_bus = FALSE;
 	gchar *opt_show_info = FALSE;
 	gboolean opt_version = FALSE;
 	gboolean ret;
@@ -269,6 +270,7 @@ main (int argc, char **argv)
 		{ "wakeups", 'w', 0, G_OPTION_ARG_NONE, &opt_wakeups, _("Get the wakeup data"), NULL },
 		{ "monitor", 'm', 0, G_OPTION_ARG_NONE, &opt_monitor, _("Monitor activity from the power daemon"), NULL },
 		{ "monitor-detail", 0, 0, G_OPTION_ARG_NONE, &opt_monitor_detail, _("Monitor with detail"), NULL },
+		{ "session", 's', 0, G_OPTION_ARG_NONE, &opt_session_bus, _("Use session data instead of system data"), NULL },
 		{ "show-info", 'i', 0, G_OPTION_ARG_STRING, &opt_show_info, _("Show information about object path"), NULL },
 		{ "version", 'v', 0, G_OPTION_ARG_NONE, &opt_version, "Print version of client and daemon", NULL },
 		{ NULL }
@@ -285,7 +287,10 @@ main (int argc, char **argv)
 	g_option_context_free (context);
 
 	loop = g_main_loop_new (NULL, FALSE);
-	client = up_client_new_full (NULL, &error);
+	if (!opt_session_bus)
+		client = up_client_new_full (NULL, &error);
+	else
+		client = up_client_new_session (NULL, &error);
 	if (client == NULL) {
 		g_warning ("Cannot connect to upowerd: %s", error->message);
 		g_error_free (error);
