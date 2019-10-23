@@ -162,7 +162,8 @@ up_client_get_devices2 (UpClient *client)
  * up_client_get_display_device:
  * @client: a #UpClient instance.
  *
- * Get the composite display device.
+ * Get the composite display device. Not available
+ * for a session #UpClient.
  *
  * Return value: (transfer full): a #UpDevice object, or %NULL on error.
  *
@@ -175,6 +176,7 @@ up_client_get_display_device (UpClient *client)
 	UpDevice *device;
 
 	g_return_val_if_fail (UP_IS_CLIENT (client), NULL);
+	g_return_val_if_fail (is_system (client), NULL);
 
 	device = up_device_new ();
 	ret = up_device_set_object_path_sync (device, "/org/freedesktop/UPower/devices/DisplayDevice", NULL, NULL);
@@ -190,7 +192,8 @@ up_client_get_display_device (UpClient *client)
  * @client: a #UpClient instance.
  *
  * Gets a string representing the configured critical action,
- * depending on availability.
+ * depending on availability. Not available for a
+ * session #UpClient.
  *
  * Return value: the action name, or %NULL on error.
  *
@@ -202,6 +205,8 @@ up_client_get_critical_action (UpClient *client)
 	char *action;
 
 	g_return_val_if_fail (UP_IS_CLIENT (client), NULL);
+	g_return_val_if_fail (is_system (client), NULL);
+
 	if (!up_exported_daemon_call_get_critical_action_sync (client->priv->proxy,
 							       &action,
 							       NULL, NULL)) {
@@ -214,7 +219,8 @@ up_client_get_critical_action (UpClient *client)
  * up_client_get_daemon_version:
  * @client: a #UpClient instance.
  *
- * Get UPower daemon version.
+ * Get UPower daemon version, or the library version in the case
+ * of a session #UpClient.
  *
  * Return value: string containing the daemon version, e.g. 008
  *
@@ -224,6 +230,8 @@ const gchar *
 up_client_get_daemon_version (UpClient *client)
 {
 	g_return_val_if_fail (UP_IS_CLIENT (client), NULL);
+	if (!is_system (client))
+		return VERSION;
 	return up_exported_daemon_get_daemon_version (client->priv->proxy);
 }
 
@@ -231,7 +239,8 @@ up_client_get_daemon_version (UpClient *client)
  * up_client_get_lid_is_closed:
  * @client: a #UpClient instance.
  *
- * Get whether the laptop lid is closed.
+ * Get whether the laptop lid is closed. Not available for a
+ * session #UpClient.
  *
  * Return value: %TRUE if lid is closed or %FALSE otherwise.
  *
@@ -241,6 +250,7 @@ gboolean
 up_client_get_lid_is_closed (UpClient *client)
 {
 	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
+	g_return_val_if_fail (is_system (client), FALSE);
 	return up_exported_daemon_get_lid_is_closed (client->priv->proxy);
 }
 
@@ -248,7 +258,8 @@ up_client_get_lid_is_closed (UpClient *client)
  * up_client_get_lid_is_present:
  * @client: a #UpClient instance.
  *
- * Get whether a laptop lid is present on this machine.
+ * Get whether a laptop lid is present on this machine. Not available for
+ * a session #UpClient.
  *
  * Return value: %TRUE if the machine has a laptop lid
  *
@@ -258,6 +269,7 @@ gboolean
 up_client_get_lid_is_present (UpClient *client)
 {
 	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
+	g_return_val_if_fail (is_system (client), FALSE);
 	return up_exported_daemon_get_lid_is_present (client->priv->proxy);
 }
 
@@ -265,7 +277,8 @@ up_client_get_lid_is_present (UpClient *client)
  * up_client_get_on_battery:
  * @client: a #UpClient instance.
  *
- * Get whether the system is running on battery power.
+ * Get whether the system is running on battery power. Not available
+ * for a session #UpClient.
  *
  * Return value: %TRUE if the system is currently running on battery, %FALSE otherwise.
  *
@@ -275,6 +288,7 @@ gboolean
 up_client_get_on_battery (UpClient *client)
 {
 	g_return_val_if_fail (UP_IS_CLIENT (client), FALSE);
+	g_return_val_if_fail (is_system (client), FALSE);
 	return up_exported_daemon_get_on_battery (client->priv->proxy);
 }
 
