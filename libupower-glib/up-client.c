@@ -79,7 +79,7 @@ G_DEFINE_TYPE_WITH_CODE (UpClient, up_client, G_TYPE_OBJECT,
  * @client: a #UpClient instance.
  *
  * Get a copy of the device objects. This function does not set the free
- * function for the #GPtrArray so you need use g_object_unref on all
+ * function for the #GPtrArray so you need use g_object_unref() on all
  * elements when you are finished with the array.
  *
  * Return value: (element-type UpDevice) (transfer full): an array of #UpDevice objects, free with g_ptr_array_unref()
