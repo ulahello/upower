@@ -150,6 +150,7 @@ up_client_get_devices2 (UpClient *client)
  * @client: a #UpClient instance.
  *
  * Get the composite display device.
+ *
  * Return value: (transfer full): a #UpDevice object, or %NULL on error.
  *
  * Since: 1.0
@@ -159,6 +160,8 @@ up_client_get_display_device (UpClient *client)
 {
 	gboolean ret;
 	UpDevice *device;
+
+	g_return_val_if_fail (UP_IS_CLIENT (client), NULL);
 
 	device = up_device_new ();
 	ret = up_device_set_object_path_sync (device, "/org/freedesktop/UPower/devices/DisplayDevice", NULL, NULL);
