@@ -1566,7 +1566,7 @@ class Tests(dbusmock.DBusTestCase):
                                       None,
                                       [], [])
 
-        # Add a device to both bluez and udev
+        # Add a device to bluez
         address = '11:22:33:44:55:66'
         alias = 'Arc Touch Mouse SE'
 
@@ -1579,13 +1579,6 @@ class Tests(dbusmock.DBusTestCase):
             'Percentage': dbus.Byte(99, variant_level=1),
         }
         device.AddProperties(BATTERY_IFACE, properties)
-
-        parent = dev
-        self.testbed.add_device(
-            'input',
-            'input3/event4',
-            parent,
-            [], ['DEVNAME', 'input/event4', 'ID_INPUT_MOUSE', '1'])
 
         self.start_daemon()
 
