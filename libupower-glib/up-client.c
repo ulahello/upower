@@ -524,6 +524,35 @@ up_client_class_init (UpClientClass *klass)
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
+static void
+connect_to_one_daemon (GBusType       bus_type,
+		       const char     *name,
+		       const char     *object_path,
+		       GCancellable   *cancellable,
+		       GError        **error)
+{
+	GDBusProxy *proxy;
+
+	proxy = up_exported_daemon_proxy_new_for_bus_sync (bus_type,
+							   G_DBUS_PROXY_FLAGS_NONE,
+							   name,
+							   object_path,
+							   cancellable,
+							   error);
+	if (proxy == NULL)
+		return NULL;
+
+	/* all callbacks */
+	g_signal_connect (proxy, "device-added",
+			  G_CALLBACK (up_device_added_cb), client);
+	g_signal_connect (proxy, "device-removed",
+			  G_CALLBACK (up_device_removed_cb), client);
+	g_signal_connect (proxy, "notify",
+			  G_CALLBACK (up_client_notify_cb), client);
+
+	return proxy;
+}
+
 static gboolean
 up_client_initable_init (GInitable *initable, GCancellable *cancellable, GError **error)
 {
@@ -536,22 +565,13 @@ up_client_initable_init (GInitable *initable, GCancellable *cancellable, GError 
 	}
 
 	/* connect to main interface */
-	client->priv->proxy = up_exported_daemon_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
-									 G_DBUS_PROXY_FLAGS_NONE,
-									 "org.freedesktop.UPower",
-									 "/org/freedesktop/UPower",
-									 cancellable,
-									 error);
-	if (client->priv->proxy == NULL)
+	client->priv->proxy = connect_to_one_daemon (G_BUS_TYPE_SYSTEM,
+						     "org.freedesktop.UPower",
+						     "/org/freedesktop/UPower",
+						     cancellable,
+						     error);
+	if (!client->priv->proxy)
 		return FALSE;
-
-	/* all callbacks */
-	g_signal_connect (client->priv->proxy, "device-added",
-			  G_CALLBACK (up_device_added_cb), client);
-	g_signal_connect (client->priv->proxy, "device-removed",
-			  G_CALLBACK (up_device_removed_cb), client);
-	g_signal_connect (client->priv->proxy, "notify",
-			  G_CALLBACK (up_client_notify_cb), client);
 
 	return TRUE;
 }
