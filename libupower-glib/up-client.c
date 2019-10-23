@@ -90,7 +90,11 @@ G_DEFINE_TYPE_WITH_CODE (UpClient, up_client, G_TYPE_OBJECT,
 GPtrArray *
 up_client_get_devices (UpClient *client)
 {
-	GPtrArray *array = up_client_get_devices2 (client);
+	GPtrArray *array;
+
+	g_return_val_if_fail (UP_IS_CLIENT (client), NULL);
+
+	array = up_client_get_devices2 (client);
 	g_ptr_array_set_free_func (array, NULL);
 	return array;
 }
