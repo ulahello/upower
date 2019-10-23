@@ -269,9 +269,6 @@ up_client_get_on_battery (UpClient *client)
 	return up_exported_daemon_get_on_battery (client->priv->proxy);
 }
 
-/*
- * up_client_add:
- */
 static void
 up_client_add (UpClient *client, const gchar *object_path)
 {
@@ -290,9 +287,6 @@ out:
 	g_clear_object (&device);
 }
 
-/*
- * up_client_notify_cb:
- */
 static void
 up_client_notify_cb (GObject    *gobject,
 		     GParamSpec *pspec,
@@ -308,18 +302,12 @@ up_client_notify_cb (GObject    *gobject,
 	g_object_notify (G_OBJECT (client), pspec->name);
 }
 
-/*
- * up_client_added_cb:
- */
 static void
 up_device_added_cb (UpExportedDaemon *proxy, const gchar *object_path, UpClient *client)
 {
 	up_client_add (client, object_path);
 }
 
-/*
- * up_client_removed_cb:
- */
 static void
 up_device_removed_cb (UpExportedDaemon *proxy, const gchar *object_path, UpClient *client)
 {
@@ -357,10 +345,6 @@ up_client_get_property (GObject *object,
 	}
 }
 
-/*
- * up_client_class_init:
- * @klass: The UpClientClass
- */
 static void
 up_client_class_init (UpClientClass *klass)
 {
@@ -459,10 +443,6 @@ up_client_class_init (UpClientClass *klass)
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
-/*
- * up_client_init:
- * @client: This class instance
- */
 static gboolean
 up_client_initable_init (GInitable *initable, GCancellable *cancellable, GError **error)
 {
@@ -495,19 +475,12 @@ up_client_initable_iface_init (GInitableIface *iface)
 	iface->init = up_client_initable_init;
 }
 
-/*
- * up_client_init:
- * @client: This class instance
- */
 static void
 up_client_init (UpClient *client)
 {
 	client->priv = up_client_get_instance_private (client);
 }
 
-/*
- * up_client_finalize:
- */
 static void
 up_client_finalize (GObject *object)
 {
