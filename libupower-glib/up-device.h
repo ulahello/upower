@@ -76,6 +76,12 @@ gboolean	 up_device_set_object_path_sync		(UpDevice		*device,
 							 const gchar		*object_path,
 							 GCancellable		*cancellable,
 							 GError			**error);
+gboolean	up_device_set_proxy_sync		(UpDevice		*device,
+							 GBusType		 bus_type,
+							 const char		*name,
+							 const gchar		*object_path,
+							 GCancellable		*cancellable,
+							 GError			**error);
 GPtrArray	*up_device_get_history_sync		(UpDevice		*device,
 							 const gchar		*type,
 							 guint			 timespec,

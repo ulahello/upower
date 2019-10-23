@@ -114,25 +114,34 @@ up_device_changed_cb (UpExportedDevice *proxy, GParamSpec *pspec, UpDevice *devi
 }
 
 /**
- * up_device_set_object_path_sync:
+ * up_device_set_proxy_sync:
  * @device: a #UpDevice instance.
+ * @bus_type: A #GBusType.
+ * @name: A bus name (well-known or unique).
  * @object_path: The UPower object path.
  * @cancellable: a #GCancellable or %NULL
  * @error: a #GError, or %NULL.
  *
- * Sets the object path of the object and fills up initial properties.
+ * Creates the internal #GDbusProxy object using the @bus_type, @name,
+ * and @object_path and fills up the initial properties.
  *
  * Return value: #TRUE for success, else #FALSE and @error is used
  *
- * Since: 0.9.0
+ * Since: 0.9.11
  **/
 gboolean
-up_device_set_object_path_sync (UpDevice *device, const gchar *object_path, GCancellable *cancellable, GError **error)
+up_device_set_proxy_sync (UpDevice      *device,
+			  GBusType       bus_type,
+			  const char    *name,
+			  const gchar   *object_path,
+			  GCancellable  *cancellable,
+			  GError       **error)
 {
 	UpExportedDevice *proxy_device;
 	gboolean ret = TRUE;
 
 	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
+	g_return_val_if_fail (name != NULL, FALSE);
 	g_return_val_if_fail (object_path != NULL, FALSE);
 
 	if (device->priv->proxy_device != NULL)
@@ -149,9 +158,9 @@ up_device_set_object_path_sync (UpDevice *device, const gchar *object_path, GCan
 	g_clear_pointer (&device->priv->offline_props, g_hash_table_unref);
 
 	/* connect to the correct path for all the other methods */
-	proxy_device = up_exported_device_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+	proxy_device = up_exported_device_proxy_new_for_bus_sync (bus_type,
 								  G_DBUS_PROXY_FLAGS_NONE,
-								  "org.freedesktop.UPower",
+								  name,
 								  object_path,
 								  cancellable,
 								  error);
@@ -166,6 +175,30 @@ up_device_set_object_path_sync (UpDevice *device, const gchar *object_path, GCan
 	device->priv->proxy_device = proxy_device;
 out:
 	return ret;
+}
+
+/**
+ * up_device_set_object_path_sync:
+ * @device: a #UpDevice instance.
+ * @object_path: The UPower object path.
+ * @cancellable: a #GCancellable or %NULL
+ * @error: a #GError, or %NULL.
+ *
+ * Sets the object path of the object and fills up initial properties.
+ *
+ * Return value: #TRUE for success, else #FALSE and @error is used
+ *
+ * Since: 0.9.0
+ **/
+gboolean
+up_device_set_object_path_sync (UpDevice *device, const gchar *object_path, GCancellable *cancellable, GError **error)
+{
+	return up_device_set_proxy_sync (device,
+					 G_BUS_TYPE_SYSTEM,
+					 "org.freedesktop.UPower",
+					 object_path,
+					 cancellable,
+					 error);
 }
 
 /**
