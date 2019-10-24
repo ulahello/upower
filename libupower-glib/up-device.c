@@ -313,7 +313,8 @@ up_device_to_text (UpDevice *device)
 	     kind == UP_DEVICE_KIND_BATTERY ||
 	     kind == UP_DEVICE_KIND_MOUSE ||
 	     kind == UP_DEVICE_KIND_KEYBOARD ||
-	     kind == UP_DEVICE_KIND_GAMING_INPUT) &&
+	     kind == UP_DEVICE_KIND_GAMING_INPUT ||
+	     kind == UP_DEVICE_KIND_PEN) &&
 	    !is_display)
 		g_string_append_printf (string, "    rechargeable:        %s\n", up_device_bool_to_string (up_exported_device_get_is_rechargeable (priv->proxy_device)));
 	if (kind == UP_DEVICE_KIND_BATTERY ||
@@ -367,7 +368,8 @@ up_device_to_text (UpDevice *device)
 	    kind == UP_DEVICE_KIND_COMPUTER ||
 	    kind == UP_DEVICE_KIND_MEDIA_PLAYER ||
 	    kind == UP_DEVICE_KIND_UPS ||
-	    kind == UP_DEVICE_KIND_GAMING_INPUT) {
+	    kind == UP_DEVICE_KIND_GAMING_INPUT ||
+	    kind == UP_DEVICE_KIND_PEN) {
 		if (battery_level == UP_DEVICE_LEVEL_NONE)
 			g_string_append_printf (string, "    percentage:          %g%%\n", up_exported_device_get_percentage (priv->proxy_device));
 		else
