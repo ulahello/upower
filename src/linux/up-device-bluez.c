@@ -52,6 +52,9 @@ appearance_to_kind (guint16 appearance)
                         return UP_DEVICE_KIND_GAMING_INPUT;
                 case 0x05:
                         return UP_DEVICE_KIND_TABLET;
+                case 0x0e:
+                case 0x0f:
+                        return UP_DEVICE_KIND_PEN;
                 }
                 break;
         }
