@@ -888,7 +888,7 @@ up_device_supply_get_sibling_with_subsystem (GUdevDevice *device,
 	class[0] = subsystem;
 	client = g_udev_client_new (class);
 	devices = g_udev_client_query_by_subsystem (client, subsystem);
-	for (l = devices; l != NULL && sibling == NULL; l = l->next) {
+	for (l = devices; l != NULL; l = l->next) {
 		GUdevDevice *d = l->data;
 		GUdevDevice *p;
 		const char *p_path;
@@ -897,8 +897,14 @@ up_device_supply_get_sibling_with_subsystem (GUdevDevice *device,
 		if (!p)
 			continue;
 		p_path = g_udev_device_get_sysfs_path (p);
-		if (g_strcmp0 (p_path, parent_path) == 0)
-			sibling = g_object_ref (d);
+		if (g_strcmp0 (p_path, parent_path) == 0) {
+			if (sibling != NULL &&
+			    g_udev_device_get_property_as_boolean (d, "ID_INPUT_KEYBOARD")) {
+				g_clear_object (&sibling);
+			}
+			if (sibling == NULL)
+				sibling = g_object_ref (d);
+		}
 
 		g_object_unref (p);
 	}
