@@ -202,8 +202,10 @@ if test x$with_backend = xlinux; then
 	PKG_CHECK_MODULES(USB, [libusb-1.0 >= 1.0.0])
 	AC_ARG_WITH(idevice, AS_HELP_STRING([--without-idevice],[Build without libimobiledevice]),
 		    with_idevice=$withval,with_idevice=yes)
+	LIBPLIST_DEP=libplist
+	PKG_CHECK_EXISTS(libplist-2.0, LIBPLIST_DEP=libplist-2.0)
 	AS_IF([test "x$with_idevice" != "xno"],
-	      [PKG_CHECK_MODULES(IDEVICE, libimobiledevice-1.0 >= 0.9.7 libplist >= 0.12, have_idevice=yes, have_idevice=no)],
+	      [PKG_CHECK_MODULES(IDEVICE, libimobiledevice-1.0 >= 0.9.7 $LIBPLIST_DEP, have_idevice=yes, have_idevice=no)],
 	      [have_idevice=no])
 	AS_IF([test "x$have_idevice" = "xyes"],
 	      [AC_DEFINE(HAVE_IDEVICE, 1, [Define to 1 if iDevice is going to be built])])
