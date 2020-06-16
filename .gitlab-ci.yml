@@ -5,7 +5,7 @@ variables:
                 gcc redhat-rpm-config gcc-c++ glibc-devel make
                 systemd sqlite-devel gobject-introspection-devel
                 libusbx-devel libgudev-devel libimobiledevice-devel
-                glib2-devel
+                glib2-devel libplist-devel
                 umockdev python3-dbus python3-dbusmock
 
 build_stable:
@@ -14,7 +14,7 @@ build_stable:
   script:
     - mkdir _build
     - cd _build
-    - ../autogen.sh
+    - ../autogen.sh --with-idevice
     - make
     - make install
     - make check
