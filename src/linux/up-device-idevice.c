@@ -203,6 +203,28 @@ out:
 	return G_SOURCE_CONTINUE;
 }
 
+static char *
+get_device_uuid (GUdevDevice *native)
+{
+	const char *uuid;
+	char *retval;
+
+	uuid = g_udev_device_get_property (native, "ID_SERIAL_SHORT");
+	if (uuid == NULL)
+		return NULL;
+
+	if (strlen (uuid) != 24)
+		return g_strdup (uuid);
+
+	/* new style UDID: add hyphen between first 8 and following 16 digits */
+	retval = g_malloc0 (24 + 1 + 1);
+	memcpy (&retval[0], &uuid[0], 8);
+	retval[8] = '-';
+	memcpy (&retval[9], &uuid[8], 16);
+
+	return retval;
+}
+
 /**
  * up_device_idevice_coldplug:
  *
@@ -213,7 +235,7 @@ up_device_idevice_coldplug (UpDevice *device)
 {
 	UpDeviceIdevice *idevice = UP_DEVICE_IDEVICE (device);
 	GUdevDevice *native;
-	const gchar *uuid;
+	char *uuid;
 	const gchar *model;
 	UpDeviceKind kind;
 
@@ -223,7 +245,7 @@ up_device_idevice_coldplug (UpDevice *device)
 		return FALSE;
 
 	/* Get the UUID */
-	uuid = g_udev_device_get_property (native, "ID_SERIAL_SHORT");
+	uuid = get_device_uuid (native);
 	if (uuid == NULL)
 		return FALSE;
 
@@ -252,6 +274,8 @@ up_device_idevice_coldplug (UpDevice *device)
 							 idevice);
 	g_source_set_name_by_id (idevice->priv->start_id,
 				 "[upower] up_device_idevice_start_poll_cb (linux)");
+
+	g_free (uuid);
 
 	return TRUE;
 }
