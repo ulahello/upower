@@ -198,7 +198,7 @@ class Tests(dbusmock.DBusTestCase):
         this only works with coldplugging, as we do not currently have a way to
         inject simulated uevents.
 
-        When done, this sets self.proxy a the Gio.DBusProxy for upowerd.
+        When done, this sets self.proxy as the Gio.DBusProxy for upowerd.
         '''
         env = os.environ.copy()
         if cfgfile is not None:
