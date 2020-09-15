@@ -96,15 +96,12 @@ input_switch_changed_cb (UpInput   *input,
 static gpointer
 is_macbook (gpointer data)
 {
-	char *product;
-	gboolean ret = FALSE;
+	g_autofree char *product = NULL;
 
-	product = sysfs_get_string ("/sys/devices/virtual/dmi/id/", "product_name");
-	if (product == NULL)
-		return GINT_TO_POINTER(ret);
-	ret = g_str_has_prefix (product, "MacBook");
-	g_free (product);
-	return GINT_TO_POINTER(ret);
+	if (!g_file_get_contents ("/sys/devices/virtual/dmi/id/product_name", &product, NULL, NULL) ||
+	    product == NULL)
+		return GINT_TO_POINTER(FALSE);
+	return GINT_TO_POINTER(g_str_has_prefix (product, "MacBook"));
 }
 
 gboolean
