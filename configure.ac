@@ -198,7 +198,7 @@ AC_SUBST(BACKEND, "$with_backend")
 # only need GUdev on linux
 have_idevice=no
 if test x$with_backend = xlinux; then
-	PKG_CHECK_MODULES(GUDEV, [gudev-1.0 >= 147])
+	PKG_CHECK_MODULES(GUDEV, [gudev-1.0 >= 234])
 	AC_ARG_WITH(idevice, AS_HELP_STRING([--without-idevice],[Build without libimobiledevice]),
 		    with_idevice=$withval,with_idevice=yes)
 	LIBPLIST_DEP=libplist
