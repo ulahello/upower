@@ -47,7 +47,6 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#include "sysfs-utils.h"
 #include "up-types.h"
 #include "up-device-hid.h"
 #include "up-constants.h"

@@ -37,7 +37,6 @@
 #include <libimobiledevice/lockdown.h>
 #include <plist/plist.h>
 
-#include "sysfs-utils.h"
 #include "up-types.h"
 #include "up-device-idevice.h"
 

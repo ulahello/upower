@@ -43,8 +43,6 @@ libupshared_la_SOURCES =					\
 	up-native.c						\
 	hidpp-device.c						\
 	hidpp-device.h						\
-	sysfs-utils.c						\
-	sysfs-utils.h						\
 	$(idevice_files)					\
 	$(BUILT_SOURCES)
 

@@ -41,7 +41,6 @@
 #include <getopt.h>
 #include <errno.h>
 
-#include "sysfs-utils.h"
 #include "up-types.h"
 #include "up-device-wup.h"
 

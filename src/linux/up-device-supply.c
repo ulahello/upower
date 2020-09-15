@@ -33,7 +33,6 @@
 #include <glib-object.h>
 #include <gudev/gudev.h>
 
-#include "sysfs-utils.h"
 #include "up-config.h"
 #include "up-types.h"
 #include "up-constants.h"

@@ -35,8 +35,6 @@
 #include "up-daemon.h"
 #include "up-device.h"
 
-#include "sysfs-utils.h"
-
 #include "up-device-supply.h"
 #include "up-device-unifying.h"
 #include "up-device-wup.h"
