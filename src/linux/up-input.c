@@ -43,7 +43,6 @@
 #include "up-types.h"
 #include "up-daemon.h"
 #include "up-input.h"
-#include "up-daemon.h"
 
 struct _UpInput
 {
