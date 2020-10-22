@@ -48,6 +48,7 @@ struct _UpInput
 {
 	GObject			 parent_instance;
 
+	guint			 watched_switch;
 	int			 eventfp;
 	struct input_event	 event;
 	gsize			 offset;
@@ -56,6 +57,11 @@ struct _UpInput
 };
 
 G_DEFINE_TYPE (UpInput, up_input, G_TYPE_OBJECT)
+
+enum {
+	PROP_0,
+	PROP_WATCHED_SWITCH
+};
 
 /* we must use this kernel-compatible implementation */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -136,9 +142,9 @@ up_input_event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 			continue;
 		}
 
-		/* is not lid */
-		if (input->event.code != SW_LID) {
-			g_debug ("not a lid");
+		/* is not the watched switch */
+		if (input->event.code != input->watched_switch) {
+			g_debug ("not the watched switch");
 			continue;
 		}
 
@@ -203,9 +209,9 @@ up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
 		goto out;
 	}
 
-	/* is this a lid? */
-	if (!test_bit (SW_LID, bitmask)) {
-		g_debug ("not a lid: %s", native_path);
+	/* is this the watched switch? */
+	if (!test_bit (input->watched_switch, bitmask)) {
+		g_debug ("not the watched switch: %s", native_path);
 		ret = FALSE;
 		goto out;
 	}
@@ -253,8 +259,8 @@ up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
 	g_io_add_watch (input->channel, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL, up_input_event_io, input);
 
 	/* set if we are closed */
-	g_debug ("using %s for lid event", native_path);
-	up_daemon_set_lid_is_closed (input->daemon, test_bit (SW_LID, bitmask));
+	g_debug ("using %s for watched switch event", native_path);
+	up_daemon_set_lid_is_closed (input->daemon, test_bit (input->watched_switch, bitmask));
 out:
 	g_free (path);
 	g_free (contents);
@@ -294,6 +300,40 @@ up_input_finalize (GObject *object)
 	G_OBJECT_CLASS (up_input_parent_class)->finalize (object);
 }
 
+static void
+up_input_set_property (GObject        *object,
+		       guint           property_id,
+		       const GValue   *value,
+		       GParamSpec     *pspec)
+{
+	UpInput *input = UP_INPUT (object);
+
+	switch (property_id) {
+	case PROP_WATCHED_SWITCH:
+		input->watched_switch = g_value_get_uint (value);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+	}
+}
+
+static void
+up_input_get_property (GObject        *object,
+		       guint           property_id,
+		       GValue         *value,
+		       GParamSpec     *pspec)
+{
+	UpInput *input = UP_INPUT (object);
+
+	switch (property_id) {
+	case PROP_WATCHED_SWITCH:
+		g_value_set_uint (value, input->watched_switch);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+	}
+}
+
 /**
  * up_input_class_init:
  **/
@@ -302,10 +342,21 @@ up_input_class_init (UpInputClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = up_input_finalize;
+	object_class->set_property = up_input_set_property;
+	object_class->get_property = up_input_get_property;
+
+	g_object_class_install_property (object_class, PROP_WATCHED_SWITCH,
+					 g_param_spec_uint("watched-switch",
+							    "Watched switch",
+							    "The input switch to watch",
+							    SW_LID, SW_MAX, SW_LID,
+							    G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 }
 
 /**
  * up_input_new:
+ *
+ * Returns a #UpInput that watches the computer lid switch.
  **/
 UpInput *
 up_input_new (void)
@@ -313,3 +364,16 @@ up_input_new (void)
 	return g_object_new (UP_TYPE_INPUT, NULL);
 }
 
+/**
+ * up_input_new_for_switch:
+ * @watched_switch: the identifier for the `SW_` switch to watch
+ *
+ * Returns a #UpInput that watches the switched passed as argument.
+ **/
+UpInput *
+up_input_new_for_switch (guint watched_switch)
+{
+	return g_object_new (UP_TYPE_INPUT,
+			     "watched-switch", watched_switch,
+			     NULL);
+}

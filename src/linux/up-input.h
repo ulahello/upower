@@ -31,7 +31,8 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (UpInput, up_input, UP, INPUT, GObject)
 
 GType			 up_input_get_type		(void);
-UpInput		*up_input_new			(void);
+UpInput			*up_input_new			(void);
+UpInput			*up_input_new_for_switch	(guint		 watched_switch);
 gboolean		 up_input_coldplug		(UpInput	*input,
 							 UpDaemon	*daemon,
 							 GUdevDevice	*d);
