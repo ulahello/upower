@@ -164,10 +164,9 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 			/* we now have a lid */
 			up_daemon_set_lid_is_present (backend->priv->daemon, TRUE);
 
-			/* not a power device */
+			/* not a power device, add it to the managed devices
+			 * and don't return a power device */
 			up_device_list_insert (backend->priv->managed_devices, G_OBJECT (native), G_OBJECT (input));
-
-			/* no valid input object */
 			device = NULL;
 		}
 		g_object_unref (input);
