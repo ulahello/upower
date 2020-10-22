@@ -41,7 +41,6 @@
 
 #include "sysfs-utils.h"
 #include "up-types.h"
-#include "up-daemon.h"
 #include "up-input.h"
 
 struct _UpInput
@@ -49,11 +48,11 @@ struct _UpInput
 	GObject			 parent_instance;
 
 	guint			 watched_switch;
+	int			 last_switch_state;
 	int			 eventfp;
 	struct input_event	 event;
 	gsize			 offset;
 	GIOChannel		*channel;
-	UpDaemon		*daemon;
 };
 
 G_DEFINE_TYPE (UpInput, up_input, G_TYPE_OBJECT)
@@ -62,6 +61,13 @@ enum {
 	PROP_0,
 	PROP_WATCHED_SWITCH
 };
+
+enum {
+	SWITCH_CHANGED,
+	LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0 };
 
 /* we must use this kernel-compatible implementation */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -109,7 +115,6 @@ up_input_event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 	GError *error = NULL;
 	gsize read_bytes;
 	glong bitmask[NBITS(SW_MAX)];
-	gboolean ret;
 
 	/* uninteresting */
 	if (condition & (G_IO_HUP | G_IO_ERR | G_IO_NVAL))
@@ -155,8 +160,10 @@ up_input_event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 		}
 
 		/* are we set */
-		ret = test_bit (input->event.code, bitmask);
-		up_daemon_set_lid_is_closed (input->daemon, ret);
+		input->last_switch_state = test_bit (input->event.code, bitmask);
+		g_signal_emit_by_name (G_OBJECT (input),
+				       "switch-changed",
+				       input->last_switch_state);
 	}
 out:
 	return TRUE;
@@ -166,7 +173,7 @@ out:
  * up_input_coldplug:
  **/
 gboolean
-up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
+up_input_coldplug (UpInput *input, GUdevDevice *d)
 {
 	gboolean ret = FALSE;
 	gchar *path;
@@ -252,15 +259,13 @@ up_input_coldplug (UpInput *input, UpDaemon *daemon, GUdevDevice *d)
 		goto out;
 	}
 
-	/* save daemon */
-	input->daemon = g_object_ref (daemon);
-
 	/* watch this */
 	g_io_add_watch (input->channel, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL, up_input_event_io, input);
 
 	/* set if we are closed */
 	g_debug ("using %s for watched switch event", native_path);
-	up_daemon_set_lid_is_closed (input->daemon, test_bit (input->watched_switch, bitmask));
+	input->last_switch_state = test_bit (input->watched_switch, bitmask);
+
 out:
 	g_free (path);
 	g_free (contents);
@@ -274,6 +279,7 @@ static void
 up_input_init (UpInput *input)
 {
 	input->eventfp = -1;
+	input->last_switch_state = -1;
 }
 
 /**
@@ -289,7 +295,6 @@ up_input_finalize (GObject *object)
 
 	input = UP_INPUT (object);
 
-	g_clear_object (&input->daemon);
 	if (input->channel) {
 		g_io_channel_shutdown (input->channel, FALSE, NULL);
 		input->eventfp = -1;
@@ -351,6 +356,17 @@ up_input_class_init (UpInputClass *klass)
 							    "The input switch to watch",
 							    SW_LID, SW_MAX, SW_LID,
 							    G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+
+	signals[SWITCH_CHANGED] = g_signal_new ("switch-changed",
+						 G_TYPE_FROM_CLASS (klass),
+						 G_SIGNAL_RUN_LAST,
+						 0,
+						 NULL,
+						 NULL,
+						 g_cclosure_marshal_generic,
+						 G_TYPE_NONE,
+						 1,
+						 G_TYPE_BOOLEAN);
 }
 
 /**
@@ -376,4 +392,21 @@ up_input_new_for_switch (guint watched_switch)
 	return g_object_new (UP_TYPE_INPUT,
 			     "watched-switch", watched_switch,
 			     NULL);
+}
+
+/**
+ * up_input_get_switch_value:
+ * @input: a #UpInput
+ *
+ * Returns the last state of the switch. It is an error
+ * to call this without having successfully run
+ * up_input_coldplug().
+ **/
+gboolean
+up_input_get_switch_value (UpInput *input)
+{
+	g_return_val_if_fail (UP_IS_INPUT(input), FALSE);
+	g_return_val_if_fail (input->last_switch_state != -1, FALSE);
+
+	return input->last_switch_state;
 }

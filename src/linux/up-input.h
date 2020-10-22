@@ -34,8 +34,8 @@ GType			 up_input_get_type		(void);
 UpInput			*up_input_new			(void);
 UpInput			*up_input_new_for_switch	(guint		 watched_switch);
 gboolean		 up_input_coldplug		(UpInput	*input,
-							 UpDaemon	*daemon,
 							 GUdevDevice	*d);
+gboolean		 up_input_get_switch_value	(UpInput	*input);
 
 G_END_DECLS
 

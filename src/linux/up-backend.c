@@ -86,6 +86,14 @@ G_DEFINE_TYPE_WITH_PRIVATE (UpBackend, up_backend, G_TYPE_OBJECT)
 static gboolean up_backend_device_add (UpBackend *backend, GUdevDevice *native);
 static void up_backend_device_remove (UpBackend *backend, GUdevDevice *native);
 
+static void
+input_switch_changed_cb (UpInput   *input,
+			 gboolean   switch_value,
+			 UpBackend *backend)
+{
+	up_daemon_set_lid_is_closed (backend->priv->daemon, switch_value);
+}
+
 static UpDevice *
 up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 {
@@ -159,10 +167,14 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 
 		/* check input device */
 		input = up_input_new ();
-		ret = up_input_coldplug (input, backend->priv->daemon, native);
+		ret = up_input_coldplug (input, native);
 		if (ret) {
 			/* we now have a lid */
 			up_daemon_set_lid_is_present (backend->priv->daemon, TRUE);
+			g_signal_connect (G_OBJECT (input), "switch-changed",
+					  G_CALLBACK (input_switch_changed_cb), backend);
+			up_daemon_set_lid_is_closed (backend->priv->daemon,
+						     up_input_get_switch_value (input));
 
 			/* not a power device, add it to the managed devices
 			 * and don't return a power device */
