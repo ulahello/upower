@@ -28,24 +28,7 @@
 G_BEGIN_DECLS
 
 #define UP_TYPE_INPUT  	(up_input_get_type ())
-#define UP_INPUT(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), UP_TYPE_INPUT, UpInput))
-#define UP_INPUT_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), UP_TYPE_INPUT, UpInputClass))
-#define UP_IS_INPUT(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), UP_TYPE_INPUT))
-#define UP_IS_INPUT_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), UP_TYPE_INPUT))
-#define UP_INPUT_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), UP_TYPE_INPUT, UpInputClass))
-
-typedef struct UpInputPrivate UpInputPrivate;
-
-typedef struct
-{
-	GObject			 parent;
-	UpInputPrivate		*priv;
-} UpInput;
-
-typedef struct
-{
-	GObjectClass		 parent_class;
-} UpInputClass;
+G_DECLARE_FINAL_TYPE (UpInput, up_input, UP, INPUT, GObject)
 
 GType			 up_input_get_type		(void);
 UpInput		*up_input_new			(void);
