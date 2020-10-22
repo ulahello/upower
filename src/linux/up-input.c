@@ -22,25 +22,15 @@
 #  include "config.h"
 #endif
 
-#include <string.h>
-#include <math.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <linux/input.h>
 
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <glib/gi18n-lib.h>
 #include <glib-object.h>
 #include <gudev/gudev.h>
 
-#include "sysfs-utils.h"
-#include "up-types.h"
 #include "up-input.h"
 
 struct _UpInput
