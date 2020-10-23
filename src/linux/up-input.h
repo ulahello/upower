@@ -23,8 +23,6 @@
 
 #include <glib-object.h>
 
-#include "up-daemon.h"
-
 G_BEGIN_DECLS
 
 #define UP_TYPE_INPUT  	(up_input_get_type ())
