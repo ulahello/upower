@@ -22,6 +22,7 @@
 #define __UP_INPUT_H__
 
 #include <glib-object.h>
+#include <gudev/gudev.h>
 
 G_BEGIN_DECLS
 

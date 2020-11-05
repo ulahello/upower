@@ -30,7 +30,6 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib-object.h>
-#include <gudev/gudev.h>
 
 #include "up-input.h"
 
