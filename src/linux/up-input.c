@@ -68,6 +68,26 @@ static guint signals[LAST_SIGNAL] = { 0 };
 #define LONG(x) ((x)/BITS_PER_LONG)
 #define test_bit(bit, array)    ((array[LONG(bit)] >> OFF(bit)) & 1)
 
+
+/**
+ * up_input_get_device_sysfs_path:
+ **/
+static char *
+up_input_get_device_sysfs_path (GUdevDevice *device)
+{
+  const char *root;
+
+  g_return_val_if_fail (G_UDEV_IS_DEVICE (device), FALSE);
+
+  root = g_getenv ("UMOCKDEV_DIR");
+  if (!root || *root == '\0')
+    return g_strdup (g_udev_device_get_sysfs_path (device));
+
+  return g_build_filename (root,
+                           g_udev_device_get_sysfs_path (device),
+                           NULL);
+}
+
 /**
  * up_input_str_to_bitmask:
  **/
@@ -169,7 +189,7 @@ up_input_coldplug (UpInput *input, GUdevDevice *d)
 	gboolean ret = FALSE;
 	gchar *path;
 	gchar *contents = NULL;
-	const gchar *native_path;
+	gchar *native_path = NULL;
 	const gchar *device_file;
 	GError *error = NULL;
 	glong bitmask[NBITS(SW_MAX)];
@@ -177,7 +197,7 @@ up_input_coldplug (UpInput *input, GUdevDevice *d)
 	GIOStatus status;
 
 	/* get sysfs path */
-	native_path = g_udev_device_get_sysfs_path (d);
+	native_path = up_input_get_device_sysfs_path (d);
 
 	/* is a switch */
 	path = g_build_filename (native_path, "../capabilities/sw", NULL);
@@ -261,6 +281,7 @@ up_input_coldplug (UpInput *input, GUdevDevice *d)
 	input->last_switch_state = test_bit (input->watched_switch, bitmask);
 
 out:
+	g_free (native_path);
 	g_free (path);
 	g_free (contents);
 	return ret;
