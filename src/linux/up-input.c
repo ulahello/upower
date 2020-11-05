@@ -182,13 +182,16 @@ up_input_coldplug (UpInput *input, GUdevDevice *d)
 	/* is a switch */
 	path = g_build_filename (native_path, "../capabilities/sw", NULL);
 	if (!g_file_test (path, G_FILE_TEST_EXISTS)) {
-		g_debug ("not a switch [%s]", path);
-		g_free (path);
-		path = g_build_filename (native_path, "capabilities/sw", NULL);
-		if (!g_file_test (path, G_FILE_TEST_EXISTS)) {
+		char *path2;
+		path2 = g_build_filename (native_path, "capabilities/sw", NULL);
+		if (!g_file_test (path2, G_FILE_TEST_EXISTS)) {
 			g_debug ("not a switch [%s]", path);
+			g_debug ("not a switch [%s]", path2);
+			g_free (path2);
 			goto out;
 		}
+		g_free (path);
+		path = path2;
 	}
 
 	/* get caps */
