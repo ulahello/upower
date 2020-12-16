@@ -651,7 +651,8 @@ up_daemon_compute_warning_level (UpDaemon      *daemon,
 	 * battery level, so this avoids falling directly
 	 * into critical (or off) before any warnings */
 	if (kind == UP_DEVICE_KIND_MOUSE ||
-	    kind == UP_DEVICE_KIND_KEYBOARD) {
+	    kind == UP_DEVICE_KIND_KEYBOARD ||
+	    kind == UP_DEVICE_KIND_TOUCHPAD) {
 		if (percentage <= 5.0f)
 			return UP_DEVICE_LEVEL_CRITICAL;
 		else if (percentage <= 10.0f)

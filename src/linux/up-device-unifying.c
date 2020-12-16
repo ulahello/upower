@@ -114,9 +114,11 @@ up_device_unifying_get_device_kind (UpDeviceUnifying *unifying)
 	UpDeviceKind kind;
 	switch (hidpp_device_get_kind (unifying->priv->hidpp_device)) {
 	case HIDPP_DEVICE_KIND_MOUSE:
-	case HIDPP_DEVICE_KIND_TOUCHPAD:
 	case HIDPP_DEVICE_KIND_TRACKBALL:
 		kind = UP_DEVICE_KIND_MOUSE;
+		break;
+	case HIDPP_DEVICE_KIND_TOUCHPAD:
+		kind = UP_DEVICE_KIND_TOUCHPAD;
 		break;
 	case HIDPP_DEVICE_KIND_KEYBOARD:
 		kind = UP_DEVICE_KIND_KEYBOARD;

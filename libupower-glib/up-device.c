@@ -307,20 +307,23 @@ up_device_to_text (UpDevice *device)
 	if (kind == UP_DEVICE_KIND_BATTERY ||
 	    kind == UP_DEVICE_KIND_MOUSE ||
 	    kind == UP_DEVICE_KIND_KEYBOARD ||
-	    kind == UP_DEVICE_KIND_UPS)
+	    kind == UP_DEVICE_KIND_UPS ||
+	    kind == UP_DEVICE_KIND_TOUCHPAD)
 		g_string_append_printf (string, "    present:             %s\n", up_device_bool_to_string (up_exported_device_get_is_present (priv->proxy_device)));
 	if ((kind == UP_DEVICE_KIND_PHONE ||
 	     kind == UP_DEVICE_KIND_BATTERY ||
 	     kind == UP_DEVICE_KIND_MOUSE ||
 	     kind == UP_DEVICE_KIND_KEYBOARD ||
 	     kind == UP_DEVICE_KIND_GAMING_INPUT ||
-	     kind == UP_DEVICE_KIND_PEN) &&
+	     kind == UP_DEVICE_KIND_PEN ||
+	     kind == UP_DEVICE_KIND_TOUCHPAD) &&
 	    !is_display)
 		g_string_append_printf (string, "    rechargeable:        %s\n", up_device_bool_to_string (up_exported_device_get_is_rechargeable (priv->proxy_device)));
 	if (kind == UP_DEVICE_KIND_BATTERY ||
 	    kind == UP_DEVICE_KIND_MOUSE ||
 	    kind == UP_DEVICE_KIND_KEYBOARD ||
-	    kind == UP_DEVICE_KIND_UPS)
+	    kind == UP_DEVICE_KIND_UPS ||
+	    kind == UP_DEVICE_KIND_TOUCHPAD)
 		g_string_append_printf (string, "    state:               %s\n", up_device_state_to_string (up_exported_device_get_state (priv->proxy_device)));
 	g_string_append_printf (string, "    warning-level:       %s\n", up_device_level_to_string (up_exported_device_get_warning_level (priv->proxy_device)));
 	battery_level = up_exported_device_get_battery_level (priv->proxy_device);
@@ -369,7 +372,8 @@ up_device_to_text (UpDevice *device)
 	    kind == UP_DEVICE_KIND_MEDIA_PLAYER ||
 	    kind == UP_DEVICE_KIND_UPS ||
 	    kind == UP_DEVICE_KIND_GAMING_INPUT ||
-	    kind == UP_DEVICE_KIND_PEN) {
+	    kind == UP_DEVICE_KIND_PEN ||
+	    kind == UP_DEVICE_KIND_TOUCHPAD) {
 		if (battery_level == UP_DEVICE_LEVEL_NONE)
 			g_string_append_printf (string, "    percentage:          %g%%\n", up_exported_device_get_percentage (priv->proxy_device));
 		else
