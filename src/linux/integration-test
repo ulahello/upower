@@ -1643,6 +1643,7 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_dev_property(mouse_bat0_up, 'Percentage'), 99)
         self.assertEqual(self.get_dbus_dev_property(mouse_bat0_up, 'PowerSupply'), False)
         self.assertEqual(self.get_dbus_dev_property(mouse_bat0_up, 'Type'), UP_DEVICE_KIND_MOUSE)
+        self.assertEqual(self.get_dbus_dev_property(mouse_bat0_up, 'UpdateTime') != 0, True)
         self.stop_daemon()
 
     def test_bluetooth_le_device(self):

@@ -147,6 +147,7 @@ up_device_bluez_coldplug (UpDevice *device)
 	g_object_set (device,
 		      "is-present", TRUE,
 		      "percentage", (gdouble) percentage,
+		      "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC,
 		      NULL);
 
 	g_object_unref (proxy);
@@ -171,7 +172,10 @@ up_device_bluez_update (UpDeviceBluez *bluez,
 	g_variant_iter_init (&iter, properties);
 	while (g_variant_iter_next (&iter, "{&sv}", &key, &value)) {
 		if (g_str_equal (key, "Percentage")) {
-			g_object_set (device, "percentage", (gdouble) g_variant_get_byte (value), NULL);
+			g_object_set (device,
+				      "percentage", (gdouble) g_variant_get_byte (value),
+				      "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC,
+				      NULL);
 		} else {
 			char *str = g_variant_print (value, TRUE);
 
