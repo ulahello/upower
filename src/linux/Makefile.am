@@ -29,8 +29,6 @@ endif
 libupshared_la_SOURCES =					\
 	up-device-supply.c					\
 	up-device-supply.h					\
-	up-device-csr.c						\
-	up-device-csr.h						\
 	up-device-unifying.c					\
 	up-device-unifying.h					\
 	up-device-hid.c						\

@@ -38,7 +38,6 @@
 #include "sysfs-utils.h"
 
 #include "up-device-supply.h"
-#include "up-device-csr.h"
 #include "up-device-unifying.h"
 #include "up-device-wup.h"
 #include "up-device-hid.h"
@@ -146,13 +145,6 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 			goto out;
 		g_object_unref (device);
 #endif /* HAVE_IDEVICE */
-
-		/* see if this is a CSR mouse or keyboard */
-		device = UP_DEVICE (up_device_csr_new ());
-		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
-		if (ret)
-			goto out;
-		g_object_unref (device);
 
 		/* try to detect a HID UPS */
 		device = UP_DEVICE (up_device_hid_new ());
