@@ -69,7 +69,6 @@ upowerd_CPPFLAGS =						\
 
 upowerd_LDADD =							\
 	-lm							\
-	$(USB_LIBS)						\
 	$(GIO_LIBS)						\
 	$(GIO_UNIX_LIBS)					\
 	$(UPOWER_LIBS)
@@ -94,7 +93,6 @@ endif
 if BACKEND_TYPE_LINUX
 upowerd_LDADD += 						\
 	linux/libupshared.la					\
-	$(USB_LIBS)						\
 	$(GUDEV_LIBS)						\
 	$(IDEVICE_LIBS)						\
 	$(NULL)

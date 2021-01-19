@@ -7,7 +7,6 @@ AM_CPPFLAGS = \
 	-DG_LOG_DOMAIN=\"UPower-Linux\"				\
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\"		\
 	-I$(top_srcdir)/libupower-glib				\
-	$(USB_CFLAGS)						\
 	$(GIO_CFLAGS)						\
 	$(GIO_UNIX_CFLAGS)					\
 	$(GUDEV_CFLAGS)						\
