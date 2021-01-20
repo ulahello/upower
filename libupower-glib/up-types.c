@@ -75,6 +75,32 @@ up_device_kind_to_string (UpDeviceKind type_enum)
 		return "pen";
 	case UP_DEVICE_KIND_TOUCHPAD:
 		return "touchpad";
+	case UP_DEVICE_KIND_MODEM:
+		return "modem";
+	case UP_DEVICE_KIND_NETWORK:
+		return "network";
+	case UP_DEVICE_KIND_HEADSET:
+		return "headset";
+	case UP_DEVICE_KIND_SPEAKERS:
+		return "speakers";
+	case UP_DEVICE_KIND_HEADPHONES:
+		return "headphones";
+	case UP_DEVICE_KIND_VIDEO:
+		return "video";
+	case UP_DEVICE_KIND_OTHER_AUDIO:
+		return "audio-device";
+	case UP_DEVICE_KIND_REMOTE_CONTROL:
+		return "remote-control";
+	case UP_DEVICE_KIND_PRINTER:
+		return "printer";
+	case UP_DEVICE_KIND_SCANNER:
+		return "scanner";
+	case UP_DEVICE_KIND_CAMERA:
+		return "camera";
+	case UP_DEVICE_KIND_WEARABLE:
+		return "wearable";
+	case UP_DEVICE_KIND_TOY:
+		return "toy";
 	default:
 		return "unknown";
 	}
@@ -121,6 +147,32 @@ up_device_kind_from_string (const gchar *type)
 		return UP_DEVICE_KIND_PEN;
 	if (g_str_equal (type, "touchpad"))
 		return UP_DEVICE_KIND_TOUCHPAD;
+	if (g_str_equal (type, "modem"))
+		return UP_DEVICE_KIND_MODEM;
+	if (g_str_equal (type, "network"))
+		return UP_DEVICE_KIND_NETWORK;
+	if (g_str_equal (type, "headset"))
+		return UP_DEVICE_KIND_HEADSET;
+	if (g_str_equal (type, "speakers"))
+		return UP_DEVICE_KIND_SPEAKERS;
+	if (g_str_equal (type, "headphones"))
+		return UP_DEVICE_KIND_HEADPHONES;
+	if (g_str_equal (type, "video"))
+		return UP_DEVICE_KIND_VIDEO;
+	if (g_str_equal (type, "audio-device"))
+		return UP_DEVICE_KIND_OTHER_AUDIO;
+	if (g_str_equal (type, "remote-control"))
+		return UP_DEVICE_KIND_REMOTE_CONTROL;
+	if (g_str_equal (type, "printer"))
+		return UP_DEVICE_KIND_PRINTER;
+	if (g_str_equal (type, "scanner"))
+		return UP_DEVICE_KIND_SCANNER;
+	if (g_str_equal (type, "camera"))
+		return UP_DEVICE_KIND_CAMERA;
+	if (g_str_equal (type, "wearable"))
+		return UP_DEVICE_KIND_WEARABLE;
+	if (g_str_equal (type, "toy"))
+		return UP_DEVICE_KIND_TOY;
 	return UP_DEVICE_KIND_UNKNOWN;
 }
 
