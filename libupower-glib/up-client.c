@@ -82,7 +82,7 @@ G_DEFINE_TYPE_WITH_CODE (UpClient, up_client, G_TYPE_OBJECT,
  * function for the #GPtrArray so you need use g_object_unref on all
  * elements when you are finished with the array.
  *
- * Return value: (element-type UpDevice) (transfer full): an array of #UpDevice objects, free with g_ptr_array_unref()
+ * Return value: (element-type UpDevice) (transfer full): an array of #UpDevice objects or %NULL on error, free with g_ptr_array_unref()
  *
  * Since: 0.9.0
  * Deprecated: 0.99.8
@@ -91,7 +91,8 @@ GPtrArray *
 up_client_get_devices (UpClient *client)
 {
 	GPtrArray *array = up_client_get_devices2 (client);
-	g_ptr_array_set_free_func (array, NULL);
+	if (array)
+		g_ptr_array_set_free_func (array, NULL);
 	return array;
 }
 
@@ -101,7 +102,7 @@ up_client_get_devices (UpClient *client)
  *
  * Get a copy of the device objects.
  *
- * Return value: (element-type UpDevice) (transfer full): an array of #UpDevice objects, free with g_ptr_array_unref()
+ * Return value: (element-type UpDevice) (transfer full): an array of #UpDevice objects or %NULL on error, free with g_ptr_array_unref()
  *
  * Since: 0.99.8
  **/
