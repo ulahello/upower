@@ -315,6 +315,10 @@ main (int argc, char **argv)
 	if (opt_enumerate || opt_dump) {
 		GPtrArray *devices;
 		devices = up_client_get_devices2 (client);
+		if (!devices) {
+			g_print ("Failed to get device list\n");
+			goto out;
+		}
 		for (i=0; i < devices->len; i++) {
 			device = (UpDevice*) g_ptr_array_index (devices, i);
 			if (opt_enumerate) {
@@ -328,6 +332,10 @@ main (int argc, char **argv)
 		}
 		g_ptr_array_unref (devices);
 		device = up_client_get_display_device (client);
+		if (!device) {
+			g_print ("Failed to get display device\n");
+			goto out;
+		}
 		if (opt_enumerate) {
 			g_print ("%s\n", up_device_get_object_path (device));
 		} else {
