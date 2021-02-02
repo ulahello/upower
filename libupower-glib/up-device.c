@@ -363,17 +363,8 @@ up_device_to_text (UpDevice *device)
 			g_free (time_str);
 		}
 	}
-	if (kind == UP_DEVICE_KIND_BATTERY ||
-	    kind == UP_DEVICE_KIND_MOUSE ||
-	    kind == UP_DEVICE_KIND_KEYBOARD ||
-	    kind == UP_DEVICE_KIND_PHONE ||
-	    kind == UP_DEVICE_KIND_TABLET ||
-	    kind == UP_DEVICE_KIND_COMPUTER ||
-	    kind == UP_DEVICE_KIND_MEDIA_PLAYER ||
-	    kind == UP_DEVICE_KIND_UPS ||
-	    kind == UP_DEVICE_KIND_GAMING_INPUT ||
-	    kind == UP_DEVICE_KIND_PEN ||
-	    kind == UP_DEVICE_KIND_TOUCHPAD) {
+	if (kind != UP_DEVICE_KIND_LINE_POWER ||
+	    kind >= UP_DEVICE_KIND_LAST) {
 		if (battery_level == UP_DEVICE_LEVEL_NONE)
 			g_string_append_printf (string, "    percentage:          %g%%\n", up_exported_device_get_percentage (priv->proxy_device));
 		else
