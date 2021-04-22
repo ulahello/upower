@@ -23,6 +23,7 @@ variables:
     umockdev
     python3-dbus
     python3-dbusmock
+  LAST_ABI_BREAK: "e294444496e8bbcd91a3605874f59562e14c34ec"
 
 build_stable:
   before_script:
@@ -35,3 +36,6 @@ build_stable:
     - make install
     - make check
     - make distcheck
+    - cd ..
+    - curl https://gitlab.freedesktop.org/hadess/check-abi/-/raw/main/contrib/check-abi-fedora.sh | bash
+    - check-abi ${LAST_ABI_BREAK} $(git rev-parse HEAD)
