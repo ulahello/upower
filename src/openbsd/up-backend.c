@@ -36,7 +36,6 @@ static gboolean	up_backend_apm_get_power_info(struct apm_power_info*);
 static gpointer	up_backend_apm_event_thread(gpointer object);
 UpDeviceState up_backend_apm_get_battery_state_value(u_char battery_state);
 static void	up_backend_update_acpibat_state(UpDevice*, struct sensordev);
-static void	up_backend_update_lid_status(UpDaemon*);
 
 static gboolean		up_apm_device_get_on_battery	(UpDevice *device, gboolean *on_battery);
 static gboolean		up_apm_device_get_online		(UpDevice *device, gboolean *online);
@@ -185,7 +184,6 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 			      "update-time", (guint64) current_time,
 			      (void*) NULL);
 
-		up_backend_update_lid_status(daemon);
 		if (!g_initable_init (G_INITABLE (backend->priv->ac), NULL, NULL))
 			g_warning ("failed to coldplug ac");
 		else
@@ -288,7 +286,6 @@ up_backend_update_ac_state(UpDevice* device)
 	gboolean ret, new_is_online, cur_is_online;
 	struct apm_power_info a;
 
-	up_backend_update_lid_status(up_device_get_daemon(device));
 	ret = up_backend_apm_get_power_info(&a);
 	if (!ret)
 		return ret;
@@ -493,71 +490,6 @@ up_apm_device_refresh(UpDevice* device, UpRefreshReason reason)
 		g_object_set (device, "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC, NULL);
 
 	return ret;
-}
-
-/*
- * Check the lid status, return TRUE if one was found, FALSE otherwise.
- */
-static void
-up_backend_update_lid_status(UpDaemon *daemon) {
-#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
-	/* Use hw.sensors.acpibtn0.indicator0=On (lid open) */
-	struct sensordev sensordev;
-	struct sensor sensor;
-	size_t sdlen, slen;
-	int dev, numt, mib[5] = {CTL_HW, HW_SENSORS, 0, 0, 0};
-	gboolean lid_found = FALSE;
-	gboolean lid_open = FALSE;
-
-	sdlen = sizeof(struct sensordev);
-	slen  = sizeof(struct sensor);
-
-	/* go through all acpibtn devices, and check if one of the values match "lid"
-	   if so, use that device.
-	*/
-	for (dev = 0; ; dev++) {
-		mib[2] = dev;
-		if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
-			if (errno == ENXIO)
-				continue;
-			if (errno == ENOENT)
-				break;
-		}
-
-		if (strstr(sensordev.xname, "acpibtn") != NULL) {
-			mib[3] = SENSOR_INDICATOR;
-			for (numt = 0; numt < sensordev.maxnumt[SENSOR_INDICATOR]; numt++) {
-				mib[4] = numt;
-				if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1) {
-					if (errno != ENOENT) {
-						g_warning("failed to get sensor data from %s",
-							  sensordev.xname);
-						continue;
-					}
-				}
-
-				/*
-				 * Found an acpibtn device, now check if the
-				 * description has got anything with a lid in it.
-				 */
-				if (strstr(sensor.desc, "lid open") == NULL) {
-					g_warning ("nothing here for %s with %s\n",
-						   sensordev.xname, sensor.desc);
-					continue;
-				} else {
-					lid_found = TRUE;
-					if (sensor.value)
-						lid_open = TRUE;
-					else
-						lid_open = FALSE;
-				}
-			}
-		}
-	}
-
-	up_daemon_set_lid_is_present (daemon, lid_found);
-	up_daemon_set_lid_is_closed (daemon, !lid_open);
-#endif
 }
 
 /* thread doing kqueue() on apm device */
