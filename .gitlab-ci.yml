@@ -1,12 +1,28 @@
 image: fedora:rawhide
 
 variables:
-  DEPENDENCIES: libtool gtk-doc autoconf automake gettext-devel
-                gcc redhat-rpm-config gcc-c++ glibc-devel make
-                systemd sqlite-devel gobject-introspection-devel
-                libusbx-devel libgudev-devel libimobiledevice-devel
-                glib2-devel libplist-devel
-                umockdev python3-dbus python3-dbusmock
+  DEPENDENCIES:
+    libtool
+    gtk-doc
+    autoconf
+    automake
+    gettext-devel
+    gcc
+    redhat-rpm-config
+    gcc-c++
+    glibc-devel
+    make
+    systemd
+    sqlite-devel
+    gobject-introspection-devel
+    libusbx-devel
+    libgudev-devel
+    libimobiledevice-devel
+    glib2-devel
+    libplist-devel
+    umockdev
+    python3-dbus
+    python3-dbusmock
 
 build_stable:
   before_script:
