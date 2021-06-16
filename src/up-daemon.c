@@ -705,12 +705,13 @@ up_daemon_update_warning_level (UpDaemon *daemon)
 }
 
 const gchar *
-up_daemon_get_charge_icon (gdouble       percentage,
+up_daemon_get_charge_icon (UpDaemon     *daemon,
+			   gdouble       percentage,
 			   UpDeviceLevel battery_level,
 			   gboolean      charging)
 {
 	if (battery_level == UP_DEVICE_LEVEL_NONE && daemon != NULL) {
-		if (percentage < 10)
+		if (percentage <= daemon->priv->low_percentage)
 			return charging ? "battery-caution-charging-symbolic" : "battery-caution-symbolic";
 		else if (percentage < 30)
 			return charging ? "battery-low-charging-symbolic" : "battery-low-symbolic";

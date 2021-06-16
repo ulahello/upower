@@ -101,6 +101,10 @@ update_icon_name (UpDevice *device)
 	const gchar *icon_name = NULL;
 	UpExportedDevice *skeleton = UP_EXPORTED_DEVICE (device);
 
+	/* Not finished setting up the object? */
+	if (device->priv->daemon == NULL)
+		return;
+
 	/* get the icon from some simple rules */
 	if (up_exported_device_get_type_ (skeleton) == UP_DEVICE_KIND_LINE_POWER) {
 		icon_name = "ac-adapter-symbolic";
@@ -119,13 +123,15 @@ update_icon_name (UpDevice *device)
 				break;
 			case UP_DEVICE_STATE_CHARGING:
 			case UP_DEVICE_STATE_PENDING_CHARGE:
-				icon_name = up_daemon_get_charge_icon (up_exported_device_get_percentage (skeleton),
+				icon_name = up_daemon_get_charge_icon (device->priv->daemon,
+								       up_exported_device_get_percentage (skeleton),
 								       up_exported_device_get_battery_level (skeleton),
 								    TRUE);
 				break;
 			case UP_DEVICE_STATE_DISCHARGING:
 			case UP_DEVICE_STATE_PENDING_DISCHARGE:
-				icon_name = up_daemon_get_charge_icon (up_exported_device_get_percentage (skeleton),
+				icon_name = up_daemon_get_charge_icon (device->priv->daemon,
+								       up_exported_device_get_percentage (skeleton),
 								       up_exported_device_get_battery_level (skeleton),
 								    FALSE);
 				break;
