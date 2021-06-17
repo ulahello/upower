@@ -129,6 +129,9 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 
 		/* are we a valid power supply */
 		device = UP_DEVICE (up_device_supply_new ());
+		g_object_set (G_OBJECT(device),
+			      "ignore-system-percentage", GPOINTER_TO_INT (is_macbook (NULL)),
+			      NULL);
 		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
 		if (ret)
 			goto out;
