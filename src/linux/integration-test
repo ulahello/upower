@@ -101,7 +101,8 @@ BATTERY_IFACE = 'org.bluez.Battery1'
  UP_DEVICE_KIND_SCANNER,
  UP_DEVICE_KIND_CAMERA,
  UP_DEVICE_KIND_WEARABLE,
- UP_DEVICE_KIND_TOY) = range(28)
+ UP_DEVICE_KIND_TOY,
+ UP_DEVICE_KIND_BLUETOOTH_GENERIC) = range(29)
 
 class Tests(dbusmock.DBusTestCase):
     @classmethod
@@ -1711,7 +1712,7 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_dev_property(mouse_bat0_up, 'Model'), alias)
         self.assertEqual(self.get_dbus_dev_property(mouse_bat0_up, 'Percentage'), battery_level)
         self.assertEqual(self.get_dbus_dev_property(mouse_bat0_up, 'PowerSupply'), False)
-        self.assertEqual(self.get_dbus_dev_property(mouse_bat0_up, 'Type'), UP_DEVICE_KIND_UNKNOWN)
+        self.assertEqual(self.get_dbus_dev_property(mouse_bat0_up, 'Type'), UP_DEVICE_KIND_BLUETOOTH_GENERIC)
         self.stop_daemon()
 
     def test_bluetooth_headphones(self):
@@ -1806,7 +1807,7 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Model'), alias)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Percentage'), battery_level)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'PowerSupply'), False)
-        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Type'), UP_DEVICE_KIND_UNKNOWN)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Type'), UP_DEVICE_KIND_BLUETOOTH_GENERIC)
         self.stop_daemon()
 
     #

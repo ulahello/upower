@@ -59,7 +59,7 @@ appearance_to_kind (guint16 appearance)
                 break;
         }
 
-	return UP_DEVICE_KIND_UNKNOWN;
+	return UP_DEVICE_KIND_BLUETOOTH_GENERIC;
 }
 
 /**
@@ -147,7 +147,7 @@ class_to_kind (guint32 class)
 		return UP_DEVICE_KIND_TOY;
 	}
 
-	return UP_DEVICE_KIND_UNKNOWN;
+	return UP_DEVICE_KIND_BLUETOOTH_GENERIC;
 }
 
 /**
@@ -198,7 +198,7 @@ up_device_bluez_coldplug (UpDevice *device)
 		kind = class_to_kind (class);
 		g_variant_unref (v);
 	} else {
-		kind = UP_DEVICE_KIND_UNKNOWN;
+		kind = UP_DEVICE_KIND_BLUETOOTH_GENERIC;
 	}
 
 	v = g_dbus_proxy_get_cached_property (proxy, "Address");
