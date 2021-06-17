@@ -101,6 +101,8 @@ up_device_kind_to_string (UpDeviceKind type_enum)
 		return "wearable";
 	case UP_DEVICE_KIND_TOY:
 		return "toy";
+	case UP_DEVICE_KIND_BLUETOOTH_GENERIC:
+		return "bluetooth-generic";
 	default:
 		return "unknown";
 	}
@@ -173,6 +175,8 @@ up_device_kind_from_string (const gchar *type)
 		return UP_DEVICE_KIND_WEARABLE;
 	if (g_str_equal (type, "toy"))
 		return UP_DEVICE_KIND_TOY;
+	if (g_str_equal (type, "bluetooth-generic"))
+		return UP_DEVICE_KIND_BLUETOOTH_GENERIC;
 	return UP_DEVICE_KIND_UNKNOWN;
 }
 
