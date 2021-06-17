@@ -36,6 +36,15 @@ build_stable:
     - make install
     - make check
     - make distcheck
-    - cd ..
+  artifacts:
+    when: on_success
+    name: "upower-${CI_COMMIT_REF_NAME}"
+    paths:
+      - "${CI_PROJECT_DIR}/_build/upower-*.tar.xz"
+
+check_abi:
+  before_script:
+    - dnf update -y --nogpgcheck && dnf install -y --nogpgcheck $DEPENDENCIES
+  script:
     - curl https://gitlab.freedesktop.org/hadess/check-abi/-/raw/main/contrib/check-abi-fedora.sh | bash
     - check-abi --suppr .ci/upower.suppr ${LAST_ABI_BREAK} $(git rev-parse HEAD)
