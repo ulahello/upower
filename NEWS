@@ -1,3 +1,19 @@
+Version 0.99.12
+~~~~~~~~~~~~~~~
+Released: 2021-06-17
+
+New Features:
+- Add a raft of new device types
+- Add support for iPhone XR, XS and newer models
+
+Bug fixes:
+- Work-around incorrect battery percentage reported by MacBooks
+- Identify keyboard/pointing device combos as keyboards
+- Fix small memory leak in Bluetooth backend
+- Fix warning in Bluetooth backend
+- Set update time in Bluetooth backend
+- Remove support for obsolete CSR devices
+
 Version 0.99.11
 ~~~~~~~~~~~~~~~
 Released: 2019-09-03
