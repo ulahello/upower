@@ -36,7 +36,6 @@
 #include "up-device.h"
 
 #include "up-device-supply.h"
-#include "up-device-unifying.h"
 #include "up-device-wup.h"
 #include "up-device-hid.h"
 #include "up-device-bluez.h"
@@ -131,16 +130,6 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 		if (ret)
 			goto out;
 
-		/* no valid power supply object */
-		g_clear_object (&device);
-
-	} else if (g_strcmp0 (subsys, "hid") == 0) {
-
-		/* see if this is a Unifying mouse or keyboard */
-		device = UP_DEVICE (up_device_unifying_new ());
-		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
-		if (ret)
-			goto out;
 		/* no valid power supply object */
 		g_clear_object (&device);
 
@@ -502,8 +491,8 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 	GList *devices;
 	GList *l;
 	guint i;
-	const gchar *subsystems_wup[] = {"power_supply", "usb", "usbmisc", "tty", "input", "hid", NULL};
-	const gchar *subsystems[] = {"power_supply", "usb", "usbmisc", "input", "hid", NULL};
+	const gchar *subsystems_wup[] = {"power_supply", "usb", "usbmisc", "tty", "input", NULL};
+	const gchar *subsystems[] = {"power_supply", "usb", "usbmisc", "input", NULL};
 
 	backend->priv->daemon = g_object_ref (daemon);
 	backend->priv->device_list = up_daemon_get_device_list (daemon);
