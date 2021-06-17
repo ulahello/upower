@@ -38,4 +38,4 @@ build_stable:
     - make distcheck
     - cd ..
     - curl https://gitlab.freedesktop.org/hadess/check-abi/-/raw/main/contrib/check-abi-fedora.sh | bash
-    - check-abi ${LAST_ABI_BREAK} $(git rev-parse HEAD)
+    - check-abi --suppr .ci/upower.suppr ${LAST_ABI_BREAK} $(git rev-parse HEAD)
