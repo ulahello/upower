@@ -704,6 +704,39 @@ up_daemon_update_warning_level (UpDaemon *daemon)
 		up_daemon_set_warning_level (daemon, warning_level);
 }
 
+const gchar *
+up_daemon_get_charge_icon (gdouble       percentage,
+			   UpDeviceLevel battery_level,
+			   gboolean      charging)
+{
+	if (battery_level == UP_DEVICE_LEVEL_NONE && daemon != NULL) {
+		if (percentage < 10)
+			return charging ? "battery-caution-charging-symbolic" : "battery-caution-symbolic";
+		else if (percentage < 30)
+			return charging ? "battery-low-charging-symbolic" : "battery-low-symbolic";
+		else if (percentage < 60)
+			return charging ? "battery-good-charging-symbolic" : "battery-good-symbolic";
+		return charging ? "battery-full-charging-symbolic" : "battery-full-symbolic";
+	} else {
+		switch (battery_level) {
+		case UP_DEVICE_LEVEL_UNKNOWN:
+			/* The lack of symmetry is on purpose */
+			return charging ? "battery-good-charging-symbolic" : "battery-caution-symbolic";
+		case UP_DEVICE_LEVEL_LOW:
+		case UP_DEVICE_LEVEL_CRITICAL:
+			return charging ? "battery-caution-charging-symbolic" : "battery-caution-symbolic";
+		case UP_DEVICE_LEVEL_NORMAL:
+			return charging ? "battery-low-charging-symbolic" : "battery-low-symbolic";
+		case UP_DEVICE_LEVEL_HIGH:
+			return charging ? "battery-good-charging-symbolic" : "battery-good-symbolic";
+		case UP_DEVICE_LEVEL_FULL:
+			return charging ? "battery-full-charging-symbolic" : "battery-full-symbolic";
+		default:
+			g_assert_not_reached ();
+		}
+	}
+}
+
 /**
  * up_daemon_device_changed_cb:
  **/
