@@ -682,8 +682,9 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 	state = up_device_supply_get_state (native);
 
 	/* this is the new value in uW */
-	energy_rate = fabs (g_udev_device_get_sysfs_attr_as_double_uncached (native, "power_now") / 1000000.0);
-	if (energy_rate < 0.01) {
+	if (g_udev_device_has_sysfs_attr (native, "power_now")) {
+		energy_rate = fabs (g_udev_device_get_sysfs_attr_as_double_uncached (native, "power_now") / 1000000.0);
+	} else {
 		gdouble charge_full;
 
 		/* convert charge to energy */
