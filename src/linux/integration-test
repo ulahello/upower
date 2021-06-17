@@ -833,6 +833,28 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_display_property('IsPresent'), True)
         self.stop_daemon()
 
+    def test_battery_zero_power_draw(self):
+        '''Battery with zero power draw, e.g. in a dual-battery system'''
+
+        self.testbed.add_device('power_supply', 'BAT0', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Full',
+                                 'energy_full', '60000000',
+                                 'energy_full_design', '80000000',
+                                 'energy_now', '60000000',
+                                 'voltage_now', '12000000',
+                                 'power_now', '0',
+                                 'current_now', '787000'], [])
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        bat0_up = devs[0]
+
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'EnergyRate'), 0.0)
+        self.stop_daemon()
+
     def test_ups_no_ac(self):
         '''UPS properties without AC'''
 
