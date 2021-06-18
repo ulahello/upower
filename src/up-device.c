@@ -63,10 +63,6 @@ update_warning_level (UpDevice *device)
 	UpDeviceLevel warning_level, battery_level;
 	UpExportedDevice *skeleton = UP_EXPORTED_DEVICE (device);
 
-	/* Not finished setting up the object? */
-	if (device->priv->daemon == NULL)
-		return;
-
 	/* If the battery level is available, and is critical,
 	 * we need to fallback to calculations to get the warning
 	 * level, as that might be "action" at this point */
@@ -100,10 +96,6 @@ update_icon_name (UpDevice *device)
 {
 	const gchar *icon_name = NULL;
 	UpExportedDevice *skeleton = UP_EXPORTED_DEVICE (device);
-
-	/* Not finished setting up the object? */
-	if (device->priv->daemon == NULL)
-		return;
 
 	/* get the icon from some simple rules */
 	if (up_exported_device_get_type_ (skeleton) == UP_DEVICE_KIND_LINE_POWER) {
@@ -164,6 +156,10 @@ static void
 up_device_notify (GObject *object, GParamSpec *pspec)
 {
 	UpDevice *device = UP_DEVICE (object);
+
+	/* Not finished setting up the object? */
+	if (device->priv->daemon == NULL)
+		return;
 
 	G_OBJECT_CLASS (up_device_parent_class)->notify (object, pspec);
 
