@@ -71,6 +71,9 @@ gboolean	 up_backend_coldplug			(UpBackend	*backend,
 void		 up_backend_unplug			(UpBackend	*backend);
 void		 up_backend_take_action			(UpBackend	*backend);
 const char	*up_backend_get_critical_action		(UpBackend	*backend);
+int		 up_backend_inhibitor_lock_take		(UpBackend	*backend,
+							 const char	*reason,
+							 const char	*mode);
 
 G_END_DECLS
 

@@ -171,6 +171,23 @@ up_backend_take_action (UpBackend *backend)
 }
 
 /**
+ * up_backend_inhibitor_lock_take:
+ * @backend: The %UpBackend class instance
+ * @reason: Why the inhibitor lock is taken
+ * @mode: The mode of the lock ('delay' or 'block')
+ *
+ * Dummy does not support inhibitor locks so they are simply ignored.
+ */
+int
+up_backend_inhibitor_lock_take (UpBackend  *backend,
+                                const char *reason,
+                                const char *mode)
+{
+    g_debug ("Not taking inhibitor, dummy backend is used");
+    return -ENOTSUP;
+}
+
+/**
  * up_backend_class_init:
  * @klass: The UpBackendClass
  **/

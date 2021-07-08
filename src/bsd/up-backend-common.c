@@ -126,4 +126,19 @@ up_backend_take_action (UpBackend *backend)
 			   NULL);
 }
 
-
+/**
+ * up_backend_inhibitor_lock_take:
+ * @backend: The %UpBackend class instance
+ * @reason: Why the inhibitor lock is taken
+ * @mode: The mode of the lock ('delay' or 'block')
+ *
+ * BSD does not support inhibitor locks so they are simply ignored.
+ */
+int
+up_backend_inhibitor_lock_take (UpBackend  *backend,
+                                const char *reason,
+                                const char *mode)
+{
+    g_debug ("Taking inhibitor locks are not supported in BSD");
+    return -1;
+}
