@@ -1063,10 +1063,10 @@ up_device_supply_guess_type (GUdevDevice *native,
 
 		sibling = up_device_supply_get_sibling_with_subsystem (native, "input");
 		if (sibling) {
-			if (g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_MOUSE")) {
-				type = UP_DEVICE_KIND_MOUSE;
-			} else if (g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_TOUCHPAD")) {
+			if (g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_TOUCHPAD")) {
 				type = UP_DEVICE_KIND_TOUCHPAD;
+			} else if (g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_MOUSE")) {
+				type = UP_DEVICE_KIND_MOUSE;
 			} else if (g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_JOYSTICK")) {
 				type = UP_DEVICE_KIND_GAMING_INPUT;
 			} else {
