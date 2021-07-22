@@ -1073,8 +1073,8 @@ static void
 load_percentage_policy (UpDaemon    *daemon,
 			gboolean     load_default)
 {
-	LOAD_OR_DEFAULT (daemon->priv->low_percentage, "PercentageLow", 10);
-	LOAD_OR_DEFAULT (daemon->priv->critical_percentage, "PercentageCritical", 3);
+	LOAD_OR_DEFAULT (daemon->priv->low_percentage, "PercentageLow", 20);
+	LOAD_OR_DEFAULT (daemon->priv->critical_percentage, "PercentageCritical", 5);
 	LOAD_OR_DEFAULT (daemon->priv->action_percentage, "PercentageAction", 2);
 }
 
