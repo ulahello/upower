@@ -724,8 +724,8 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 	if (energy_rate == 0xffff)
 		energy_rate = 0;
 
-	/* sanity check to less than 100W */
-	if (energy_rate > 100)
+	/* Ensure less than 300W, above the 240W possible with USB Power Delivery */
+	if (energy_rate > 300)
 		energy_rate = 0;
 
 	/* the hardware reporting failed -- try to calculate this */
