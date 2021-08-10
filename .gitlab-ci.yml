@@ -22,12 +22,19 @@ variables:
     libplist-devel
     umockdev
     python3-dbus
-    python3-dbusmock
+    python3-pip
+    python3-packaging
+    git
   LAST_ABI_BREAK: "e294444496e8bbcd91a3605874f59562e14c34ec"
 
 build_stable:
   before_script:
     - dnf update -y --nogpgcheck && dnf install -y --nogpgcheck $DEPENDENCIES
+    - git clone https://github.com/martinpitt/python-dbusmock.git /tmp/python-dbusmock
+    - echo '## [0.23.2] - UNRELEASED' | cat - /tmp/python-dbusmock/NEWS > /tmp/python-dbusmock/NEWS.tmp
+    - mv /tmp/python-dbusmock/NEWS.tmp /tmp/python-dbusmock/NEWS
+    - sed -i 's,0.23.1,0.23.2,' /tmp/python-dbusmock/dbusmock/__init__.py
+    - pip install /tmp/python-dbusmock
   script:
     - mkdir _build
     - cd _build
