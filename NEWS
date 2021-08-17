@@ -1,3 +1,17 @@
+Version 0.99.13
+---------------
+Released: 2021-08-17
+
+Bug fixes:
+- Tweak default percentage levels to better match other operating systems
+- Support large energy rates seen in some modern laptops
+- Fix touchpads showing up as mice
+- Fix composite battery state when multiple batteries are used and
+  one isn't drawing any power
+- Make the icon and warning properties respect the "low battery level"
+  configuration option
+- Stop the device being suspended during the 20-second "shutdown" grace period
+
 Version 0.99.12
 ~~~~~~~~~~~~~~~
 Released: 2021-06-17
