@@ -404,7 +404,7 @@ up_client_class_init (UpClientClass *klass)
 							       "If the laptop lid is closed",
 							       NULL,
 							       FALSE,
-							       G_PARAM_READABLE));
+							       G_PARAM_READABLE | G_PARAM_DEPRECATED));
 	/**
 	 * UpClient:lid-is-present:
 	 *
@@ -418,7 +418,7 @@ up_client_class_init (UpClientClass *klass)
 							       "If a laptop lid is present",
 							       NULL,
 							       FALSE,
-							       G_PARAM_READABLE));
+							       G_PARAM_READABLE | G_PARAM_DEPRECATED));
 
 	/**
 	 * UpClient::device-added:

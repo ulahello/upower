@@ -82,7 +82,9 @@ char *		 up_client_get_critical_action		(UpClient *client);
 GPtrArray	*up_client_get_devices			(UpClient		*client) G_DEPRECATED_FOR(up_client_get_devices2);
 GPtrArray	*up_client_get_devices2			(UpClient		*client);
 const gchar	*up_client_get_daemon_version		(UpClient		*client);
+G_DEPRECATED
 gboolean	 up_client_get_lid_is_closed		(UpClient		*client);
+G_DEPRECATED
 gboolean	 up_client_get_lid_is_present		(UpClient		*client);
 gboolean	 up_client_get_on_battery		(UpClient		*client);
 
