@@ -69,6 +69,7 @@ UpDevice	*up_device_new				(void);
 gchar		*up_device_to_text			(UpDevice		*device);
 
 /* sync versions */
+G_DEPRECATED
 gboolean	 up_device_refresh_sync			(UpDevice		*device,
 							 GCancellable		*cancellable,
 							 GError			**error);
