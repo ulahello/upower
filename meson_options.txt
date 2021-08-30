@@ -1,0 +1,31 @@
+option('man',
+       type : 'boolean',
+       value : 'true',
+       description : 'Build manpages')
+option('gtk-doc',
+       type : 'boolean',
+       value : 'true',
+       description : 'Build developer documentation')
+option('introspection',
+       type : 'feature',
+       value : 'auto',
+       description : 'Build GObject Introspection data')
+option('udevrulesdir',
+       type : 'string',
+       value: 'auto',
+       description : 'Directory for udev rules')
+option('historydir',
+       type : 'string',
+       description : 'Directory for upower history files will be stored')
+option('systemdsystemunitdir',
+       type : 'string',
+       description : 'Directory for systemd service files ("no" to disable)')
+option('os_backend',
+       type : 'combo',
+       choices : [ 'auto', 'linux', 'freebsd', 'openbsd', 'dummy'],
+       value : 'auto',
+       description : 'Directory for systemd service files')
+option('idevice',
+       type : 'feature',
+       value : 'auto',
+       description : 'Build with libimobiledevice')
