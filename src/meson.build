@@ -4,7 +4,6 @@ upowerd_deps = declare_dependency(
         include_directories('.'),
         include_directories('..'),
         include_directories('../dbus'),
-        include_directories('../libupower-glib'),
     ],
     dependencies: [
         glib_dep, gobject_dep, gio_dep, gio_unix_dep, libupower_glib_dep, upowerd_dbus_dep

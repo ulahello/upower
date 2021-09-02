@@ -60,7 +60,8 @@ libupower_glib = shared_library('upower-glib',
 libupower_glib_dep = declare_dependency(
     sources: libupower_glib_headers,
     link_with: libupower_glib,
-    include_directories: [ '..' ],
+    # FIXME: The libupower-glib prefix is used inconsistently when including
+    include_directories: [ '.', '..' ],
     dependencies: [ gobject_dep, gio_dep ],
 )
 
