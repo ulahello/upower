@@ -2,16 +2,13 @@ image: fedora:rawhide
 
 variables:
   DEPENDENCIES:
-    libtool
     gtk-doc
-    autoconf
-    automake
+    meson
     gettext-devel
     gcc
     redhat-rpm-config
     gcc-c++
     glibc-devel
-    make
     systemd
     sqlite-devel
     gobject-introspection-devel
@@ -24,6 +21,12 @@ variables:
     python3-pip
     python3-packaging
     git
+  # Make this explicit for check-abi, as it still builds the old version using "make"
+  AUTOTOOLS_DEPENDENCIES:
+    libtool
+    autoconf
+    automake
+    make
   LAST_ABI_BREAK: "e294444496e8bbcd91a3605874f59562e14c34ec"
 
 build_stable:
@@ -35,13 +38,8 @@ build_stable:
     - sed -i 's,0.23.1,0.23.2,' /tmp/python-dbusmock/dbusmock/__init__.py
     - pip install /tmp/python-dbusmock
   script:
-    - mkdir _build
-    - cd _build
-    - ../autogen.sh --with-idevice
-    - make
-    - make install
-    - make check
-    - make distcheck
+    - meson _build
+    - meson test -C _build --print-errorlogs --no-stdsplit
   artifacts:
     when: on_success
     name: "upower-${CI_COMMIT_REF_NAME}"
@@ -54,7 +52,7 @@ build_stable:
 
 check_abi:
   before_script:
-    - dnf update -y --nogpgcheck && dnf install -y --nogpgcheck $DEPENDENCIES
+    - dnf update -y --nogpgcheck && dnf install -y --nogpgcheck $DEPENDENCIES $AUTOTOOLS_DEPENDENCIES
   script:
     - curl https://gitlab.freedesktop.org/hadess/check-abi/-/raw/main/contrib/check-abi-fedora.sh | bash
     - check-abi --suppr .ci/upower.suppr ${LAST_ABI_BREAK} $(git rev-parse HEAD)
