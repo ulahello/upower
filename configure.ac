@@ -159,15 +159,6 @@ PKG_CHECK_MODULES(GIO_UNIX, [gio-unix-2.0])
 dnl ====================================================================
 dnl Check for systemd
 dnl ====================================================================
-AC_ARG_WITH([systemdutildir],
-            AS_HELP_STRING([--with-systemdutildir=DIR], [Directory for systemd utilities]),
-            [],
-            [with_systemdutildir=$($PKG_CONFIG --variable=systemdutildir systemd)])
-if test x$with_systemdutildir != xno; then
-        AC_SUBST([systemdutildir], [$with_systemdutildir])
-fi
-AM_CONDITIONAL(HAVE_SYSTEMDUTILDIR, [test -n "$systemdutildir"])
-
 AC_ARG_WITH([systemdsystemunitdir],
             AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [Directory for systemd service files]),
             [],
