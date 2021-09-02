@@ -21,7 +21,7 @@ git push
 
 3. Generate the tarball:
 
-make dist
+meson dist
 
 4. Upload tarball:
 
