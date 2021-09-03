@@ -17,8 +17,8 @@ foreach interface: upowerd_dbus_interfaces
         namespace: 'Up',
         object_manager: false,
     )
-    upowerd_dbus_headers += t[0]
-    upowerd_dbus_sources += t[1]
+    upowerd_dbus_sources += t[0]
+    upowerd_dbus_headers += t[1]
 
     install_data(xml,
         install_dir: dbusdir / 'interfaces',
