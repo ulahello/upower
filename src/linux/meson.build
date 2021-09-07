@@ -21,8 +21,9 @@ upshared += { 'linux': static_library('upshared',
         'up-backend.c',
         'up-backend-linux-private.h',
         'up-native.c',
+        idevice_sources
     ],
     c_args: [ '-DG_LOG_DOMAIN="UPower-Linux"' ],
-    dependencies: [ gudev_dep, upowerd_deps ],
+    dependencies: [ gudev_dep, upowerd_deps, idevice_dep ],
     build_by_default: false,
 )}

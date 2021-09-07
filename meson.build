@@ -79,6 +79,7 @@ if os_backend == 'linux'
       plist_dep = dependency(libplist)
     endif
   endif
+  cdata.set10('HAVE_IDEVICE', true)
 endif
 
 historydir = get_option('historydir')
