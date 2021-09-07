@@ -27,28 +27,10 @@ import time
 from packaging.version import parse as parse_version
 
 try:
-    import gi
-    from gi.repository import GLib
-    from gi.repository import Gio
-    gi.require_version('UPowerGlib', '1.0')
-    from gi.repository import UPowerGlib
-except ImportError as e:
-    sys.stderr.write('Skipping tests, PyGobject not available for Python 3, or missing GI typelibs: %s\n' % str(e))
-    sys.exit(77)
-
-try:
-    gi.require_version('UMockdev', '1.0')
-    from gi.repository import UMockdev
-except ImportError:
-    sys.stderr.write('Skipping tests, umockdev not available (https://github.com/martinpitt/umockdev)\n')
-    sys.exit(77)
-
-try:
     import dbusmock
 except ImportError:
     sys.stderr.write('Skipping tests, python-dbusmock not available (http://pypi.python.org/pypi/python-dbusmock).\n')
     sys.exit(77)
-
 
 UP = 'org.freedesktop.UPower'
 UP_DEVICE = 'org.freedesktop.UPower.Device'
@@ -1947,6 +1929,23 @@ class Tests(dbusmock.DBusTestCase):
         return prop_str
 
 if __name__ == '__main__':
+    try:
+        import gi
+        from gi.repository import GLib
+        from gi.repository import Gio
+        gi.require_version('UPowerGlib', '1.0')
+        from gi.repository import UPowerGlib
+    except ImportError as e:
+        sys.stderr.write('Skipping tests, PyGobject not available for Python 3, or missing GI typelibs: %s\n' % str(e))
+        sys.exit(77)
+
+    try:
+        gi.require_version('UMockdev', '1.0')
+        from gi.repository import UMockdev
+    except ImportError:
+        sys.stderr.write('Skipping tests, umockdev not available (https://github.com/martinpitt/umockdev)\n')
+        sys.exit(77)
+
     # run ourselves under umockdev
     if 'umockdev' not in os.environ.get('LD_PRELOAD', ''):
         os.execvp('umockdev-wrapper', ['umockdev-wrapper'] + sys.argv)
