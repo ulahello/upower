@@ -121,10 +121,18 @@ if os_backend == 'linux' and gir_dep.found()
     env.prepend('LD_LIBRARY_PATH', join_paths(meson.build_root(), 'libupower-glib'))
     env.prepend('GI_TYPELIB_PATH', join_paths(meson.build_root(), 'libupower-glib'))
 
-    test(
-        'integration-test',
-        find_program('linux/integration-test.py'),
-        timeout: 120,
-        env: env,
-    )
+    python3 = find_program('python3')
+    unittest_inspector = find_program('linux/unittest_inspector.py')
+    r = run_command(unittest_inspector, files('linux/integration-test.py'))
+    unit_tests = r.stdout().strip().split('\n')
+
+    foreach ut: unit_tests
+        ut_args = files('linux/integration-test.py')
+        ut_args += ut
+        test(ut,
+             python3,
+             args: ut_args,
+             env: env,
+            )
+    endforeach
 endif
