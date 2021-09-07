@@ -17,6 +17,8 @@ variables:
     glib2-devel
     libplist-devel
     umockdev
+    dbus-x11
+    python3-gobject
     python3-dbus
     python3-pip
     python3-packaging
