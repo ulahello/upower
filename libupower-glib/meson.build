@@ -51,6 +51,7 @@ libupower_glib = shared_library('upower-glib',
     include_directories: [ '..' ],
     c_args: [
         '-DUP_COMPILATION',
+        '-DG_LOG_DOMAIN="libupower-glib"',
     ],
     soversion: soversion,
     version: libversion,

@@ -43,6 +43,7 @@ upowerd_private = static_library('upowerd-private',
         'up-native.h',
     ],
     dependencies: [ upowerd_deps ],
+    c_args: [ '-DG_LOG_DOMAIN="UPower"' ],
 )
 
 upowerd = executable('upowerd',
