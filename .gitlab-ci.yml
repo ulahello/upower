@@ -48,7 +48,7 @@ build_stable:
   artifacts:
     when: on_failure
     paths:
-      - "${CI_PROJECT_DIR}/_build/src/test-suite.log"
+      - "${CI_PROJECT_DIR}/_build/meson-logs/"
 
 check_abi:
   before_script:
