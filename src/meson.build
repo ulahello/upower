@@ -123,7 +123,7 @@ if os_backend == 'linux' and gir_dep.found()
 
     test(
         'integration-test',
-        find_program('linux/integration-test'),
+        find_program('linux/integration-test.py'),
         timeout: 120,
         env: env,
     )
