@@ -40,7 +40,7 @@ build_stable:
     - sed -i 's,0.23.1,0.23.2,' /tmp/python-dbusmock/dbusmock/__init__.py
     - pip install /tmp/python-dbusmock
   script:
-    - meson _build
+    - meson _build -Dintrospection=enabled -Dman=true -Dgtk-doc=true -Didevice=enabled
     - meson test -C _build --print-errorlogs --no-stdsplit
     - .ci/fail_skipped_tests.py _build/meson-logs/testlog.junit.xml
   artifacts:
