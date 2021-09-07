@@ -86,7 +86,6 @@ up_device_supply_refresh_line_power (UpDeviceSupply *supply)
 {
 	UpDevice *device = UP_DEVICE (supply);
 	GUdevDevice *native;
-	const gchar *native_path;
 
 	/* is providing power to computer? */
 	g_object_set (device,
