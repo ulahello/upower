@@ -1,12 +1,3 @@
-
-idevice_sources = []
-if idevice_dep.found()
-    idevice_sources = [
-        'up-device-idevice.c',
-        'up-device-idevice.h',
-    ]
-endif
-
 cdata = configuration_data()
 cdata.set('UP_MAJOR_VERSION', meson.project_version()[0])
 cdata.set('UP_MINOR_VERSION', meson.project_version()[1])
