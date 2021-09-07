@@ -116,7 +116,7 @@ test(
 
 # On Linux, we can run the additional integration test;
 # defined here as we would have a circular dependency otherwise.
-if os_backend == 'linux' and gir_dep.found()
+if os_backend == 'linux' and gobject_introspection.found()
     env = environment()
     env.prepend('top_builddir', join_paths(meson.build_root()))
     env.prepend('LD_LIBRARY_PATH', join_paths(meson.build_root(), 'libupower-glib'))
@@ -134,6 +134,7 @@ if os_backend == 'linux' and gir_dep.found()
              python3,
              args: ut_args,
              env: env,
+             depends: [ libupower_glib_typelib, upowerd ],
             )
     endforeach
 endif

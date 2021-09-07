@@ -88,7 +88,5 @@ if gobject_introspection.found()
         ],
         install : true)
 
-    gir_dep = declare_dependency(sources: gir)
-else
-    gir_dep = dependency('', required: false)
+    libupower_glib_typelib = gir[1]
 endif
