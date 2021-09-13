@@ -76,7 +76,7 @@ if os_backend == 'linux'
   if idevice_dep.found()
     plist_dep = dependency('libplist-2.0', required: false)
     if not plist_dep.found()
-      plist_dep = dependency(libplist)
+      plist_dep = dependency('libplist', required: true)
     endif
     cdata.set10('HAVE_IDEVICE', true)
   endif
