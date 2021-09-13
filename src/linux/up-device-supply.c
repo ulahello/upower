@@ -145,6 +145,7 @@ up_device_supply_reset_values (UpDeviceSupply *supply)
 		      "percentage", (gdouble) 0.0,
 		      "temperature", (gdouble) 0.0,
 		      "technology", UP_DEVICE_TECHNOLOGY_UNKNOWN,
+		      "charge-cycles", -1,
 		      NULL);
 }
 
@@ -565,6 +566,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 	gint64 time_to_empty;
 	gint64 time_to_full;
 	gdouble temp;
+	int charge_cycles = -1;
 	gchar *manufacturer = NULL;
 	gchar *model_name = NULL;
 	gchar *serial_number = NULL;
@@ -833,6 +835,10 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 	/* get temperature */
 	temp = g_udev_device_get_sysfs_attr_as_double_uncached (native, "temp") / 10.0;
 
+	/* charge cycles */
+	if (g_udev_device_has_sysfs_attr_uncached (native, "cycle_count"))
+		charge_cycles = g_udev_device_get_sysfs_attr_as_int_uncached (native, "cycle_count");
+
 	/* check if the energy value has changed and, if that's the case,
 	 * store the new values in the buffer. */
 	if (up_device_supply_push_new_energy (supply, energy))
@@ -862,6 +868,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 		      "time-to-empty", time_to_empty,
 		      "time-to-full", time_to_full,
 		      "temperature", temp,
+		      "charge-cycles", charge_cycles,
 		      NULL);
 
 	/* Setup unknown poll again if needed */
