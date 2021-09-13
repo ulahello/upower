@@ -1897,6 +1897,39 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Type'), UP_DEVICE_KIND_BLUETOOTH_GENERIC)
         self.stop_daemon()
 
+    def test_charge_cycles(self):
+        '''Charge cycles'''
+
+        # one well charged, one low
+        self.testbed.add_device('power_supply', 'BAT0', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Discharging',
+                                 'energy_full', '60000000',
+                                 'energy_full_design', '80000000',
+                                 'energy_now', '48000000',
+                                 'voltage_now', '12000000'], [])
+
+        self.testbed.add_device('power_supply', 'BAT1', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Discharging',
+                                 'energy_full', '60000000',
+                                 'energy_full_design', '80000000',
+                                 'energy_now', '1500000',
+                                 'voltage_now', '12000000',
+                                 'cycle_count', '2000'], [])
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 2)
+        bat0_up = devs[0]
+        bat1_up = devs[1]
+
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'ChargeCycles'), -1)
+        self.assertEqual(self.get_dbus_dev_property(bat1_up, 'ChargeCycles'), 2000)
+        self.stop_daemon()
+
     #
     # libupower-glib tests (through introspection)
     #
