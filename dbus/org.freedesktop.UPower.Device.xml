@@ -477,6 +477,17 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
+    <property name="ChargeCycles" type="i" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            The number of charge cycles as defined by the TCO certification, or -1 if
+            that value is unknown or not applicable.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </property>
+
     <property name="Luminosity" type="d" access="read">
       <doc:doc>
         <doc:description>
