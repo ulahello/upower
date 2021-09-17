@@ -58,4 +58,4 @@ check_abi:
     - dnf update -y --nogpgcheck && dnf install -y --nogpgcheck $DEPENDENCIES $AUTOTOOLS_DEPENDENCIES
   script:
     - curl https://gitlab.freedesktop.org/hadess/check-abi/-/raw/main/contrib/check-abi-fedora.sh | bash
-    - check-abi --suppr .ci/upower.suppr ${LAST_ABI_BREAK} $(git rev-parse HEAD)
+    - check-abi --suppr .ci/upower.suppr --old-parameters="--with-idevice --disable-tests --disable-static --disable-gtk-doc" --new-parameters="-Dman=false -Dgtk-doc=false -Didevice=enabled"  ${LAST_ABI_BREAK} $(git rev-parse HEAD)
