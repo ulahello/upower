@@ -1920,14 +1920,34 @@ class Tests(dbusmock.DBusTestCase):
                                  'voltage_now', '12000000',
                                  'cycle_count', '2000'], [])
 
+        self.testbed.add_device('power_supply', 'BAT2', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Discharging',
+                                 'energy_full', '60000000',
+                                 'energy_full_design', '80000000',
+                                 'energy_now', '1500000',
+                                 'voltage_now', '12000000',
+                                 'cycle_count', '0'], [])
+
+        self.testbed.add_device('power_supply', 'BAT3', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Discharging',
+                                 'energy_full', '60000000',
+                                 'energy_full_design', '80000000',
+                                 'energy_now', '1500000',
+                                 'voltage_now', '12000000',
+                                 'cycle_count', '-1'], [])
+
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
-        self.assertEqual(len(devs), 2)
-        bat0_up = devs[0]
-        bat1_up = devs[1]
+        self.assertEqual(len(devs), 4)
 
-        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'ChargeCycles'), -1)
-        self.assertEqual(self.get_dbus_dev_property(bat1_up, 'ChargeCycles'), 2000)
+        self.assertEqual(self.get_dbus_dev_property(devs[0], 'ChargeCycles'), -1)
+        self.assertEqual(self.get_dbus_dev_property(devs[1], 'ChargeCycles'), 2000)
+        self.assertEqual(self.get_dbus_dev_property(devs[2], 'ChargeCycles'), -1)
+        self.assertEqual(self.get_dbus_dev_property(devs[3], 'ChargeCycles'), -1)
         self.stop_daemon()
 
     #

@@ -835,9 +835,15 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 	/* get temperature */
 	temp = g_udev_device_get_sysfs_attr_as_double_uncached (native, "temp") / 10.0;
 
-	/* charge cycles */
-	if (g_udev_device_has_sysfs_attr_uncached (native, "cycle_count"))
+	/* charge_cycles is -1 if:
+	 * cycle_count is -1 (unknown)
+	 * cycle_count is 0 (shouldn't be used by conforming implementations)
+	 * cycle_count is absent (unsupported) */
+	if (g_udev_device_has_sysfs_attr_uncached (native, "cycle_count")) {
 		charge_cycles = g_udev_device_get_sysfs_attr_as_int_uncached (native, "cycle_count");
+		if (charge_cycles == 0)
+			charge_cycles = -1;
+	}
 
 	/* check if the energy value has changed and, if that's the case,
 	 * store the new values in the buffer. */
