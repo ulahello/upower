@@ -636,6 +636,11 @@ up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 			g_debug ("Removing timeout as action level changed");
 			g_source_remove (daemon->priv->action_timeout_id);
 		}
+
+		if (daemon->priv->critical_action_lock_fd >= 0) {
+			close (daemon->priv->critical_action_lock_fd);
+			daemon->priv->critical_action_lock_fd = -1;
+		}
 	}
 }
 
