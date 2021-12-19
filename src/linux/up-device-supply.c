@@ -1093,6 +1093,8 @@ up_device_supply_guess_type (GUdevDevice *native,
 		/* use a heuristic to find the device type */
 		if (g_strstr_len (native_path, -1, "wacom_") != NULL) {
 			type = UP_DEVICE_KIND_TABLET;
+		} else if (g_strstr_len (native_path, -1, "ucsi-source-psy-") != NULL) {
+			type = UP_DEVICE_KIND_LINE_POWER;
 		} else {
 			g_warning ("did not recognise USB path %s, please report",
 				   native_path);
