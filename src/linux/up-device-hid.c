@@ -321,18 +321,18 @@ up_device_hid_coldplug (UpDevice *device)
 		goto out;
 	}
 
-	/* connect to the device */
-	g_debug ("using device: %s", device_file);
-	hid->priv->fd = open (device_file, O_RDONLY | O_NONBLOCK);
-	if (hid->priv->fd < 0) {
-		g_debug ("cannot open device file %s", device_file);
-		goto out;
-	}
-
 	/* first check that we are an UPS */
 	hid->priv->fake_device = g_udev_device_has_property (native, "UPOWER_FAKE_DEVICE");
 	if (!hid->priv->fake_device)
 	{
+		/* connect to the device */
+		g_debug ("using device: %s", device_file);
+		hid->priv->fd = open (device_file, O_RDONLY | O_NONBLOCK);
+		if (hid->priv->fd < 0) {
+			g_debug ("cannot open device file %s", device_file);
+			goto out;
+		}
+
 		ret = up_device_hid_is_ups (hid);
 		if (!ret) {
 			g_debug ("not a HID device: %s", device_file);
