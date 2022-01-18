@@ -395,6 +395,9 @@ up_device_hid_refresh (UpDevice *device)
 	int rd;
 	UpDeviceHid *hid = UP_DEVICE_HID (device);
 
+	if (hid->priv->fake_device)
+		goto update_time;
+
 	/* read any data */
 	rd = read (hid->priv->fd, ev, sizeof (ev));
 
@@ -423,6 +426,7 @@ up_device_hid_refresh (UpDevice *device)
 	/* fix up device states */
 	up_device_hid_fixup_state (device);
 
+update_time:
 	/* reset time */
 	g_object_set (device, "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC, NULL);
 out:
