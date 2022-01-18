@@ -183,7 +183,7 @@ up_device_bluez_coldplug (UpDevice *device)
 	}
 
 	v = g_dbus_proxy_get_cached_property (proxy, "Appearance");
-	if (v) {
+	if (v && g_variant_get_uint16 (v) != 0) {
 		guint16 appearance;
 
 		appearance = g_variant_get_uint16 (v);

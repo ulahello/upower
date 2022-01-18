@@ -1748,7 +1748,7 @@ class Tests(dbusmock.DBusTestCase):
         device = self.dbus_con.get_object('org.bluez', path)
 
         if device_properties:
-            device.AddProperties(DEVICE_IFACE, device_properties)
+            device.UpdateProperties(DEVICE_IFACE, device_properties)
 
         battery_properties = {
             'Percentage': dbus.Byte(battery_level, variant_level=1),
