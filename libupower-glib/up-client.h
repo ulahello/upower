@@ -73,6 +73,11 @@ typedef struct {
 GType		 up_client_get_type			(void);
 UpClient	*up_client_new				(void);
 UpClient	*up_client_new_full			(GCancellable *cancellable, GError **error);
+void		 up_client_new_async			(GCancellable        *cancellable,
+							 GAsyncReadyCallback  callback,
+							 gpointer             user_data);
+UpClient 	*up_client_new_finish			(GAsyncResult  *res,
+							 GError       **error);
 
 /* sync versions */
 UpDevice *	 up_client_get_display_device		(UpClient *client);

@@ -38,10 +38,11 @@
 #include "up-daemon-generated.h"
 #include "up-device.h"
 
-static void	up_client_class_init		(UpClientClass	*klass);
-static void	up_client_initable_iface_init	(GInitableIface *iface);
-static void	up_client_init			(UpClient	*client);
-static void	up_client_finalize		(GObject	*object);
+static void	up_client_class_init			(UpClientClass	*klass);
+static void	up_client_initable_iface_init		(GInitableIface *iface);
+static void	up_client_async_initable_iface_init	(GAsyncInitableIface *async_initable_iface);
+static void	up_client_init				(UpClient	*client);
+static void	up_client_finalize			(GObject	*object);
 
 /**
  * UpClientPrivate:
@@ -72,7 +73,8 @@ static guint signals [UP_CLIENT_LAST_SIGNAL] = { 0 };
 
 G_DEFINE_TYPE_WITH_CODE (UpClient, up_client, G_TYPE_OBJECT,
 			 G_ADD_PRIVATE(UpClient)
-                         G_IMPLEMENT_INTERFACE(G_TYPE_INITABLE, up_client_initable_iface_init))
+                         G_IMPLEMENT_INTERFACE(G_TYPE_INITABLE, up_client_initable_iface_init)
+                         G_IMPLEMENT_INTERFACE (G_TYPE_ASYNC_INITABLE, up_client_async_initable_iface_init))
 
 /**
  * up_client_get_devices:
@@ -557,5 +559,88 @@ up_client_new (void)
 		g_error_free (error);
 	}
 	return client;
+}
+
+static void
+up_client_async_initable_iface_init (GAsyncInitableIface *async_initable_iface)
+{
+  /* Use default */
+}
+
+static void
+up_client_new_async_initable_cb (GObject      *source_object,
+				 GAsyncResult *res,
+				 gpointer      user_data)
+{
+  GTask *task = user_data;
+  GError *error = NULL;
+
+  if (!g_async_initable_init_finish (G_ASYNC_INITABLE (source_object),
+                                     res,
+                                     &error))
+    {
+      g_assert (error != NULL);
+      g_task_return_error (task, error);
+      g_object_unref (source_object);
+    }
+  else
+    {
+      g_task_return_pointer (task, source_object, g_object_unref);
+    }
+  g_object_unref (task);
+}
+
+/**
+ * up_client_new_async:
+ * @cancellable: (nullable): a #GCancellable or %NULL
+ * @callback: a #GAsyncReadyCallback to call when the request is satisfied
+ * @user_data: the data to pass to @callback
+ *
+ * Asynchronously creates a new #UpClient object.
+ *
+ * This is an asynchronous failable function.
+ *
+ * Since: 0.99.14
+ **/
+void
+up_client_new_async (GCancellable        *cancellable,
+		     GAsyncReadyCallback  callback,
+		     gpointer             user_data)
+{
+  UpClient *client;
+  GTask *task;
+
+  task = g_task_new (NULL, cancellable, callback, user_data);
+  g_task_set_source_tag (task, (gpointer) G_STRFUNC);
+
+  client = g_object_new (UP_TYPE_CLIENT, NULL);
+  g_async_initable_init_async (G_ASYNC_INITABLE (client),
+                               G_PRIORITY_DEFAULT,
+                               cancellable,
+                               up_client_new_async_initable_cb,
+                               task);
+}
+
+/**
+ * up_client_new_finish:
+ * @res: a #GAsyncResult obtained from the #GAsyncReadyCallback passed
+ *     to up_client_new_async()
+ * @error: return location for error or %NULL
+ *
+ * Finishes an operation started with up_client_new_async().
+ *
+ * Returns: (transfer full): a #UpClient or %NULL if @error is set.
+ *     Free with g_object_unref().
+ *
+ * Since: 0.99.14
+ **/
+UpClient *
+up_client_new_finish (GAsyncResult  *res,
+		      GError       **error)
+{
+  g_return_val_if_fail (g_task_is_valid (res, NULL), NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+  return g_task_propagate_pointer (G_TASK (res), error);
 }
 
