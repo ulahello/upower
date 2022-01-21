@@ -1967,6 +1967,21 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(client.get_critical_action(), 'HybridSleep')
         self.stop_daemon()
 
+    def test_lib_up_client_async(self):
+        '''Test up_client_async_new()'''
+
+        self.start_daemon()
+
+        def client_new_cb(obj, task):
+            nonlocal ml
+            client = UPowerGlib.Client.new_finish(task)
+            self.assertRegex(client.get_daemon_version(), '^[0-9.]+$')
+            ml.quit()
+
+        ml = GLib.MainLoop()
+        UPowerGlib.Client.new_async(None, client_new_cb)
+        ml.run()
+
     #
     # Helper methods
     #
