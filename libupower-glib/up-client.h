@@ -86,6 +86,13 @@ char *		 up_client_get_critical_action		(UpClient *client);
 /* accessors */
 GPtrArray	*up_client_get_devices			(UpClient		*client) G_DEPRECATED_FOR(up_client_get_devices2);
 GPtrArray	*up_client_get_devices2			(UpClient		*client);
+void		up_client_get_devices_async		(UpClient		*client,
+							 GCancellable		*cancellable,
+							 GAsyncReadyCallback 	 callback,
+							 gpointer		 user_data);
+GPtrArray	*up_client_get_devices_finish		(UpClient		*client,
+							 GAsyncResult		*res,
+							 GError		       **error);
 const gchar	*up_client_get_daemon_version		(UpClient		*client);
 G_DEPRECATED
 gboolean	 up_client_get_lid_is_closed		(UpClient		*client);

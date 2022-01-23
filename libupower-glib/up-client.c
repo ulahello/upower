@@ -160,6 +160,71 @@ up_client_get_devices2 (UpClient *client)
 	}
 	return ret;
 }
+
+static void
+get_devices_async_thread (GTask        *task,
+			  gpointer      source_object,
+			  gpointer      task_data,
+			  GCancellable *cancellable)
+{
+	GError *error = NULL;
+	GPtrArray *array;
+
+	array = up_client_get_devices_full (UP_CLIENT (source_object), cancellable, &error);
+	if (!array)
+		g_task_return_error (task, error);
+	else
+		g_task_return_pointer (task, array, (GDestroyNotify) g_ptr_array_unref);
+}
+
+/**
+ * up_client_get_devices_async:
+ * @client: a #UpClient instance.
+ * @cancellable: (nullable): a #GCancellable or %NULL
+ * @callback: a #GAsyncReadyCallback to call when the request is satisfied
+ * @user_data: the data to pass to @callback
+ *
+ * Asynchronously fetches the list of #UpDevice objects.
+ *
+ * Since: 0.99.14
+ **/
+void
+up_client_get_devices_async (UpClient            *client,
+			     GCancellable        *cancellable,
+			     GAsyncReadyCallback  callback,
+			     gpointer             user_data)
+{
+	GTask *task;
+
+	task = g_task_new (client, cancellable, callback, user_data);
+	g_task_set_source_tag (task, (gpointer) G_STRFUNC);
+
+	g_task_run_in_thread (task, get_devices_async_thread);
+}
+
+/**
+ * up_client_get_devices_finish:
+ * @client: a #UpClient instance.
+ * @res: a #GAsyncResult obtained from the #GAsyncReadyCallback passed
+ *     to up_client_get_devices_async()
+ *
+ * Finishes an operation started with up_client_get_devices_async().
+ *
+ * Return value: (element-type UpDevice) (transfer full): an array of
+ *     #UpDevice objects or %NULL on error.
+ **/
+GPtrArray *
+up_client_get_devices_finish (UpClient      *client,
+			      GAsyncResult  *res,
+			      GError       **error)
+{
+  g_return_val_if_fail (UP_IS_CLIENT (client), NULL);
+  g_return_val_if_fail (g_task_is_valid (res, client), NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+  return g_task_propagate_pointer (G_TASK (res), error);
+}
+
 /**
  * up_client_get_display_device:
  * @client: a #UpClient instance.

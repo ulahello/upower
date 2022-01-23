@@ -1967,17 +1967,31 @@ class Tests(dbusmock.DBusTestCase):
     def test_lib_up_client_async(self):
         '''Test up_client_async_new()'''
 
+        ac = self.testbed.add_device('power_supply', 'AC', None,
+                                     ['type', 'Mains', 'online', '1'], [])
         self.start_daemon()
 
-        def client_new_cb(obj, task):
-            nonlocal ml
-            client = UPowerGlib.Client.new_finish(task)
+        def client_new_cb(obj, res):
+            nonlocal ml, client
+            client = UPowerGlib.Client.new_finish(res)
             self.assertRegex(client.get_daemon_version(), '^[0-9.]+$')
             ml.quit()
 
+        def get_devices_cb(obj, res):
+            nonlocal ml, client
+            devs = client.get_devices_finish(res)
+            self.assertEqual(len(devs), 1)
+            ml.quit()
+
+        client = None
         ml = GLib.MainLoop()
         UPowerGlib.Client.new_async(None, client_new_cb)
         ml.run()
+
+        # This will crash, see:
+        # https://gitlab.gnome.org/GNOME/gobject-introspection/-/issues/305
+        # client.get_devices_async(None, get_devices_cb)
+        # ml.run()
 
     #
     # Helper methods
