@@ -98,6 +98,44 @@ up_client_get_devices (UpClient *client)
 	return array;
 }
 
+static GPtrArray *
+up_client_get_devices_full (UpClient      *client,
+			    GCancellable  *cancellable,
+			    GError       **error)
+{
+	g_auto(GStrv) devices = NULL;
+	GPtrArray *array;
+	guint i;
+
+	g_return_val_if_fail (UP_IS_CLIENT (client), NULL);
+
+	if (up_exported_daemon_call_enumerate_devices_sync (client->priv->proxy,
+							    &devices,
+							    cancellable,
+							    error) == FALSE) {
+		return NULL;
+	}
+
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+
+	for (i = 0; devices[i] != NULL; i++) {
+		UpDevice *device;
+		const char *object_path = ((char **)devices)[i];
+		gboolean ret;
+
+		device = up_device_new ();
+		ret = up_device_set_object_path_sync (device, object_path, cancellable, NULL);
+		if (!ret) {
+			g_object_unref (device);
+			continue;
+		}
+
+		g_ptr_array_add (array, device);
+	}
+
+	return array;
+}
+
 /**
  * up_client_get_devices2:
  * @client: a #UpClient instance.
@@ -111,43 +149,17 @@ up_client_get_devices (UpClient *client)
 GPtrArray *
 up_client_get_devices2 (UpClient *client)
 {
-	GError *error = NULL;
-	char **devices;
-	GPtrArray *array;
-	guint i;
+	g_autoptr(GError) error = NULL;
+	GPtrArray *ret = NULL;
 
-	g_return_val_if_fail (UP_IS_CLIENT (client), NULL);
-
-	if (up_exported_daemon_call_enumerate_devices_sync (client->priv->proxy,
-							    &devices,
-							    NULL,
-							    &error) == FALSE) {
-		g_warning ("up_client_get_devices failed: %s", error->message);
-		g_error_free (error);
+	ret = up_client_get_devices_full (client, NULL, &error);
+	if (!ret) {
+		if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+			g_warning ("up_client_get_devices failed: %s", error->message);
 		return NULL;
 	}
-
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-
-	for (i = 0; devices[i] != NULL; i++) {
-		UpDevice *device;
-		const char *object_path = devices[i];
-		gboolean ret;
-
-		device = up_device_new ();
-		ret = up_device_set_object_path_sync (device, object_path, NULL, NULL);
-		if (!ret) {
-			g_object_unref (device);
-			continue;
-		}
-
-		g_ptr_array_add (array, device);
-	}
-	g_strfreev (devices);
-
-	return array;
+	return ret;
 }
-
 /**
  * up_client_get_display_device:
  * @client: a #UpClient instance.
