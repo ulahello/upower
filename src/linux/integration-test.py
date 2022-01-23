@@ -194,10 +194,7 @@ class Tests(dbusmock.DBusTestCase):
         env['UMOCKDEV_DIR'] = self.testbed.get_root_dir()
         self.log = tempfile.NamedTemporaryFile()
         if os.getenv('VALGRIND') != None:
-            if self.local_daemon:
-                daemon_path = ['libtool', '--mode=execute', 'valgrind', self.daemon_path, '-v']
-            else:
-                daemon_path = ['valgrind', self.daemon_path, '-v']
+            daemon_path = ['valgrind', self.daemon_path, '-v']
         else:
             daemon_path = [self.daemon_path, '-v']
         self.daemon = subprocess.Popen(daemon_path,
