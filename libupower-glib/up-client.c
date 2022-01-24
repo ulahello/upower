@@ -118,18 +118,15 @@ up_client_get_devices_full (UpClient      *client,
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	for (i = 0; devices[i] != NULL; i++) {
-		UpDevice *device;
+		g_autoptr(UpDevice) device = NULL;
 		const char *object_path = devices[i];
 		gboolean ret;
 
 		device = up_device_new ();
 		ret = up_device_set_object_path_sync (device, object_path, cancellable, NULL);
-		if (!ret) {
-			g_object_unref (device);
+		if (!ret)
 			continue;
-		}
-
-		g_ptr_array_add (array, device);
+		g_ptr_array_add (array, g_steal_pointer (&device));
 	}
 
 	return array;
