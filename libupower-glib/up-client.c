@@ -34,9 +34,8 @@
 #include <stdio.h>
 #include <glib-object.h>
 
-#include "up-client.h"
+#include "upower.h"
 #include "up-daemon-generated.h"
-#include "up-device.h"
 
 static void	up_client_class_init			(UpClientClass	*klass);
 static void	up_client_initable_iface_init		(GInitableIface *iface);
