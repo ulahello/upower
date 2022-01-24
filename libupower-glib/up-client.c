@@ -120,7 +120,7 @@ up_client_get_devices_full (UpClient      *client,
 
 	for (i = 0; devices[i] != NULL; i++) {
 		UpDevice *device;
-		const char *object_path = ((char **)devices)[i];
+		const char *object_path = devices[i];
 		gboolean ret;
 
 		device = up_device_new ();
