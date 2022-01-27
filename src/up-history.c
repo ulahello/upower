@@ -33,7 +33,6 @@
 
 static void	up_history_finalize	(GObject		*object);
 
-#define UP_HISTORY_FILE_HEADER		"PackageKit Profile"
 #define UP_HISTORY_SAVE_INTERVAL	(10*60)		/* seconds */
 #define UP_HISTORY_SAVE_INTERVAL_LOW_POWER	5	/* seconds */
 #define UP_HISTORY_LOW_POWER_PERCENT	10
