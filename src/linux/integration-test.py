@@ -1745,7 +1745,11 @@ class Tests(dbusmock.DBusTestCase):
         device = self.dbus_con.get_object('org.bluez', path)
 
         if device_properties:
-            device.UpdateProperties(DEVICE_IFACE, device_properties)
+            try:
+                # The properties are only installed for umockdev newer than 0.25.0
+                device.UpdateProperties(DEVICE_IFACE, device_properties)
+            except dbus.exceptions.DBusException:
+                device.AddProperties(DEVICE_IFACE, device_properties)
 
         battery_properties = {
             'Percentage': dbus.Byte(battery_level, variant_level=1),
