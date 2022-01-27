@@ -36,6 +36,8 @@ UP = 'org.freedesktop.UPower'
 UP_DEVICE = 'org.freedesktop.UPower.Device'
 UP_DISPLAY_OBJECT_PATH = '/org/freedesktop/UPower/devices/DisplayDevice'
 UP_DAEMON_ACTION_DELAY = 20
+UP_HISTORY_SAVE_INTERVAL = (10*60)
+UP_HISTORY_SAVE_INTERVAL_LOW_POWER = 5
 
 DEVICE_IFACE = 'org.bluez.Device1'
 BATTERY_IFACE = 'org.bluez.Battery1'
@@ -1061,6 +1063,49 @@ class Tests(dbusmock.DBusTestCase):
         self.stop_daemon()
 
         os.unlink(config.name)
+
+    def test_low_battery_changes_history_save_interval(self):
+        '''check that we save the history more quickly on low battery'''
+
+        bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
+                                       ['type', 'Battery',
+                                        'present', '1',
+                                        'status', 'Discharging',
+                                        'energy_full', '60000000',
+                                        'energy_full_design', '80000000',
+                                        'energy_now', '50000000',
+                                        'voltage_now', '12000000'], [])
+
+        self.start_logind()
+        self.start_daemon()
+
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        bat0_up = devs[0]
+
+        self.assertEventually(lambda: self.have_text_in_log(f"saving in {UP_HISTORY_SAVE_INTERVAL} seconds"), timeout=10)
+
+        # simulate that battery has 1% (less than 10%)
+        self.testbed.set_attribute(bat0, 'energy_now', '600000')
+        self.testbed.uevent(bat0, 'change')
+
+        time.sleep(0.5)
+        self.assertEqual(self.get_dbus_display_property('Percentage'), 1)
+
+        self.assertEqual(self.count_text_in_log("saving to disk earlier due to low power"), 1)
+        self.assertEqual(self.count_text_in_log(f"saving in {UP_HISTORY_SAVE_INTERVAL_LOW_POWER} seconds"), 1)
+
+        # simulate that battery was charged to 100% during sleep
+        self.testbed.set_attribute(bat0, 'energy_now', '60000000')
+        self.testbed.uevent(bat0, 'change')
+
+        time.sleep(0.5)
+        self.assertEqual(self.get_dbus_display_property('Percentage'), 100)
+
+        # The 5 seconds were not up yet, and the shorter timeout sticks
+        self.assertEqual(self.count_text_in_log("deferring as earlier timeout is already queued"), 1)
+
+        self.stop_daemon()
 
     def test_no_poll_batteries(self):
         ''' setting NoPollBatteries option should disable polling'''

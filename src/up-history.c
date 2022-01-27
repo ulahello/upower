@@ -35,6 +35,8 @@ static void	up_history_finalize	(GObject		*object);
 
 #define UP_HISTORY_FILE_HEADER		"PackageKit Profile"
 #define UP_HISTORY_SAVE_INTERVAL	(10*60)		/* seconds */
+#define UP_HISTORY_SAVE_INTERVAL_LOW_POWER	5	/* seconds */
+#define UP_HISTORY_LOW_POWER_PERCENT	10
 #define UP_HISTORY_DEFAULT_MAX_DATA_AGE	(7*24*60*60)	/* seconds */
 
 struct UpHistoryPrivate
@@ -49,7 +51,7 @@ struct UpHistoryPrivate
 	GPtrArray		*data_charge;
 	GPtrArray		*data_time_full;
 	GPtrArray		*data_time_empty;
-	guint			 save_id;
+	GSource			*save_source;
 	guint			 max_data_age;
 	gchar			*dir;
 };
@@ -589,7 +591,7 @@ static gboolean
 up_history_schedule_save_cb (UpHistory *history)
 {
 	up_history_save_data (history);
-	history->priv->save_id = 0;
+	g_clear_pointer (&history->priv->save_source, g_source_destroy);
 	return FALSE;
 }
 
@@ -617,7 +619,7 @@ up_history_is_low_power (UpHistory *history)
 		return FALSE;
 
 	/* high enough */
-	if (up_history_item_get_value (item) > 10)
+	if (up_history_item_get_value (item) > UP_HISTORY_LOW_POWER_PERCENT)
 		return FALSE;
 
 	/* we are low power */
@@ -631,26 +633,35 @@ static gboolean
 up_history_schedule_save (UpHistory *history)
 {
 	gboolean ret;
+	gint timeout = UP_HISTORY_SAVE_INTERVAL;
 
 	/* if low power, then don't batch up save requests */
 	ret = up_history_is_low_power (history);
 	if (ret) {
-		g_debug ("saving directly to disk as low power");
-		up_history_save_data (history);
-		return TRUE;
+		g_debug ("saving to disk earlier due to low power");
+		timeout = UP_HISTORY_SAVE_INTERVAL_LOW_POWER;
 	}
 
-	/* we already have one saved */
-	if (history->priv->save_id != 0) {
-		g_debug ("deferring as others queued");
-		return TRUE;
+	/* we already have one saved, clear it if it will fire earlier */
+	if (history->priv->save_source) {
+		guint64 ready = g_source_get_ready_time (history->priv->save_source);
+
+		if (ready > g_source_get_time (history->priv->save_source) + timeout * G_USEC_PER_SEC) {
+			g_clear_pointer (&history->priv->save_source, g_source_destroy);
+		} else {
+			g_debug ("deferring as earlier timeout is already queued");
+			return TRUE;
+		}
 	}
 
-	/* nothing scheduled, do new */
-	g_debug ("saving in %i seconds", UP_HISTORY_SAVE_INTERVAL);
-	history->priv->save_id = g_timeout_add_seconds (UP_HISTORY_SAVE_INTERVAL,
-							(GSourceFunc) up_history_schedule_save_cb, history);
-	g_source_set_name_by_id (history->priv->save_id, "[upower] up_history_schedule_save_cb");
+	/* nothing scheduled */
+	g_debug ("saving in %i seconds", timeout);
+	history->priv->save_source = g_timeout_source_new_seconds (timeout);
+	g_source_set_name (history->priv->save_source, "[upower] up_history_schedule_save_cb");
+	g_source_attach (history->priv->save_source, NULL);
+	g_source_set_callback (history->priv->save_source,
+			       (GSourceFunc) up_history_schedule_save_cb, history,
+			       NULL);
 	return TRUE;
 }
 
@@ -902,8 +913,7 @@ up_history_finalize (GObject *object)
 	history = UP_HISTORY (object);
 
 	/* save */
-	if (history->priv->save_id > 0)
-		g_source_remove (history->priv->save_id);
+	g_clear_pointer (&history->priv->save_source, g_source_destroy);
 	if (history->priv->id != NULL)
 		up_history_save_data (history);
 
