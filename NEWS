@@ -1,3 +1,21 @@
+Version 0.99.14
+---------------
+Released: 2022-02-03
+
+Changes:
+- Port build system to meson
+- New ChargeCycles D-Bus property (#152)
+- New async GLib APIs (#121)
+- lid related functions are now deprecated
+- Refresh API is now deprecated
+
+Bug fixes:
+- Plenty of test suite fixes
+- Fix leak of inhibitor lock (#160)
+- Recognize USB power supplies (#148)
+- Fix time compression of data points (#167)
+- Fix disk write amplification when battery is low (#150)
+
 Version 0.99.13
 ---------------
 Released: 2021-08-17
