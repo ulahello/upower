@@ -90,7 +90,7 @@ endif
 udevrulesdir = get_option('udevrulesdir')
 if udevrulesdir == 'auto'
     udev_dep = dependency('udev', required: true)
-    udevrulesdir = udev_dep.get_pkgconfig_variable('udev_dir')
+    udevrulesdir = udev_dep.get_pkgconfig_variable('udev_dir') / 'rules.d'
 endif
 
 dbusdir = get_option('datadir') / 'dbus-1'
