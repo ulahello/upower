@@ -1,7 +1,12 @@
+version_arr = meson.project_version().split('.')
+major_version = version_arr[0].to_int()
+minor_version = version_arr[1].to_int()
+micro_version = version_arr[2].to_int()
+
 cdata = configuration_data()
-cdata.set('UP_MAJOR_VERSION', meson.project_version()[0])
-cdata.set('UP_MINOR_VERSION', meson.project_version()[1])
-cdata.set('UP_MICRO_VERSION', meson.project_version()[2])
+cdata.set('UP_MAJOR_VERSION', major_version)
+cdata.set('UP_MINOR_VERSION', minor_version)
+cdata.set('UP_MICRO_VERSION', micro_version)
 
 up_version_h = configure_file(
     output: 'up-version.h',
