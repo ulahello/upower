@@ -14,7 +14,8 @@ foreach iface: upowerd_dbus_interfaces
     input: files(dbus_dir / iface + '.xml'),
     output: iface_ref,
     command: [xsltproc, '--output', '@OUTPUT@', spec_to_docbook, '@INPUT@'],
-    # XXX: This appears to be needed so that "ninja -C _build install" works
+    # gnome.gtkdoc dependencies don't work properly
+    # https://github.com/mesonbuild/meson/pull/9960
     build_by_default: get_option('gtk-doc'),
   )
 endforeach
