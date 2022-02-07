@@ -268,6 +268,10 @@ up_device_bluez_update (UpDeviceBluez *bluez,
 				      "percentage", (gdouble) g_variant_get_byte (value),
 				      "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC,
 				      NULL);
+		} else if (g_str_equal (key, "Alias")) {
+			g_object_set (device,
+				      "model", g_variant_get_string (value, NULL),
+				      NULL);
 		} else {
 			char *str = g_variant_print (value, TRUE);
 
