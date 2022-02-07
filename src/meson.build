@@ -6,7 +6,7 @@ upowerd_deps = declare_dependency(
         include_directories('../dbus'),
     ],
     dependencies: [
-        glib_dep, gobject_dep, gio_dep, gio_unix_dep, libupower_glib_dep, upowerd_dbus_dep
+        m_dep, glib_dep, gobject_dep, gio_dep, gio_unix_dep, libupower_glib_dep, upowerd_dbus_dep
     ],
     compile_args: [
         '-DUP_COMPILATION',

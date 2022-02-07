@@ -45,6 +45,7 @@ glib_dep = dependency('glib-2.0', version: '>=' + glib_min_version)
 gobject_dep = dependency('gobject-2.0', version: '>=' + glib_min_version)
 gio_dep = dependency('gio-2.0', version: '>=' + glib_min_version)
 gio_unix_dep = dependency('gio-unix-2.0', version: '>=' + glib_min_version)
+m_dep = cc.find_library('m', required: true)
 
 xsltproc = find_program('xsltproc', required: get_option('gtk-doc') or get_option('man'))
 
