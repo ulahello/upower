@@ -1,3 +1,11 @@
+Version 0.99.15
+---------------
+Released: 2022-02-09
+
+Bug fixes:
+- Various build fixes
+- Update bluetooth device alias when it changes (#169)
+
 Version 0.99.14
 ---------------
 Released: 2022-02-03
