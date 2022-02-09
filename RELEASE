@@ -2,37 +2,32 @@ UPower Release Notes
 
 1. Write NEWS entries for UPower in the same format as usual.
 
-git shortlog UPOWER_0_99_7.. | grep -i -v trivial | grep -v Merge > NEWS.new
+git shortlog v0.99.14.. | grep -i -v trivial | grep -v Merge > NEWS.new
 
 Version 0.99.8
-~~~~~~~~~~~~~~
+--------------
 Released: 2017-xx-xx
 
 New Features:
 Bugfixes:
 
-2. Commit changes to git:
+2. Commit changes to git (bump version in meson.build if needed):
 
-git commit -a -m "Released UPower 0.99.8"
-git tag -s -f -m "Released UPower 0.99.8" UPOWER_0_99_8
-<wait>
-git push --tags
-git push
+git branch -b <user>/v0.99.14
+git commit -a -m "Release 0.99.14"
 
-3. Generate the tarball:
+3. Run tests and try building a tarball
 
 meson dist
 
-4. Upload tarball:
+4. Create an MR and merge it
+5. Tag the release
 
-scp *.tar.* hughsient@annarchy.freedesktop.org:/srv/upower.freedesktop.org/www/releases/
+git fetch origin
+git check master
+git evtag sign v0.99.14
+git push --tags
 
-5. Do post release version bump in configure.ac
+4. Paste the release notes into the tag information
 
-6. Commit changes:
-
-git commit -a -m "trivial: post release version bump"
-git push
-
-7. Send an email to devkit-devel@lists.freedesktop.org
-
+5. Optional: Do a post-release version bump
