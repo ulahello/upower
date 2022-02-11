@@ -79,7 +79,7 @@ static guint signals [SIGNAL_LAST] = { 0 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpBackend, up_backend, G_TYPE_OBJECT)
 
-static gboolean up_backend_device_add (UpBackend *backend, GUdevDevice *native);
+static gboolean up_backend_device_add (UpBackend *backend, GUdevDevice *native, const char *was_event);
 static void up_backend_device_remove (UpBackend *backend, GUdevDevice *native);
 
 static void
@@ -192,7 +192,7 @@ out:
 }
 
 static void
-up_backend_device_changed (UpBackend *backend, GUdevDevice *native)
+up_backend_device_changed (UpBackend *backend, GUdevDevice *native, const char *was_event)
 {
 	GObject *object;
 	UpDevice *device;
@@ -201,8 +201,7 @@ up_backend_device_changed (UpBackend *backend, GUdevDevice *native)
 	/* first, check the device and add it if it doesn't exist */
 	object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 	if (object == NULL) {
-		g_warning ("treating change event as add on %s", g_udev_device_get_sysfs_path (native));
-		up_backend_device_add (backend, native);
+		up_backend_device_add (backend, native, "changed");
 		goto out;
 	}
 
@@ -213,12 +212,16 @@ up_backend_device_changed (UpBackend *backend, GUdevDevice *native)
 		g_debug ("no changes on %s", up_device_get_object_path (device));
 		goto out;
 	}
+
+	if (was_event)
+		g_warning ("treated %s event as change on %s", was_event, g_udev_device_get_sysfs_path (native));
+
 out:
 	g_clear_object (&object);
 }
 
 static gboolean
-up_backend_device_add (UpBackend *backend, GUdevDevice *native)
+up_backend_device_add (UpBackend *backend, GUdevDevice *native, const char *was_event)
 {
 	GObject *object;
 	UpDevice *device;
@@ -229,8 +232,7 @@ up_backend_device_add (UpBackend *backend, GUdevDevice *native)
 	if (object != NULL) {
 		device = UP_DEVICE (object);
 		/* we already have the device; treat as change event */
-		g_warning ("treating add event as change event on %s", up_device_get_object_path (device));
-		up_backend_device_changed (backend, native);
+		up_backend_device_changed (backend, native, "add");
 		goto out;
 	}
 
@@ -240,6 +242,9 @@ up_backend_device_add (UpBackend *backend, GUdevDevice *native)
 		ret = FALSE;
 		goto out;
 	}
+
+	if (was_event)
+		g_warning ("treated %s event as add on %s", was_event, g_udev_device_get_sysfs_path (native));
 
 	/* emit */
 	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, native, device);
@@ -278,13 +283,13 @@ up_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 
 	if (g_strcmp0 (action, "add") == 0) {
 		g_debug ("SYSFS add %s", g_udev_device_get_sysfs_path (device));
-		up_backend_device_add (backend, device);
+		up_backend_device_add (backend, device, NULL);
 	} else if (g_strcmp0 (action, "remove") == 0) {
 		g_debug ("SYSFS remove %s", g_udev_device_get_sysfs_path (device));
 		up_backend_device_remove (backend, device);
 	} else if (g_strcmp0 (action, "change") == 0) {
 		g_debug ("SYSFS change %s", g_udev_device_get_sysfs_path (device));
-		up_backend_device_changed (backend, device);
+		up_backend_device_changed (backend, device, NULL);
 	} else {
 		g_debug ("unhandled action '%s' on %s", action, g_udev_device_get_sysfs_path (device));
 	}
@@ -509,7 +514,7 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 		devices = g_udev_client_query_by_subsystem (backend->priv->gudev_client, subsystems[i]);
 		for (l = devices; l != NULL; l = l->next) {
 			native = l->data;
-			up_backend_device_add (backend, native);
+			up_backend_device_add (backend, native, NULL);
 		}
 		g_list_free_full (devices, (GDestroyNotify) g_object_unref);
 	}
