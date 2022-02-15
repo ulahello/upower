@@ -24,6 +24,6 @@ upshared += { 'linux': static_library('upshared',
         idevice_sources
     ],
     c_args: [ '-DG_LOG_DOMAIN="UPower-Linux"' ],
-    dependencies: [ gudev_dep, upowerd_deps, idevice_dep ],
+    dependencies: [ gudev_dep, upowerd_deps, idevice_dep, plist_dep ],
     build_by_default: false,
 )}
