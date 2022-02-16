@@ -46,9 +46,6 @@ struct UpDaemonPrivate
 	GHashTable		*idle_signals;
 	int			 critical_action_lock_fd;
 
-	/* Properties */
-	UpDeviceLevel		 warning_level;
-
 	/* Display battery properties */
 	UpDevice		*display_device;
 	UpDeviceKind		 kind;
@@ -601,20 +598,23 @@ take_action_timeout_cb (UpDaemon *daemon)
 void
 up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 {
-	UpDaemonPrivate *priv = daemon->priv;
+	UpDeviceLevel old_level;
 
-	if (priv->warning_level == warning_level)
+	g_object_get (G_OBJECT (daemon->priv->display_device),
+		      "warning-level", &old_level,
+		      NULL);
+
+	if (old_level == warning_level)
 		return;
 
 	g_debug ("warning_level = %s", up_device_level_to_string (warning_level));
-	priv->warning_level = warning_level;
 
 	g_object_set (G_OBJECT (daemon->priv->display_device),
 		      "warning-level", warning_level,
 		      "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC,
 		      NULL);
 
-	if (daemon->priv->warning_level == UP_DEVICE_LEVEL_ACTION) {
+	if (warning_level == UP_DEVICE_LEVEL_ACTION) {
 		if (daemon->priv->action_timeout_id == 0) {
 			g_debug ("About to take action in %d seconds", UP_DAEMON_ACTION_DELAY);
 			daemon->priv->critical_action_lock_fd = up_backend_inhibitor_lock_take (daemon->priv->backend, "Execute critical action", "block");

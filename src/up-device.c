@@ -40,6 +40,7 @@ struct UpDevicePrivate
 	UpHistory		*history;
 	GObject			*native;
 	gboolean		 has_ever_refresh;
+	gboolean                 is_display_device;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDevice, up_device, UP_TYPE_EXPORTED_DEVICE_SKELETON)
@@ -166,11 +167,13 @@ up_device_notify (GObject *object, GParamSpec *pspec)
 		update_icon_name (device);
 	} else if (g_strcmp0 (pspec->name, "power-supply") == 0 ||
 		   g_strcmp0 (pspec->name, "time-to-empty") == 0) {
-		update_warning_level (device);
+		if (!device->priv->is_display_device)
+			update_warning_level (device);
 	} else if (g_strcmp0 (pspec->name, "state") == 0 ||
 		   g_strcmp0 (pspec->name, "percentage") == 0 ||
 		   g_strcmp0 (pspec->name, "battery-level") == 0) {
-		update_warning_level (device);
+		if (!device->priv->is_display_device)
+			update_warning_level (device);
 		update_icon_name (device);
 	} else if (g_strcmp0 (pspec->name, "update-time") == 0) {
 		update_history (device);
@@ -611,6 +614,7 @@ up_device_register_display_device (UpDevice *device,
 	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 
 	device->priv->daemon = g_object_ref (daemon);
+	device->priv->is_display_device = TRUE;
 	object_path = g_build_filename (UP_DEVICES_DBUS_PATH, "DisplayDevice", NULL);
 	up_device_export_skeleton (device, object_path);
 	g_free (object_path);
