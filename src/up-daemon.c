@@ -73,6 +73,7 @@ struct UpDaemonPrivate
 static void	up_daemon_finalize		(GObject	*object);
 static gboolean	up_daemon_get_on_battery_local	(UpDaemon	*daemon);
 static UpDeviceLevel up_daemon_get_warning_level_local(UpDaemon	*daemon);
+static void	up_daemon_update_warning_level	(UpDaemon	*daemon);
 static gboolean	up_daemon_get_on_ac_local 	(UpDaemon	*daemon);
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDaemon, up_daemon, UP_TYPE_EXPORTED_DAEMON_SKELETON)
@@ -478,8 +479,6 @@ up_daemon_startup (UpDaemon *daemon,
 		   GDBusConnection *connection)
 {
 	gboolean ret;
-	gboolean on_battery;
-	UpDeviceLevel warning_level;
 	UpDaemonPrivate *priv = daemon->priv;
 
 	/* register on bus */
@@ -499,12 +498,7 @@ up_daemon_startup (UpDaemon *daemon,
 	}
 
 	/* get battery state */
-	on_battery = (up_daemon_get_on_battery_local (daemon) &&
-		      !up_daemon_get_on_ac_local (daemon));
-	warning_level = up_daemon_get_warning_level_local (daemon);
-	up_daemon_set_on_battery (daemon, on_battery);
-	up_daemon_set_warning_level (daemon, warning_level);
-
+	up_daemon_update_warning_level (daemon);
 	g_debug ("daemon now not coldplug");
 
 out:
