@@ -72,7 +72,7 @@ struct UpDaemonPrivate
 
 static void	up_daemon_finalize		(GObject	*object);
 static gboolean	up_daemon_get_on_battery_local	(UpDaemon	*daemon);
-static gboolean	up_daemon_get_warning_level_local(UpDaemon	*daemon);
+static UpDeviceLevel up_daemon_get_warning_level_local(UpDaemon	*daemon);
 static gboolean	up_daemon_get_on_ac_local 	(UpDaemon	*daemon);
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDaemon, up_daemon, UP_TYPE_EXPORTED_DAEMON_SKELETON)
@@ -300,7 +300,7 @@ out:
  *
  * As soon as _all_ batteries are low, this is true
  **/
-static gboolean
+static UpDeviceLevel
 up_daemon_get_warning_level_local (UpDaemon *daemon)
 {
 	up_daemon_update_display_battery (daemon);
