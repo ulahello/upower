@@ -1032,6 +1032,7 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
 		g_warning ("INTERNAL STATE CORRUPT (device-added): not sending NULL, native:%p, device:%p", native, device);
 		return;
 	}
+	up_daemon_update_warning_level (daemon);
 	up_exported_daemon_emit_device_added (UP_EXPORTED_DAEMON (daemon), object_path);
 }
 
