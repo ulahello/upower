@@ -190,7 +190,7 @@ up_client_get_devices_async (UpClient            *client,
 			     GAsyncReadyCallback  callback,
 			     gpointer             user_data)
 {
-	GTask *task;
+	g_autoptr(GTask) task = NULL;
 
 	task = g_task_new (client, cancellable, callback, user_data);
 	g_task_set_source_tag (task, (gpointer) G_STRFUNC);
