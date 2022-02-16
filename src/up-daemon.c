@@ -703,7 +703,6 @@ static void
 up_daemon_update_warning_level (UpDaemon *daemon)
 {
 	gboolean ret;
-	UpDaemonPrivate *priv = daemon->priv;
 	UpDeviceLevel warning_level;
 
 	/* Check if the on_battery and warning_level state has changed */
@@ -711,8 +710,7 @@ up_daemon_update_warning_level (UpDaemon *daemon)
 	up_daemon_set_on_battery (daemon, ret);
 
 	warning_level = up_daemon_get_warning_level_local (daemon);
-	if (warning_level != priv->warning_level)
-		up_daemon_set_warning_level (daemon, warning_level);
+	up_daemon_set_warning_level (daemon, warning_level);
 }
 
 const gchar *
