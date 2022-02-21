@@ -62,6 +62,9 @@ update_warning_level (UpDevice *device)
 	UpDeviceLevel warning_level, battery_level;
 	UpExportedDevice *skeleton = UP_EXPORTED_DEVICE (device);
 
+	if (device->priv->is_display_device)
+		return;
+
 	/* If the battery level is available, and is critical,
 	 * we need to fallback to calculations to get the warning
 	 * level, as that might be "action" at this point */
@@ -167,13 +170,11 @@ up_device_notify (GObject *object, GParamSpec *pspec)
 		update_icon_name (device);
 	} else if (g_strcmp0 (pspec->name, "power-supply") == 0 ||
 		   g_strcmp0 (pspec->name, "time-to-empty") == 0) {
-		if (!device->priv->is_display_device)
-			update_warning_level (device);
+		update_warning_level (device);
 	} else if (g_strcmp0 (pspec->name, "state") == 0 ||
 		   g_strcmp0 (pspec->name, "percentage") == 0 ||
 		   g_strcmp0 (pspec->name, "battery-level") == 0) {
-		if (!device->priv->is_display_device)
-			update_warning_level (device);
+		update_warning_level (device);
 		update_icon_name (device);
 	} else if (g_strcmp0 (pspec->name, "update-time") == 0) {
 		update_history (device);
