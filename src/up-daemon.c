@@ -628,7 +628,7 @@ up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 	} else {
 		if (daemon->priv->action_timeout_id > 0) {
 			g_debug ("Removing timeout as action level changed");
-			g_source_remove (daemon->priv->action_timeout_id);
+			g_clear_handle_id (&daemon->priv->action_timeout_id, g_source_remove);
 		}
 
 		if (daemon->priv->critical_action_lock_fd >= 0) {
@@ -1189,8 +1189,7 @@ up_daemon_finalize (GObject *object)
 	UpDaemon *daemon = UP_DAEMON (object);
 	UpDaemonPrivate *priv = daemon->priv;
 
-	if (priv->action_timeout_id != 0)
-		g_source_remove (priv->action_timeout_id);
+	g_clear_handle_id (&priv->action_timeout_id, g_source_remove);
 
 	if (priv->critical_action_lock_fd >= 0) {
 		close (priv->critical_action_lock_fd);
