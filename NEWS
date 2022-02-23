@@ -1,3 +1,15 @@
+Version 0.99.16
+---------------
+Released: 2022-02-23
+
+Bug fixes:
+- Silence unnecessary udev event warnings
+- Increase test timeout (#171)
+- Explicitly link with plist
+- Fix UpClient reference leak
+- Fix DisplayDevice state on battery hotplug
+- Fix critical action to work after it was cancelled (#172)
+
 Version 0.99.15
 ---------------
 Released: 2022-02-09
