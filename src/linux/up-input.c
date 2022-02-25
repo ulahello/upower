@@ -37,7 +37,6 @@ struct _UpInput
 
 	guint			 watched_switch;
 	int			 last_switch_state;
-	int			 eventfp;
 	struct input_event	 event;
 	gsize			 offset;
 	GIOChannel		*channel;
@@ -192,6 +191,7 @@ up_input_coldplug (UpInput *input, GUdevDevice *d)
 	glong bitmask[NBITS(SW_MAX)];
 	gint num_bits;
 	GIOStatus status;
+	int eventfd;
 
 	/* get sysfs path */
 	native_path = up_input_get_device_sysfs_path (d);
@@ -243,23 +243,25 @@ up_input_coldplug (UpInput *input, GUdevDevice *d)
 	}
 
 	/* open device file */
-	input->eventfp = open (device_file, O_RDONLY | O_NONBLOCK);
-	if (input->eventfp <= 0) {
+	eventfd = open (device_file, O_RDONLY | O_NONBLOCK);
+	if (eventfd < 0) {
 		g_warning ("cannot open '%s': %s", device_file, strerror (errno));
 		ret = FALSE;
 		goto out;
 	}
 
 	/* get initial state */
-	if (ioctl (input->eventfp, EVIOCGSW(sizeof (bitmask)), bitmask) < 0) {
+	if (ioctl (eventfd, EVIOCGSW(sizeof (bitmask)), bitmask) < 0) {
 		g_warning ("ioctl EVIOCGSW on %s failed", native_path);
+		close(eventfd);
 		ret = FALSE;
 		goto out;
 	}
 
 	/* create channel */
-	g_debug ("watching %s (%i)", device_file, input->eventfp);
-	input->channel = g_io_channel_unix_new (input->eventfp);
+	g_debug ("watching %s (%i)", device_file, eventfd);
+	input->channel = g_io_channel_unix_new (eventfd);
+	g_io_channel_set_close_on_unref (input->channel, TRUE);
 
 	/* set binary encoding */
 	status = g_io_channel_set_encoding (input->channel, NULL, &error);
@@ -290,7 +292,6 @@ out:
 static void
 up_input_init (UpInput *input)
 {
-	input->eventfp = -1;
 	input->last_switch_state = -1;
 }
 
@@ -309,11 +310,8 @@ up_input_finalize (GObject *object)
 
 	if (input->channel) {
 		g_io_channel_shutdown (input->channel, FALSE, NULL);
-		input->eventfp = -1;
 		g_io_channel_unref (input->channel);
 	}
-	if (input->eventfp >= 0)
-		close (input->eventfp);
 	G_OBJECT_CLASS (up_input_parent_class)->finalize (object);
 }
 
