@@ -746,9 +746,9 @@ up_backend_prepare_for_sleep (GDBusConnection *connection,
 
 	if (will_sleep) {
 		up_daemon_pause_poll (backend->priv->daemon);
-		if (backend->priv->logind_delay_inhibitor_fd > 0) {
+		if (backend->priv->logind_delay_inhibitor_fd >= 0) {
 			close (backend->priv->logind_delay_inhibitor_fd);
-			backend->priv->logind_delay_inhibitor_fd = 0;
+			backend->priv->logind_delay_inhibitor_fd = -1;
 		}
 		return;
 	}
