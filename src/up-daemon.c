@@ -616,6 +616,8 @@ up_daemon_set_warning_level (UpDaemon *daemon, UpDeviceLevel warning_level)
 
 	if (warning_level == UP_DEVICE_LEVEL_ACTION) {
 		if (daemon->priv->action_timeout_id == 0) {
+			g_assert (daemon->priv->critical_action_lock_fd == -1);
+
 			g_debug ("About to take action in %d seconds", UP_DAEMON_ACTION_DELAY);
 			daemon->priv->critical_action_lock_fd = up_backend_inhibitor_lock_take (daemon->priv->backend, "Execute critical action", "block");
 			daemon->priv->action_timeout_id = g_timeout_add_seconds (UP_DAEMON_ACTION_DELAY,
@@ -1120,6 +1122,8 @@ static void
 up_daemon_init (UpDaemon *daemon)
 {
 	daemon->priv = up_daemon_get_instance_private (daemon);
+
+	daemon->priv->critical_action_lock_fd = -1;
 	daemon->priv->config = up_config_new ();
 	daemon->priv->power_devices = up_device_list_new ();
 	daemon->priv->display_device = up_device_new ();
