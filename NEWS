@@ -1,3 +1,10 @@
+Version 0.99.17
+---------------
+Released: 2022-03-09
+
+Bug fixes:
+- Fix FD handling issues that may cause lid to not be detected
+
 Version 0.99.16
 ---------------
 Released: 2022-02-23
