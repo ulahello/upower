@@ -80,7 +80,6 @@
     <xi:include href="xml/up-device.xml"/>
     <xi:include href="xml/up-history-item.xml"/>
     <xi:include href="xml/up-stats-item.xml"/>
-    <xi:include href="xml/up-wakeup-item.xml"/>
   </reference>
 
   <reference id="libupower-glib-helpers">

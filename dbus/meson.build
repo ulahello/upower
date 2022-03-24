@@ -3,7 +3,6 @@ upowerd_dbus_interfaces = [
     [ 'daemon', 'org.freedesktop.UPower', 'Daemon' ],
     [ 'device', 'org.freedesktop.UPower.Device', 'Device' ],
     [ 'kbd-backlight', 'org.freedesktop.UPower.KbdBacklight', 'KbdBacklight' ],
-    [ 'wakeups', 'org.freedesktop.UPower.Wakeups', 'Wakeups' ],
 ]
 
 upowerd_dbus_headers = []

@@ -25,7 +25,6 @@
       <arg><option>--monitor</option></arg>
       <arg><option>--show-info</option></arg>
       <arg><option>--version</option></arg>
-      <arg><option>--wakeups</option></arg>
       <arg><option>--help</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>

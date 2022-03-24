@@ -21,8 +21,6 @@
            send_interface="org.freedesktop.DBus.Properties"/>
     <allow send_destination="org.freedesktop.UPower.KbdBacklight"
            send_interface="org.freedesktop.DBus.Properties"/>
-    <allow send_destination="org.freedesktop.UPower.Wakeups"
-           send_interface="org.freedesktop.DBus.Properties"/>
 
     <allow send_destination="org.freedesktop.UPower"
            send_interface="org.freedesktop.UPower"/>
@@ -30,7 +28,5 @@
            send_interface="org.freedesktop.UPower.Device"/>
     <allow send_destination="org.freedesktop.UPower"
            send_interface="org.freedesktop.UPower.KbdBacklight"/>
-    <allow send_destination="org.freedesktop.UPower"
-	   send_interface="org.freedesktop.UPower.Wakeups"/>
   </policy>
 </busconfig>

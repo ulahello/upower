@@ -32,8 +32,6 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(UpClient, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(UpDevice, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(UpHistoryItem, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(UpStatsItem, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(UpWakeupItem, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(UpWakeups, g_object_unref)
 
 #endif
 

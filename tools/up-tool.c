@@ -182,62 +182,6 @@ up_tool_do_monitor (UpClient *client)
 }
 
 /**
- * up_tool_print_wakeup_item:
- **/
-static void
-up_tool_print_wakeup_item (UpWakeupItem *item)
-{
-	g_print ("userspace:%i id:%i, interrupts:%.1f, cmdline:%s, details:%s\n",
-		 up_wakeup_item_get_is_userspace (item),
-		 up_wakeup_item_get_id (item),
-		 up_wakeup_item_get_value (item),
-		 up_wakeup_item_get_cmdline (item),
-		 up_wakeup_item_get_details (item));
-}
-
-/**
- * up_tool_show_wakeups:
- **/
-static gboolean
-up_tool_show_wakeups (void)
-{
-	guint i;
-	gboolean ret;
-	UpWakeups *wakeups;
-	UpWakeupItem *item;
-	guint total;
-	GPtrArray *array;
-
-	/* create new object */
-	wakeups = up_wakeups_new ();
-
-	/* do we have support? */
-	ret = up_wakeups_get_has_capability (wakeups);
-	if (!ret) {
-		g_print ("No wakeup capability\n");
-		goto out;
-	}
-
-	/* get total */
-	total = up_wakeups_get_total_sync (wakeups, NULL, NULL);
-	g_print ("Total wakeups per minute: %i\n", total);
-
-	/* get data */
-	array = up_wakeups_get_data_sync (wakeups, NULL, NULL);
-	if (array == NULL)
-		goto out;
-	g_print ("Wakeup sources:\n");
-	for (i=0; i<array->len; i++) {
-		item = g_ptr_array_index (array, i);
-		up_tool_print_wakeup_item (item);
-	}
-	g_ptr_array_unref (array);
-out:
-	g_object_unref (wakeups);
-	return ret;
-}
-
-/**
  * main:
  **/
 int
@@ -247,7 +191,6 @@ main (int argc, char **argv)
 	guint i;
 	GOptionContext *context;
 	gboolean opt_dump = FALSE;
-	gboolean opt_wakeups = FALSE;
 	gboolean opt_enumerate = FALSE;
 	gboolean opt_monitor = FALSE;
 	gchar *opt_show_info = FALSE;
@@ -262,7 +205,6 @@ main (int argc, char **argv)
 	const GOptionEntry entries[] = {
 		{ "enumerate", 'e', 0, G_OPTION_ARG_NONE, &opt_enumerate, _("Enumerate objects paths for devices"), NULL },
 		{ "dump", 'd', 0, G_OPTION_ARG_NONE, &opt_dump, _("Dump all parameters for all objects"), NULL },
-		{ "wakeups", 'w', 0, G_OPTION_ARG_NONE, &opt_wakeups, _("Get the wakeup data"), NULL },
 		{ "monitor", 'm', 0, G_OPTION_ARG_NONE, &opt_monitor, _("Monitor activity from the power daemon"), NULL },
 		{ "monitor-detail", 0, 0, G_OPTION_ARG_NONE, &opt_monitor_detail, _("Monitor with detail"), NULL },
 		{ "show-info", 'i', 0, G_OPTION_ARG_STRING, &opt_show_info, _("Show information about object path"), NULL },
@@ -298,13 +240,6 @@ main (int argc, char **argv)
 			 PACKAGE_VERSION, daemon_version);
 		g_free (daemon_version);
 		retval = 0;
-		goto out;
-	}
-
-	/* wakeups */
-	if (opt_wakeups) {
-		up_tool_show_wakeups ();
-		retval = EXIT_SUCCESS;
 		goto out;
 	}
 

@@ -39,8 +39,6 @@
 #include <libupower-glib/up-device.h>
 #include <libupower-glib/up-history-item.h>
 #include <libupower-glib/up-stats-item.h>
-#include <libupower-glib/up-wakeup-item.h>
-#include <libupower-glib/up-wakeups.h>
 
 #include <libupower-glib/up-autocleanups.h>
 

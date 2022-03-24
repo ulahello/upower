@@ -33,7 +33,6 @@
 #include "up-device-list.h"
 #include "up-history.h"
 #include "up-native.h"
-#include "up-wakeups.h"
 
 gchar *history_dir = NULL;
 
@@ -275,18 +274,6 @@ up_test_history_func (void)
 	rmdir (history_dir);
 }
 
-static void
-up_test_wakeups_func (void)
-{
-	UpWakeups *wakeups;
-
-	wakeups = up_wakeups_new ();
-	g_assert (wakeups != NULL);
-
-	/* unref */
-	g_object_unref (wakeups);
-}
-
 int
 main (int argc, char **argv)
 {
@@ -303,7 +290,6 @@ main (int argc, char **argv)
 	g_test_add_func ("/power/device_list", up_test_device_list_func);
 	g_test_add_func ("/power/history", up_test_history_func);
 	g_test_add_func ("/power/native", up_test_native_func);
-	g_test_add_func ("/power/wakeups", up_test_wakeups_func);
 	g_test_add_func ("/power/daemon", up_test_daemon_func);
 
 	return g_test_run ();

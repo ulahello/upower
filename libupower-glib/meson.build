@@ -19,10 +19,8 @@ libupower_glib_headers = [
     'up-autocleanups.h',
     'up-types.h',
     'up-device.h',
-    'up-wakeup-item.h',
     'up-stats-item.h',
     'up-history-item.h',
-    'up-wakeups.h',
     'up-client.h',
     up_version_h,
 ]
@@ -30,8 +28,6 @@ libupower_glib_headers = [
 libupower_glib_sources = [
     'up-types.c',
     'up-client.c',
-    'up-wakeups.c',
-    'up-wakeup-item.c',
     'up-stats-item.c',
     'up-history-item.c',
     'up-device.c',
