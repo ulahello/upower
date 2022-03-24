@@ -23,13 +23,7 @@ variables:
     python3-pip
     python3-packaging
     git
-  # Make this explicit for check-abi, as it still builds the old version using "make"
-  AUTOTOOLS_DEPENDENCIES:
-    libtool
-    autoconf
-    automake
-    make
-  LAST_ABI_BREAK: "e294444496e8bbcd91a3605874f59562e14c34ec"
+  LAST_ABI_BREAK: "9058d45685d1c7c08d52fb64c393fed9eeed542b"
 
 build_stable:
   before_script:
@@ -55,7 +49,7 @@ build_stable:
 
 check_abi:
   before_script:
-    - dnf update -y --nogpgcheck && dnf install -y --nogpgcheck $DEPENDENCIES $AUTOTOOLS_DEPENDENCIES
+    - dnf update -y --nogpgcheck && dnf install -y --nogpgcheck $DEPENDENCIES
   script:
     - curl https://gitlab.freedesktop.org/hadess/check-abi/-/raw/main/contrib/check-abi-fedora.sh | bash
-    - check-abi --suppr .ci/upower.suppr --old-parameters="--with-idevice --disable-tests --disable-static --disable-gtk-doc" --new-parameters="-Dman=false -Dgtk-doc=false -Didevice=enabled"  ${LAST_ABI_BREAK} $(git rev-parse HEAD)
+    - check-abi --suppr .ci/upower.suppr --parameters="-Dman=false -Dgtk-doc=false -Didevice=enabled"  ${LAST_ABI_BREAK} $(git rev-parse HEAD)
