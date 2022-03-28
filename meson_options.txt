@@ -14,6 +14,10 @@ option('udevrulesdir',
        type : 'string',
        value: 'auto',
        description : 'Directory for udev rules')
+option('udevhwdbdir',
+       type : 'string',
+       value: 'auto',
+       description : 'Directory for udev hwdb')
 option('historydir',
        type : 'string',
        description : 'Directory for upower history files will be stored')

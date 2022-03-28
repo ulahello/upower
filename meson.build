@@ -94,6 +94,12 @@ if udevrulesdir == 'auto'
     udevrulesdir = udev_dep.get_pkgconfig_variable('udev_dir') / 'rules.d'
 endif
 
+udevhwdbdir = get_option('udevhwdbdir')
+if udevhwdbdir == 'auto'
+    udev_dep = dependency('udev', required: true)
+    udevhwdbdir = udev_dep.get_pkgconfig_variable('udev_dir') / 'hwdb.d'
+endif
+
 dbusdir = get_option('datadir') / 'dbus-1'
 systemdsystemunitdir = get_option('systemdsystemunitdir')
 if systemdsystemunitdir == ''
