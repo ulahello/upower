@@ -144,7 +144,7 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 		/* no valid TTY object */
 		g_clear_object (&device);
 
-	} else if (g_strcmp0 (subsys, "usb") == 0 || g_strcmp0 (subsys, "usbmisc") == 0) {
+	} else if (g_strcmp0 (subsys, "usbmisc") == 0) {
 
 #ifdef HAVE_IDEVICE
 		/* see if this is an iDevice */
@@ -496,8 +496,8 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 	GList *devices;
 	GList *l;
 	guint i;
-	const gchar *subsystems_wup[] = {"power_supply", "usb", "usbmisc", "tty", "input", NULL};
-	const gchar *subsystems[] = {"power_supply", "usb", "usbmisc", "input", NULL};
+	const gchar *subsystems_wup[] = {"power_supply", "usbmisc", "tty", "input", NULL};
+	const gchar *subsystems[] = {"power_supply", "usbmisc", "input", NULL};
 
 	backend->priv->daemon = g_object_ref (daemon);
 	backend->priv->device_list = up_daemon_get_device_list (daemon);

@@ -842,7 +842,7 @@ class Tests(dbusmock.DBusTestCase):
         '''UPS properties without AC'''
 
         # add a charging UPS
-        ups0 = self.testbed.add_device('usb', 'hiddev0', None, [],
+        ups0 = self.testbed.add_device('usbmisc', 'hiddev0', None, [],
                                        ['DEVNAME', 'null', 'UPOWER_VENDOR', 'APC',
                                         'UPOWER_BATTERY_TYPE', 'ups',
                                         'UPOWER_FAKE_DEVICE', '1',
@@ -893,7 +893,7 @@ class Tests(dbusmock.DBusTestCase):
         '''UPS properties with offline AC'''
 
         # add low charge UPS
-        ups0 = self.testbed.add_device('usb', 'hiddev0', None, [],
+        ups0 = self.testbed.add_device('usbmisc', 'hiddev0', None, [],
                                        ['DEVNAME', 'null', 'UPOWER_VENDOR', 'APC',
                                         'UPOWER_BATTERY_TYPE', 'ups',
                                         'UPOWER_FAKE_DEVICE', '1',
