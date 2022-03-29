@@ -50,12 +50,6 @@ enum {
 /* number of old energy values to keep cached */
 #define UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH		4
 
-typedef enum {
-	REFRESH_RESULT_FAILURE = 0,
-	REFRESH_RESULT_SUCCESS = 1,
-	REFRESH_RESULT_NO_DATA
-} RefreshResult;
-
 struct UpDeviceSupplyPrivate
 {
 	guint			 poll_timer_id;
@@ -81,7 +75,7 @@ static void		 up_device_supply_setup_unknown_poll	(UpDevice      *device,
 static UpDeviceKind	 up_device_supply_guess_type		(GUdevDevice *native,
 								 const char *native_path);
 
-static RefreshResult
+static gboolean
 up_device_supply_refresh_line_power (UpDeviceSupply *supply)
 {
 	UpDevice *device = UP_DEVICE (supply);
@@ -98,7 +92,7 @@ up_device_supply_refresh_line_power (UpDeviceSupply *supply)
 		      "online", g_udev_device_get_sysfs_attr_as_int_uncached (native, "online"),
 		      NULL);
 
-	return REFRESH_RESULT_SUCCESS;
+	return TRUE;
 }
 
 /**
@@ -545,7 +539,7 @@ sysfs_get_capacity_level (GUdevDevice   *native,
 	return ret;
 }
 
-static RefreshResult
+static gboolean
 up_device_supply_refresh_battery (UpDeviceSupply *supply,
 				  UpDeviceState  *out_state)
 {
@@ -885,7 +879,7 @@ out:
 	g_free (manufacturer);
 	g_free (model_name);
 	g_free (serial_number);
-	return REFRESH_RESULT_SUCCESS;
+	return TRUE;
 }
 
 static GUdevDevice *
@@ -939,7 +933,7 @@ up_device_supply_get_sibling_with_subsystem (GUdevDevice *device,
 	return sibling;
 }
 
-static RefreshResult
+static gboolean
 up_device_supply_refresh_device (UpDeviceSupply *supply,
 				 UpDeviceState  *out_state)
 {
@@ -1011,7 +1005,7 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 		state = UP_DEVICE_STATE_UNKNOWN;
 		g_object_set (device, "state", state, NULL);
 		*out_state = state;
-		return REFRESH_RESULT_NO_DATA;
+		return FALSE;
 	}
 
 	state = up_device_supply_get_state (native);
@@ -1035,7 +1029,7 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 
 	*out_state = state;
 
-	return REFRESH_RESULT_SUCCESS;
+	return TRUE;
 }
 
 static gboolean
@@ -1121,7 +1115,6 @@ up_device_supply_coldplug (UpDevice *device)
 	const gchar *native_path;
 	const gchar *scope;
 	UpDeviceKind type;
-	RefreshResult ret;
 
 	up_device_supply_reset_values (supply);
 
@@ -1176,8 +1169,9 @@ up_device_supply_coldplug (UpDevice *device)
 		up_daemon_start_poll (G_OBJECT (device), (GSourceFunc) up_device_supply_refresh);
 
 	/* coldplug values */
-	ret = up_device_supply_refresh (device);
-	return (ret != REFRESH_RESULT_FAILURE);
+	up_device_supply_refresh (device);
+
+	return TRUE;
 }
 
 /**
@@ -1226,27 +1220,27 @@ up_device_supply_disable_unknown_poll (UpDevice *device)
 static gboolean
 up_device_supply_refresh (UpDevice *device)
 {
-	RefreshResult ret;
+	gboolean updated;
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
 	UpDeviceKind type;
 	UpDeviceState state;
 
 	g_object_get (device, "type", &type, NULL);
 	if (type == UP_DEVICE_KIND_LINE_POWER) {
-		ret = up_device_supply_refresh_line_power (supply);
+		updated = up_device_supply_refresh_line_power (supply);
 	} else if (type == UP_DEVICE_KIND_BATTERY &&
 		   supply->priv->is_power_supply) {
 		up_device_supply_disable_unknown_poll (device);
-		ret = up_device_supply_refresh_battery (supply, &state);
+		updated = up_device_supply_refresh_battery (supply, &state);
 	} else {
-		ret = up_device_supply_refresh_device (supply, &state);
+		updated = up_device_supply_refresh_device (supply, &state);
 	}
 
 	/* reset time if we got new data */
-	if (ret == REFRESH_RESULT_SUCCESS)
+	if (updated)
 		g_object_set (device, "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC, NULL);
 
-	return (ret != REFRESH_RESULT_FAILURE);
+	return updated;
 }
 
 /**
