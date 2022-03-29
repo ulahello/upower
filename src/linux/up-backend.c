@@ -496,15 +496,18 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 	GList *devices;
 	GList *l;
 	guint i;
+	const gchar **subsystems;
+	const gchar *subsystems_no_wup[] = {"power_supply", "usbmisc", "input", NULL};
 	const gchar *subsystems_wup[] = {"power_supply", "usbmisc", "tty", "input", NULL};
-	const gchar *subsystems[] = {"power_supply", "usbmisc", "input", NULL};
 
 	backend->priv->daemon = g_object_ref (daemon);
 	backend->priv->device_list = up_daemon_get_device_list (daemon);
 	if (up_config_get_boolean (backend->priv->config, "EnableWattsUpPro"))
-		backend->priv->gudev_client = g_udev_client_new (subsystems_wup);
+		subsystems = subsystems_wup;
 	else
-		backend->priv->gudev_client = g_udev_client_new (subsystems);
+		subsystems = subsystems_no_wup;
+
+	backend->priv->gudev_client = g_udev_client_new (subsystems);
 	g_signal_connect (backend->priv->gudev_client, "uevent",
 			  G_CALLBACK (up_backend_uevent_signal_handler_cb), backend);
 
