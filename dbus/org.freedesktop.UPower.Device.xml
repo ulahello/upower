@@ -146,7 +146,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
             Refreshes the data collected from the power source.
           </doc:para>
         </doc:description>
-        <doc:permission>Callers need the org.freedesktop.upower.refresh-power-source authorization</doc:permission>
+        <doc:permission>Callers will need to make sure that the daemon was started in debug mode</doc:permission>
         <doc:errors>
           <doc:error name="&ERROR_GENERAL;">if an error occured while refreshing</doc:error>
         </doc:errors>

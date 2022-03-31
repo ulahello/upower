@@ -408,7 +408,8 @@ up_device_to_text (UpDevice *device)
  * @error: a #GError, or %NULL.
  *
  * Refreshes properties on the device.
- * This function is normally not required.
+ * This function is normally not required and will only return without
+ * an error if the daemon was started in debug mode.
  *
  * Return value: #TRUE for success, else #FALSE and @error is used
  *

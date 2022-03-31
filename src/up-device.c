@@ -401,6 +401,21 @@ up_device_register_device (UpDevice *device)
 }
 
 /**
+ * up_device_refresh:
+ *
+ * Return %TRUE on success, %FALSE if we failed to refresh or no data
+ **/
+static gboolean
+up_device_refresh (UpExportedDevice *skeleton,
+		   GDBusMethodInvocation *invocation,
+		   UpDevice *device)
+{
+	up_device_refresh_internal (device);
+	up_exported_device_complete_refresh (skeleton, invocation);
+	return TRUE;
+}
+
+/**
  * up_device_coldplug:
  *
  * Return %TRUE on success, %FALSE if we failed to get data and should be removed
@@ -416,6 +431,9 @@ up_device_coldplug (UpDevice *device)
 	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 
 	native_path = up_native_get_native_path (device->priv->native);
+	if (up_daemon_get_debug (device->priv->daemon))
+		g_signal_connect (device, "handle-refresh",
+				  G_CALLBACK (up_device_refresh), device);
 	up_exported_device_set_native_path (UP_EXPORTED_DEVICE (device), native_path);
 
 	/* coldplug source */
@@ -582,21 +600,6 @@ out:
 }
 
 /**
- * up_device_refresh:
- *
- * Return %TRUE on success, %FALSE if we failed to refresh or no data
- **/
-static gboolean
-up_device_refresh (UpExportedDevice *skeleton,
-		   GDBusMethodInvocation *invocation,
-		   UpDevice *device)
-{
-	up_device_refresh_internal (device);
-	up_exported_device_complete_refresh (skeleton, invocation);
-	return TRUE;
-}
-
-/**
  * up_device_register_display_device:
  **/
 gboolean
@@ -685,8 +688,6 @@ up_device_init (UpDevice *device)
 			  G_CALLBACK (up_device_get_history), device);
 	g_signal_connect (device, "handle-get-statistics",
 			  G_CALLBACK (up_device_get_statistics), device);
-	g_signal_connect (device, "handle-refresh",
-			  G_CALLBACK (up_device_refresh), device);
 }
 
 /**
