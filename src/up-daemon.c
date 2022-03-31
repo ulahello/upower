@@ -38,6 +38,7 @@
 struct UpDaemonPrivate
 {
 	UpConfig		*config;
+	gboolean		 debug;
 	UpBackend		*backend;
 	UpDeviceList		*power_devices;
 	guint			 action_timeout_id;
@@ -1003,6 +1004,19 @@ up_daemon_resume_poll (UpDaemon *daemon)
 	}
 
 	daemon->priv->poll_paused = FALSE;
+}
+
+void
+up_daemon_set_debug (UpDaemon *daemon,
+		     gboolean  debug)
+{
+	daemon->priv->debug = debug;
+}
+
+gboolean
+up_daemon_get_debug (UpDaemon *daemon)
+{
+	return daemon->priv->debug;
 }
 
 /**

@@ -169,6 +169,7 @@ main (gint argc, gchar **argv)
 	gboolean timed_exit = FALSE;
 	gboolean immediate_exit = FALSE;
 	guint timer_id = 0;
+	gboolean debug = FALSE;
 	gboolean verbose = FALSE;
 	UpState *state;
 	GBusNameOwnerFlags bus_flags;
@@ -185,6 +186,8 @@ main (gint argc, gchar **argv)
 		  _("Replace the old daemon"), NULL},
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
 		  _("Show extra debugging information"), NULL },
+		{ "debug", 'd', 0, G_OPTION_ARG_NONE, &debug,
+		  _("Enable debugging (implies --verbose)"), NULL },
 		{ NULL}
 	};
 
@@ -201,6 +204,9 @@ main (gint argc, gchar **argv)
 		return 1;
 	}
 	g_option_context_free (context);
+
+	if (debug)
+		verbose = TRUE;
 
 	/* verbose? */
 	if (verbose) {
@@ -233,6 +239,7 @@ main (gint argc, gchar **argv)
 
 	/* initialize state */
 	state = up_state_new ();
+	up_daemon_set_debug (state->daemon, debug);
 
 	/* do stuff on ctrl-c */
 	g_unix_signal_add_full (G_PRIORITY_DEFAULT,

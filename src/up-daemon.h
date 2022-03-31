@@ -92,6 +92,9 @@ void		 up_daemon_start_poll		(GObject		*object,
 void		 up_daemon_stop_poll		(GObject		*object);
 void             up_daemon_pause_poll           (UpDaemon               *daemon);
 void             up_daemon_resume_poll          (UpDaemon               *daemon);
+void		 up_daemon_set_debug		(UpDaemon		*daemon,
+						 gboolean		 debug);
+gboolean	 up_daemon_get_debug		(UpDaemon		*daemon);
 
 G_END_DECLS
 
