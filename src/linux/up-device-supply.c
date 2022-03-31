@@ -1281,15 +1281,23 @@ up_device_supply_finalize (GObject *object)
 	supply = UP_DEVICE_SUPPLY (object);
 	g_return_if_fail (supply->priv != NULL);
 
+	g_free (supply->priv->energy_old);
+	g_free (supply->priv->energy_old_timespec);
+
+	G_OBJECT_CLASS (up_device_supply_parent_class)->finalize (object);
+}
+
+static void
+up_device_supply_dispose (GObject *object)
+{
+	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (object);
+
 	up_daemon_stop_poll (object);
 
 	if (supply->priv->poll_timer_id > 0)
 		g_source_remove (supply->priv->poll_timer_id);
 
-	g_free (supply->priv->energy_old);
-	g_free (supply->priv->energy_old_timespec);
-
-	G_OBJECT_CLASS (up_device_supply_parent_class)->finalize (object);
+	G_OBJECT_CLASS (up_device_supply_parent_class)->dispose (object);
 }
 
 static void
@@ -1336,6 +1344,7 @@ up_device_supply_class_init (UpDeviceSupplyClass *klass)
 	UpDeviceClass *device_class = UP_DEVICE_CLASS (klass);
 
 	object_class->finalize = up_device_supply_finalize;
+	object_class->dispose = up_device_supply_dispose;
 	object_class->set_property = up_device_supply_set_property;
 	object_class->get_property = up_device_supply_get_property;
 	device_class->get_on_battery = up_device_supply_get_on_battery;

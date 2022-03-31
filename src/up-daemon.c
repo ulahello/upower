@@ -517,7 +517,7 @@ up_daemon_shutdown (UpDaemon *daemon)
 	up_device_list_clear (daemon->priv->power_devices, TRUE);
 
 	/* release UpDaemon reference */
-	up_device_unplug (daemon->priv->display_device);
+	g_object_run_dispose (G_OBJECT (daemon->priv->display_device));
 }
 
 /**

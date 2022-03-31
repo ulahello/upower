@@ -449,19 +449,6 @@ bail:
 }
 
 /**
- * up_device_unplug:
- *
- * Initiates destruction of %UpDevice, undoing the effects of
- * up_device_coldplug.
- */
-void
-up_device_unplug (UpDevice *device)
-{
-	/* break circular dependency */
-	g_clear_object (&device->priv->daemon);
-}
-
-/**
  * up_device_get_statistics:
  **/
 static gboolean
@@ -716,6 +703,14 @@ up_device_finalize (GObject *object)
 	G_OBJECT_CLASS (up_device_parent_class)->finalize (object);
 }
 
+static void
+up_device_dispose (GObject *object)
+{
+	g_clear_object (&UP_DEVICE (object)->priv->daemon);
+
+	G_OBJECT_CLASS (up_device_parent_class)->dispose (object);
+}
+
 /**
  * up_device_class_init:
  **/
@@ -725,6 +720,7 @@ up_device_class_init (UpDeviceClass *klass)
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->notify = up_device_notify;
 	object_class->finalize = up_device_finalize;
+	object_class->dispose = up_device_dispose;
 }
 
 /**

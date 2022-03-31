@@ -389,13 +389,20 @@ up_device_idevice_finalize (GObject *object)
 		idevice->priv->start_id = 0;
 	}
 
-	up_daemon_stop_poll (object);
 	if (idevice->priv->client != NULL)
 		lockdownd_client_free (idevice->priv->client);
 	if (idevice->priv->dev != NULL)
 		idevice_free (idevice->priv->dev);
 
 	G_OBJECT_CLASS (up_device_idevice_parent_class)->finalize (object);
+}
+
+static void
+up_device_idevice_dispose (GObject *object)
+{
+	up_daemon_stop_poll (object);
+
+	G_OBJECT_CLASS (up_device_idevice_parent_class)->dispose (object);
 }
 
 /**
@@ -408,6 +415,7 @@ up_device_idevice_class_init (UpDeviceIdeviceClass *klass)
 	UpDeviceClass *device_class = UP_DEVICE_CLASS (klass);
 
 	object_class->finalize = up_device_idevice_finalize;
+	object_class->dispose = up_device_idevice_dispose;
 	device_class->coldplug = up_device_idevice_coldplug;
 	device_class->refresh = up_device_idevice_refresh;
 }
