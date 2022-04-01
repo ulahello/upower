@@ -64,6 +64,32 @@ build:
     paths: [$(pwd)]
     expire_in: 3h30min
 
+
+# Compile test the other backends (they don't have extra dependencies currently)
+.build_backend_template: &build_backend
+  stage: build
+  script:
+    - CFLAGS=-DUPOWER_CI_DISABLE_PLATFORM_CODE=1 meson _build -Dos_backend=$backend
+    - ninja -C _build
+  except:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule"
+
+build_dummy:
+  variables:
+    backend: dummy
+  <<: *build_backend
+
+build_freebsd:
+  variables:
+    backend: freebsd
+  <<: *build_backend
+
+build_openbsd:
+  variables:
+    backend: openbsd
+  <<: *build_backend
+
 test:
   stage: test
   dependencies:
