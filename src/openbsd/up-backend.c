@@ -24,6 +24,8 @@
 #include "up-backend.h"
 #include "up-daemon.h"
 #include "up-device.h"
+#include "up-config.h"
+#include "up-backend-bsd-private.h"
 #include <string.h> /* strcmp() */
 
 static void	up_backend_class_init	(UpBackendClass	*klass);
@@ -270,6 +272,9 @@ up_backend_update_battery_state(UpDevice* device)
 		"is-present", &is_present,
 		(void*) NULL);
 
+	// zero out new_time_to empty if we're not discharging or minutes_left is negative
+	new_time_to_empty = (new_state == UP_DEVICE_STATE_DISCHARGING && a.minutes_left > 0 ? a.minutes_left : 0);
+
 	/* XXX use acpibat0.raw0 if available */
 	/*
 	 * XXX: Stop having a split brain regarding
@@ -284,11 +289,12 @@ up_backend_update_battery_state(UpDevice* device)
 	 * If we're on AC, we may either be charging, or the battery is already
 	 * fully charged. Figure out which.
 	 */
-	if (a.ac_state == APM_AC_ON)
+	if (a.ac_state == APM_AC_ON) {
 		if ((gdouble) a.battery_life >= 99.0)
 			new_state = UP_DEVICE_STATE_FULLY_CHARGED;
 		else
 			new_state = UP_DEVICE_STATE_CHARGING;
+	}
 
 	if ((a.battery_state == APM_BATTERY_ABSENT) ||
 	    (a.battery_state == APM_BATT_UNKNOWN)) {
@@ -309,9 +315,6 @@ up_backend_update_battery_state(UpDevice* device)
 	} else {
 		is_present = TRUE;
 	}
-
-	// zero out new_time_to empty if we're not discharging or minutes_left is negative
-	new_time_to_empty = (new_state == UP_DEVICE_STATE_DISCHARGING && a.minutes_left > 0 ? a.minutes_left : 0);
 
 	if (cur_state != new_state ||
 		percentage != (gdouble) a.battery_life ||
@@ -617,7 +620,7 @@ up_backend_init (UpBackend *backend)
 		device_class->get_online = up_apm_device_get_online;
 		device_class->refresh = up_apm_device_refresh;
 		/* creates thread */
-		if((backend->priv->apm_thread = (GThread*) g_thread_try_new("apm-poller",(GThreadFunc)up_backend_apm_event_thread, (void*) backend, &err) == NULL))
+		if((backend->priv->apm_thread = (GThread*) g_thread_try_new("apm-poller",(GThreadFunc)up_backend_apm_event_thread, (void*) backend, &err)) == NULL)
 		{
 			g_warning("Thread create failed: %s", err->message);
 			g_error_free (err);
