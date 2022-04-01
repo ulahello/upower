@@ -424,8 +424,11 @@ up_device_idevice_class_init (UpDeviceIdeviceClass *klass)
  * up_device_idevice_new:
  **/
 UpDeviceIdevice *
-up_device_idevice_new (void)
+up_device_idevice_new (UpDaemon	*daemon,
+                       GObject	*native)
 {
-	return g_object_new (UP_TYPE_DEVICE_IDEVICE, NULL);
+	return UP_DEVICE_IDEVICE (g_object_new (UP_TYPE_DEVICE_IDEVICE,
+	                                        "daemon", daemon,
+	                                        "native", native,
+	                                        NULL));
 }
-

@@ -1009,17 +1009,16 @@ up_daemon_resume_poll (UpDaemon *daemon)
  * up_daemon_device_added_cb:
  **/
 static void
-up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device, UpDaemon *daemon)
+up_daemon_device_added_cb (UpBackend *backend, UpDevice *device, UpDaemon *daemon)
 {
 	const gchar *object_path;
 	UpDaemonPrivate *priv = daemon->priv;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 	g_return_if_fail (UP_IS_DEVICE (device));
-	g_return_if_fail (G_IS_OBJECT (native));
 
 	/* add to device list */
-	up_device_list_insert (priv->power_devices, native, G_OBJECT (device));
+	up_device_list_insert (priv->power_devices, up_device_get_native (device), G_OBJECT (device));
 
 	/* connect, so we get changes */
 	g_signal_connect (device, "notify",
@@ -1031,7 +1030,7 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
 
 	/* don't crash the session */
 	if (object_path == NULL) {
-		g_warning ("INTERNAL STATE CORRUPT (device-added): not sending NULL, native:%p, device:%p", native, device);
+		g_warning ("INTERNAL STATE CORRUPT (device-added): not sending NULL, device:%p", device);
 		return;
 	}
 	up_daemon_update_warning_level (daemon);
@@ -1042,14 +1041,13 @@ up_daemon_device_added_cb (UpBackend *backend, GObject *native, UpDevice *device
  * up_daemon_device_removed_cb:
  **/
 static void
-up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *device, UpDaemon *daemon)
+up_daemon_device_removed_cb (UpBackend *backend, UpDevice *device, UpDaemon *daemon)
 {
 	const gchar *object_path;
 	UpDaemonPrivate *priv = daemon->priv;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 	g_return_if_fail (UP_IS_DEVICE (device));
-	g_return_if_fail (G_IS_OBJECT (native));
 
 	/* remove from list */
 	up_device_list_remove (priv->power_devices, G_OBJECT(device));
@@ -1060,7 +1058,7 @@ up_daemon_device_removed_cb (UpBackend *backend, GObject *native, UpDevice *devi
 
 	/* don't crash the session */
 	if (object_path == NULL) {
-		g_warning ("INTERNAL STATE CORRUPT (device-removed): not sending NULL, native:%p, device:%p", native, device);
+		g_warning ("INTERNAL STATE CORRUPT (device-removed): not sending NULL, device:%p", device);
 		return;
 	}
 	up_exported_daemon_emit_device_removed (UP_EXPORTED_DAEMON (daemon), object_path);
@@ -1126,7 +1124,7 @@ up_daemon_init (UpDaemon *daemon)
 	daemon->priv->critical_action_lock_fd = -1;
 	daemon->priv->config = up_config_new ();
 	daemon->priv->power_devices = up_device_list_new ();
-	daemon->priv->display_device = up_device_new ();
+	daemon->priv->display_device = up_device_new (daemon, NULL);
 
 	daemon->priv->use_percentage_for_policy = up_config_get_boolean (daemon->priv->config, "UsePercentageForPolicy");
 	load_percentage_policy (daemon, FALSE);

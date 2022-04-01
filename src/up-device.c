@@ -37,13 +37,23 @@
 struct UpDevicePrivate
 {
 	UpDaemon		*daemon;
-	UpHistory		*history;
 	GObject			*native;
+
+	UpHistory		*history;
 	gboolean		 has_ever_refresh;
 	gboolean                 is_display_device;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDevice, up_device, UP_TYPE_EXPORTED_DEVICE_SKELETON)
+
+enum {
+  PROP_0,
+  PROP_DAEMON,
+  PROP_NATIVE,
+  N_PROPS
+};
+
+static GParamSpec *properties[N_PROPS];
 
 #define UP_DEVICES_DBUS_PATH "/org/freedesktop/UPower/devices"
 
@@ -396,7 +406,7 @@ up_device_register_device (UpDevice *device)
  * Return %TRUE on success, %FALSE if we failed to get data and should be removed
  **/
 gboolean
-up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
+up_device_coldplug (UpDevice *device)
 {
 	gboolean ret;
 	const gchar *native_path;
@@ -405,11 +415,7 @@ up_device_coldplug (UpDevice *device, UpDaemon *daemon, GObject *native)
 
 	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 
-	/* save */
-	device->priv->native = g_object_ref (native);
-	device->priv->daemon = g_object_ref (daemon);
-
-	native_path = up_native_get_native_path (native);
+	native_path = up_native_get_native_path (device->priv->native);
 	up_exported_device_set_native_path (UP_EXPORTED_DEVICE (device), native_path);
 
 	/* coldplug source */
@@ -711,6 +717,30 @@ up_device_dispose (GObject *object)
 	G_OBJECT_CLASS (up_device_parent_class)->dispose (object);
 }
 
+static void
+up_device_set_property (GObject      *object,
+                        guint         prop_id,
+                        const GValue *value,
+                        GParamSpec   *pspec)
+{
+	UpDevice *device = UP_DEVICE (object);
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
+
+	switch (prop_id)
+	{
+	case PROP_DAEMON:
+		priv->daemon = g_value_dup_object (value);
+		break;
+
+	case PROP_NATIVE:
+		priv->native = g_value_dup_object (value);
+		break;
+
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+	}
+}
+
 /**
  * up_device_class_init:
  **/
@@ -718,16 +748,39 @@ static void
 up_device_class_init (UpDeviceClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
 	object_class->notify = up_device_notify;
 	object_class->finalize = up_device_finalize;
 	object_class->dispose = up_device_dispose;
+
+	object_class->set_property = up_device_set_property;
+
+	properties[PROP_DAEMON] =
+		g_param_spec_object ("daemon",
+		                     "UpDaemon",
+		                     "UpDaemon reference",
+		                     UP_TYPE_DAEMON,
+		                     G_PARAM_STATIC_STRINGS | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY);
+
+	properties[PROP_NATIVE] =
+		g_param_spec_object ("native",
+		                     "Native",
+		                     "Native Object",
+		                     G_TYPE_OBJECT,
+		                     G_PARAM_STATIC_STRINGS | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY);
+
+	g_object_class_install_properties (object_class, N_PROPS, properties);
 }
 
 /**
  * up_device_new:
  **/
 UpDevice *
-up_device_new (void)
+up_device_new (UpDaemon	*daemon,
+               GObject	*native)
 {
-	return UP_DEVICE (g_object_new (UP_TYPE_DEVICE, NULL));
+	return UP_DEVICE (g_object_new (UP_TYPE_DEVICE,
+	                                "daemon", daemon,
+	                                "native", native,
+	                                NULL));
 }

@@ -518,8 +518,11 @@ up_device_hid_class_init (UpDeviceHidClass *klass)
  * up_device_hid_new:
  **/
 UpDeviceHid *
-up_device_hid_new (void)
+up_device_hid_new (UpDaemon	*daemon,
+                   GObject	*native)
 {
-	return g_object_new (UP_TYPE_DEVICE_HID, NULL);
+	return UP_DEVICE_HID (g_object_new (UP_TYPE_DEVICE_HID,
+	                                    "daemon", daemon,
+	                                    "native", native,
+	                                    NULL));
 }
-

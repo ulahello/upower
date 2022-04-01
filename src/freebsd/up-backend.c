@@ -185,8 +185,8 @@ up_backend_create_new_device (UpBackend *backend, UpAcpiNative *native)
 	UpDevice *device;
 	gboolean ret;
 
-	device = UP_DEVICE (up_device_supply_new ());
-	ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+	device = UP_DEVICE (up_device_supply_new (backend->priv->daemon, G_OBJECT (native)));
+	ret = up_device_coldplug (device);
 	if (!ret)
 		g_object_unref (device);
 	else {
@@ -209,7 +209,7 @@ up_backend_create_new_device (UpBackend *backend, UpAcpiNative *native)
 			}
 		}
 
-		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, native, device);
+		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
 	}
 
 	return ret;
@@ -395,13 +395,13 @@ up_backend_class_init (UpBackendClass *klass)
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpBackendClass, device_added),
 			      NULL, NULL, NULL,
-			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
+			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
 	signals [SIGNAL_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpBackendClass, device_removed),
 			      NULL, NULL, NULL,
-			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
+			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
 }
 
 /**

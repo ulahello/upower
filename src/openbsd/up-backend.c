@@ -125,24 +125,20 @@ up_apm_device_get_online (UpDevice *device, gboolean * online)
 gboolean
 up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 {
-	UpApmNative *acnative = NULL;
-	UpApmNative *battnative = NULL;
 	backend->priv->daemon = g_object_ref (daemon);
 
 	if (backend->priv->is_laptop)
 	{
 		up_backend_update_lid_status(daemon);
-		acnative = up_apm_native_new("/ac");
-		if (!up_device_coldplug (backend->priv->ac, backend->priv->daemon, G_OBJECT(acnative)))
+		if (!up_device_coldplug (backend->priv->ac))
 			g_warning ("failed to coldplug ac");
 		else
-			g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, acnative, backend->priv->ac);
+			g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, backend->priv->ac);
 
-		battnative = up_apm_native_new("/batt");
-		if (!up_device_coldplug (backend->priv->battery, backend->priv->daemon, G_OBJECT(battnative)))
+		if (!up_device_coldplug (backend->priv->battery))
 			g_warning ("failed to coldplug battery");
 		else
-			g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, battnative, backend->priv->battery);
+			g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, backend->priv->battery);
 	}
 
 	return TRUE;
@@ -576,13 +572,13 @@ up_backend_class_init (UpBackendClass *klass)
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpBackendClass, device_added),
 			      NULL, NULL, NULL,
-			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
+			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
 	signals [SIGNAL_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpBackendClass, device_removed),
 			      NULL, NULL, NULL,
-			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
+			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
 }
 
 /**
@@ -600,8 +596,18 @@ up_backend_init (UpBackend *backend)
 	g_debug("is_laptop:%d",backend->priv->is_laptop);
 	if (backend->priv->is_laptop)
 	{
-		backend->priv->ac = UP_DEVICE(up_device_new());
-		backend->priv->battery = UP_DEVICE(up_device_new ());
+		UpApmNative *acnative = NULL;
+		UpApmNative *battnative = NULL;
+
+		acnative = up_apm_native_new("/ac");
+		battnative = up_apm_native_new("/batt");
+
+		backend->priv->ac = UP_DEVICE(up_device_new (backend->priv->daemon, G_OBJECT(acnative)));
+		backend->priv->battery = UP_DEVICE(up_device_new (backend->priv->daemon, G_OBJECT(battnative)));
+
+		g_object_unref (acnative);
+		g_object_unref (battnative);
+
 		device_class = UP_DEVICE_GET_CLASS (backend->priv->battery);
 		device_class->get_on_battery = up_apm_device_get_on_battery;
 		device_class->get_online = up_apm_device_get_online;

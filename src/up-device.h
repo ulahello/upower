@@ -57,11 +57,10 @@ typedef struct
 } UpDeviceClass;
 
 GType		 up_device_get_type		(void);
-UpDevice	*up_device_new			(void);
-
-gboolean	 up_device_coldplug		(UpDevice	*device,
-						 UpDaemon	*daemon,
+UpDevice	*up_device_new			(UpDaemon	*daemon,
 						 GObject	*native);
+
+gboolean	 up_device_coldplug		(UpDevice	*device);
 gboolean	 up_device_register_display_device (UpDevice	*device,
 						    UpDaemon	*daemon);
 UpDaemon	*up_device_get_daemon		(UpDevice	*device);

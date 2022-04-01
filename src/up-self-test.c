@@ -76,7 +76,7 @@ up_test_device_func (void)
 {
 	UpDevice *device;
 
-	device = up_device_new ();
+	device = up_device_new (NULL, NULL);
 	g_assert (device != NULL);
 
 	/* unref */

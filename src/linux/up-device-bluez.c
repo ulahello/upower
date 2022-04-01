@@ -291,8 +291,11 @@ up_device_bluez_class_init (UpDeviceBluezClass *klass)
 }
 
 UpDeviceBluez *
-up_device_bluez_new (void)
+up_device_bluez_new (UpDaemon	*daemon,
+                     GObject	*native)
 {
-	return g_object_new (UP_TYPE_DEVICE_BLUEZ, NULL);
+	return UP_DEVICE_BLUEZ (g_object_new (UP_TYPE_DEVICE_BLUEZ,
+	                                      "daemon", daemon,
+	                                      "native", native,
+	                                      NULL));
 }
-

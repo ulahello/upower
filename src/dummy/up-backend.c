@@ -91,7 +91,7 @@ up_backend_add_cb (UpBackend *backend)
 	}
 
 	/* emit */
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, backend->priv->native, backend->priv->device);
+	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, backend->priv->device);
 
 	/* setup poll */
 	timer_id = g_timeout_add_seconds (2, (GSourceFunc) up_backend_changed_time_cb, backend);
@@ -202,13 +202,13 @@ up_backend_class_init (UpBackendClass *klass)
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpBackendClass, device_added),
 			      NULL, NULL, NULL,
-			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
+			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
 	signals [SIGNAL_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpBackendClass, device_removed),
 			      NULL, NULL, NULL,
-			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
+			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
 }
 
 /**

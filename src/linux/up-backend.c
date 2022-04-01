@@ -122,11 +122,11 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 	if (g_strcmp0 (subsys, "power_supply") == 0) {
 
 		/* are we a valid power supply */
-		device = UP_DEVICE (up_device_supply_new ());
+		device = UP_DEVICE (up_device_supply_new (backend->priv->daemon, G_OBJECT (native)));
 		g_object_set (G_OBJECT(device),
 			      "ignore-system-percentage", GPOINTER_TO_INT (is_macbook (NULL)),
 			      NULL);
-		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+		ret = up_device_coldplug (device);
 		if (ret)
 			goto out;
 
@@ -136,8 +136,8 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 	} else if (g_strcmp0 (subsys, "tty") == 0) {
 
 		/* see if this is a Watts Up Pro device */
-		device = UP_DEVICE (up_device_wup_new ());
-		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+		device = UP_DEVICE (up_device_wup_new (backend->priv->daemon, G_OBJECT (native)));
+		ret = up_device_coldplug (device);
 		if (ret)
 			goto out;
 
@@ -148,16 +148,16 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 
 #ifdef HAVE_IDEVICE
 		/* see if this is an iDevice */
-		device = UP_DEVICE (up_device_idevice_new ());
-		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+		device = UP_DEVICE (up_device_idevice_new (backend->priv->daemon, G_OBJECT (native)));
+		ret = up_device_coldplug (device);
 		if (ret)
 			goto out;
 		g_object_unref (device);
 #endif /* HAVE_IDEVICE */
 
 		/* try to detect a HID UPS */
-		device = UP_DEVICE (up_device_hid_new ());
-		ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (native));
+		device = UP_DEVICE (up_device_hid_new (backend->priv->daemon, G_OBJECT (native)));
+		ret = up_device_coldplug (device);
 		if (ret)
 			goto out;
 
@@ -247,7 +247,7 @@ up_backend_device_add (UpBackend *backend, GUdevDevice *native, const char *was_
 		g_warning ("treated %s event as add on %s", was_event, g_udev_device_get_sysfs_path (native));
 
 	/* emit */
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, native, device);
+	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
 out:
 	g_clear_object (&object);
 	return ret;
@@ -269,7 +269,7 @@ up_backend_device_remove (UpBackend *backend, GUdevDevice *native)
 	device = UP_DEVICE (object);
 	/* emit */
 	g_debug ("emitting device-removed: %s", g_udev_device_get_sysfs_path (native));
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, native, device);
+	g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, device);
 
 out:
 	g_clear_object (&object);
@@ -358,7 +358,7 @@ bluez_interface_removed (GDBusObjectManager *manager,
 		return;
 
 	g_debug ("emitting device-removed: %s", g_dbus_object_get_object_path (bus_object));
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, bus_object, UP_DEVICE (object));
+	g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, UP_DEVICE (object));
 
 	g_object_unref (object);
 }
@@ -383,15 +383,15 @@ bluez_interface_added (GDBusObjectManager *manager,
 		return;
 	}
 
-	device = UP_DEVICE (up_device_bluez_new ());
-	ret = up_device_coldplug (device, backend->priv->daemon, G_OBJECT (bus_object));
+	device = UP_DEVICE (up_device_bluez_new (backend->priv->daemon, G_OBJECT (bus_object)));
+	ret = up_device_coldplug (device);
 	if (!ret) {
 		g_object_unref (device);
 		return;
 	}
 
 	g_debug ("emitting device-added: %s", g_dbus_object_get_object_path (bus_object));
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, bus_object, device);
+	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
 }
 
 static void
@@ -470,7 +470,7 @@ bluez_vanished (GDBusConnection *connection,
 
 			object = G_DBUS_OBJECT (up_device_get_native (device));
 			g_debug ("emitting device-removed: %s", g_dbus_object_get_object_path (object));
-			g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, object, UP_DEVICE (object));
+			g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, UP_DEVICE (object));
 		}
 	}
 
@@ -785,13 +785,13 @@ up_backend_class_init (UpBackendClass *klass)
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpBackendClass, device_added),
 			      NULL, NULL, NULL,
-			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
+			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
 	signals [SIGNAL_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpBackendClass, device_removed),
 			      NULL, NULL, NULL,
-			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
+			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
 }
 
 static void

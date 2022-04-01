@@ -465,8 +465,11 @@ up_device_wup_class_init (UpDeviceWupClass *klass)
  * up_device_wup_new:
  **/
 UpDeviceWup *
-up_device_wup_new (void)
+up_device_wup_new (UpDaemon	*daemon,
+                   GObject	*native)
 {
-	return g_object_new (UP_TYPE_DEVICE_WUP, NULL);
+	return UP_DEVICE_WUP (g_object_new (UP_TYPE_DEVICE_WUP,
+	                                    "daemon", daemon,
+	                                    "native", native,
+	                                    NULL));
 }
-

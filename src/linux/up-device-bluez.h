@@ -46,7 +46,8 @@ typedef struct
 } UpDeviceBluezClass;
 
 GType		 up_device_bluez_get_type		(void);
-UpDeviceBluez	*up_device_bluez_new			(void);
+UpDeviceBluez	*up_device_bluez_new			(UpDaemon	*daemon,
+							 GObject	*native);
 void		 up_device_bluez_update			(UpDeviceBluez *bluez,
 							 GVariant      *properties);
 

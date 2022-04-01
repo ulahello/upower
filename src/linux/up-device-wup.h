@@ -47,7 +47,8 @@ typedef struct
 } UpDeviceWupClass;
 
 GType		 up_device_wup_get_type		(void);
-UpDeviceWup	*up_device_wup_new			(void);
+UpDeviceWup	*up_device_wup_new		(UpDaemon	*daemon,
+						 GObject	*native);
 
 G_END_DECLS
 

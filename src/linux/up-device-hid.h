@@ -47,7 +47,8 @@ typedef struct
 } UpDeviceHidClass;
 
 GType		 up_device_hid_get_type		(void);
-UpDeviceHid	*up_device_hid_new			(void);
+UpDeviceHid	*up_device_hid_new		(UpDaemon	*daemon,
+						 GObject	*native);
 
 G_END_DECLS
 

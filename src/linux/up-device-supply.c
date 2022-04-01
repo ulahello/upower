@@ -1363,8 +1363,11 @@ up_device_supply_class_init (UpDeviceSupplyClass *klass)
  * up_device_supply_new:
  **/
 UpDeviceSupply *
-up_device_supply_new (void)
+up_device_supply_new (UpDaemon	*daemon,
+                      GObject	*native)
 {
-	return g_object_new (UP_TYPE_DEVICE_SUPPLY, NULL);
+	return UP_DEVICE_SUPPLY (g_object_new (UP_TYPE_DEVICE_SUPPLY,
+	                                       "daemon", daemon,
+	                                       "native", native,
+	                                       NULL));
 }
-
