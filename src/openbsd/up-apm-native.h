@@ -27,11 +27,14 @@
 #include <fcntl.h> /* open() */
 /* kevent() */
 #include <sys/types.h>
+#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
 #include <sys/event.h>
+#endif
 #include <sys/time.h>
 #include <sys/ioctl.h> /* ioctl() */
 /* APM macros */
 
+#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
 #include <machine/apmvar.h>
 
 /* sensor struct defs */
@@ -40,6 +43,27 @@
 /* sysctl() */
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#else
+struct sensordev { };
+struct apm_power_info {
+	enum {
+		APM_BATT_HIGH,
+		APM_BATT_LOW,
+		APM_BATT_CRITICAL,
+		APM_BATT_CHARGING,
+		APM_BATT_UNKNOWN,
+		APM_BATTERY_ABSENT,
+	} battery_state;
+	enum {
+		APM_AC_OFF,
+		APM_AC_ON,
+		APM_AC_BACKUP,
+		APM_AC_UNKNOWN,
+	} ac_state;
+	int battery_life;
+	int minutes_left;
+};
+#endif
 
 #include <glib.h>
 #include <glib-object.h>

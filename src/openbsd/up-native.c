@@ -89,6 +89,7 @@ up_native_get_native_path (GObject *object)
 gboolean
 up_native_is_laptop()
 {
+#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
 	struct apm_power_info bstate;
 	struct sensordev acpiac;
 
@@ -98,6 +99,9 @@ up_native_is_laptop()
 	if (-1 == ioctl(up_apm_get_fd(), APM_IOC_GETPOWER, &bstate))
 		g_error("ioctl on apm fd failed : %s", g_strerror(errno));
 	return bstate.ac_state != APM_AC_UNKNOWN;
+#else
+	return TRUE;
+#endif
 }
 
 /**
@@ -107,6 +111,7 @@ up_native_is_laptop()
 gboolean
 up_native_get_sensordev(const char * id, struct sensordev * snsrdev)
 {
+#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
 	int devn;
 	size_t sdlen = sizeof(struct sensordev);
 	int mib[] = {CTL_HW, HW_SENSORS, 0, 0 ,0};
@@ -122,5 +127,6 @@ up_native_get_sensordev(const char * id, struct sensordev * snsrdev)
 		if (!strcmp(snsrdev->xname, id))
 			return TRUE;
 	}
+#endif
 	return FALSE;
 }

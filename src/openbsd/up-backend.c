@@ -202,10 +202,12 @@ up_backend_apm_get_power_info(struct apm_power_info *bstate) {
 	bstate->battery_life = 0;
 	bstate->minutes_left = -1;
 
+#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
 	if (-1 == ioctl(up_apm_get_fd(), APM_IOC_GETPOWER, bstate)) {
 		g_error("ioctl on apm fd failed : %s", g_strerror(errno));
 		return FALSE;
 	}
+#endif
 	return TRUE;
 }
 
@@ -337,6 +339,7 @@ up_backend_update_battery_state(UpDevice* device)
 static void
 up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 {
+#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
 	enum sensor_type type;
 	int numt;
 	gdouble bst_volt, bst_rate, bif_cap, bif_lastfullcap, bst_cap, bif_lowcap, capacity;
@@ -397,6 +400,7 @@ up_backend_update_acpibat_state(UpDevice* device, struct sensordev s)
 		"voltage", bst_volt,
 		"capacity", capacity,
 		(void*) NULL);
+#endif
 }
 
 /* callback updating the device */
@@ -443,7 +447,7 @@ up_apm_device_refresh(UpDevice* device)
  */
 static void
 up_backend_update_lid_status(UpDaemon *daemon) {
-
+#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
 	/* Use hw.sensors.acpibtn0.indicator0=On (lid open) */
 	struct sensordev sensordev;
 	struct sensor sensor;
@@ -500,12 +504,14 @@ up_backend_update_lid_status(UpDaemon *daemon) {
 
 	up_daemon_set_lid_is_present (daemon, lid_found);
 	up_daemon_set_lid_is_closed (daemon, !lid_open);
+#endif
 }
 
 /* thread doing kqueue() on apm device */
 static gpointer
 up_backend_apm_event_thread(gpointer object)
 {
+#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
 	int kq, nevents;
 	struct kevent ev;
 	struct timespec ts = {600, 0}, sts = {0, 0};
@@ -541,6 +547,7 @@ up_backend_apm_event_thread(gpointer object)
 			g_idle_add((GSourceFunc) up_backend_apm_powerchange_event_cb, backend);
 		}
 	}
+#endif
 	return NULL;
 	/* shouldnt be reached ? */
 }

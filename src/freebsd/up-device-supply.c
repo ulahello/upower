@@ -29,7 +29,9 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
 #include <dev/acpica/acpiio.h>
+#endif
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -155,6 +157,7 @@ up_device_supply_battery_coldplug (UpDevice *device, UpAcpiNative *native)
 static gboolean
 up_device_supply_battery_set_properties (UpDevice *device, UpAcpiNative *native)
 {
+#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
 	gint fd;
 	gdouble volt, dvolt, rate, lastfull, cap, dcap, lcap, capacity;
 	gboolean is_present;
@@ -317,6 +320,9 @@ up_device_supply_battery_set_properties (UpDevice *device, UpAcpiNative *native)
 end:
 	close (fd);
 	return ret;
+#else
+	return FALSE;
+#endif
 }
 
 /**
@@ -327,10 +333,12 @@ up_device_supply_acline_set_properties (UpDevice *device)
 {
 	int acstate;
 
+#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
 	if (up_get_int_sysctl (&acstate, NULL, "hw.acpi.acline")) {
 		g_object_set (device, "online", acstate ? TRUE : FALSE, NULL);
 		return TRUE;
 	}
+#endif
 
 	return FALSE;
 }
