@@ -1,6 +1,13 @@
-image: fedora:rawhide
+include:
+  - project: 'freedesktop/ci-templates'
+    ref: master
+    file: '/templates/fedora.yml'
 
 variables:
+  FDO_DISTRIBUTION_TAG: latest
+  FDO_DISTRIBUTION_VERSION: rawhide
+  FDO_UPSTREAM_REPO: "upower/$CI_PROJECT_NAME"
+  FEDORA_IMAGE: "$CI_REGISTRY/upower/$CI_PROJECT_NAME/fedora/$FDO_DISTRIBUTION_VERSION:$FDO_DISTRIBUTION_TAG"
   DEPENDENCIES:
     gtk-doc
     meson
@@ -19,37 +26,81 @@ variables:
     umockdev
     dbus-x11
     python3-gobject
-    python3-dbus
+    python3-dbusmock
     python3-pip
     python3-packaging
     git
   LAST_ABI_BREAK: "9058d45685d1c7c08d52fb64c393fed9eeed542b"
 
-build_stable:
-  before_script:
-    - dnf update -y --nogpgcheck && dnf install -y --nogpgcheck $DEPENDENCIES
-    - git clone https://github.com/martinpitt/python-dbusmock.git /tmp/python-dbusmock
-    - echo '## [0.23.2] - UNRELEASED' | cat - /tmp/python-dbusmock/NEWS > /tmp/python-dbusmock/NEWS.tmp
-    - mv /tmp/python-dbusmock/NEWS.tmp /tmp/python-dbusmock/NEWS
-    - sed -i 's,0.23.1,0.23.2,' /tmp/python-dbusmock/dbusmock/__init__.py
-    - pip install /tmp/python-dbusmock
+stages:
+  - check-source
+  - build
+  - test
+
+image: $FEDORA_IMAGE
+
+test_nut_hwdb:
+  stage: check-source
+  except:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule"
+  allow_failure: true
+  script:
+    - curl https://raw.githubusercontent.com/networkupstools/nut/master/scripts/upower/95-upower-hid.hwdb >rules/95-upower-hid.hwdb
+    - git diff
+    - "! git status -s | grep -q ."
+
+build:
+  stage: build
   script:
     - meson _build -Dintrospection=enabled -Dman=true -Dgtk-doc=true -Didevice=enabled
+    - ninja -C _build
+  except:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule"
+  # avoid recompiling in test stage
+  artifacts:
+    name: untracked
+    paths: [$(pwd)]
+    expire_in: 3h30min
+
+test:
+  stage: test
+  dependencies:
+   - build
+  script:
     - meson test -C _build --print-errorlogs --no-stdsplit
     - .ci/fail_skipped_tests.py _build/meson-logs/testlog.junit.xml
-  artifacts:
-    when: on_success
-    name: "upower-${CI_COMMIT_REF_NAME}"
-    paths:
-      - "${CI_PROJECT_DIR}/_build/upower-*.tar.xz"
+
   artifacts:
     when: always
+    expire_in: 1 week
     paths:
       - "${CI_PROJECT_DIR}/_build/meson-logs/"
+  except:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule"
 
 check_abi:
-  before_script:
-    - dnf update -y --nogpgcheck && dnf install -y --nogpgcheck $DEPENDENCIES
+  stage: test
   script:
-    - curl https://gitlab.freedesktop.org/hadess/check-abi/-/raw/main/contrib/check-abi-fedora.sh | bash
     - check-abi --suppr .ci/upower.suppr --parameters="-Dman=false -Dgtk-doc=false -Didevice=enabled"  ${LAST_ABI_BREAK} $(git rev-parse HEAD)
+  except:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule"
+
+
+# CONTAINERS creation stage
+container_fedora_build:
+  extends: .fdo.container-build@fedora
+  only:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule" && $CRON_TASK == "BUILD_CI_IMAGES"
+  variables:
+    GIT_STRATEGY: none # no need to pull the whole tree for rebuilding the image
+    FDO_FORCE_REBUILD: 1
+    # a list of packages to install
+    FDO_DISTRIBUTION_PACKAGES:
+      $DEPENDENCIES
+    FDO_DISTRIBUTION_EXEC: |
+      curl https://gitlab.freedesktop.org/hadess/check-abi/-/raw/main/contrib/check-abi-fedora.sh | bash
