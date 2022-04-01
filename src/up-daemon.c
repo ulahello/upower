@@ -1032,7 +1032,7 @@ up_daemon_device_added_cb (UpBackend *backend, UpDevice *device, UpDaemon *daemo
 	g_return_if_fail (UP_IS_DEVICE (device));
 
 	/* add to device list */
-	up_device_list_insert (priv->power_devices, up_device_get_native (device), G_OBJECT (device));
+	up_device_list_insert (priv->power_devices, device);
 
 	/* connect, so we get changes */
 	g_signal_connect (device, "notify",
@@ -1064,7 +1064,7 @@ up_daemon_device_removed_cb (UpBackend *backend, UpDevice *device, UpDaemon *dae
 	g_return_if_fail (UP_IS_DEVICE (device));
 
 	/* remove from list */
-	up_device_list_remove (priv->power_devices, G_OBJECT(device));
+	up_device_list_remove (priv->power_devices, device);
 
 	/* emit */
 	object_path = up_device_get_object_path (device);

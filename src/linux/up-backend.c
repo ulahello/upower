@@ -179,7 +179,7 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 
 			/* not a power device, add it to the managed devices
 			 * and don't return a power device */
-			up_device_list_insert (backend->priv->managed_devices, G_OBJECT (native), G_OBJECT (input));
+			up_device_list_insert (backend->priv->managed_devices, input);
 			device = NULL;
 		}
 		g_object_unref (input);

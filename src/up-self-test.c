@@ -88,7 +88,7 @@ up_test_device_list_func (void)
 {
 	UpDeviceList *list;
 	GObject *native;
-	GObject *device;
+	UpDevice *device;
 	GObject *found;
 	gboolean ret;
 
@@ -97,8 +97,8 @@ up_test_device_list_func (void)
 
 	/* add device */
 	native = g_object_new (G_TYPE_OBJECT, NULL);
-	device = g_object_new (G_TYPE_OBJECT, NULL);
-	ret = up_device_list_insert (list, native, device);
+	device = up_device_new (NULL, native);
+	ret = up_device_list_insert (list, device);
 	g_assert (ret);
 
 	/* find device */

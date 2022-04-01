@@ -27,6 +27,7 @@
 
 #include "up-native.h"
 #include "up-device-list.h"
+#include "up-device.h"
 
 static void	up_device_list_finalize	(GObject		*object);
 
@@ -71,13 +72,16 @@ up_device_list_lookup (UpDeviceList *list, GObject *native)
  * into a list of devices.
  **/
 gboolean
-up_device_list_insert (UpDeviceList *list, GObject *native, GObject *device)
+up_device_list_insert (UpDeviceList *list, gpointer device)
 {
+	GObject *native;
 	const gchar *native_path;
 
 	g_return_val_if_fail (UP_IS_DEVICE_LIST (list), FALSE);
-	g_return_val_if_fail (native != NULL, FALSE);
 	g_return_val_if_fail (device != NULL, FALSE);
+
+	native = up_device_get_native (UP_DEVICE (device));
+	g_return_val_if_fail (native != NULL, FALSE);
 
 	native_path = up_native_get_native_path (native);
 	if (native_path == NULL) {
@@ -108,7 +112,7 @@ up_device_list_remove_cb (gpointer key, gpointer value, gpointer user_data)
  * up_device_list_remove:
  **/
 gboolean
-up_device_list_remove (UpDeviceList *list, GObject *device)
+up_device_list_remove (UpDeviceList *list, gpointer device)
 {
 	g_return_val_if_fail (UP_IS_DEVICE_LIST (list), FALSE);
 	g_return_val_if_fail (device != NULL, FALSE);
