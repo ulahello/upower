@@ -24,7 +24,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <kvm.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <unistd.h>
@@ -343,41 +342,6 @@ up_backend_get_config (UpBackend  *backend)
 	g_return_val_if_fail (UP_IS_BACKEND (backend), NULL);
 
 	return backend->priv->config;
-}
-
-/* Return value: a percentage value */
-gfloat
-up_backend_get_used_swap (UpBackend *backend)
-{
-	gfloat percent;
-	kvm_t *kd;
-	gchar errbuf[_POSIX2_LINE_MAX];
-	int nswdev;
-	struct kvm_swap kvmsw[16];
-
-	kd = kvm_openfiles (NULL, NULL, NULL, O_RDONLY, errbuf);
-	if (kd == NULL) {
-		g_warning ("failed to open kvm: '%s'", errbuf);
-		return 0.0f;
-	}
-
-	nswdev = kvm_getswapinfo (kd, kvmsw, 16, 0);
-	if (nswdev == 0) {
-		percent = 100.0f;
-		goto out;
-	}
-	if (nswdev < 0) {
-		g_warning ("failed to get swap info: '%s'", kvm_geterr (kd));
-		percent = 0.0f;
-		goto out;
-	}
-
-	percent = (gfloat) ((gfloat) ((gfloat) kvmsw[nswdev].ksw_used / (gfloat) kvmsw[nswdev].ksw_total) * 100.0f);
-
-out:
-	kvm_close (kd);
-
-	return percent;
 }
 
 /**
