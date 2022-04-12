@@ -331,9 +331,9 @@ end:
 static gboolean
 up_device_supply_acline_set_properties (UpDevice *device)
 {
+#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
 	int acstate;
 
-#ifndef UPOWER_CI_DISABLE_PLATFORM_CODE
 	if (up_get_int_sysctl (&acstate, NULL, "hw.acpi.acline")) {
 		g_object_set (device, "online", acstate ? TRUE : FALSE, NULL);
 		return TRUE;
@@ -480,7 +480,6 @@ up_device_supply_init (UpDeviceSupply *supply)
 static void
 up_device_supply_class_init (UpDeviceSupplyClass *klass)
 {
-	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	UpDeviceClass *device_class = UP_DEVICE_CLASS (klass);
 
 	device_class->get_on_battery = up_device_supply_get_on_battery;

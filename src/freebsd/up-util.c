@@ -80,7 +80,6 @@ up_get_int_sysctl (int *value, GError **err, const gchar *format, ...)
 	g_free (name);
 	return status;
 #else
-	*value = NULL;
 	return FALSE;
 #endif
 }
