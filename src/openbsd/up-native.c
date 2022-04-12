@@ -56,8 +56,8 @@ up_apm_native_get_path(UpApmNative * native)
 int
 up_apm_get_fd()
 {
-	static int apm_fd = 0;
-	if (apm_fd == 0) {
+	static int apm_fd = -2;
+	if (apm_fd == -2) {
 		g_debug("apm_fd is not initialized yet, opening");
 		/* open /dev/apm */
 		if ((apm_fd = open("/dev/apm", O_RDONLY)) == -1) {
