@@ -464,7 +464,7 @@ up_daemon_register_power_daemon (UpDaemon *daemon,
 	}
 
 	/* Register the display device */
-	up_device_register_display_device (daemon->priv->display_device, daemon);
+	up_device_register_display_device (daemon->priv->display_device);
 
 	return TRUE;
 }

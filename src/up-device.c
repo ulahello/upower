@@ -37,11 +37,11 @@
 struct UpDevicePrivate
 {
 	UpDaemon		*daemon;
+	/* native == NULL implies display device */
 	GObject			*native;
 
 	UpHistory		*history;
 	gboolean		 has_ever_refresh;
-	gboolean                 is_display_device;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDevice, up_device, UP_TYPE_EXPORTED_DEVICE_SKELETON)
@@ -72,7 +72,7 @@ update_warning_level (UpDevice *device)
 	UpDeviceLevel warning_level, battery_level;
 	UpExportedDevice *skeleton = UP_EXPORTED_DEVICE (device);
 
-	if (device->priv->is_display_device)
+	if (device->priv->native == NULL)
 		return;
 
 	/* If the battery level is available, and is critical,
@@ -362,6 +362,10 @@ up_device_compute_object_path (UpDevice *device)
 	const gchar *type;
 	guint i;
 
+	if (device->priv->native == NULL) {
+		return g_build_filename (UP_DEVICES_DBUS_PATH, "DisplayDevice", NULL);
+	}
+
 	type = up_device_kind_to_string (up_exported_device_get_type_ (UP_EXPORTED_DEVICE (device)));
 	native_path = up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device));
 	basename = g_path_get_basename (native_path);
@@ -603,20 +607,11 @@ out:
  * up_device_register_display_device:
  **/
 gboolean
-up_device_register_display_device (UpDevice *device,
-				   UpDaemon *daemon)
+up_device_register_display_device (UpDevice *device)
 {
-	char *object_path;
+	g_assert (device->priv->native == NULL);
 
-	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
-
-	device->priv->daemon = g_object_ref (daemon);
-	device->priv->is_display_device = TRUE;
-	object_path = g_build_filename (UP_DEVICES_DBUS_PATH, "DisplayDevice", NULL);
-	up_device_export_skeleton (device, object_path);
-	g_free (object_path);
-
-	return TRUE;
+	return up_device_register_device (device);
 }
 
 /**

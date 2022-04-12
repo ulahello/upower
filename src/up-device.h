@@ -61,8 +61,7 @@ UpDevice	*up_device_new			(UpDaemon	*daemon,
 						 GObject	*native);
 
 gboolean	 up_device_coldplug		(UpDevice	*device);
-gboolean	 up_device_register_display_device (UpDevice	*device,
-						    UpDaemon	*daemon);
+gboolean	 up_device_register_display_device (UpDevice	*device);
 UpDaemon	*up_device_get_daemon		(UpDevice	*device);
 GObject		*up_device_get_native		(UpDevice	*device);
 const gchar	*up_device_get_object_path	(UpDevice	*device);
