@@ -44,7 +44,12 @@ struct UpDevicePrivate
 	gboolean		 has_ever_refresh;
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE (UpDevice, up_device, UP_TYPE_EXPORTED_DEVICE_SKELETON)
+static void up_device_initable_iface_init (GInitableIface *iface);
+
+G_DEFINE_TYPE_EXTENDED (UpDevice, up_device, UP_TYPE_EXPORTED_DEVICE_SKELETON, 0,
+                        G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE,
+                                               up_device_initable_iface_init)
+                        G_ADD_PRIVATE (UpDevice))
 
 enum {
   PROP_0,
@@ -241,6 +246,9 @@ up_device_get_id (UpDevice *device)
 	const char *serial;
 	UpExportedDevice *skeleton;
 
+	if (device->priv->native == NULL)
+		return NULL;
+
 	skeleton = UP_EXPORTED_DEVICE (device);
 	model = up_exported_device_get_model (skeleton);
 	serial = up_exported_device_get_serial (skeleton);
@@ -393,15 +401,13 @@ up_device_compute_object_path (UpDevice *device)
 /**
  * up_device_register_device:
  **/
-static gboolean
+static void
 up_device_register_device (UpDevice *device)
 {
 	char *object_path = up_device_compute_object_path (device);
 	g_debug ("object path = %s", object_path);
 	up_device_export_skeleton (device, object_path);
 	g_free (object_path);
-
-	return TRUE;
 }
 
 /**
@@ -419,33 +425,36 @@ up_device_refresh (UpExportedDevice *skeleton,
 	return TRUE;
 }
 
-/**
- * up_device_coldplug:
- *
- * Return %TRUE on success, %FALSE if we failed to get data and should be removed
- **/
-gboolean
-up_device_coldplug (UpDevice *device)
+static gboolean
+up_device_initable_init (GInitable     *initable,
+                         GCancellable  *cancellable,
+                         GError       **error)
 {
-	gboolean ret;
-	const gchar *native_path;
+	UpDevice *device = UP_DEVICE (initable);
+	const gchar *native_path = "DisplayDevice";
 	UpDeviceClass *klass = UP_DEVICE_GET_CLASS (device);
 	gchar *id = NULL;
+	int ret;
 
 	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 
-	native_path = up_native_get_native_path (device->priv->native);
 	if (up_daemon_get_debug (device->priv->daemon))
 		g_signal_connect (device, "handle-refresh",
 				  G_CALLBACK (up_device_refresh), device);
-	up_exported_device_set_native_path (UP_EXPORTED_DEVICE (device), native_path);
+	if (device->priv->native) {
+		native_path = up_native_get_native_path (device->priv->native);
+		up_exported_device_set_native_path (UP_EXPORTED_DEVICE (device), native_path);
+	}
 
 	/* coldplug source */
 	if (klass->coldplug != NULL) {
 		ret = klass->coldplug (device);
 		if (!ret) {
 			g_debug ("failed to coldplug %s", native_path);
-			goto bail;
+			g_propagate_error (error, g_error_new (G_IO_ERROR, G_IO_ERROR_FAILED,
+			                                       "Failed to coldplug %s", native_path));
+
+			return FALSE;
 		}
 	}
 
@@ -454,9 +463,9 @@ up_device_coldplug (UpDevice *device)
 	if (!ret) {
 		g_debug ("failed to refresh %s", native_path);
 
-		/* TODO: refresh should really have separate
-		 *       success _and_ changed parameters */
-		goto out;
+		/* XXX: We do not store a history if the initial refresh failed.
+		 * This doesn't seem sensible, but it was the case historically. */
+		goto register_device;
 	}
 
 	/* get the id so we can load the old history */
@@ -465,15 +474,18 @@ up_device_coldplug (UpDevice *device)
 		up_history_set_id (device->priv->history, id);
 		g_free (id);
 	}
-out:
-	/* only put on the bus if we succeeded */
-	ret = up_device_register_device (device);
-	if (!ret) {
-		g_warning ("failed to register device %s", native_path);
-		goto out;
-	}
-bail:
-	return ret;
+
+register_device:
+	/* put on the bus */
+	up_device_register_device (device);
+
+	return TRUE;
+}
+
+static void
+up_device_initable_iface_init (GInitableIface *iface)
+{
+  iface->init = up_device_initable_init;
 }
 
 /**
@@ -604,17 +616,6 @@ out:
 }
 
 /**
- * up_device_register_display_device:
- **/
-gboolean
-up_device_register_display_device (UpDevice *device)
-{
-	g_assert (device->priv->native == NULL);
-
-	return up_device_register_device (device);
-}
-
-/**
  * up_device_refresh_internal:
  *
  * NOTE: if you're calling this function you have to ensure you're doing the
@@ -626,6 +627,9 @@ up_device_refresh_internal (UpDevice *device)
 {
 	gboolean ret = FALSE;
 	UpDeviceClass *klass = UP_DEVICE_GET_CLASS (device);
+
+	if (device->priv->native == NULL)
+		return TRUE;
 
 	/* not implemented */
 	if (klass->refresh == NULL)

@@ -122,47 +122,35 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 	if (g_strcmp0 (subsys, "power_supply") == 0) {
 
 		/* are we a valid power supply */
-		device = UP_DEVICE (up_device_supply_new (backend->priv->daemon, G_OBJECT (native)));
-		g_object_set (G_OBJECT(device),
-			      "ignore-system-percentage", GPOINTER_TO_INT (is_macbook (NULL)),
-			      NULL);
-		ret = up_device_coldplug (device);
-		if (ret)
-			goto out;
-
-		/* no valid power supply object */
-		g_clear_object (&device);
+		device = g_initable_new (UP_TYPE_DEVICE_SUPPLY, NULL, NULL,
+		                         "daemon", backend->priv->daemon,
+		                         "native", G_OBJECT (native),
+		                         "ignore-system-percentage", GPOINTER_TO_INT (is_macbook (NULL)),
+		                         NULL);
 
 	} else if (g_strcmp0 (subsys, "tty") == 0) {
 
 		/* see if this is a Watts Up Pro device */
-		device = UP_DEVICE (up_device_wup_new (backend->priv->daemon, G_OBJECT (native)));
-		ret = up_device_coldplug (device);
-		if (ret)
-			goto out;
-
-		/* no valid TTY object */
-		g_clear_object (&device);
+		device = g_initable_new (UP_TYPE_DEVICE_WUP, NULL, NULL,
+		                         "daemon", backend->priv->daemon,
+		                         "native", G_OBJECT (native),
+		                         NULL);
 
 	} else if (g_strcmp0 (subsys, "usbmisc") == 0) {
 
 #ifdef HAVE_IDEVICE
-		/* see if this is an iDevice */
-		device = UP_DEVICE (up_device_idevice_new (backend->priv->daemon, G_OBJECT (native)));
-		ret = up_device_coldplug (device);
-		if (ret)
+		device = g_initable_new (UP_TYPE_DEVICE_IDEVICE, NULL, NULL,
+		                         "daemon", backend->priv->daemon,
+		                         "native", G_OBJECT (native),
+		                         NULL);
+		if (device)
 			goto out;
-		g_object_unref (device);
 #endif /* HAVE_IDEVICE */
 
-		/* try to detect a HID UPS */
-		device = UP_DEVICE (up_device_hid_new (backend->priv->daemon, G_OBJECT (native)));
-		ret = up_device_coldplug (device);
-		if (ret)
-			goto out;
-
-		/* no valid USB object */
-		g_clear_object (&device);
+		device = g_initable_new (UP_TYPE_DEVICE_HID, NULL, NULL,
+		                         "daemon", backend->priv->daemon,
+		                         "native", G_OBJECT (native),
+		                         NULL);
 
 	} else if (g_strcmp0 (subsys, "input") == 0) {
 
@@ -372,7 +360,6 @@ bluez_interface_added (GDBusObjectManager *manager,
 	UpBackend *backend = user_data;
 	UpDevice *device;
 	GObject *object;
-	gboolean ret;
 
 	if (!has_battery_iface (bus_object))
 		return;
@@ -383,15 +370,14 @@ bluez_interface_added (GDBusObjectManager *manager,
 		return;
 	}
 
-	device = UP_DEVICE (up_device_bluez_new (backend->priv->daemon, G_OBJECT (bus_object)));
-	ret = up_device_coldplug (device);
-	if (!ret) {
-		g_object_unref (device);
-		return;
+	device = g_initable_new (UP_TYPE_DEVICE_BLUEZ, NULL, NULL,
+	                         "daemon", backend->priv->daemon,
+	                         "native", G_OBJECT (bus_object),
+	                         NULL);
+	if (device) {
+		g_debug ("emitting device-added: %s", g_dbus_object_get_object_path (bus_object));
+		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
 	}
-
-	g_debug ("emitting device-added: %s", g_dbus_object_get_object_path (bus_object));
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
 }
 
 static void

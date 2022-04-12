@@ -84,7 +84,7 @@ up_backend_add_cb (UpBackend *backend)
 	guint timer_id;
 
 	/* coldplug */
-	ret = up_device_coldplug (backend->priv->device, backend->priv->daemon, backend->priv->native);
+	ret = g_initable_init (G_INITABLE (backend->priv->device), NULL, NULL);
 	if (!ret) {
 		g_warning ("failed to coldplug");
 		goto out;

@@ -50,7 +50,7 @@ static void	up_backend_finalize	(GObject		*object);
 
 static gboolean	up_backend_refresh_devices (gpointer user_data);
 static gboolean	up_backend_acpi_devd_notify (UpBackend *backend, const gchar *system, const gchar *subsystem, const gchar *type, const gchar *data);
-static gboolean	up_backend_create_new_device (UpBackend *backend, UpAcpiNative *native);
+static void	up_backend_create_new_device (UpBackend *backend, UpAcpiNative *native);
 static void	up_backend_lid_coldplug (UpBackend *backend);
 
 struct UpBackendPrivate
@@ -178,17 +178,16 @@ out:
 /**
  * up_backend_create_new_device:
  **/
-static gboolean
+static void
 up_backend_create_new_device (UpBackend *backend, UpAcpiNative *native)
 {
 	UpDevice *device;
-	gboolean ret;
 
-	device = UP_DEVICE (up_device_supply_new (backend->priv->daemon, G_OBJECT (native)));
-	ret = up_device_coldplug (device);
-	if (!ret)
-		g_object_unref (device);
-	else {
+	device = g_initable_new (UP_TYPE_DEVICE_SUPPLY, NULL, NULL,
+	                         "daemon", backend->priv->daemon,
+	                         "native", G_OBJECT (native),
+	                         NULL);
+	if (device) {
 		if (!strncmp (up_acpi_native_get_path (native), "dev.", strlen ("dev."))) {
 			const gchar *path;
 
@@ -210,8 +209,6 @@ up_backend_create_new_device (UpBackend *backend, UpAcpiNative *native)
 
 		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
 	}
-
-	return ret;
 }
 
 /**

@@ -513,16 +513,3 @@ up_device_hid_class_init (UpDeviceHidClass *klass)
 	device_class->get_on_battery = up_device_hid_get_on_battery;
 	device_class->refresh = up_device_hid_refresh;
 }
-
-/**
- * up_device_hid_new:
- **/
-UpDeviceHid *
-up_device_hid_new (UpDaemon	*daemon,
-                   GObject	*native)
-{
-	return UP_DEVICE_HID (g_object_new (UP_TYPE_DEVICE_HID,
-	                                    "daemon", daemon,
-	                                    "native", native,
-	                                    NULL));
-}

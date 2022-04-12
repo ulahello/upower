@@ -49,8 +49,6 @@ typedef struct
 } UpDeviceIdeviceClass;
 
 GType		 up_device_idevice_get_type		(void);
-UpDeviceIdevice	*up_device_idevice_new			(UpDaemon	*daemon,
-							 GObject	*native);
 
 G_END_DECLS
 

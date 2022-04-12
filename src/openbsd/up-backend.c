@@ -132,12 +132,12 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 	if (backend->priv->is_laptop)
 	{
 		up_backend_update_lid_status(daemon);
-		if (!up_device_coldplug (backend->priv->ac))
+		if (!g_initable_init (G_INITABLE (backend->priv->ac), NULL, NULL))
 			g_warning ("failed to coldplug ac");
 		else
 			g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, backend->priv->ac);
 
-		if (!up_device_coldplug (backend->priv->battery))
+		if (!g_initable_init (G_INITABLE (backend->priv->battery), NULL, NULL))
 			g_warning ("failed to coldplug battery");
 		else
 			g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, backend->priv->battery);

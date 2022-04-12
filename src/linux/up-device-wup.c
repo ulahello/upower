@@ -460,16 +460,3 @@ up_device_wup_class_init (UpDeviceWupClass *klass)
 	device_class->coldplug = up_device_wup_coldplug;
 	device_class->refresh = up_device_wup_refresh;
 }
-
-/**
- * up_device_wup_new:
- **/
-UpDeviceWup *
-up_device_wup_new (UpDaemon	*daemon,
-                   GObject	*native)
-{
-	return UP_DEVICE_WUP (g_object_new (UP_TYPE_DEVICE_WUP,
-	                                    "daemon", daemon,
-	                                    "native", native,
-	                                    NULL));
-}

@@ -1361,16 +1361,3 @@ up_device_supply_class_init (UpDeviceSupplyClass *klass)
 							       "Ignore system provided battery percentage",
 							       FALSE, G_PARAM_READWRITE));
 }
-
-/**
- * up_device_supply_new:
- **/
-UpDeviceSupply *
-up_device_supply_new (UpDaemon	*daemon,
-                      GObject	*native)
-{
-	return UP_DEVICE_SUPPLY (g_object_new (UP_TYPE_DEVICE_SUPPLY,
-	                                       "daemon", daemon,
-	                                       "native", native,
-	                                       NULL));
-}

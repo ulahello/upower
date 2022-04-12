@@ -488,16 +488,3 @@ up_device_supply_class_init (UpDeviceSupplyClass *klass)
 	device_class->coldplug = up_device_supply_coldplug;
 	device_class->refresh = up_device_supply_refresh;
 }
-
-/**
- * up_device_supply_new:
- **/
-UpDeviceSupply *
-up_device_supply_new (UpDaemon	*daemon,
-                      GObject	*native)
-{
-	return UP_DEVICE_SUPPLY (g_object_new (UP_TYPE_DEVICE_SUPPLY,
-	                                       "daemon", daemon,
-	                                       "native", native,
-	                                       NULL));
-}

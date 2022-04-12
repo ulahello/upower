@@ -289,13 +289,3 @@ up_device_bluez_class_init (UpDeviceBluezClass *klass)
 
 	device_class->coldplug = up_device_bluez_coldplug;
 }
-
-UpDeviceBluez *
-up_device_bluez_new (UpDaemon	*daemon,
-                     GObject	*native)
-{
-	return UP_DEVICE_BLUEZ (g_object_new (UP_TYPE_DEVICE_BLUEZ,
-	                                      "daemon", daemon,
-	                                      "native", native,
-	                                      NULL));
-}
