@@ -1073,6 +1073,9 @@ up_device_supply_guess_type (GUdevDevice *native,
 				type = UP_DEVICE_KIND_MOUSE;
 			} else if (g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_JOYSTICK")) {
 				type = UP_DEVICE_KIND_GAMING_INPUT;
+			} else if (g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_TABLET") ||
+				   g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_TABLET_PAD")) {
+				type = UP_DEVICE_KIND_TABLET;
 			} else {
 				type = UP_DEVICE_KIND_KEYBOARD;
 			}
