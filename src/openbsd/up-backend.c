@@ -39,7 +39,7 @@ static void	up_backend_update_lid_status(UpDaemon*);
 
 static gboolean		up_apm_device_get_on_battery	(UpDevice *device, gboolean *on_battery);
 static gboolean		up_apm_device_get_online		(UpDevice *device, gboolean *online);
-static gboolean		up_apm_device_refresh		(UpDevice *device);
+static gboolean		up_apm_device_refresh		(UpDevice *device, UpRefreshReason reason);
 
 struct UpBackendPrivate
 {
@@ -411,14 +411,14 @@ up_backend_apm_powerchange_event_cb(gpointer object)
 
 	g_return_val_if_fail (UP_IS_BACKEND (object), FALSE);
 	backend = UP_BACKEND (object);
-	up_apm_device_refresh(backend->priv->ac);
-	up_apm_device_refresh(backend->priv->battery);
+	up_device_refresh_internal (backend->priv->ac, UP_REFRESH_EVENT);
+	up_device_refresh_internal (backend->priv->battery, UP_REFRESH_EVENT);
 	/* return false to not endless loop */
 	return FALSE;
 }
 
 static gboolean
-up_apm_device_refresh(UpDevice* device)
+up_apm_device_refresh(UpDevice* device, UpRefreshReason reason)
 {
 	UpDeviceKind type;
 	gboolean ret;

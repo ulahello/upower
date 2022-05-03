@@ -420,7 +420,7 @@ up_device_refresh (UpExportedDevice *skeleton,
 		   GDBusMethodInvocation *invocation,
 		   UpDevice *device)
 {
-	up_device_refresh_internal (device);
+	up_device_refresh_internal (device, UP_REFRESH_POLL);
 	up_exported_device_complete_refresh (skeleton, invocation);
 	return TRUE;
 }
@@ -459,7 +459,7 @@ up_device_initable_init (GInitable     *initable,
 	}
 
 	/* force a refresh, although failure isn't fatal */
-	ret = up_device_refresh_internal (device);
+	ret = up_device_refresh_internal (device, UP_REFRESH_INIT);
 	if (!ret) {
 		g_debug ("failed to refresh %s", native_path);
 
@@ -623,7 +623,7 @@ out:
  * notify::update-time this should be mostly done.
  **/
 gboolean
-up_device_refresh_internal (UpDevice *device)
+up_device_refresh_internal (UpDevice *device, UpRefreshReason reason)
 {
 	gboolean ret = FALSE;
 	UpDeviceClass *klass = UP_DEVICE_GET_CLASS (device);
@@ -636,7 +636,7 @@ up_device_refresh_internal (UpDevice *device)
 		goto out;
 
 	/* do the refresh */
-	ret = klass->refresh (device);
+	ret = klass->refresh (device, reason);
 	if (!ret) {
 		g_debug ("no changes");
 		goto out;

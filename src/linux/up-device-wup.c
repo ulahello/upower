@@ -71,7 +71,7 @@ struct UpDeviceWupPrivate
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceWup, up_device_wup, UP_TYPE_DEVICE)
 
-static gboolean		 up_device_wup_refresh	 	(UpDevice *device);
+static gboolean		 up_device_wup_refresh	 	(UpDevice *device, UpRefreshReason reason);
 
 /**
  * up_device_wup_poll_cb:
@@ -82,7 +82,7 @@ up_device_wup_poll_cb (UpDeviceWup *wup)
 	UpDevice *device = UP_DEVICE (wup);
 
 	g_debug ("Polling: %s", up_device_get_object_path (device));
-	up_device_wup_refresh (device);
+	up_device_wup_refresh (device, UP_REFRESH_POLL);
 
 	/* always continue polling */
 	return TRUE;
@@ -372,7 +372,7 @@ up_device_wup_coldplug (UpDevice *device)
 
 	/* coldplug */
 	g_debug ("coldplug");
-	ret = up_device_wup_refresh (device);
+	ret = up_device_wup_refresh (device, UP_REFRESH_INIT);
 out:
 	return ret;
 }
@@ -383,7 +383,7 @@ out:
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
-up_device_wup_refresh (UpDevice *device)
+up_device_wup_refresh (UpDevice *device, UpRefreshReason reason)
 {
 	gboolean ret = FALSE;
 	gchar *data = NULL;

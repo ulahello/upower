@@ -195,7 +195,7 @@ up_backend_device_changed (UpBackend *backend, GUdevDevice *native, const char *
 
 	/* need to refresh device */
 	device = UP_DEVICE (object);
-	ret = up_device_refresh_internal (device);
+	ret = up_device_refresh_internal (device, UP_REFRESH_EVENT);
 	if (!ret) {
 		g_debug ("no changes on %s", up_device_get_object_path (device));
 		goto out;
@@ -751,7 +751,7 @@ up_backend_prepare_for_sleep (GDBusConnection *connection,
 
 	for (i = 0; i < array->len; i++) {
 		UpDevice *device = UP_DEVICE (g_ptr_array_index (array, i));
-		up_device_refresh_internal (device);
+		up_device_refresh_internal (device, UP_REFRESH_RESUME);
 	}
 
 	g_ptr_array_unref (array);

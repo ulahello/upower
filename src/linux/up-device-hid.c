@@ -90,7 +90,7 @@ struct UpDeviceHidPrivate
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceHid, up_device_hid, UP_TYPE_DEVICE)
 
-static gboolean		 up_device_hid_refresh	 	(UpDevice *device);
+static gboolean		 up_device_hid_refresh	 	(UpDevice *device, UpRefreshReason reason);
 
 /**
  * up_device_hid_is_ups:
@@ -131,7 +131,7 @@ up_device_hid_poll (UpDeviceHid *hid)
 	UpDevice *device = UP_DEVICE (hid);
 
 	g_debug ("Polling: %s", up_device_get_object_path (device));
-	up_device_hid_refresh (device);
+	up_device_hid_refresh (device, UP_REFRESH_POLL);
 
 	/* always continue polling */
 	return TRUE;
@@ -386,7 +386,7 @@ out:
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
-up_device_hid_refresh (UpDevice *device)
+up_device_hid_refresh (UpDevice *device, UpRefreshReason reason)
 {
 	gboolean set = FALSE;
 	gboolean ret = FALSE;

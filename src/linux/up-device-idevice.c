@@ -47,7 +47,7 @@ struct UpDeviceIdevicePrivate
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceIdevice, up_device_idevice, UP_TYPE_DEVICE)
 
-static gboolean		 up_device_idevice_refresh		(UpDevice *device);
+static gboolean		 up_device_idevice_refresh		(UpDevice *device, UpRefreshReason reason);
 
 /**
  * up_device_idevice_poll_cb:
@@ -58,7 +58,7 @@ up_device_idevice_poll_cb (UpDeviceIdevice *idevice)
 	UpDevice *device = UP_DEVICE (idevice);
 
 	g_debug ("Polling: %s", up_device_get_object_path (device));
-	up_device_idevice_refresh (device);
+	up_device_idevice_refresh (device, UP_REFRESH_POLL);
 
 	/* always continue polling */
 	return TRUE;
@@ -175,7 +175,7 @@ up_device_idevice_start_poll_cb (UpDeviceIdevice *idevice)
 
 	/* coldplug */
 	idevice->priv->client = client;
-	if (up_device_idevice_refresh (device) == FALSE) {
+	if (up_device_idevice_refresh (device, UP_REFRESH_INIT) == FALSE) {
 		idevice->priv->client = NULL;
 		goto out;
 	}
@@ -283,7 +283,7 @@ up_device_idevice_coldplug (UpDevice *device)
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
-up_device_idevice_refresh (UpDevice *device)
+up_device_idevice_refresh (UpDevice *device, UpRefreshReason reason)
 {
 	UpDeviceIdevice *idevice = UP_DEVICE_IDEVICE (device);
 	lockdownd_client_t client = NULL;

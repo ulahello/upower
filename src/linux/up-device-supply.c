@@ -69,7 +69,8 @@ struct UpDeviceSupplyPrivate
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
 
-static gboolean		 up_device_supply_refresh	 	(UpDevice *device);
+static gboolean		 up_device_supply_refresh	 	(UpDevice *device,
+								 UpRefreshReason reason);
 static void		 up_device_supply_setup_unknown_poll	(UpDevice      *device,
 								 UpDeviceState  state);
 static UpDeviceKind	 up_device_supply_guess_type		(GUdevDevice *native,
@@ -1041,7 +1042,7 @@ up_device_supply_poll_unknown_battery (UpDevice *device)
 		 up_device_get_object_path (device), UP_DAEMON_UNKNOWN_TIMEOUT);
 
 	supply->priv->poll_timer_id = 0;
-	up_device_supply_refresh (device);
+	up_device_supply_refresh (device, UP_REFRESH_POLL);
 
 	return FALSE;
 }
@@ -1172,7 +1173,7 @@ up_device_supply_coldplug (UpDevice *device)
 		up_daemon_start_poll (G_OBJECT (device), (GSourceFunc) up_device_supply_refresh);
 
 	/* coldplug values */
-	up_device_supply_refresh (device);
+	up_device_supply_refresh (device, UP_REFRESH_INIT);
 
 	return TRUE;
 }
@@ -1221,7 +1222,7 @@ up_device_supply_disable_unknown_poll (UpDevice *device)
 }
 
 static gboolean
-up_device_supply_refresh (UpDevice *device)
+up_device_supply_refresh (UpDevice *device, UpRefreshReason reason)
 {
 	gboolean updated;
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);

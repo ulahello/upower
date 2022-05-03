@@ -49,7 +49,7 @@
 
 G_DEFINE_TYPE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
 
-static gboolean		 up_device_supply_refresh	 	(UpDevice *device);
+static gboolean		 up_device_supply_refresh	 	(UpDevice *device, UpRefreshReason reason);
 static UpDeviceTechnology	up_device_supply_convert_device_technology (const gchar *type);
 static gboolean		up_device_supply_acline_coldplug	(UpDevice *device);
 static gboolean		up_device_supply_battery_coldplug	(UpDevice *device, UpAcpiNative *native);
@@ -387,7 +387,7 @@ out:
  * Return %TRUE on success, %FALSE if we failed to refresh or no data
  **/
 static gboolean
-up_device_supply_refresh (UpDevice *device)
+up_device_supply_refresh (UpDevice *device, UpRefreshReason reason)
 {
 	GObject *object;
 	UpDeviceKind type;

@@ -97,7 +97,7 @@ up_backend_refresh_devices (gpointer user_data)
 
 	for (i = 0; i < array->len; i++) {
 		device = UP_DEVICE (g_ptr_array_index (array, i));
-		up_device_refresh_internal (device);
+		up_device_refresh_internal (device, UP_REFRESH_POLL);
 	}
 
 	g_ptr_array_unref (array);
@@ -164,7 +164,7 @@ up_backend_acpi_devd_notify (UpBackend *backend, const gchar *system, const gcha
 		goto out;
 	}
 
-	up_device_refresh_internal (UP_DEVICE (object));
+	up_device_refresh_internal (UP_DEVICE (object), UP_REFRESH_EVENT);
 
 	if (object != NULL)
 		g_object_unref (object);
@@ -258,7 +258,7 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 			if (object != NULL) {
 				device = UP_DEVICE (object);
 				g_warning ("treating add event as change event on %s", up_device_get_object_path (device));
-				up_device_refresh_internal (device);
+				up_device_refresh_internal (device, UP_REFRESH_EVENT);
 			} else {
 				up_backend_create_new_device (backend, native);
 			}

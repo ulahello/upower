@@ -42,13 +42,22 @@ typedef struct
 	UpDevicePrivate	*priv;
 } UpDevice;
 
+typedef enum {
+	UP_REFRESH_INIT,
+	UP_REFRESH_POLL,
+	UP_REFRESH_RESUME,
+	UP_REFRESH_EVENT,
+	UP_REFRESH_CHANGES,
+} UpRefreshReason;
+
 typedef struct
 {
 	UpExportedDeviceSkeletonClass parent_class;
 
 	/* vtable */
 	gboolean	 (*coldplug)		(UpDevice	*device);
-	gboolean	 (*refresh)		(UpDevice	*device);
+	gboolean	 (*refresh)		(UpDevice	*device,
+						 UpRefreshReason reason);
 	const gchar	*(*get_id)		(UpDevice	*device);
 	gboolean	 (*get_on_battery)	(UpDevice	*device,
 						 gboolean	*on_battery);
@@ -67,7 +76,8 @@ gboolean	 up_device_get_on_battery	(UpDevice	*device,
 						 gboolean	*on_battery);
 gboolean	 up_device_get_online		(UpDevice	*device,
 						 gboolean	*online);
-gboolean	 up_device_refresh_internal	(UpDevice	*device);
+gboolean	 up_device_refresh_internal	(UpDevice	*device,
+						 UpRefreshReason reason);
 
 G_END_DECLS
 
