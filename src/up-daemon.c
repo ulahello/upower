@@ -770,7 +770,6 @@ up_daemon_device_changed_cb (UpDevice *device, GParamSpec *pspec, UpDaemon *daem
 typedef struct {
 	guint id;
 	guint timeout;
-	GSourceFunc callback;
 } TimeoutData;
 
 static void
@@ -778,17 +777,12 @@ change_idle_timeout (UpDevice   *device,
 		     GParamSpec *pspec,
 		     gpointer    user_data)
 {
-	TimeoutData *data;
-	GSourceFunc callback;
 	UpDaemon *daemon;
 
 	daemon = up_device_get_daemon (device);
 
-	data = g_hash_table_lookup (daemon->priv->poll_timeouts, device);
-	callback = data->callback;
-
 	up_daemon_stop_poll (G_OBJECT (device));
-	up_daemon_start_poll (G_OBJECT (device), callback);
+	up_daemon_start_poll (G_OBJECT (device));
 	g_object_unref (daemon);
 }
 
@@ -807,7 +801,7 @@ device_destroyed (gpointer  user_data,
 }
 
 static gboolean
-fire_timeout_callback (gpointer user_data)
+poll_timeout_cb (gpointer user_data)
 {
 	UpDevice *device = user_data;
 	TimeoutData *data;
@@ -822,8 +816,7 @@ fire_timeout_callback (gpointer user_data)
 		 up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device)),
 		 data->timeout);
 
-	/* Fire the actual callback */
-	(data->callback) (device);
+	up_device_refresh_internal (device, UP_REFRESH_POLL);
 	g_object_unref (daemon);
 
 	return G_SOURCE_CONTINUE;
@@ -852,7 +845,7 @@ enable_poll_for_device (UpDevice *device, TimeoutData *data)
 	timeout = calculate_timeout (device);
 	data->timeout = timeout;
 
-	data->id = g_timeout_add_seconds (timeout, fire_timeout_callback, device);
+	data->id = g_timeout_add_seconds (timeout, poll_timeout_cb, device);
 	name = g_strdup_printf ("[upower] UpDevice::poll for %s (%u secs)",
 				path, timeout);
 	g_source_set_name_by_id (data->id, name);
@@ -889,8 +882,7 @@ disable_warning_level_notifications (UpDaemon *daemon, UpDevice *device)
 }
 
 void
-up_daemon_start_poll (GObject     *object,
-		      GSourceFunc  callback)
+up_daemon_start_poll (GObject  *object)
 {
 	UpDaemon *daemon;
 	UpDevice *device;
@@ -908,7 +900,6 @@ up_daemon_start_poll (GObject     *object,
 	}
 
 	data = g_new0 (TimeoutData, 1);
-	data->callback = callback;
 
 	g_hash_table_insert (daemon->priv->poll_timeouts, device, data);
 

@@ -87,8 +87,7 @@ const gchar	*up_daemon_get_charge_icon	(UpDaemon		*daemon,
 						 UpDeviceLevel		 battery_level,
 						 gboolean		 charging);
 
-void		 up_daemon_start_poll		(GObject		*object,
-						 GSourceFunc		 callback);
+void		 up_daemon_start_poll		(GObject		*object);
 void		 up_daemon_stop_poll		(GObject		*object);
 void             up_daemon_pause_poll           (UpDaemon               *daemon);
 void             up_daemon_resume_poll          (UpDaemon               *daemon);

@@ -49,21 +49,6 @@ G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceIdevice, up_device_idevice, UP_TYPE_DEVICE)
 
 static gboolean		 up_device_idevice_refresh		(UpDevice *device, UpRefreshReason reason);
 
-/**
- * up_device_idevice_poll_cb:
- **/
-static gboolean
-up_device_idevice_poll_cb (UpDeviceIdevice *idevice)
-{
-	UpDevice *device = UP_DEVICE (idevice);
-
-	g_debug ("Polling: %s", up_device_get_object_path (device));
-	up_device_idevice_refresh (device, UP_REFRESH_POLL);
-
-	/* always continue polling */
-	return TRUE;
-}
-
 static const char *
 lockdownd_error_to_string (lockdownd_error_t lerr)
 {
@@ -188,7 +173,7 @@ up_device_idevice_start_poll_cb (UpDeviceIdevice *idevice)
 	g_object_set (G_OBJECT (idevice), "is-present", TRUE, NULL);
 
 	/* set up a poll */
-	up_daemon_start_poll (G_OBJECT (idevice), (GSourceFunc) up_device_idevice_poll_cb);
+	up_daemon_start_poll (G_OBJECT (idevice));
 
 	idevice->priv->start_id = 0;
 	return G_SOURCE_REMOVE;
