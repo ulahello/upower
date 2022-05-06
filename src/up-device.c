@@ -166,9 +166,6 @@ update_history (UpDevice *device)
 	up_history_set_time_empty_data (device->priv->history, up_exported_device_get_time_to_empty (skeleton));
 }
 
-/**
- * up_device_notify:
- **/
 static void
 up_device_notify (GObject *object, GParamSpec *pspec)
 {
@@ -208,7 +205,6 @@ up_device_get_on_battery (UpDevice *device, gboolean *on_battery)
 
 	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 
-	/* no support */
 	if (klass->get_on_battery == NULL)
 		return FALSE;
 
@@ -227,16 +223,12 @@ up_device_get_online (UpDevice *device, gboolean *online)
 
 	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 
-	/* no support */
 	if (klass->get_online == NULL)
 		return FALSE;
 
 	return klass->get_online (device, online);
 }
 
-/**
- * up_device_get_id:
- **/
 static gchar *
 up_device_get_id (UpDevice *device)
 {
@@ -253,11 +245,9 @@ up_device_get_id (UpDevice *device)
 	model = up_exported_device_get_model (skeleton);
 	serial = up_exported_device_get_serial (skeleton);
 
-	/* line power */
 	if (up_exported_device_get_type_ (skeleton) == UP_DEVICE_KIND_LINE_POWER) {
 		goto out;
 
-	/* batteries */
 	} else if (up_exported_device_get_type_ (skeleton) == UP_DEVICE_KIND_BATTERY) {
 		/* we don't have an ID if we are not present */
 		if (!up_exported_device_get_is_present (skeleton))
@@ -289,7 +279,6 @@ up_device_get_id (UpDevice *device)
 			g_string_set_size (string, string->len - 1);
 		}
 
-		/* the id may have invalid chars that need to be replaced */
 		id = g_string_free (string, FALSE);
 
 	} else {
@@ -317,10 +306,10 @@ up_device_get_id (UpDevice *device)
 			g_string_set_size (string, string->len - 1);
 		}
 
-		/* the id may have invalid chars that need to be replaced */
 		id = g_string_free (string, FALSE);
 	}
 
+	/* the id may have invalid chars that need to be replaced */
 	g_strdelimit (id, "\\\t\"?' /,.", '_');
 
 out:
@@ -357,9 +346,6 @@ up_device_export_skeleton (UpDevice *device,
 	}
 }
 
-/**
- * up_device_compute_object_path:
- **/
 static gchar *
 up_device_compute_object_path (UpDevice *device)
 {
@@ -398,9 +384,6 @@ up_device_compute_object_path (UpDevice *device)
 	return object_path;
 }
 
-/**
- * up_device_register_device:
- **/
 static void
 up_device_register_device (UpDevice *device)
 {
@@ -488,9 +471,6 @@ up_device_initable_iface_init (GInitableIface *iface)
   iface->init = up_device_initable_init;
 }
 
-/**
- * up_device_get_statistics:
- **/
 static gboolean
 up_device_get_statistics (UpExportedDevice *skeleton,
 			  GDBusMethodInvocation *invocation,
@@ -502,7 +482,6 @@ up_device_get_statistics (UpExportedDevice *skeleton,
 	guint i;
 	GVariantBuilder builder;
 
-	/* doesn't even try to support this */
 	if (!up_exported_device_get_has_statistics (skeleton)) {
 		g_dbus_method_invocation_return_error_literal (invocation,
 							       UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL,
@@ -549,9 +528,6 @@ out:
 	return TRUE;
 }
 
-/**
- * up_device_get_history:
- **/
 static gboolean
 up_device_get_history (UpExportedDevice *skeleton,
 		       GDBusMethodInvocation *invocation,
@@ -615,13 +591,6 @@ out:
 	return TRUE;
 }
 
-/**
- * up_device_refresh_internal:
- *
- * NOTE: if you're calling this function you have to ensure you're doing the
- * the changed signals on the right interfaces, although by monitoring
- * notify::update-time this should be mostly done.
- **/
 gboolean
 up_device_refresh_internal (UpDevice *device, UpRefreshReason reason)
 {
@@ -652,9 +621,6 @@ out:
 	return ret;
 }
 
-/**
- * up_device_get_object_path:
- **/
 const gchar *
 up_device_get_object_path (UpDevice *device)
 {
@@ -669,9 +635,6 @@ up_device_get_native (UpDevice *device)
 	return device->priv->native;
 }
 
-/**
- * up_device_init:
- **/
 static void
 up_device_init (UpDevice *device)
 {
@@ -689,9 +652,6 @@ up_device_init (UpDevice *device)
 			  G_CALLBACK (up_device_get_statistics), device);
 }
 
-/**
- * up_device_finalize:
- **/
 static void
 up_device_finalize (GObject *object)
 {
@@ -741,9 +701,6 @@ up_device_set_property (GObject      *object,
 	}
 }
 
-/**
- * up_device_class_init:
- **/
 static void
 up_device_class_init (UpDeviceClass *klass)
 {
@@ -772,9 +729,6 @@ up_device_class_init (UpDeviceClass *klass)
 	g_object_class_install_properties (object_class, N_PROPS, properties);
 }
 
-/**
- * up_device_new:
- **/
 UpDevice *
 up_device_new (UpDaemon	*daemon,
                GObject	*native)
