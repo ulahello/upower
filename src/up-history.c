@@ -895,7 +895,10 @@ up_history_init (UpHistory *history)
 	history->priv->data_time_empty = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	history->priv->max_data_age = UP_HISTORY_DEFAULT_MAX_DATA_AGE;
 
-	up_history_set_directory (history, HISTORY_DIR);
+	if (g_getenv ("UPOWER_HISTORY_DIR"))
+		up_history_set_directory (history, g_getenv ("UPOWER_HISTORY_DIR"));
+	else
+		up_history_set_directory (history, HISTORY_DIR);
 }
 
 /**
