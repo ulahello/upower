@@ -45,6 +45,7 @@ struct UpDaemonPrivate
 	GHashTable		*poll_timeouts;
 	gboolean                 poll_paused;
 	GHashTable		*idle_signals;
+	GSource                 *poll_source;
 	int			 critical_action_lock_fd;
 
 	/* Display battery properties */
@@ -751,9 +752,18 @@ static void
 up_daemon_device_changed_cb (UpDevice *device, GParamSpec *pspec, UpDaemon *daemon)
 {
 	UpDeviceKind type;
+	const char *prop;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 	g_return_if_fail (UP_IS_DEVICE (device));
+
+	prop = g_param_spec_get_name (pspec);
+	if (!daemon->priv->poll_paused &&
+	    ((g_strcmp0 (prop, "poll-timeout") == 0) ||
+	     (g_strcmp0 (prop, "last-refresh") == 0))) {
+		g_source_set_ready_time (daemon->priv->poll_source, 0);
+		return;
+	}
 
 	/* refresh battery devices when AC state changes */
 	g_object_get (device,
@@ -766,6 +776,76 @@ up_daemon_device_changed_cb (UpDevice *device, GParamSpec *pspec, UpDaemon *daem
 
 	up_daemon_update_warning_level (daemon);
 }
+
+static gboolean
+up_daemon_poll_dispatch (GSource *source, GSourceFunc callback, gpointer user_data)
+{
+	UpDaemon *daemon = UP_DAEMON (user_data);
+	UpDaemonPrivate *priv = daemon->priv;
+	g_autoptr(GPtrArray) array = NULL;
+	guint i;
+	UpDevice *device;
+	gint64 ready_time = G_MAXINT64;
+	gint64 now = g_source_get_time (priv->poll_source);
+	gint max_dispatch_timeout = 0;
+
+	g_source_set_ready_time (priv->poll_source, -1);
+	g_assert (callback == NULL);
+
+	if (daemon->priv->poll_paused)
+		return G_SOURCE_CONTINUE;
+
+	/* Find the earliest device that needs a refresh. */
+	array = up_device_list_get_array (priv->power_devices);
+	for (i = 0; i < array->len; i += 1) {
+		gint timeout;
+		gint64 last_refresh;
+		gint64 poll_time;
+		gint64 dispatch_time;
+		device = (UpDevice *) g_ptr_array_index (array, i);
+		g_object_get (device,
+			      "poll-timeout", &timeout,
+			      "last-refresh", &last_refresh,
+			      NULL);
+
+		if (timeout <= 0)
+			continue;
+
+		poll_time = last_refresh + timeout * G_USEC_PER_SEC;
+
+		/* Allow dispatching early if another device got dispatched.
+		 * i.e. device polling will synchronize eventually.
+		 */
+		dispatch_time = poll_time - MIN(timeout, max_dispatch_timeout) * G_USEC_PER_SEC / 2;
+
+		if (now >= dispatch_time) {
+			g_debug ("up_daemon_poll_dispatch: refreshing %s", up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device)));
+			up_device_refresh_internal (device, UP_REFRESH_POLL);
+			max_dispatch_timeout = MAX(max_dispatch_timeout, timeout);
+
+			/* We'll wake up again immediately and then
+			 * calculate the correct time to re-poll. */
+		}
+
+		ready_time = MIN(ready_time, poll_time);
+	}
+
+	if (ready_time == G_MAXINT64)
+		ready_time = -1;
+
+	/* Set the ready time (if it was not modified externally) */
+	if (g_source_get_ready_time (priv->poll_source) == -1)
+		g_source_set_ready_time (priv->poll_source, ready_time);
+
+	return G_SOURCE_CONTINUE;
+}
+
+GSourceFuncs poll_source_funcs = {
+	.prepare = NULL,
+	.check = NULL,
+	.dispatch = up_daemon_poll_dispatch,
+	.finalize = NULL,
+};
 
 typedef struct {
 	guint id;
@@ -1029,6 +1109,9 @@ up_daemon_device_added_cb (UpBackend *backend, UpDevice *device, UpDaemon *daemo
 	g_signal_connect (device, "notify",
 			  G_CALLBACK (up_daemon_device_changed_cb), daemon);
 
+	/* Ensure we poll the new device if needed */
+	g_source_set_ready_time (daemon->priv->poll_source, 0);
+
 	/* emit */
 	object_path = up_device_get_object_path (device);
 	g_debug ("emitting added: %s", object_path);
@@ -1130,6 +1213,13 @@ up_daemon_init (UpDaemon *daemon)
 	daemon->priv->config = up_config_new ();
 	daemon->priv->power_devices = up_device_list_new ();
 	daemon->priv->display_device = up_device_new (daemon, NULL);
+	daemon->priv->poll_source = g_source_new (&poll_source_funcs, sizeof (GSource));
+
+	g_source_set_callback (daemon->priv->poll_source, NULL, daemon, NULL);
+	g_source_set_name (daemon->priv->poll_source, "up-device-poll");
+	g_source_attach (daemon->priv->poll_source, NULL);
+	/* g_source_destroy removes the last reference */
+	g_source_unref (daemon->priv->poll_source);
 
 	daemon->priv->use_percentage_for_policy = up_config_get_boolean (daemon->priv->config, "UsePercentageForPolicy");
 	load_percentage_policy (daemon, FALSE);
@@ -1205,6 +1295,7 @@ up_daemon_finalize (GObject *object)
 
 	g_clear_pointer (&priv->poll_timeouts, g_hash_table_destroy);
 	g_clear_pointer (&priv->idle_signals, g_hash_table_destroy);
+	g_clear_pointer (&daemon->priv->poll_source, g_source_destroy);
 
 	g_object_unref (priv->power_devices);
 	g_object_unref (priv->display_device);
