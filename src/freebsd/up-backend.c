@@ -48,7 +48,6 @@ static void	up_backend_class_init	(UpBackendClass	*klass);
 static void	up_backend_init	(UpBackend		*backend);
 static void	up_backend_finalize	(GObject		*object);
 
-static gboolean	up_backend_refresh_devices (gpointer user_data);
 static gboolean	up_backend_acpi_devd_notify (UpBackend *backend, const gchar *system, const gchar *subsystem, const gchar *type, const gchar *data);
 static void	up_backend_create_new_device (UpBackend *backend, UpAcpiNative *native);
 static void	up_backend_lid_coldplug (UpBackend *backend);
@@ -58,7 +57,6 @@ struct UpBackendPrivate
 	UpDaemon		*daemon;
 	UpDeviceList		*device_list;
 	GHashTable		*handle_map;
-	guint			poll_timer_id;
 	UpConfig		*config;
 	GDBusProxy		*seat_manager_proxy;
 };
@@ -80,30 +78,6 @@ static const gchar *handlers[] = {
 UpDevdHandler up_backend_acpi_devd_handler = {
 	.notify = up_backend_acpi_devd_notify
 };
-
-/**
- * up_backend_refresh_devices:
- **/
-static gboolean
-up_backend_refresh_devices (gpointer user_data)
-{
-	UpBackend *backend;
-	GPtrArray *array;
-	UpDevice *device;
-	guint i;
-
-	backend = UP_BACKEND (user_data);
-	array = up_device_list_get_array (backend->priv->device_list);
-
-	for (i = 0; i < array->len; i++) {
-		device = UP_DEVICE (g_ptr_array_index (array, i));
-		up_device_refresh_internal (device, UP_REFRESH_POLL);
-	}
-
-	g_ptr_array_unref (array);
-
-	return TRUE;
-}
 
 /**
  * up_backend_acpi_devd_notify:
@@ -186,6 +160,7 @@ up_backend_create_new_device (UpBackend *backend, UpAcpiNative *native)
 	device = g_initable_new (UP_TYPE_DEVICE_SUPPLY, NULL, NULL,
 	                         "daemon", backend->priv->daemon,
 	                         "native", G_OBJECT (native),
+	                         "poll-timeout", UP_BACKEND_REFRESH_TIMEOUT,
 	                         NULL);
 	if (device) {
 		if (!strncmp (up_acpi_native_get_path (native), "dev.", strlen ("dev."))) {
@@ -280,12 +255,6 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 
 	up_devd_init (backend);
 
-	backend->priv->poll_timer_id =
-		g_timeout_add_seconds (UP_BACKEND_REFRESH_TIMEOUT,
-			       (GSourceFunc) up_backend_refresh_devices,
-			       backend);
-	g_source_set_name_by_id (backend->priv->poll_timer_id, "[upower] up_backend_refresh_devices (freebsd)");
-
 	return TRUE;
 }
 
@@ -299,10 +268,6 @@ up_backend_coldplug (UpBackend *backend, UpDaemon *daemon)
 void
 up_backend_unplug (UpBackend *backend)
 {
-	if (backend->priv->poll_timer_id > 0) {
-		g_source_remove (backend->priv->poll_timer_id);
-		backend->priv->poll_timer_id = 0;
-	}
 	if (backend->priv->device_list != NULL) {
 		g_object_unref (backend->priv->device_list);
 		backend->priv->device_list = NULL;
@@ -403,8 +368,6 @@ up_backend_finalize (GObject *object)
 		g_object_unref (backend->priv->device_list);
 	if (backend->priv->handle_map != NULL)
 		g_hash_table_unref (backend->priv->handle_map);
-	if (backend->priv->poll_timer_id > 0)
-		g_source_remove (backend->priv->poll_timer_id);
 	g_clear_object (&backend->priv->seat_manager_proxy);
 
 	G_OBJECT_CLASS (up_backend_parent_class)->finalize (object);
