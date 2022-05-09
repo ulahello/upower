@@ -83,7 +83,6 @@
 
 struct UpDeviceHidPrivate
 {
-	guint			 poll_timer_id;
 	int			 fd;
 	gboolean		 fake_device;
 };
@@ -120,21 +119,6 @@ up_device_hid_is_ups (UpDeviceHid *hid)
 	}
 out:
 	return ret;
-}
-
-/**
- * up_device_hid_poll:
- **/
-static gboolean
-up_device_hid_poll (UpDeviceHid *hid)
-{
-	UpDevice *device = UP_DEVICE (hid);
-
-	g_debug ("Polling: %s", up_device_get_object_path (device));
-	up_device_hid_refresh (device, UP_REFRESH_POLL);
-
-	/* always continue polling */
-	return TRUE;
 }
 
 /**
@@ -376,6 +360,8 @@ up_device_hid_coldplug (UpDevice *device)
 
 	/* fix up device states */
 	up_device_hid_fixup_state (device);
+
+	g_object_set (device, "poll-timeout", UP_DEVICE_HID_REFRESH_TIMEOUT, NULL);
 out:
 	return ret;
 }
@@ -472,9 +458,6 @@ up_device_hid_init (UpDeviceHid *hid)
 {
 	hid->priv = up_device_hid_get_instance_private (hid);
 	hid->priv->fd = -1;
-	hid->priv->poll_timer_id = g_timeout_add_seconds (UP_DEVICE_HID_REFRESH_TIMEOUT,
-							  (GSourceFunc) up_device_hid_poll, hid);
-	g_source_set_name_by_id (hid->priv->poll_timer_id, "[upower] up_device_hid_poll (linux)");
 }
 
 /**
@@ -493,8 +476,6 @@ up_device_hid_finalize (GObject *object)
 
 	if (hid->priv->fd > 0)
 		close (hid->priv->fd);
-	if (hid->priv->poll_timer_id > 0)
-		g_source_remove (hid->priv->poll_timer_id);
 
 	G_OBJECT_CLASS (up_device_hid_parent_class)->finalize (object);
 }
