@@ -42,6 +42,9 @@ struct UpDevicePrivate
 
 	UpHistory		*history;
 	gboolean		 has_ever_refresh;
+
+	gint64			last_refresh;
+	int			poll_timeout;
 };
 
 static void up_device_initable_iface_init (GInitableIface *iface);
@@ -55,6 +58,8 @@ enum {
   PROP_0,
   PROP_DAEMON,
   PROP_NATIVE,
+  PROP_LAST_REFRESH,
+  PROP_POLL_TIMEOUT,
   N_PROPS
 };
 
@@ -604,8 +609,11 @@ up_device_refresh_internal (UpDevice *device, UpRefreshReason reason)
 	if (klass->refresh == NULL)
 		goto out;
 
-	/* do the refresh */
+	/* do the refresh, and change the property */
 	ret = klass->refresh (device, reason);
+	device->priv->last_refresh = g_get_monotonic_time ();
+	g_object_notify_by_pspec (G_OBJECT (device), properties[PROP_LAST_REFRESH]);
+
 	if (!ret) {
 		g_debug ("no changes");
 		goto out;
@@ -696,6 +704,34 @@ up_device_set_property (GObject      *object,
 		priv->native = g_value_dup_object (value);
 		break;
 
+	case PROP_POLL_TIMEOUT:
+		priv->poll_timeout = g_value_get_int (value);
+		break;
+
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+	}
+}
+
+static void
+up_device_get_property (GObject      *object,
+                        guint         prop_id,
+                        GValue       *value,
+                        GParamSpec   *pspec)
+{
+	UpDevice *device = UP_DEVICE (object);
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
+
+	switch (prop_id)
+	{
+	case PROP_POLL_TIMEOUT:
+		g_value_set_int (value, priv->poll_timeout);
+		break;
+
+	case PROP_LAST_REFRESH:
+		g_value_set_int64 (value, priv->last_refresh);
+		break;
+
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 	}
@@ -711,6 +747,7 @@ up_device_class_init (UpDeviceClass *klass)
 	object_class->dispose = up_device_dispose;
 
 	object_class->set_property = up_device_set_property;
+	object_class->get_property = up_device_get_property;
 
 	properties[PROP_DAEMON] =
 		g_param_spec_object ("daemon",
@@ -725,6 +762,24 @@ up_device_class_init (UpDeviceClass *klass)
 		                     "Native Object",
 		                     G_TYPE_OBJECT,
 		                     G_PARAM_STATIC_STRINGS | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY);
+
+	properties[PROP_POLL_TIMEOUT] =
+		g_param_spec_int ("poll-timeout",
+		                  "Poll timeout",
+		                  "Time in seconds between polls",
+		                  0,
+		                  3600,
+		                  0,
+		                  G_PARAM_STATIC_STRINGS | G_PARAM_WRITABLE | G_PARAM_READABLE);
+
+	properties[PROP_LAST_REFRESH] =
+		g_param_spec_int64 ("last-refresh",
+		                    "Last Refresh",
+		                    "Time of last refresh (in monotonic clock)",
+		                    -1,
+		                    G_MAXINT64,
+		                    0,
+		                    G_PARAM_STATIC_STRINGS | G_PARAM_READABLE);
 
 	g_object_class_install_properties (object_class, N_PROPS, properties);
 }
