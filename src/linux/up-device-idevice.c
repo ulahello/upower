@@ -41,9 +41,7 @@
 
 struct UpDeviceIdevicePrivate
 {
-	guint			 start_id;
 	idevice_t		 dev;
-	lockdownd_client_t	 client;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceIdevice, up_device_idevice, UP_TYPE_DEVICE)
@@ -135,57 +133,6 @@ lockdownd_error_to_string (lockdownd_error_t lerr)
 	}
 }
 
-static gboolean
-up_device_idevice_start_poll_cb (UpDeviceIdevice *idevice)
-{
-	UpDevice *device = UP_DEVICE (idevice);
-	idevice_t dev = NULL;
-	lockdownd_client_t client = NULL;
-	char *uuid = NULL;
-	lockdownd_error_t lerr;
-
-	g_object_get (G_OBJECT (idevice), "serial", &uuid, NULL);
-	g_assert (uuid);
-
-	/* Connect to the device */
-	if (idevice_new (&dev, uuid) != IDEVICE_E_SUCCESS)
-		goto out;
-
-	g_clear_pointer (&uuid, g_free);
-
-	if ((lerr = lockdownd_client_new_with_handshake (dev, &client, "upower")) != LOCKDOWN_E_SUCCESS) {
-		g_debug ("Could not start initial lockdownd client: %s (%d)",
-			 lockdownd_error_to_string (lerr), lerr);
-		goto out;
-	}
-
-	/* coldplug */
-	idevice->priv->client = client;
-	if (up_device_idevice_refresh (device, UP_REFRESH_INIT) == FALSE) {
-		idevice->priv->client = NULL;
-		goto out;
-	}
-	idevice->priv->dev = dev;
-
-	/* _refresh will reopen a new lockdownd client */
-	idevice->priv->client = NULL;
-	g_clear_pointer (&client, lockdownd_client_free);
-
-	g_object_set (G_OBJECT (idevice), "is-present", TRUE, NULL);
-
-	/* set up a poll */
-	g_object_set (idevice, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
-
-	idevice->priv->start_id = 0;
-	return G_SOURCE_REMOVE;
-
-out:
-	g_clear_pointer (&client, lockdownd_client_free);
-	g_clear_pointer (&dev, idevice_free);
-	g_clear_pointer (&uuid, g_free);
-	return G_SOURCE_CONTINUE;
-}
-
 static char *
 get_device_uuid (GUdevDevice *native)
 {
@@ -253,10 +200,7 @@ up_device_idevice_coldplug (UpDevice *device)
 		      "has-history", TRUE,
 		      NULL);
 
-	idevice->priv->start_id = g_timeout_add_seconds (5, (GSourceFunc) up_device_idevice_start_poll_cb,
-							 idevice);
-	g_source_set_name_by_id (idevice->priv->start_id,
-				 "[upower] up_device_idevice_start_poll_cb (linux)");
+	g_object_set (idevice, "poll-timeout", 5, NULL);
 
 	g_free (uuid);
 
@@ -272,19 +216,31 @@ static gboolean
 up_device_idevice_refresh (UpDevice *device, UpRefreshReason reason)
 {
 	UpDeviceIdevice *idevice = UP_DEVICE_IDEVICE (device);
+	idevice_t dev = idevice->priv->dev;
 	lockdownd_client_t client = NULL;
+	lockdownd_error_t lerr;
 	plist_t dict, node;
 	guint64 percentage;
 	guint8 charging, has_battery;
 	UpDeviceState state;
 	gboolean retval = FALSE;
 
-	/* Open a lockdown port, or re-use the one we have */
-	if (idevice->priv->client == NULL) {
-		if (LOCKDOWN_E_SUCCESS != lockdownd_client_new_with_handshake (idevice->priv->dev, &client, "upower"))
+	/* No device yet, try to open it */
+	if (!dev) {
+		g_autofree char *uuid = NULL;
+
+		g_object_get (G_OBJECT (idevice), "serial", &uuid, NULL);
+		g_assert (uuid);
+
+		/* Connect to the device */
+		if (idevice_new (&dev, uuid) != IDEVICE_E_SUCCESS)
 			goto out;
-	} else {
-		client = idevice->priv->client;
+	}
+
+	if ((lerr = lockdownd_client_new_with_handshake (dev, &client, "upower")) != LOCKDOWN_E_SUCCESS) {
+		g_debug ("Could not start lockdownd client: %s (%d)",
+			 lockdownd_error_to_string (lerr), lerr);
+		goto out;
 	}
 
 	if (lockdownd_get_value (client, "com.apple.mobile.battery", NULL, &dict) != LOCKDOWN_E_SUCCESS)
@@ -339,10 +295,18 @@ up_device_idevice_refresh (UpDevice *device, UpRefreshReason reason)
 
 	retval = TRUE;
 
+	if (!idevice->priv->dev) {
+		/* Device is working, mark as present and poll less frequently */
+		g_object_set (G_OBJECT (idevice), "is-present", TRUE, NULL);
+		g_object_set (idevice, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
+		idevice->priv->dev = dev;
+	}
+
 out:
-	/* Only free it if we opened it */
-	if (idevice->priv->client == NULL && client != NULL)
-		lockdownd_client_free (client);
+	/* Free device if we created it and it was not stored. */
+	if (dev && !idevice->priv->dev)
+		idevice_free (dev);
+	lockdownd_client_free (client);
 
 	return retval;
 }
@@ -370,13 +334,6 @@ up_device_idevice_finalize (GObject *object)
 	idevice = UP_DEVICE_IDEVICE (object);
 	g_return_if_fail (idevice->priv != NULL);
 
-	if (idevice->priv->start_id > 0) {
-		g_source_remove (idevice->priv->start_id);
-		idevice->priv->start_id = 0;
-	}
-
-	if (idevice->priv->client != NULL)
-		lockdownd_client_free (idevice->priv->client);
 	if (idevice->priv->dev != NULL)
 		idevice_free (idevice->priv->dev);
 
