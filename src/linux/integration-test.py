@@ -21,6 +21,7 @@ import os
 import sys
 import dbus
 import tempfile
+import shutil
 import subprocess
 import unittest
 import time
@@ -191,6 +192,9 @@ class Tests(dbusmock.DBusTestCase):
         if not cfgfile:
             _, cfgfile = tempfile.mkstemp(prefix='upower-cfg-')
             self.addCleanup(os.unlink, cfgfile)
+        env['UPOWER_CONF_FILE_NAME'] = cfgfile
+        env['UPOWER_HISTORY_DIR'] = tempfile.mkdtemp(prefix='upower-history-')
+        self.addCleanup(shutil.rmtree, env['UPOWER_HISTORY_DIR'])
         env['G_DEBUG'] = 'fatal-criticals'
         # note: Python doesn't propagate the setenv from Testbed.new(), so we
         # have to do that ourselves
