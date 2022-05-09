@@ -147,7 +147,7 @@ class Tests(dbusmock.DBusTestCase):
         self.proxy = None
         self.log = None
         self.daemon = None
-        self.logind = None
+        self.start_logind({'CanHybridSleep' : 'yes'})
 
     def tearDown(self):
         del self.testbed
@@ -947,7 +947,6 @@ class Tests(dbusmock.DBusTestCase):
                                         'energy_now', '48000000',
                                         'voltage_now', '12000000'], [])
 
-        self.start_logind()
         self.start_daemon()
 
         self.logind_obj.EmitSignal('', 'PrepareForSleep', 'b', [True])
@@ -988,7 +987,6 @@ class Tests(dbusmock.DBusTestCase):
         config.write("CriticalPowerAction=Hibernate\n")
         config.close()
 
-        self.start_logind()
         self.start_daemon(cfgfile=config.name)
 
         # delay inhibitor taken
@@ -1032,7 +1030,6 @@ class Tests(dbusmock.DBusTestCase):
         config.write("CriticalPowerAction=Hibernate\n")
         config.close()
 
-        self.start_logind()
         self.start_daemon(cfgfile=config.name)
 
         devs = self.proxy.EnumerateDevices()
@@ -1082,7 +1079,6 @@ class Tests(dbusmock.DBusTestCase):
                                         'energy_now', '50000000',
                                         'voltage_now', '12000000'], [])
 
-        self.start_logind()
         self.start_daemon()
 
         devs = self.proxy.EnumerateDevices()
@@ -1971,7 +1967,6 @@ class Tests(dbusmock.DBusTestCase):
     def test_lib_daemon_properties(self):
         '''library GI: daemon properties'''
 
-        self.start_logind(parameters={'CanHybridSleep': 'yes'})
         self.start_daemon()
         client = UPowerGlib.Client.new()
         self.assertRegex(client.get_daemon_version(), '^[0-9.]+$')
