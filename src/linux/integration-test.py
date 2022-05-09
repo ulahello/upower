@@ -188,8 +188,9 @@ class Tests(dbusmock.DBusTestCase):
         When done, this sets self.proxy as the Gio.DBusProxy for upowerd.
         '''
         env = os.environ.copy()
-        if cfgfile is not None:
-            env['UPOWER_CONF_FILE_NAME'] = cfgfile
+        if not cfgfile:
+            _, cfgfile = tempfile.mkstemp(prefix='upower-cfg-')
+            self.addCleanup(os.unlink, cfgfile)
         env['G_DEBUG'] = 'fatal-criticals'
         # note: Python doesn't propagate the setenv from Testbed.new(), so we
         # have to do that ourselves
