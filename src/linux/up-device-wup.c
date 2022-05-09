@@ -370,9 +370,6 @@ up_device_wup_coldplug (UpDevice *device)
 		      "state", UP_DEVICE_STATE_DISCHARGING,
 		      NULL);
 
-	/* coldplug */
-	g_debug ("coldplug");
-	ret = up_device_wup_refresh (device, UP_REFRESH_INIT);
 out:
 	return ret;
 }

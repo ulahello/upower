@@ -1146,9 +1146,6 @@ up_device_supply_coldplug (UpDevice *device)
 		 (!supply->priv->disable_battery_poll || !supply->priv->is_power_supply))
 		g_object_set (device, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
 
-	/* coldplug values */
-	up_device_supply_refresh (device, UP_REFRESH_INIT);
-
 	return TRUE;
 }
 
