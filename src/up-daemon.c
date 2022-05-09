@@ -932,6 +932,8 @@ up_daemon_device_removed_cb (UpBackend *backend, UpDevice *device, UpDaemon *dae
 	g_return_if_fail (UP_IS_DAEMON (daemon));
 	g_return_if_fail (UP_IS_DEVICE (device));
 
+	g_signal_handlers_disconnect_by_data (device, daemon);
+
 	/* remove from list */
 	up_device_list_remove (priv->power_devices, device);
 
