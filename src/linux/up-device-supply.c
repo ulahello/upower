@@ -52,15 +52,13 @@ enum {
 
 struct UpDeviceSupplyPrivate
 {
-	guint			 poll_timer_id;
 	gboolean		 has_coldplug_values;
 	gboolean		 coldplug_units;
 	gdouble			*energy_old;
 	GTimeVal		*energy_old_timespec;
 	guint			 energy_old_first;
 	gdouble			 rate_old;
-	guint			 unknown_retries;
-	gint64			 last_unknown_retry;
+	gint64			 fast_repoll_until;
 	gboolean		 disable_battery_poll; /* from configuration */
 	gboolean		 is_power_supply;
 	gboolean		 shown_invalid_voltage_warning;
@@ -71,13 +69,15 @@ G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
 
 static gboolean		 up_device_supply_refresh	 	(UpDevice *device,
 								 UpRefreshReason reason);
-static void		 up_device_supply_setup_unknown_poll	(UpDevice      *device,
-								 UpDeviceState  state);
+static void		 up_device_supply_update_poll_frequency	(UpDevice       *device,
+								 UpDeviceState   state,
+								 UpRefreshReason reason);
 static UpDeviceKind	 up_device_supply_guess_type		(GUdevDevice *native,
 								 const char *native_path);
 
 static gboolean
-up_device_supply_refresh_line_power (UpDeviceSupply *supply)
+up_device_supply_refresh_line_power (UpDeviceSupply *supply,
+				     UpRefreshReason reason)
 {
 	UpDevice *device = UP_DEVICE (supply);
 	GUdevDevice *native;
@@ -542,7 +542,7 @@ sysfs_get_capacity_level (GUdevDevice   *native,
 
 static gboolean
 up_device_supply_refresh_battery (UpDeviceSupply *supply,
-				  UpDeviceState  *out_state)
+				  UpRefreshReason reason)
 {
 	gchar *technology_native = NULL;
 	gdouble voltage_design;
@@ -585,7 +585,6 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 	g_object_set (device, "is-present", is_present, NULL);
 	if (!is_present) {
 		up_device_supply_reset_values (supply);
-		g_object_get (device, "state", out_state, NULL);
 		goto out;
 	}
 
@@ -856,8 +855,6 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 		supply->priv->energy_old_first = 0;
 	}
 
-	*out_state = state;
-
 	g_object_set (device,
 		      "energy", energy,
 		      "energy-full", energy_full,
@@ -873,7 +870,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 		      NULL);
 
 	/* Setup unknown poll again if needed */
-	up_device_supply_setup_unknown_poll (device, state);
+	up_device_supply_update_poll_frequency (device, state, reason);
 
 out:
 	g_free (technology_native);
@@ -936,7 +933,7 @@ up_device_supply_get_sibling_with_subsystem (GUdevDevice *device,
 
 static gboolean
 up_device_supply_refresh_device (UpDeviceSupply *supply,
-				 UpDeviceState  *out_state)
+				 UpRefreshReason reason)
 {
 	UpDeviceState state;
 	UpDevice *device = UP_DEVICE (supply);
@@ -1005,7 +1002,6 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 		/* Probably talking to the device over Bluetooth */
 		state = UP_DEVICE_STATE_UNKNOWN;
 		g_object_set (device, "state", state, NULL);
-		*out_state = state;
 		return FALSE;
 	}
 
@@ -1016,35 +1012,13 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 	if (percentage == 100.0)
 		state = UP_DEVICE_STATE_FULLY_CHARGED;
 
-	/* reset unknown counter */
-	if (state != UP_DEVICE_STATE_UNKNOWN) {
-		g_debug ("resetting unknown timeout after %i retries", supply->priv->unknown_retries);
-		supply->priv->unknown_retries = 0;
-	}
-
 	g_object_set (device,
 		      "percentage", percentage,
 		      "battery-level", level,
 		      "state", state,
 		      NULL);
 
-	*out_state = state;
-
 	return TRUE;
-}
-
-static gboolean
-up_device_supply_poll_unknown_battery (UpDevice *device)
-{
-	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
-
-	g_debug ("Unknown state on supply %s; forcing update after %i seconds",
-		 up_device_get_object_path (device), UP_DAEMON_UNKNOWN_TIMEOUT);
-
-	supply->priv->poll_timer_id = 0;
-	up_device_supply_refresh (device, UP_REFRESH_POLL);
-
-	return FALSE;
 }
 
 static UpDeviceKind
@@ -1167,10 +1141,10 @@ up_device_supply_coldplug (UpDevice *device)
 
 	if (type != UP_DEVICE_KIND_LINE_POWER &&
 	    type != UP_DEVICE_KIND_BATTERY)
-		up_daemon_start_poll (G_OBJECT (device));
+		g_object_set (device, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
 	else if (type == UP_DEVICE_KIND_BATTERY &&
 		 (!supply->priv->disable_battery_poll || !supply->priv->is_power_supply))
-		up_daemon_start_poll (G_OBJECT (device));
+		g_object_set (device, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
 
 	/* coldplug values */
 	up_device_supply_refresh (device, UP_REFRESH_INIT);
@@ -1178,46 +1152,42 @@ up_device_supply_coldplug (UpDevice *device)
 	return TRUE;
 }
 
-/**
- * up_device_supply_setup_unknown_poll:
- **/
 static void
-up_device_supply_setup_unknown_poll (UpDevice      *device,
-				     UpDeviceState  state)
+up_device_supply_update_poll_frequency (UpDevice        *device,
+					UpDeviceState    state,
+					UpRefreshReason  reason)
 {
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
 
 	if (supply->priv->disable_battery_poll)
 		return;
 
-	/* if it's unknown, poll faster than we would normally */
-	if (supply->priv->unknown_retries < UP_DAEMON_UNKNOWN_RETRIES &&
+	/* We start fast-polling if the reason to update was not a normal POLL
+	 * and the state is either unknown or we are in quirk mode and expect
+	 * the battery to return unstable values for a while.
+	 *
+	 * We stop again when:
+	 *  1. The state is known and we are NOT in quirk mode
+	 *  2. The timeout elapsed
+	 */
+	if (reason != UP_REFRESH_POLL &&
 	    (state == UP_DEVICE_STATE_UNKNOWN || up_backend_needs_poll_after_uevent ())) {
-		gint64 now;
-		supply->priv->poll_timer_id =
-			g_timeout_add_seconds (UP_DAEMON_UNKNOWN_TIMEOUT,
-					       (GSourceFunc) up_device_supply_poll_unknown_battery, supply);
-		g_source_set_name_by_id (supply->priv->poll_timer_id, "[upower] up_device_supply_poll_unknown_battery (linux)");
+		g_debug ("unknown_poll: setting up fast re-poll");
+		g_object_set (device, "poll-timeout", UP_DAEMON_UNKNOWN_TIMEOUT, NULL);
+		supply->priv->fast_repoll_until = g_get_monotonic_time () + UP_DAEMON_UNKNOWN_POLL_TIME * G_USEC_PER_SEC;
 
-		/* increase count, we don't want to poll at 0.5Hz forever */
-		now = g_get_monotonic_time ();
-		if (now - supply->priv->last_unknown_retry > G_USEC_PER_SEC)
-			supply->priv->unknown_retries++;
-		supply->priv->last_unknown_retry = now;
-	} else {
-		/* reset unknown counter */
-		supply->priv->unknown_retries = 0;
-	}
-}
+	} else if (supply->priv->fast_repoll_until == 0) {
+		/* Not fast-repolling, no need to check whether to stop */
 
-static void
-up_device_supply_disable_unknown_poll (UpDevice *device)
-{
-	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
+	} else if (state != UP_DEVICE_STATE_UNKNOWN && !up_backend_needs_poll_after_uevent ()) {
+		g_debug ("unknown_poll: stopping fast repoll (not needed anymore)");
+		supply->priv->fast_repoll_until = 0;
+		g_object_set (device, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
 
-	if (supply->priv->poll_timer_id > 0) {
-		g_source_remove (supply->priv->poll_timer_id);
-		supply->priv->poll_timer_id = 0;
+	} else if (supply->priv->fast_repoll_until < g_get_monotonic_time ()) {
+		g_debug ("unknown_poll: stopping fast repoll (giving up)");
+		supply->priv->fast_repoll_until = 0;
+		g_object_set (device, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
 	}
 }
 
@@ -1227,17 +1197,15 @@ up_device_supply_refresh (UpDevice *device, UpRefreshReason reason)
 	gboolean updated;
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
 	UpDeviceKind type;
-	UpDeviceState state;
 
 	g_object_get (device, "type", &type, NULL);
 	if (type == UP_DEVICE_KIND_LINE_POWER) {
-		updated = up_device_supply_refresh_line_power (supply);
+		updated = up_device_supply_refresh_line_power (supply, reason);
 	} else if (type == UP_DEVICE_KIND_BATTERY &&
 		   supply->priv->is_power_supply) {
-		up_device_supply_disable_unknown_poll (device);
-		updated = up_device_supply_refresh_battery (supply, &state);
+		updated = up_device_supply_refresh_battery (supply, reason);
 	} else {
-		updated = up_device_supply_refresh_device (supply, &state);
+		updated = up_device_supply_refresh_device (supply, reason);
 	}
 
 	/* reset time if we got new data */
@@ -1292,19 +1260,6 @@ up_device_supply_finalize (GObject *object)
 }
 
 static void
-up_device_supply_dispose (GObject *object)
-{
-	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (object);
-
-	up_daemon_stop_poll (object);
-
-	if (supply->priv->poll_timer_id > 0)
-		g_source_remove (supply->priv->poll_timer_id);
-
-	G_OBJECT_CLASS (up_device_supply_parent_class)->dispose (object);
-}
-
-static void
 up_device_supply_set_property (GObject        *object,
 			       guint           property_id,
 			       const GValue   *value,
@@ -1348,7 +1303,6 @@ up_device_supply_class_init (UpDeviceSupplyClass *klass)
 	UpDeviceClass *device_class = UP_DEVICE_CLASS (klass);
 
 	object_class->finalize = up_device_supply_finalize;
-	object_class->dispose = up_device_supply_dispose;
 	object_class->set_property = up_device_supply_set_property;
 	object_class->get_property = up_device_supply_get_property;
 	device_class->get_on_battery = up_device_supply_get_on_battery;

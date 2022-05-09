@@ -945,14 +945,14 @@ class Tests(dbusmock.DBusTestCase):
         self.start_daemon()
 
         self.logind_obj.EmitSignal('', 'PrepareForSleep', 'b', [True])
-        self.assertEventually(lambda: self.have_text_in_log("Poll paused"), timeout=10)
+        self.assertEventually(lambda: self.have_text_in_log("Polling will be paused"), timeout=10)
 
         # simulate some battery drain during sleep for which we then
         # can check after we 'woke up'
         self.testbed.set_attribute(bat0, 'energy_now', '40000000')
 
         self.logind_obj.EmitSignal('', 'PrepareForSleep', 'b', [False])
-        self.assertEventually(lambda: self.have_text_in_log("Poll resumed"), timeout=10)
+        self.assertEventually(lambda: self.have_text_in_log("Polling will be resumed"), timeout=10)
 
         devs = self.proxy.EnumerateDevices()
         self.assertEqual(len(devs), 1)
@@ -1106,44 +1106,6 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.count_text_in_log("deferring as earlier timeout is already queued"), 1)
 
         self.stop_daemon()
-
-    def test_no_poll_batteries(self):
-        ''' setting NoPollBatteries option should disable polling'''
-
-        self.testbed.add_device('power_supply', 'BAT0', None,
-                                ['type', 'Battery',
-                                 'present', '1',
-                                 'status', 'Discharging',
-                                 'energy_full', '60000000',
-                                 'energy_full_design', '80000000',
-                                 'energy_now', '48000000',
-                                 'voltage_now', '12000000'], [])
-
-        config = tempfile.NamedTemporaryFile(delete=False, mode='w')
-        config.write("[UPower]\n")
-        config.write("NoPollBatteries=true\n")
-        config.close()
-
-        self.start_logind()
-        self.start_daemon(cfgfile=config.name)
-
-        devs = self.proxy.EnumerateDevices()
-        self.assertEqual(len(devs), 1)
-
-        self.logind_obj.EmitSignal('', 'PrepareForSleep', 'b', [True])
-        self.assertEventually(lambda: self.have_text_in_log("Polling will be paused"), timeout=10)
-
-        self.logind_obj.EmitSignal('', 'PrepareForSleep', 'b', [False])
-        self.assertEventually(lambda: self.have_text_in_log("Polling will be resumed"), timeout=10)
-
-        self.stop_daemon()
-
-        # Now make sure we don't have any actual polling setup for the battery
-        self.assertFalse(self.have_text_in_log("Setup poll for"))
-        self.assertFalse(self.have_text_in_log("Poll paused for"))
-        self.assertFalse(self.have_text_in_log("Poll resumed for"))
-
-        os.unlink(config.name)
 
     def test_percentage_low_icon_set(self):
         '''Without battery level, PercentageLow is limit for icon change'''
