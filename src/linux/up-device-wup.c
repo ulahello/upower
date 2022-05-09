@@ -65,28 +65,12 @@
 
 struct UpDeviceWupPrivate
 {
-	guint			 poll_timer_id;
 	int			 fd;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceWup, up_device_wup, UP_TYPE_DEVICE)
 
 static gboolean		 up_device_wup_refresh	 	(UpDevice *device, UpRefreshReason reason);
-
-/**
- * up_device_wup_poll_cb:
- **/
-static gboolean
-up_device_wup_poll_cb (UpDeviceWup *wup)
-{
-	UpDevice *device = UP_DEVICE (wup);
-
-	g_debug ("Polling: %s", up_device_get_object_path (device));
-	up_device_wup_refresh (device, UP_REFRESH_POLL);
-
-	/* always continue polling */
-	return TRUE;
-}
 
 /**
  * up_device_wup_set_speed:
@@ -368,6 +352,7 @@ up_device_wup_coldplug (UpDevice *device)
 		      "serial", serial,
 		      "has-history", TRUE,
 		      "state", UP_DEVICE_STATE_DISCHARGING,
+		      "poll-timeout", UP_DEVICE_WUP_REFRESH_TIMEOUT,
 		      NULL);
 
 out:
@@ -417,9 +402,6 @@ up_device_wup_init (UpDeviceWup *wup)
 {
 	wup->priv = up_device_wup_get_instance_private (wup);
 	wup->priv->fd = -1;
-	wup->priv->poll_timer_id = g_timeout_add_seconds (UP_DEVICE_WUP_REFRESH_TIMEOUT,
-							  (GSourceFunc) up_device_wup_poll_cb, wup);
-	g_source_set_name_by_id (wup->priv->poll_timer_id, "[upower] up_device_wup_poll_cb (linux)");
 }
 
 /**
@@ -438,8 +420,6 @@ up_device_wup_finalize (GObject *object)
 
 	if (wup->priv->fd > 0)
 		close (wup->priv->fd);
-	if (wup->priv->poll_timer_id > 0)
-		g_source_remove (wup->priv->poll_timer_id);
 
 	G_OBJECT_CLASS (up_device_wup_parent_class)->finalize (object);
 }
