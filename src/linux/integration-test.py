@@ -179,7 +179,7 @@ class Tests(dbusmock.DBusTestCase):
     # Daemon control and D-BUS I/O
     #
 
-    def start_daemon(self, cfgfile=None):
+    def start_daemon(self, cfgfile=None, warns=False):
         '''Start daemon and create DBus proxy.
 
         Do this after adding the devices you want to test with. At the moment
@@ -195,7 +195,7 @@ class Tests(dbusmock.DBusTestCase):
         env['UPOWER_CONF_FILE_NAME'] = cfgfile
         env['UPOWER_HISTORY_DIR'] = tempfile.mkdtemp(prefix='upower-history-')
         self.addCleanup(shutil.rmtree, env['UPOWER_HISTORY_DIR'])
-        env['G_DEBUG'] = 'fatal-criticals'
+        env['G_DEBUG'] = 'fatal-criticals' if warns else 'fatal-warnings'
         # note: Python doesn't propagate the setenv from Testbed.new(), so we
         # have to do that ourselves
         env['UMOCKDEV_DIR'] = self.testbed.get_root_dir()
@@ -765,7 +765,7 @@ class Tests(dbusmock.DBusTestCase):
                                  'capacity', '110',
                                  'voltage_now', '12000000'], [])
 
-        self.start_daemon()
+        self.start_daemon(warns=True)
         devs = self.proxy.EnumerateDevices()
         self.assertEqual(len(devs), 1)
         bat0_up = devs[0]
@@ -1233,7 +1233,7 @@ class Tests(dbusmock.DBusTestCase):
 
         mb = self._add_bt_mouse()
 
-        self.start_daemon()
+        self.start_daemon(warns=True)
         devs_before = self.proxy.EnumerateDevices()
         self.assertEqual(len(devs_before), 1)
 
