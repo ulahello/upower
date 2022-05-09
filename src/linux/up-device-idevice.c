@@ -35,6 +35,7 @@
 #include <libimobiledevice/lockdown.h>
 #include <plist/plist.h>
 
+#include "up-constants.h"
 #include "up-types.h"
 #include "up-device-idevice.h"
 
@@ -173,7 +174,7 @@ up_device_idevice_start_poll_cb (UpDeviceIdevice *idevice)
 	g_object_set (G_OBJECT (idevice), "is-present", TRUE, NULL);
 
 	/* set up a poll */
-	up_daemon_start_poll (G_OBJECT (idevice));
+	g_object_set (idevice, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
 
 	idevice->priv->start_id = 0;
 	return G_SOURCE_REMOVE;
@@ -382,14 +383,6 @@ up_device_idevice_finalize (GObject *object)
 	G_OBJECT_CLASS (up_device_idevice_parent_class)->finalize (object);
 }
 
-static void
-up_device_idevice_dispose (GObject *object)
-{
-	up_daemon_stop_poll (object);
-
-	G_OBJECT_CLASS (up_device_idevice_parent_class)->dispose (object);
-}
-
 /**
  * up_device_idevice_class_init:
  **/
@@ -400,7 +393,6 @@ up_device_idevice_class_init (UpDeviceIdeviceClass *klass)
 	UpDeviceClass *device_class = UP_DEVICE_CLASS (klass);
 
 	object_class->finalize = up_device_idevice_finalize;
-	object_class->dispose = up_device_idevice_dispose;
 	device_class->coldplug = up_device_idevice_coldplug;
 	device_class->refresh = up_device_idevice_refresh;
 }
