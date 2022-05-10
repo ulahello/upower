@@ -79,7 +79,7 @@ static guint signals [SIGNAL_LAST] = { 0 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpBackend, up_backend, G_TYPE_OBJECT)
 
-static gboolean up_backend_device_add (UpBackend *backend, GUdevDevice *native, const char *was_event);
+static void up_backend_device_add (UpBackend *backend, GUdevDevice *native, const char *was_event);
 static void up_backend_device_remove (UpBackend *backend, GUdevDevice *native);
 
 static void
@@ -206,12 +206,11 @@ out:
 	g_clear_object (&object);
 }
 
-static gboolean
+static void
 up_backend_device_add (UpBackend *backend, GUdevDevice *native, const char *was_event)
 {
-	GObject *object;
-	UpDevice *device;
-	gboolean ret = TRUE;
+	g_autoptr(UpDevice) device = NULL;
+	GObject *object = NULL;
 
 	/* does device exist in db? */
 	object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
@@ -219,24 +218,19 @@ up_backend_device_add (UpBackend *backend, GUdevDevice *native, const char *was_
 		device = UP_DEVICE (object);
 		/* we already have the device; treat as change event */
 		up_backend_device_changed (backend, native, "add");
-		goto out;
+		return;
 	}
 
 	/* get the right sort of device */
 	device = up_backend_device_new (backend, native);
 	if (device == NULL) {
-		ret = FALSE;
-		goto out;
+		return;
 	}
 
 	if (was_event)
 		g_warning ("treated %s event as add on %s", was_event, g_udev_device_get_sysfs_path (native));
 
-	/* emit */
 	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
-out:
-	g_clear_object (&object);
-	return ret;
 }
 
 static void
@@ -355,8 +349,8 @@ bluez_interface_added (GDBusObjectManager *manager,
 		       GDBusInterface     *interface,
 		       gpointer            user_data)
 {
+	g_autoptr(UpDevice) device = NULL;
 	UpBackend *backend = user_data;
-	UpDevice *device;
 	GObject *object;
 
 	if (!has_battery_iface (bus_object))

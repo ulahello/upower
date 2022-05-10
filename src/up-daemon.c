@@ -955,7 +955,7 @@ up_daemon_device_removed_cb (UpBackend *backend, UpDevice *device, UpDaemon *dae
 
 	g_signal_handlers_disconnect_by_data (device, daemon);
 
-	/* remove from list */
+	/* remove from list (device remains valid during the function call) */
 	up_device_list_remove (priv->power_devices, device);
 
 	/* emit */
@@ -968,9 +968,6 @@ up_daemon_device_removed_cb (UpBackend *backend, UpDevice *device, UpDaemon *dae
 		return;
 	}
 	up_exported_daemon_emit_device_removed (UP_EXPORTED_DAEMON (daemon), object_path);
-
-	/* finalise the object */
-	g_object_unref (device);
 
 	/* In case a battery was removed */
 	up_daemon_refresh_battery_devices (daemon);

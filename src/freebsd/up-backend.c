@@ -155,7 +155,7 @@ out:
 static void
 up_backend_create_new_device (UpBackend *backend, UpAcpiNative *native)
 {
-	UpDevice *device;
+	g_autoptr(UpDevice) device = NULL;
 
 	device = g_initable_new (UP_TYPE_DEVICE_SUPPLY, NULL, NULL,
 	                         "daemon", backend->priv->daemon,
