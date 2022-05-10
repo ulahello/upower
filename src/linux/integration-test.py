@@ -1251,7 +1251,7 @@ class Tests(dbusmock.DBusTestCase):
              'present', '1',
              'online', '1',
              'status', 'Discharging',
-             'capacity', '30',
+             'capacity', '20',
              'model_name', 'Fancy BT mouse'],
             [])
 
@@ -1263,7 +1263,7 @@ class Tests(dbusmock.DBusTestCase):
 
         mb1_up = devs_after[0]
         self.assertEqual(self.get_dbus_dev_property(mb1_up, 'Model'), 'Fancy BT mouse')
-        self.assertEqual(self.get_dbus_dev_property(mb1_up, 'Percentage'), 30)
+        self.assertEqual(self.get_dbus_dev_property(mb1_up, 'Percentage'), 20)
         self.assertEqual(self.get_dbus_dev_property(mb1_up, 'PowerSupply'), False)
         self.stop_daemon()
 
