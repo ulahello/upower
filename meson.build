@@ -6,7 +6,7 @@ project('upower', 'c',
         'warning_level=1',
         'c_std=gnu99',
     ],
-    meson_version: '>= 0.49.0')
+    meson_version: '>= 0.56.0')
 
 soversion = 3
 current = 1
@@ -91,20 +91,20 @@ endif
 udevrulesdir = get_option('udevrulesdir')
 if udevrulesdir == 'auto'
     udev_dep = dependency('udev', required: true)
-    udevrulesdir = udev_dep.get_pkgconfig_variable('udev_dir') / 'rules.d'
+    udevrulesdir = udev_dep.get_variable(pkgconfig: 'udev_dir') / 'rules.d'
 endif
 
 udevhwdbdir = get_option('udevhwdbdir')
 if udevhwdbdir == 'auto'
     udev_dep = dependency('udev', required: true)
-    udevhwdbdir = udev_dep.get_pkgconfig_variable('udev_dir') / 'hwdb.d'
+    udevhwdbdir = udev_dep.get_variable(pkgconfig: 'udev_dir') / 'hwdb.d'
 endif
 
 dbusdir = get_option('datadir') / 'dbus-1'
 systemdsystemunitdir = get_option('systemdsystemunitdir')
 if systemdsystemunitdir == ''
     systemd_dep = dependency('systemd')
-    systemdsystemunitdir = systemd_dep.get_pkgconfig_variable('systemdsystemunitdir')
+    systemdsystemunitdir = systemd_dep.get_variable(pkgconfig: 'systemdsystemunitdir')
 endif
 
 # Generate configuration file

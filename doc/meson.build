@@ -2,7 +2,7 @@ subdir('man')
 
 ifaces_refs = []
 
-dbus_dir = join_paths(meson.source_root(), 'dbus')
+dbus_dir = join_paths(meson.project_source_root(), 'dbus')
 spec_to_docbook = files('spec-to-docbook.xsl')
 
 foreach iface: upowerd_dbus_interfaces
@@ -30,7 +30,7 @@ version_xml = configure_file(
 if get_option('gtk-doc')
   gnome.gtkdoc('UPower',
       main_xml: 'upower-docs.xml',
-      src_dir: meson.source_root() / 'libupower-glib',
+      src_dir: meson.project_source_root() / 'libupower-glib',
       dependencies: [ libupower_glib_dep ],
       scan_args: ['--rebuild-types', '--rebuild-sections'],
       content_files: [
