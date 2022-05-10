@@ -216,9 +216,18 @@ up_backend_device_add (UpBackend *backend, GUdevDevice *native, const char *was_
 	object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (native));
 	if (object != NULL) {
 		device = UP_DEVICE (object);
-		/* we already have the device; treat as change event */
-		up_backend_device_changed (backend, native, "add");
-		return;
+
+		/* If the known device is different, then remove it. If it is
+		 * the same, then simply treat it as a "changed" event.
+		 */
+		if (g_strcmp0 (g_udev_device_get_sysfs_path (native),
+		               g_udev_device_get_sysfs_path (G_UDEV_DEVICE (up_device_get_native (device)))) != 0) {
+			up_backend_device_remove (backend, G_UDEV_DEVICE (up_device_get_native (device)));
+			g_clear_object (&device);
+		} else {
+			up_backend_device_changed (backend, native, "add");
+			return;
+		}
 	}
 
 	/* get the right sort of device */
