@@ -34,7 +34,7 @@
 #include "up-history-item.h"
 #include "up-stats-item.h"
 
-struct UpDevicePrivate
+typedef struct
 {
 	UpDaemon		*daemon;
 	/* native == NULL implies display device */
@@ -45,7 +45,7 @@ struct UpDevicePrivate
 
 	gint64			last_refresh;
 	int			poll_timeout;
-};
+} UpDevicePrivate;
 
 static void up_device_initable_iface_init (GInitableIface *iface);
 
@@ -79,10 +79,11 @@ static GParamSpec *properties[N_PROPS];
 static void
 update_warning_level (UpDevice *device)
 {
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
 	UpDeviceLevel warning_level, battery_level;
 	UpExportedDevice *skeleton = UP_EXPORTED_DEVICE (device);
 
-	if (device->priv->native == NULL)
+	if (priv->native == NULL)
 		return;
 
 	/* If the battery level is available, and is critical,
@@ -96,7 +97,7 @@ update_warning_level (UpDevice *device)
 		else
 			warning_level = UP_DEVICE_LEVEL_NONE;
 	} else {
-		warning_level = up_daemon_compute_warning_level (device->priv->daemon,
+		warning_level = up_daemon_compute_warning_level (priv->daemon,
 								 up_exported_device_get_state (skeleton),
 								 up_exported_device_get_type_ (skeleton),
 								 up_exported_device_get_power_supply (skeleton),
@@ -116,6 +117,7 @@ update_warning_level (UpDevice *device)
 static void
 update_icon_name (UpDevice *device)
 {
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
 	const gchar *icon_name = NULL;
 	UpExportedDevice *skeleton = UP_EXPORTED_DEVICE (device);
 
@@ -137,14 +139,14 @@ update_icon_name (UpDevice *device)
 				break;
 			case UP_DEVICE_STATE_CHARGING:
 			case UP_DEVICE_STATE_PENDING_CHARGE:
-				icon_name = up_daemon_get_charge_icon (device->priv->daemon,
+				icon_name = up_daemon_get_charge_icon (priv->daemon,
 								       up_exported_device_get_percentage (skeleton),
 								       up_exported_device_get_battery_level (skeleton),
 								    TRUE);
 				break;
 			case UP_DEVICE_STATE_DISCHARGING:
 			case UP_DEVICE_STATE_PENDING_DISCHARGE:
-				icon_name = up_daemon_get_charge_icon (device->priv->daemon,
+				icon_name = up_daemon_get_charge_icon (priv->daemon,
 								       up_exported_device_get_percentage (skeleton),
 								       up_exported_device_get_battery_level (skeleton),
 								    FALSE);
@@ -161,23 +163,25 @@ update_icon_name (UpDevice *device)
 static void
 update_history (UpDevice *device)
 {
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
 	UpExportedDevice *skeleton = UP_EXPORTED_DEVICE (device);
 
 	/* save new history */
-	up_history_set_state (device->priv->history, up_exported_device_get_state (skeleton));
-	up_history_set_charge_data (device->priv->history, up_exported_device_get_percentage (skeleton));
-	up_history_set_rate_data (device->priv->history, up_exported_device_get_energy_rate (skeleton));
-	up_history_set_time_full_data (device->priv->history, up_exported_device_get_time_to_full (skeleton));
-	up_history_set_time_empty_data (device->priv->history, up_exported_device_get_time_to_empty (skeleton));
+	up_history_set_state (priv->history, up_exported_device_get_state (skeleton));
+	up_history_set_charge_data (priv->history, up_exported_device_get_percentage (skeleton));
+	up_history_set_rate_data (priv->history, up_exported_device_get_energy_rate (skeleton));
+	up_history_set_time_full_data (priv->history, up_exported_device_get_time_to_full (skeleton));
+	up_history_set_time_empty_data (priv->history, up_exported_device_get_time_to_empty (skeleton));
 }
 
 static void
 up_device_notify (GObject *object, GParamSpec *pspec)
 {
 	UpDevice *device = UP_DEVICE (object);
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
 
 	/* Not finished setting up the object? */
-	if (device->priv->daemon == NULL)
+	if (priv->daemon == NULL)
 		return;
 
 	G_OBJECT_CLASS (up_device_parent_class)->notify (object, pspec);
@@ -237,13 +241,14 @@ up_device_get_online (UpDevice *device, gboolean *online)
 static gchar *
 up_device_get_id (UpDevice *device)
 {
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
 	GString *string;
 	gchar *id = NULL;
 	const char *model;
 	const char *serial;
 	UpExportedDevice *skeleton;
 
-	if (device->priv->native == NULL)
+	if (priv->native == NULL)
 		return NULL;
 
 	skeleton = UP_EXPORTED_DEVICE (device);
@@ -329,19 +334,22 @@ out:
 UpDaemon *
 up_device_get_daemon (UpDevice *device)
 {
-	if (device->priv->daemon == NULL)
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
+
+	if (priv->daemon == NULL)
 		return NULL;
-	return g_object_ref (device->priv->daemon);
+	return g_object_ref (priv->daemon);
 }
 
 static void
 up_device_export_skeleton (UpDevice *device,
 			   const gchar *object_path)
 {
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
 	GError *error = NULL;
 
 	g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (device),
-					  g_dbus_interface_skeleton_get_connection (G_DBUS_INTERFACE_SKELETON (device->priv->daemon)),
+					  g_dbus_interface_skeleton_get_connection (G_DBUS_INTERFACE_SKELETON (priv->daemon)),
 					  object_path,
 					  &error);
 
@@ -354,6 +362,7 @@ up_device_export_skeleton (UpDevice *device,
 static gchar *
 up_device_compute_object_path (UpDevice *device)
 {
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
 	gchar *basename;
 	gchar *id;
 	gchar *object_path;
@@ -361,7 +370,7 @@ up_device_compute_object_path (UpDevice *device)
 	const gchar *type;
 	guint i;
 
-	if (device->priv->native == NULL) {
+	if (priv->native == NULL) {
 		return g_build_filename (UP_DEVICES_DBUS_PATH, "DisplayDevice", NULL);
 	}
 
@@ -419,6 +428,7 @@ up_device_initable_init (GInitable     *initable,
                          GError       **error)
 {
 	UpDevice *device = UP_DEVICE (initable);
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
 	const gchar *native_path = "DisplayDevice";
 	UpDeviceClass *klass = UP_DEVICE_GET_CLASS (device);
 	gchar *id = NULL;
@@ -426,11 +436,11 @@ up_device_initable_init (GInitable     *initable,
 
 	g_return_val_if_fail (UP_IS_DEVICE (device), FALSE);
 
-	if (up_daemon_get_debug (device->priv->daemon))
+	if (up_daemon_get_debug (priv->daemon))
 		g_signal_connect (device, "handle-refresh",
 				  G_CALLBACK (up_device_refresh), device);
-	if (device->priv->native) {
-		native_path = up_native_get_native_path (device->priv->native);
+	if (priv->native) {
+		native_path = up_native_get_native_path (priv->native);
 		up_exported_device_set_native_path (UP_EXPORTED_DEVICE (device), native_path);
 	}
 
@@ -459,7 +469,7 @@ up_device_initable_init (GInitable     *initable,
 	/* get the id so we can load the old history */
 	id = up_device_get_id (device);
 	if (id != NULL) {
-		up_history_set_id (device->priv->history, id);
+		up_history_set_id (priv->history, id);
 		g_free (id);
 	}
 
@@ -482,6 +492,7 @@ up_device_get_statistics (UpExportedDevice *skeleton,
 			  const gchar *type,
 			  UpDevice *device)
 {
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
 	GPtrArray *array = NULL;
 	UpStatsItem *item;
 	guint i;
@@ -496,9 +507,9 @@ up_device_get_statistics (UpExportedDevice *skeleton,
 
 	/* get the correct data */
 	if (g_strcmp0 (type, "charging") == 0)
-		array = up_history_get_profile_data (device->priv->history, TRUE);
+		array = up_history_get_profile_data (priv->history, TRUE);
 	else if (g_strcmp0 (type, "discharging") == 0)
-		array = up_history_get_profile_data (device->priv->history, FALSE);
+		array = up_history_get_profile_data (priv->history, FALSE);
 
 	/* maybe the device doesn't support histories */
 	if (array == NULL) {
@@ -541,6 +552,7 @@ up_device_get_history (UpExportedDevice *skeleton,
 		       guint resolution,
 		       UpDevice *device)
 {
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
 	GPtrArray *array = NULL;
 	UpHistoryItem *item;
 	guint i;
@@ -567,7 +579,7 @@ up_device_get_history (UpExportedDevice *skeleton,
 
 	/* something recognised */
 	if (type != UP_HISTORY_TYPE_UNKNOWN)
-		array = up_history_get_data (device->priv->history, type, timespan, resolution);
+		array = up_history_get_data (priv->history, type, timespan, resolution);
 
 	/* maybe the device doesn't have any history */
 	if (array == NULL) {
@@ -599,10 +611,11 @@ out:
 gboolean
 up_device_refresh_internal (UpDevice *device, UpRefreshReason reason)
 {
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
 	gboolean ret = FALSE;
 	UpDeviceClass *klass = UP_DEVICE_GET_CLASS (device);
 
-	if (device->priv->native == NULL)
+	if (priv->native == NULL)
 		return TRUE;
 
 	/* not implemented */
@@ -611,7 +624,7 @@ up_device_refresh_internal (UpDevice *device, UpRefreshReason reason)
 
 	/* do the refresh, and change the property */
 	ret = klass->refresh (device, reason);
-	device->priv->last_refresh = g_get_monotonic_time ();
+	priv->last_refresh = g_get_monotonic_time ();
 	g_object_notify_by_pspec (G_OBJECT (device), properties[PROP_LAST_REFRESH]);
 
 	if (!ret) {
@@ -620,9 +633,9 @@ up_device_refresh_internal (UpDevice *device, UpRefreshReason reason)
 	}
 
 	/* the first time, print all properties */
-	if (!device->priv->has_ever_refresh) {
+	if (!priv->has_ever_refresh) {
 		g_debug ("added native-path: %s", up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device)));
-		device->priv->has_ever_refresh = TRUE;
+		priv->has_ever_refresh = TRUE;
 		goto out;
 	}
 out:
@@ -639,17 +652,19 @@ up_device_get_object_path (UpDevice *device)
 GObject *
 up_device_get_native (UpDevice *device)
 {
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
 	g_return_val_if_fail (UP_IS_DEVICE (device), NULL);
-	return device->priv->native;
+	return priv->native;
 }
 
 static void
 up_device_init (UpDevice *device)
 {
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
 	UpExportedDevice *skeleton;
 
-	device->priv = up_device_get_instance_private (device);
-	device->priv->history = up_history_new ();
+	priv = up_device_get_instance_private (device);
+	priv->history = up_history_new ();
 
 	skeleton = UP_EXPORTED_DEVICE (device);
 	up_exported_device_set_battery_level (skeleton, UP_DEVICE_LEVEL_NONE);
@@ -663,16 +678,11 @@ up_device_init (UpDevice *device)
 static void
 up_device_finalize (GObject *object)
 {
-	UpDevice *device;
+	UpDevicePrivate *priv = up_device_get_instance_private (UP_DEVICE (object));
 
-	g_return_if_fail (object != NULL);
-	g_return_if_fail (UP_IS_DEVICE (object));
-
-	device = UP_DEVICE (object);
-	g_return_if_fail (device->priv != NULL);
-	g_clear_object (&device->priv->native);
-	g_clear_object (&device->priv->daemon);
-	g_object_unref (device->priv->history);
+	g_clear_object (&priv->native);
+	g_clear_object (&priv->daemon);
+	g_object_unref (priv->history);
 
 	G_OBJECT_CLASS (up_device_parent_class)->finalize (object);
 }
@@ -680,7 +690,9 @@ up_device_finalize (GObject *object)
 static void
 up_device_dispose (GObject *object)
 {
-	g_clear_object (&UP_DEVICE (object)->priv->daemon);
+	UpDevicePrivate *priv = up_device_get_instance_private (UP_DEVICE (object));
+
+	g_clear_object (&priv->daemon);
 
 	G_OBJECT_CLASS (up_device_parent_class)->dispose (object);
 }

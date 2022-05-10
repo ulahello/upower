@@ -28,19 +28,8 @@
 G_BEGIN_DECLS
 
 #define UP_TYPE_DEVICE		(up_device_get_type ())
-#define UP_DEVICE(o)	   	(G_TYPE_CHECK_INSTANCE_CAST ((o), UP_TYPE_DEVICE, UpDevice))
-#define UP_DEVICE_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), UP_TYPE_DEVICE, UpDeviceClass))
-#define UP_IS_DEVICE(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), UP_TYPE_DEVICE))
-#define UP_IS_DEVICE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), UP_TYPE_DEVICE))
-#define UP_DEVICE_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), UP_TYPE_DEVICE, UpDeviceClass))
 
-typedef struct UpDevicePrivate UpDevicePrivate;
-
-typedef struct
-{
-	UpExportedDeviceSkeleton parent;
-	UpDevicePrivate	*priv;
-} UpDevice;
+G_DECLARE_DERIVABLE_TYPE (UpDevice, up_device, UP, DEVICE, UpExportedDeviceSkeleton)
 
 typedef enum {
 	UP_REFRESH_INIT,
@@ -50,7 +39,7 @@ typedef enum {
 	UP_REFRESH_CHANGES,
 } UpRefreshReason;
 
-typedef struct
+struct _UpDeviceClass
 {
 	UpExportedDeviceSkeletonClass parent_class;
 
@@ -63,7 +52,7 @@ typedef struct
 						 gboolean	*on_battery);
 	gboolean	 (*get_online)		(UpDevice	*device,
 						 gboolean	*online);
-} UpDeviceClass;
+};
 
 GType		 up_device_get_type		(void);
 UpDevice	*up_device_new			(UpDaemon	*daemon,
