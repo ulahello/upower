@@ -58,7 +58,7 @@ struct UpBackendPrivate
 	UpDaemon		*daemon;
 	UpDeviceList		*device_list;
 	GUdevClient		*gudev_client;
-	UpDeviceList		*managed_devices;
+	UpInput			*lid_device;
 	UpConfig		*config;
 	GDBusProxy		*logind_proxy;
 	guint                    logind_sleep_id;
@@ -152,7 +152,7 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 		                         "native", G_OBJECT (native),
 		                         NULL);
 
-	} else if (g_strcmp0 (subsys, "input") == 0) {
+	} else if (!backend->priv->lid_device && g_strcmp0 (subsys, "input") == 0) {
 
 		/* check input device */
 		input = up_input_new ();
@@ -165,9 +165,7 @@ up_backend_device_new (UpBackend *backend, GUdevDevice *native)
 			up_daemon_set_lid_is_closed (backend->priv->daemon,
 						     up_input_get_switch_value (input));
 
-			/* not a power device, add it to the managed devices
-			 * and don't return a power device */
-			up_device_list_insert (backend->priv->managed_devices, input);
+			backend->priv->lid_device = g_object_ref (input);
 			device = NULL;
 		}
 		g_object_unref (input);
@@ -531,9 +529,7 @@ up_backend_unplug (UpBackend *backend)
 {
 	g_clear_object (&backend->priv->gudev_client);
 	g_clear_object (&backend->priv->device_list);
-	/* set in init, clear the list to remove reference to UpDaemon */
-	if (backend->priv->managed_devices != NULL)
-		up_device_list_clear (backend->priv->managed_devices, FALSE);
+	g_clear_object (&backend->priv->lid_device);
 	g_clear_object (&backend->priv->daemon);
 	if (backend->priv->bluez_watch_id > 0) {
 		g_bus_unwatch_name (backend->priv->bluez_watch_id);
@@ -788,7 +784,6 @@ up_backend_init (UpBackend *backend)
 
 	backend->priv = up_backend_get_instance_private (backend);
 	backend->priv->config = up_config_new ();
-	backend->priv->managed_devices = up_device_list_new ();
 	backend->priv->logind_proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
 								     0,
 								     NULL,
@@ -845,7 +840,7 @@ up_backend_finalize (GObject *object)
 
 	g_clear_object (&backend->priv->logind_proxy);
 
-	g_object_unref (backend->priv->managed_devices);
+	g_clear_object (&backend->priv->lid_device);
 
 	G_OBJECT_CLASS (up_backend_parent_class)->finalize (object);
 }
