@@ -25,6 +25,7 @@ import shutil
 import subprocess
 import unittest
 import time
+from output_checker import OutputChecker
 from packaging.version import parse as parse_version
 
 try:
@@ -146,7 +147,6 @@ class Tests(dbusmock.DBusTestCase):
         self.testbed = UMockdev.Testbed.new()
 
         self.proxy = None
-        self.log = None
         self.daemon = None
         self.start_logind({'CanHybridSleep' : 'yes'})
 
@@ -166,14 +166,6 @@ class Tests(dbusmock.DBusTestCase):
                 self.bluez.wait()
         except:
             pass
-
-        # on failures, print daemon log
-        errors = [x[1] for x in self._outcome.errors if x[1]]
-        if errors and self.log:
-            with open(self.log.name) as f:
-                sys.stderr.write('\n-------------- daemon log: ----------------\n')
-                sys.stderr.write(f.read())
-                sys.stderr.write('------------------------------\n')
 
     #
     # Daemon control and D-BUS I/O
@@ -199,15 +191,16 @@ class Tests(dbusmock.DBusTestCase):
         # note: Python doesn't propagate the setenv from Testbed.new(), so we
         # have to do that ourselves
         env['UMOCKDEV_DIR'] = self.testbed.get_root_dir()
-        self.log = tempfile.NamedTemporaryFile()
+        self.daemon_log = OutputChecker()
+
         if os.getenv('VALGRIND') != None:
             daemon_path = ['valgrind', self.daemon_path, '-v']
         else:
             daemon_path = [self.daemon_path, '-v']
         self.daemon = subprocess.Popen(daemon_path,
-                                       env=env, stdout=self.log,
+                                       env=env, stdout=self.daemon_log.fd,
                                        stderr=subprocess.STDOUT)
-
+        self.daemon_log.writer_attached()
         # wait until the daemon gets online
         timeout = 100
         while timeout > 0:
@@ -236,6 +229,7 @@ class Tests(dbusmock.DBusTestCase):
             except OSError:
                 pass
             self.daemon.wait()
+        self.daemon_log.assert_closed()
         self.daemon = None
         self.proxy = None
 
@@ -272,13 +266,6 @@ class Tests(dbusmock.DBusTestCase):
         self.bluez, self.bluez_obj = self.spawn_server_template('bluez5',
                                                                   parameters or {},
                                                                   stdout=subprocess.PIPE)
-
-    def have_text_in_log(self, text):
-        return self.count_text_in_log(text) > 0
-
-    def count_text_in_log(self, text):
-        with open(self.log.name) as f:
-            return f.read().count(text)
 
     def assertEventually(self, condition, message=None, timeout=50, value=True):
         '''Assert that condition function eventually returns True.
@@ -955,14 +942,14 @@ class Tests(dbusmock.DBusTestCase):
         self.start_daemon()
 
         self.logind_obj.EmitSignal('', 'PrepareForSleep', 'b', [True])
-        self.assertEventually(lambda: self.have_text_in_log("Polling will be paused"), timeout=10)
+        self.daemon_log.check_line("Polling will be paused", timeout=1)
 
         # simulate some battery drain during sleep for which we then
         # can check after we 'woke up'
         self.testbed.set_attribute(bat0, 'energy_now', '40000000')
 
         self.logind_obj.EmitSignal('', 'PrepareForSleep', 'b', [False])
-        self.assertEventually(lambda: self.have_text_in_log("Polling will be resumed"), timeout=10)
+        self.daemon_log.check_line("Polling will be resumed", timeout=1)
 
         devs = self.proxy.EnumerateDevices()
         self.assertEqual(len(devs), 1)
@@ -1010,8 +997,7 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEventually(lambda: self.get_dbus_display_property('WarningLevel'), value=UP_DEVICE_LEVEL_ACTION)
         self.assertEqual(len(self.logind_obj.ListInhibitors()), 2)
 
-        time.sleep(UP_DAEMON_ACTION_DELAY + 0.5) # wait for UP_DAEMON_ACTION_DELAY
-        self.assertEqual(self.count_text_in_log("About to call logind method Hibernate"), 1)
+        self.daemon_log.check_line("About to call logind method Hibernate", timeout=UP_DAEMON_ACTION_DELAY + 0.5)
 
         # block inhibitor lock is released
         self.assertEqual(len(self.logind_obj.ListInhibitors()), 1)
@@ -1048,8 +1034,7 @@ class Tests(dbusmock.DBusTestCase):
         time.sleep(0.5)
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_ACTION)
 
-        time.sleep(UP_DAEMON_ACTION_DELAY + 0.5) # wait for UP_DAEMON_ACTION_DELAY
-        self.assertEqual(self.count_text_in_log("About to call logind method Hibernate"), 1)
+        self.daemon_log.check_line("About to call logind method Hibernate", timeout=UP_DAEMON_ACTION_DELAY + 0.5)
 
         # simulate that battery was charged to 100% during sleep
         self.testbed.set_attribute(bat0, 'energy_now', '60000000')
@@ -1065,8 +1050,7 @@ class Tests(dbusmock.DBusTestCase):
         time.sleep(0.5)
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_ACTION)
 
-        time.sleep(UP_DAEMON_ACTION_DELAY + 0.5) # wait for UP_DAEMON_ACTION_DELAY
-        self.assertEqual(self.count_text_in_log("About to call logind method Hibernate"), 2)
+        self.daemon_log.check_line("About to call logind method Hibernate", timeout=UP_DAEMON_ACTION_DELAY + 0.5)
 
         self.stop_daemon()
 
@@ -1090,7 +1074,7 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(len(devs), 1)
         bat0_up = devs[0]
 
-        self.assertEventually(lambda: self.have_text_in_log(f"saving in {UP_HISTORY_SAVE_INTERVAL} seconds"), timeout=10)
+        self.daemon_log.check_line(f"saving in {UP_HISTORY_SAVE_INTERVAL} seconds", timeout=1)
 
         # simulate that battery has 1% (less than 10%)
         self.testbed.set_attribute(bat0, 'energy_now', '600000')
@@ -1099,8 +1083,8 @@ class Tests(dbusmock.DBusTestCase):
         time.sleep(0.5)
         self.assertEqual(self.get_dbus_display_property('Percentage'), 1)
 
-        self.assertEqual(self.count_text_in_log("saving to disk earlier due to low power"), 1)
-        self.assertEqual(self.count_text_in_log(f"saving in {UP_HISTORY_SAVE_INTERVAL_LOW_POWER} seconds"), 1)
+        self.daemon_log.check_line("saving to disk earlier due to low power")
+        self.daemon_log.check_line(f"saving in {UP_HISTORY_SAVE_INTERVAL_LOW_POWER} seconds")
 
         # simulate that battery was charged to 100% during sleep
         self.testbed.set_attribute(bat0, 'energy_now', '60000000')
@@ -1110,7 +1094,7 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_display_property('Percentage'), 100)
 
         # The 5 seconds were not up yet, and the shorter timeout sticks
-        self.assertEqual(self.count_text_in_log("deferring as earlier timeout is already queued"), 1)
+        self.daemon_log.check_line("deferring as earlier timeout is already queued")
 
         self.stop_daemon()
 
