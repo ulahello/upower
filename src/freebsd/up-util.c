@@ -145,7 +145,7 @@ up_make_safe_string (const gchar *text)
 				ret[idx] = ret[i];
 			idx++;
 		} else {
-			g_debug ("invalid char '%c'", ret[i]);
+			g_debug ("invalid char 0x%02X", ret[i]);
 		}
 	}
 

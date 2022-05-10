@@ -431,7 +431,7 @@ up_device_supply_make_safe_string (gchar *text)
 				text[idx] = text[i];
 			idx++;
 		} else {
-			g_debug ("invalid char '%c'", text[i]);
+			g_debug ("invalid char: 0x%02X", text[i]);
 		}
 	}
 
