@@ -16,7 +16,8 @@ def format_title(title):
         f"{box['bl']}{hline}{box['br']}",
     ])
 
-tree = etree.parse(sys.argv[1])
+# The log coloring causes the XML to be invalid, so set recover=True
+tree = etree.parse(sys.argv[1], etree.XMLParser(recover=True))
 for suite in tree.xpath('/testsuites/testsuite'):
     skipped = suite.get('skipped')
     if int(skipped) != 0:
