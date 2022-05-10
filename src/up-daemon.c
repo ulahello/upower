@@ -42,6 +42,8 @@ struct UpDaemonPrivate
 	UpBackend		*backend;
 	UpDeviceList		*power_devices;
 	guint			 action_timeout_id;
+	guint			 refresh_batteries_id;
+	guint			 warning_level_id;
 	gboolean                 poll_paused;
 	GSource                 *poll_source;
 	int			 critical_action_lock_fd;
@@ -352,11 +354,8 @@ up_daemon_get_on_ac_local (UpDaemon *daemon)
 	return result;
 }
 
-/**
- * up_daemon_refresh_battery_devices:
- **/
 static gboolean
-up_daemon_refresh_battery_devices (UpDaemon *daemon)
+up_daemon_refresh_battery_devices_idle (UpDaemon *daemon)
 {
 	guint i;
 	GPtrArray *array;
@@ -380,7 +379,17 @@ up_daemon_refresh_battery_devices (UpDaemon *daemon)
 	}
 	g_ptr_array_unref (array);
 
-	return TRUE;
+	daemon->priv->refresh_batteries_id = 0;
+	return G_SOURCE_REMOVE;
+}
+
+static void
+up_daemon_refresh_battery_devices (UpDaemon *daemon)
+{
+	if (daemon->priv->refresh_batteries_id)
+		return;
+
+	daemon->priv->refresh_batteries_id = g_idle_add ((GSourceFunc) up_daemon_refresh_battery_devices_idle, daemon);
 }
 
 /**
@@ -695,8 +704,8 @@ up_daemon_compute_warning_level (UpDaemon      *daemon,
 	g_assert_not_reached ();
 }
 
-static void
-up_daemon_update_warning_level (UpDaemon *daemon)
+static gboolean
+up_daemon_update_warning_level_idle (UpDaemon *daemon)
 {
 	gboolean ret;
 	UpDeviceLevel warning_level;
@@ -707,6 +716,18 @@ up_daemon_update_warning_level (UpDaemon *daemon)
 
 	warning_level = up_daemon_get_warning_level_local (daemon);
 	up_daemon_set_warning_level (daemon, warning_level);
+
+	daemon->priv->warning_level_id = 0;
+	return G_SOURCE_REMOVE;
+}
+
+static void
+up_daemon_update_warning_level (UpDaemon *daemon)
+{
+	if (daemon->priv->warning_level_id)
+		return;
+
+	daemon->priv->warning_level_id = g_idle_add ((GSourceFunc) up_daemon_update_warning_level_idle, daemon);
 }
 
 const gchar *
@@ -1080,6 +1101,8 @@ up_daemon_finalize (GObject *object)
 	UpDaemonPrivate *priv = daemon->priv;
 
 	g_clear_handle_id (&priv->action_timeout_id, g_source_remove);
+	g_clear_handle_id (&priv->refresh_batteries_id, g_source_remove);
+	g_clear_handle_id (&priv->warning_level_id, g_source_remove);
 
 	if (priv->critical_action_lock_fd >= 0) {
 		close (priv->critical_action_lock_fd);
