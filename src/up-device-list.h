@@ -59,8 +59,7 @@ gboolean	 up_device_list_insert			(UpDeviceList		*list,
 							 gpointer		 device);
 gboolean	 up_device_list_remove			(UpDeviceList		*list,
 							 gpointer		 device);
-void		 up_device_list_clear			(UpDeviceList		*list,
-							 gboolean unref_it);
+void		 up_device_list_clear			(UpDeviceList		*list);
 GPtrArray	*up_device_list_get_array		(UpDeviceList		*list);
 
 G_END_DECLS

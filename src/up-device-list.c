@@ -132,33 +132,17 @@ up_device_list_remove (UpDeviceList *list, gpointer device)
 }
 
 /**
- * up_device_list_remove_cb:
- **/
-static gboolean
-up_device_list_remove_all_cb (gpointer key, gpointer value, gpointer user_data)
-{
-	return TRUE;
-}
-
-/**
  * up_device_list_clear:
  * @list: This class instance
- * @unref_it: %TRUE if you own a reference to the objects and want to drop it.
  *
  * Clear the contents of this list.
  **/
 void
-up_device_list_clear (UpDeviceList *list, gboolean unref_it)
+up_device_list_clear (UpDeviceList *list)
 {
 	g_return_if_fail (UP_IS_DEVICE_LIST (list));
 
-	/* caller owns these objects, but wants to destroy them */
-	if (unref_it)
-		g_ptr_array_foreach (list->priv->array, (GFunc) g_object_unref, NULL);
-
-	/* remove all devices from the db */
-	g_hash_table_foreach_remove (list->priv->map_native_path_to_device,
-				     up_device_list_remove_all_cb, NULL);
+	g_hash_table_remove_all (list->priv->map_native_path_to_device);
 	g_ptr_array_set_size (list->priv->array, 0);
 }
 

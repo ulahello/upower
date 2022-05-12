@@ -522,8 +522,8 @@ up_daemon_shutdown (UpDaemon *daemon)
 	/* stop accepting new devices and clear backend state */
 	up_backend_unplug (daemon->priv->backend);
 
-	/* forget about discovered devices and release UpDaemon reference */
-	up_device_list_clear (daemon->priv->power_devices, TRUE);
+	/* forget about discovered devices */
+	up_device_list_clear (daemon->priv->power_devices);
 
 	/* release UpDaemon reference */
 	g_object_run_dispose (G_OBJECT (daemon->priv->display_device));
