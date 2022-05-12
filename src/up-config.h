@@ -55,6 +55,8 @@ guint		 up_config_get_uint		(UpConfig	*config,
 gchar		*up_config_get_string           (UpConfig	*config,
 						 const gchar	*key);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(UpConfig, g_object_unref)
+
 G_END_DECLS
 
 #endif /* __UP_CONFIG_H */

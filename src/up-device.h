@@ -45,6 +45,8 @@ struct _UpDeviceClass
 
 	/* vtable */
 	gboolean	 (*coldplug)		(UpDevice	*device);
+	void		 (*sibling_discovered)	(UpDevice	*device,
+						 GObject	*sibling);
 	gboolean	 (*refresh)		(UpDevice	*device,
 						 UpRefreshReason reason);
 	const gchar	*(*get_id)		(UpDevice	*device);
@@ -65,6 +67,8 @@ gboolean	 up_device_get_on_battery	(UpDevice	*device,
 						 gboolean	*on_battery);
 gboolean	 up_device_get_online		(UpDevice	*device,
 						 gboolean	*online);
+void		 up_device_sibling_discovered	(UpDevice	*device,
+						 GObject	*sibling);
 gboolean	 up_device_refresh_internal	(UpDevice	*device,
 						 UpRefreshReason reason);
 

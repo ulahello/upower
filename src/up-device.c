@@ -608,6 +608,15 @@ out:
 	return TRUE;
 }
 
+void
+up_device_sibling_discovered (UpDevice *device, GObject *sibling)
+{
+	UpDeviceClass *klass = UP_DEVICE_GET_CLASS (device);
+
+	if (klass->sibling_discovered)
+		klass->sibling_discovered (device, sibling);
+}
+
 gboolean
 up_device_refresh_internal (UpDevice *device, UpRefreshReason reason)
 {

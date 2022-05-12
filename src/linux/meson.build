@@ -20,6 +20,7 @@ upshared += { 'linux': static_library('upshared',
         'up-input.h',
         'up-backend.c',
         'up-native.c',
+        'up-enumerator-udev.c',
         idevice_sources
     ],
     c_args: [ '-DG_LOG_DOMAIN="UPower-Linux"' ],
