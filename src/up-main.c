@@ -111,6 +111,15 @@ up_main_sigint_cb (gpointer user_data)
 	return FALSE;
 }
 
+static gboolean
+up_main_sigterm_cb (gpointer user_data)
+{
+	UpState *state = user_data;
+	g_debug ("Handling SIGTERM");
+	g_main_loop_quit (state->loop);
+	return FALSE;
+}
+
 /**
  * up_main_timed_exit_cb:
  *
@@ -245,6 +254,13 @@ main (gint argc, gchar **argv)
 	g_unix_signal_add_full (G_PRIORITY_DEFAULT,
 				SIGINT,
 				up_main_sigint_cb,
+				state,
+				NULL);
+
+	/* Clean shutdown on SIGTERM */
+	g_unix_signal_add_full (G_PRIORITY_DEFAULT,
+				SIGTERM,
+				up_main_sigterm_cb,
 				state,
 				NULL);
 
