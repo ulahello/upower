@@ -225,10 +225,17 @@ class Tests(dbusmock.DBusTestCase):
 
         if self.daemon:
             try:
-                self.daemon.kill()
+                self.daemon.terminate()
             except OSError:
                 pass
-            self.daemon.wait()
+            try:
+                self.assertEqual(self.daemon.wait(timeout=2.0), 0)
+            except TimeoutError:
+                try:
+                    self.daemon.kill()
+                except OSError:
+                    pass
+                self.assertEqual(self.daemon.wait(), 0)
         self.daemon_log.assert_closed()
         self.daemon = None
         self.proxy = None
