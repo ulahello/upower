@@ -35,7 +35,6 @@
 #include "up-types.h"
 #include "up-constants.h"
 #include "up-device-supply.h"
-#include "up-backend-linux-private.h"
 
 enum {
 	PROP_0,
@@ -1161,26 +1160,26 @@ up_device_supply_update_poll_frequency (UpDevice        *device,
 		return;
 
 	/* We start fast-polling if the reason to update was not a normal POLL
-	 * and the state is either unknown or we are in quirk mode and expect
-	 * the battery to return unstable values for a while.
+	 * and one of the following holds true:
+	 *  1. The current stat is unknown; we hope that this is transient
+	 *     and re-poll.
+	 *  2. A change occured on a line power supply. This likely means that
+	 *     batteries switch between charging/discharging which does not
+	 *     always result in a separate uevent.
 	 *
-	 * We stop again when:
-	 *  1. The state is known and we are NOT in quirk mode
-	 *  2. The timeout elapsed
+	 * For simplicity, we do the fast polling for a specific period of time.
+	 * If the reason to do fast-polling was an unknown state, then it would
+	 * also be reasonable to stop as soon as we got a proper state.
 	 */
 	if (reason != UP_REFRESH_POLL &&
-	    (state == UP_DEVICE_STATE_UNKNOWN || up_backend_needs_poll_after_uevent ())) {
+	    (state == UP_DEVICE_STATE_UNKNOWN ||
+	     reason == UP_REFRESH_LINE_POWER)) {
 		g_debug ("unknown_poll: setting up fast re-poll");
 		g_object_set (device, "poll-timeout", UP_DAEMON_UNKNOWN_TIMEOUT, NULL);
 		supply->priv->fast_repoll_until = g_get_monotonic_time () + UP_DAEMON_UNKNOWN_POLL_TIME * G_USEC_PER_SEC;
 
 	} else if (supply->priv->fast_repoll_until == 0) {
 		/* Not fast-repolling, no need to check whether to stop */
-
-	} else if (state != UP_DEVICE_STATE_UNKNOWN && !up_backend_needs_poll_after_uevent ()) {
-		g_debug ("unknown_poll: stopping fast repoll (not needed anymore)");
-		supply->priv->fast_repoll_until = 0;
-		g_object_set (device, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
 
 	} else if (supply->priv->fast_repoll_until < g_get_monotonic_time ()) {
 		g_debug ("unknown_poll: stopping fast repoll (giving up)");

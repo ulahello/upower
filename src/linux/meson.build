@@ -19,7 +19,6 @@ upshared += { 'linux': static_library('upshared',
         'up-input.c',
         'up-input.h',
         'up-backend.c',
-        'up-backend-linux-private.h',
         'up-native.c',
         idevice_sources
     ],

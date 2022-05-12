@@ -375,7 +375,7 @@ up_daemon_refresh_battery_devices_idle (UpDaemon *daemon)
 			      NULL);
 		if (type == UP_DEVICE_KIND_BATTERY &&
 		    power_supply)
-			up_device_refresh_internal (device, UP_REFRESH_CHANGES);
+			up_device_refresh_internal (device, UP_REFRESH_LINE_POWER);
 	}
 	g_ptr_array_unref (array);
 

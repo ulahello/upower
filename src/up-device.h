@@ -36,7 +36,7 @@ typedef enum {
 	UP_REFRESH_POLL,
 	UP_REFRESH_RESUME,
 	UP_REFRESH_EVENT,
-	UP_REFRESH_CHANGES,
+	UP_REFRESH_LINE_POWER,
 } UpRefreshReason;
 
 struct _UpDeviceClass

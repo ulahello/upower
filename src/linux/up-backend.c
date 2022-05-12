@@ -31,7 +31,6 @@
 #include <gudev/gudev.h>
 
 #include "up-backend.h"
-#include "up-backend-linux-private.h"
 #include "up-daemon.h"
 #include "up-device.h"
 
@@ -99,14 +98,6 @@ is_macbook (gpointer data)
 	    product == NULL)
 		return GINT_TO_POINTER(FALSE);
 	return GINT_TO_POINTER(g_str_has_prefix (product, "MacBook"));
-}
-
-gboolean
-up_backend_needs_poll_after_uevent (void)
-{
-	static GOnce dmi_once = G_ONCE_INIT;
-	g_once (&dmi_once, is_macbook, NULL);
-	return GPOINTER_TO_INT(dmi_once.retval);
 }
 
 static UpDevice *
