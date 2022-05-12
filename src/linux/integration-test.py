@@ -1270,9 +1270,17 @@ class Tests(dbusmock.DBusTestCase):
     def test_hidpp_mouse(self):
         '''HID++ mouse battery'''
 
+        parent = self.testbed.add_device('usb',
+                                         '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2',
+                                         None,
+                                         [], [])
+        parent = self.testbed.add_device('hid',
+                                         '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009',
+                                         parent,
+                                         [], [])
         dev = self.testbed.add_device('hid',
                                       '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009/0003:046D:4101.000A',
-                                      None,
+                                      parent,
                                       [], [])
 
         parent = dev
@@ -1354,9 +1362,17 @@ class Tests(dbusmock.DBusTestCase):
     def test_hidpp_touchpad_race(self):
         '''HID++ touchpad with input node that appears later'''
 
+        parent = self.testbed.add_device('usb',
+                                         '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2',
+                                         None,
+                                         [], [])
+        parent = self.testbed.add_device('hid',
+                                         '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009',
+                                         parent,
+                                         [], [])
         dev = self.testbed.add_device('hid',
                                       '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009/0003:046D:4101.000A',
-                                      None,
+                                      parent,
                                       [], [])
 
         parent = dev
@@ -1403,9 +1419,17 @@ class Tests(dbusmock.DBusTestCase):
     def test_hidpp_touchpad(self):
         '''HID++ touchpad battery with 5 capacity levels'''
 
+        parent = self.testbed.add_device('usb',
+                                         '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2',
+                                         None,
+                                         [], [])
+        parent = self.testbed.add_device('hid',
+                                         '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009',
+                                         parent,
+                                         [], [])
         dev = self.testbed.add_device('hid',
                                       '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009/0003:046D:4101.000A',
-                                      None,
+                                      parent,
                                       [], [])
 
         parent = dev
