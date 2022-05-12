@@ -876,79 +876,17 @@ out:
 	return TRUE;
 }
 
-static GUdevDevice *
-up_device_supply_get_sibling_with_subsystem (GUdevDevice *device,
-					     const char *subsystem)
-{
-	GUdevDevice *parent;
-	GUdevClient *client;
-	GUdevDevice *sibling;
-	const char * class[] = { NULL, NULL };
-	const char *parent_path;
-	GList *devices, *l;
-
-	g_return_val_if_fail (device != NULL, NULL);
-	g_return_val_if_fail (subsystem != NULL, NULL);
-
-	parent = g_udev_device_get_parent (device);
-	if (!parent)
-		return NULL;
-	parent_path = g_udev_device_get_sysfs_path (parent);
-
-	sibling = NULL;
-	class[0] = subsystem;
-	client = g_udev_client_new (class);
-	devices = g_udev_client_query_by_subsystem (client, subsystem);
-	for (l = devices; l != NULL; l = l->next) {
-		GUdevDevice *d = l->data;
-		GUdevDevice *p;
-		const char *p_path;
-
-		p = g_udev_device_get_parent (d);
-		if (!p)
-			continue;
-		p_path = g_udev_device_get_sysfs_path (p);
-		if (g_strcmp0 (p_path, parent_path) == 0) {
-			if (sibling != NULL &&
-			    g_udev_device_get_property_as_boolean (d, "ID_INPUT_KEYBOARD")) {
-				g_clear_object (&sibling);
-			}
-			if (sibling == NULL)
-				sibling = g_object_ref (d);
-		}
-
-		g_object_unref (p);
-	}
-
-	g_list_free_full (devices, (GDestroyNotify) g_object_unref);
-	g_object_unref (client);
-	g_object_unref (parent);
-
-	return sibling;
-}
-
 static gboolean
 up_device_supply_refresh_device (UpDeviceSupply *supply,
 				 UpRefreshReason reason)
 {
 	UpDeviceState state;
 	UpDevice *device = UP_DEVICE (supply);
-	const gchar *native_path;
 	GUdevDevice *native;
 	gdouble percentage = 0.0f;
 	UpDeviceLevel level = UP_DEVICE_LEVEL_NONE;
-	UpDeviceKind type;
 
 	native = G_UDEV_DEVICE (up_device_get_native (device));
-	native_path = g_udev_device_get_sysfs_path (native);
-
-	/* Try getting a more precise type again */
-	g_object_get (device, "type", &type, NULL);
-	if (type == UP_DEVICE_KIND_BATTERY) {
-		type = up_device_supply_guess_type (native, native_path);
-		if (type != UP_DEVICE_KIND_BATTERY)
-			g_object_set (device, "type", type, NULL);
-	}
 
 	/* initial values */
 	if (!supply->priv->has_coldplug_values) {
@@ -958,16 +896,6 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 		/* get values which may be blank */
 		model_name = up_device_supply_get_string (native, "model_name");
 		serial_number = up_device_supply_get_string (native, "serial_number");
-		if (model_name == NULL && serial_number == NULL) {
-			GUdevDevice *sibling;
-
-			sibling = up_device_supply_get_sibling_with_subsystem (native, "input");
-			if (sibling != NULL) {
-				model_name = up_device_supply_get_string (sibling, "name");
-				serial_number = up_device_supply_get_string (sibling, "uniq");
-				g_object_unref (sibling);
-			}
-		}
 
 		/* some vendors fill this with binary garbage */
 		up_device_supply_make_safe_string (model_name);
@@ -1017,6 +945,78 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 	return TRUE;
 }
 
+static void
+up_device_supply_sibling_discovered (UpDevice *device,
+				     GObject  *sibling)
+{
+	GUdevDevice *input;
+	g_autofree char *device_type = NULL;
+	UpDeviceKind cur_type, new_type;
+	char *model_name;
+	char *serial_number;
+	int i;
+	struct {
+		const char *prop;
+		UpDeviceKind type;
+	} types[] = {
+		/* In order of type priority, we never downgrade here (loop aborts). */
+		{ "ID_INPUT_TABLET", UP_DEVICE_KIND_TABLET },
+		{ "ID_INPUT_TABLET_PAD", UP_DEVICE_KIND_TABLET },
+		{ "ID_INPUT_KEYBOARD", UP_DEVICE_KIND_KEYBOARD },
+		{ "ID_INPUT_TOUCHPAD", UP_DEVICE_KIND_TOUCHPAD },
+		{ "ID_INPUT_MOUSE", UP_DEVICE_KIND_MOUSE },
+		{ "ID_INPUT_JOYSTICK", UP_DEVICE_KIND_GAMING_INPUT },
+	};
+
+	if (!G_UDEV_IS_DEVICE (sibling))
+		return;
+
+	input = G_UDEV_DEVICE (sibling);
+
+	/* Do not process if we already have a "good" guess for the device type. */
+	g_object_get (device, "type", &cur_type, NULL);
+	if (cur_type == UP_DEVICE_KIND_LINE_POWER)
+		return;
+
+	if (g_strcmp0 (g_udev_device_get_subsystem (input), "input") != 0)
+		return;
+
+	g_object_get (device,
+		      "model", &model_name,
+		      "serial", &serial_number,
+		      NULL);
+
+	if (model_name == NULL && serial_number == NULL) {
+		model_name = up_device_supply_get_string (input, "name");
+		serial_number = up_device_supply_get_string (input, "uniq");
+
+		up_device_supply_make_safe_string (model_name);
+		up_device_supply_make_safe_string (serial_number);
+
+		g_object_set (device,
+			      "model", model_name,
+			      "serial", serial_number,
+			      NULL);
+
+		g_free (model_name);
+		g_free (serial_number);
+	}
+
+	/* Fall back to "keyboard" if we don't find anything. */
+	new_type = UP_DEVICE_KIND_KEYBOARD;
+
+	for (i = 0; i < G_N_ELEMENTS (types); i++) {
+		if (types[i].type == cur_type ||
+		    g_udev_device_get_property_as_boolean (input, types[i].prop)) {
+			new_type = types[i].type;
+			break;
+		}
+	}
+
+	if (cur_type != new_type)
+		g_object_set (device, "type", new_type, NULL);
+}
+
 static UpDeviceKind
 up_device_supply_guess_type (GUdevDevice *native,
 			     const char *native_path)
@@ -1034,28 +1034,8 @@ up_device_supply_guess_type (GUdevDevice *native,
 	}
 
 	if (g_ascii_strcasecmp (device_type, "battery") == 0) {
-		GUdevDevice *sibling;
+		type = UP_DEVICE_KIND_BATTERY;
 
-		sibling = up_device_supply_get_sibling_with_subsystem (native, "input");
-		if (sibling) {
-			if (g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_TOUCHPAD")) {
-				type = UP_DEVICE_KIND_TOUCHPAD;
-			} else if (g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_MOUSE")) {
-				type = UP_DEVICE_KIND_MOUSE;
-			} else if (g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_JOYSTICK")) {
-				type = UP_DEVICE_KIND_GAMING_INPUT;
-			} else if (g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_TABLET") ||
-				   g_udev_device_get_property_as_boolean (sibling, "ID_INPUT_TABLET_PAD")) {
-				type = UP_DEVICE_KIND_TABLET;
-			} else {
-				type = UP_DEVICE_KIND_KEYBOARD;
-			}
-
-			g_object_unref (sibling);
-		}
-
-		if (type == UP_DEVICE_KIND_UNKNOWN)
-			type = UP_DEVICE_KIND_BATTERY;
 	} else if (g_ascii_strcasecmp (device_type, "USB") == 0) {
 
 		/* USB supplies should have a usb_type attribute which we would
@@ -1315,6 +1295,7 @@ up_device_supply_class_init (UpDeviceSupplyClass *klass)
 	device_class->get_on_battery = up_device_supply_get_on_battery;
 	device_class->get_online = up_device_supply_get_online;
 	device_class->coldplug = up_device_supply_coldplug;
+	device_class->sibling_discovered = up_device_supply_sibling_discovered;
 	device_class->refresh = up_device_supply_refresh;
 
 	g_object_class_install_property (object_class, PROP_IGNORE_SYSTEM_PERCENTAGE,
