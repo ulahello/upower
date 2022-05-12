@@ -991,6 +991,7 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 		supply->priv->has_coldplug_values = TRUE;
 
 		g_free (model_name);
+		g_free (serial_number);
 	}
 
 	/* get a precise percentage */
