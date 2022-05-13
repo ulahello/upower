@@ -59,7 +59,6 @@ struct UpDeviceSupplyPrivate
 	gdouble			 rate_old;
 	gint64			 fast_repoll_until;
 	gboolean		 disable_battery_poll; /* from configuration */
-	gboolean		 is_power_supply;
 	gboolean		 shown_invalid_voltage_warning;
 	gboolean		 ignore_system_percentage;
 };
@@ -80,11 +79,6 @@ up_device_supply_refresh_line_power (UpDeviceSupply *supply,
 {
 	UpDevice *device = UP_DEVICE (supply);
 	GUdevDevice *native;
-
-	/* is providing power to computer? */
-	g_object_set (device,
-		      "power-supply", supply->priv->is_power_supply,
-		      NULL);
 
 	/* get new AC value */
 	native = G_UDEV_DEVICE (up_device_get_native (device));
@@ -120,7 +114,6 @@ up_device_supply_reset_values (UpDeviceSupply *supply)
 		      "model", NULL,
 		      "serial", NULL,
 		      "update-time", (guint64) 0,
-		      "power-supply", FALSE,
 		      "online", FALSE,
 		      "energy", (gdouble) 0.0,
 		      "is-present", FALSE,
@@ -599,10 +592,6 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 	if (!supply->priv->has_coldplug_values ||
 	    up_device_supply_units_changed (supply, native)) {
 
-		g_object_set (device,
-			      "power-supply", supply->priv->is_power_supply,
-			      NULL);
-
 		/* the ACPI spec is bad at defining battery type constants */
 		technology_native = up_device_supply_get_string (native, "technology");
 		g_object_set (device, "technology", up_device_supply_convert_device_technology (technology_native), NULL);
@@ -745,7 +734,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 
 	/* the battery isn't charging or discharging, it's just
 	 * sitting there half full doing nothing: try to guess a state */
-	if (state == UP_DEVICE_STATE_UNKNOWN && supply->priv->is_power_supply) {
+	if (state == UP_DEVICE_STATE_UNKNOWN) {
 		daemon = up_device_get_daemon (device);
 
 		/* If we have any online AC, assume charging, otherwise
@@ -983,7 +972,6 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 			      "is-rechargeable", TRUE,
 			      "has-history", TRUE,
 			      "has-statistics", TRUE,
-			      "power-supply", supply->priv->is_power_supply, /* always FALSE */
 			      NULL);
 
 		/* we only coldplug once, as these values will never change */
@@ -1100,6 +1088,7 @@ up_device_supply_coldplug (UpDevice *device)
 	const gchar *native_path;
 	const gchar *scope;
 	UpDeviceKind type;
+	gboolean is_power_supply;
 
 	up_device_supply_reset_values (supply);
 
@@ -1114,16 +1103,16 @@ up_device_supply_coldplug (UpDevice *device)
 	/* try to work out if the device is powering the system */
 	scope = g_udev_device_get_sysfs_attr (native, "scope");
 	if (scope != NULL && g_ascii_strcasecmp (scope, "device") == 0) {
-		supply->priv->is_power_supply = FALSE;
+		is_power_supply = FALSE;
 	} else if (scope != NULL && g_ascii_strcasecmp (scope, "system") == 0) {
-		supply->priv->is_power_supply = TRUE;
+		is_power_supply = TRUE;
 	} else {
 		g_debug ("taking a guess for power supply scope");
-		supply->priv->is_power_supply = TRUE;
+		is_power_supply = TRUE;
 	}
 
 	/* we don't use separate ACs for devices */
-	if (supply->priv->is_power_supply == FALSE &&
+	if (is_power_supply == FALSE &&
 	    !g_udev_device_has_sysfs_attr_uncached (native, "capacity") &&
 	    !g_udev_device_has_sysfs_attr_uncached (native, "capacity_level")) {
 		g_debug ("Ignoring device AC, we'll monitor the device battery");
@@ -1144,13 +1133,16 @@ up_device_supply_coldplug (UpDevice *device)
 	}
 
 	/* set the value */
-	g_object_set (device, "type", type, NULL);
+	g_object_set (device,
+		     "type", type,
+		     "power-supply", is_power_supply,
+		     NULL);
 
 	if (type != UP_DEVICE_KIND_LINE_POWER &&
 	    type != UP_DEVICE_KIND_BATTERY)
 		g_object_set (device, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
 	else if (type == UP_DEVICE_KIND_BATTERY &&
-		 (!supply->priv->disable_battery_poll || !supply->priv->is_power_supply))
+		 (!supply->priv->disable_battery_poll || !is_power_supply))
 		g_object_set (device, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
 
 	return TRUE;
@@ -1201,12 +1193,15 @@ up_device_supply_refresh (UpDevice *device, UpRefreshReason reason)
 	gboolean updated;
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
 	UpDeviceKind type;
+	gboolean is_power_supply = FALSE;
 
-	g_object_get (device, "type", &type, NULL);
+	g_object_get (device,
+		      "type", &type,
+		      "power-supply", &is_power_supply,
+		      NULL);
 	if (type == UP_DEVICE_KIND_LINE_POWER) {
 		updated = up_device_supply_refresh_line_power (supply, reason);
-	} else if (type == UP_DEVICE_KIND_BATTERY &&
-		   supply->priv->is_power_supply) {
+	} else if (type == UP_DEVICE_KIND_BATTERY && is_power_supply) {
 		updated = up_device_supply_refresh_battery (supply, reason);
 	} else {
 		updated = up_device_supply_refresh_device (supply, reason);
