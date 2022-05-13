@@ -79,12 +79,20 @@ up_device_supply_refresh_line_power (UpDeviceSupply *supply,
 {
 	UpDevice *device = UP_DEVICE (supply);
 	GUdevDevice *native;
+	gboolean online_old, online_new;
 
 	/* get new AC value */
 	native = G_UDEV_DEVICE (up_device_get_native (device));
-	g_object_set (device,
-		      "online", g_udev_device_get_sysfs_attr_as_int_uncached (native, "online"),
+
+	g_object_get (device,
+		      "online", &online_old,
 		      NULL);
+	online_new = g_udev_device_get_sysfs_attr_as_int_uncached (native, "online");
+	/* Avoid notification if the value did not change. */
+	if (online_old != online_new)
+		g_object_set (device,
+			      "online", online_new,
+			      NULL);
 
 	return TRUE;
 }
