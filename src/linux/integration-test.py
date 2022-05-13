@@ -409,7 +409,9 @@ class Tests(dbusmock.DBusTestCase):
 
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'State'), UP_DEVICE_STATE_CHARGING)
 
-        # We stopped polling now, so this update will *not* be read
+        # We stopped polling now, so this update will *not* be read, even if
+        # we send a new uevent, as the 'online' state does not change.
+        self.testbed.uevent(ac, 'change')
         time.sleep(2)
         self.testbed.set_attribute(bat0, 'status', 'Discharging')
         time.sleep(1)
