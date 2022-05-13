@@ -788,7 +788,7 @@ up_daemon_device_changed_cb (UpDevice *device, GParamSpec *pspec, UpDaemon *daem
 	g_object_get (device,
 		      "type", &type,
 		      NULL);
-	if (type == UP_DEVICE_KIND_LINE_POWER) {
+	if (type == UP_DEVICE_KIND_LINE_POWER && g_strcmp0 (prop, "online") == 0) {
 		/* refresh now */
 		up_daemon_refresh_battery_devices (daemon);
 	}
