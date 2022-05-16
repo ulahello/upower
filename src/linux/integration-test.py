@@ -270,6 +270,27 @@ class Tests(dbusmock.DBusTestCase):
                                    Gio.DBusCallFlags.NO_AUTO_START,
                                    -1, None).unpack()[0]
 
+    def get_dbus_dev_properties(self, device):
+        '''Get property values from an upower device D-Bus path.'''
+
+        return self.dbus.call_sync(UP, device,
+                                   'org.freedesktop.DBus.Properties',
+                                   'GetAll', GLib.Variant('(s)', (UP_DEVICE,)),
+                                   None,
+                                   Gio.DBusCallFlags.NO_AUTO_START,
+                                   -1, None).unpack()[0]
+
+    def assertDevs(self, expected):
+        devs = self.proxy.EnumerateDevices()
+        names = (n.split('/')[-1] for n in devs)
+
+        self.assertEqual(sorted(names), sorted(expected.keys()))
+
+        for n in names:
+            props = self.get_dbus_dev_properties(n)
+            for k, v in expected[n].items():
+                self.assertEqual(props[k], v, msg=f'Property "{k}" of "{n}" should be {v} but is {props[k]}')
+
     def start_logind(self, parameters=None):
         self.logind, self.logind_obj = self.spawn_server_template('logind',
                                                                   parameters or {},
