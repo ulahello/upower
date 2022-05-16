@@ -28,6 +28,8 @@ import time
 from output_checker import OutputChecker
 from packaging.version import parse as parse_version
 
+edir = os.path.dirname(sys.argv[0])
+
 try:
     import dbusmock
 except ImportError:
@@ -2007,6 +2009,70 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_dev_property(devs[1], 'ChargeCycles'), 2000)
         self.assertEqual(self.get_dbus_dev_property(devs[2], 'ChargeCycles'), -1)
         self.assertEqual(self.get_dbus_dev_property(devs[3], 'ChargeCycles'), -1)
+        self.stop_daemon()
+
+    def test_wacom_dongle(self):
+        'Wacom tablet connected through wireless USB dongle'
+
+        self.start_daemon()
+
+        self.testbed.add_from_file(os.path.join(edir, 'tests/wacom-dongle-waiting.device'))
+        time.sleep(0.5)
+        self.assertDevs({})
+
+        self.testbed.add_from_file(os.path.join(edir, 'tests/wacom-dongle-active.device'))
+        time.sleep(0.5)
+        self.assertDevs({
+            'battery_wacom_battery_11': {
+                'NativePath': 'wacom_battery_11',
+                'Model': 'Wacom Intuos5 touch M (WL)',
+                'Type': UP_DEVICE_KIND_TABLET,
+                'PowerSupply': False,
+                'HasHistory': True,
+                'Online': False,
+                'Percentage': 19.0,
+                'IsPresent': True,
+                'State': UP_DEVICE_STATE_CHARGING,
+                'IsRechargeable': True,
+            }
+        })
+
+        # For good measures, try to remove just the battery and re-add it
+        self.testbed.uevent('/sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1/1-1.1:1.0/0003:056A:0084.001F/power_supply/wacom_battery_11',
+                            'remove')
+        time.sleep(0.5)
+        self.assertDevs({})
+
+        self.testbed.uevent('/sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1/1-1.1:1.0/0003:056A:0084.001F/power_supply/wacom_battery_11',
+                            'add')
+        time.sleep(0.5)
+        self.assertDevs({ 'battery_wacom_battery_11': {} })
+
+        self.stop_daemon()
+
+    def test_wacom_bluetooth(self):
+        'Wacom tablet connected through wireless USB dongle'
+
+        self.start_daemon()
+
+        self.testbed.add_from_file(os.path.join(edir, 'tests/wacom-bluetooth-active.device'))
+        time.sleep(0.5)
+        self.assertDevs({
+            'battery_wacom_battery_10': {
+                'NativePath': 'wacom_battery_10',
+                'Model': 'Wacom Intuos5 touch M (WL)',
+                'Type': UP_DEVICE_KIND_TABLET,
+                'PowerSupply': False,
+                'HasHistory': True,
+                'Online': False,
+                'Percentage': 100.0,
+                'IsPresent': True,
+                # XXX: This is "Discharging" in sysfs
+                'State': UP_DEVICE_STATE_FULLY_CHARGED,
+                'IsRechargeable': True,
+            }
+        })
+
         self.stop_daemon()
 
     #
