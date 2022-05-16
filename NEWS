@@ -1,3 +1,24 @@
+Version 0.99.18
+---------------
+Released: 2022-05-17
+
+Changes:
+- Remove broken wakeup DBus API
+- Tag UPS hid devices using hwdb and update list from upstream
+- Only permit Refresh method when in debug mode
+- Refactor device polling
+- Refactor udev device discovery and sibling detection
+- Improved testing and CI
+- Handle SIGTERM to trigger a clean shutdown
+
+Bug fixes:
+- Improve polling of batteries after line-power "online" status change
+- Multiple wacom tablet detection fixes
+- Fix updates after a BT hid power supply moves in sysfs
+- Fix enumeration of "Whats Up!" devices on startup
+- Accept USB power supplies without warning
+- Allow building without gtk-doc
+
 Version 0.99.17
 ---------------
 Released: 2022-03-09
