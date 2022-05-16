@@ -448,7 +448,7 @@ bluez_vanished (GDBusConnection *connection,
 
 			object = G_DBUS_OBJECT (up_device_get_native (device));
 			g_debug ("emitting device-removed: %s", g_dbus_object_get_object_path (object));
-			g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, UP_DEVICE (object));
+			g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, device);
 		}
 	}
 
