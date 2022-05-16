@@ -243,26 +243,32 @@ class Tests(dbusmock.DBusTestCase):
     def get_dbus_property(self, name):
         '''Get property value from daemon D-Bus interface.'''
 
-        proxy = Gio.DBusProxy.new_sync(
-            self.dbus, Gio.DBusProxyFlags.DO_NOT_AUTO_START, None, UP,
-            '/org/freedesktop/UPower', 'org.freedesktop.DBus.Properties', None)
-        return proxy.Get('(ss)', UP, name)
+        return self.dbus.call_sync(UP, '/org/freedesktop/UPower',
+                                   'org.freedesktop.DBus.Properties',
+                                   'Get', GLib.Variant('(ss)', (UP, name)),
+                                   None,
+                                   Gio.DBusCallFlags.NO_AUTO_START,
+                                   -1, None).unpack()[0]
 
     def get_dbus_display_property(self, name):
         '''Get property value from display device D-Bus interface.'''
 
-        proxy = Gio.DBusProxy.new_sync(
-            self.dbus, Gio.DBusProxyFlags.DO_NOT_AUTO_START, None, UP,
-            UP_DISPLAY_OBJECT_PATH, 'org.freedesktop.DBus.Properties', None)
-        return proxy.Get('(ss)', UP + '.Device', name)
+        return self.dbus.call_sync(UP, UP_DISPLAY_OBJECT_PATH,
+                                   'org.freedesktop.DBus.Properties',
+                                   'Get', GLib.Variant('(ss)', (UP_DEVICE, name)),
+                                   None,
+                                   Gio.DBusCallFlags.NO_AUTO_START,
+                                   -1, None).unpack()[0]
 
     def get_dbus_dev_property(self, device, name):
         '''Get property value from an upower device D-Bus path.'''
 
-        proxy = Gio.DBusProxy.new_sync(
-            self.dbus, Gio.DBusProxyFlags.DO_NOT_AUTO_START, None, UP, device,
-            'org.freedesktop.DBus.Properties', None)
-        return proxy.Get('(ss)', UP + '.Device', name)
+        return self.dbus.call_sync(UP, device,
+                                   'org.freedesktop.DBus.Properties',
+                                   'Get', GLib.Variant('(ss)', (UP_DEVICE, name)),
+                                   None,
+                                   Gio.DBusCallFlags.NO_AUTO_START,
+                                   -1, None).unpack()[0]
 
     def start_logind(self, parameters=None):
         self.logind, self.logind_obj = self.spawn_server_template('logind',
