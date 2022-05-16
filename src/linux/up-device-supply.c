@@ -1062,15 +1062,22 @@ up_device_supply_guess_type (GUdevDevice *native,
 			type = UP_DEVICE_KIND_BATTERY;
 	} else if (g_ascii_strcasecmp (device_type, "USB") == 0) {
 
-		/* use a heuristic to find the device type */
-		if (g_strstr_len (native_path, -1, "wacom_") != NULL) {
-			type = UP_DEVICE_KIND_TABLET;
-		} else if (g_strstr_len (native_path, -1, "ucsi-source-psy-") != NULL) {
+		/* USB supplies should have a usb_type attribute which we would
+		 * ideally decode further.
+		 *
+		 * For historic reasons, we have a heuristic for wacom tablets
+		 * that can be dropped in the future.
+		 * As of May 2022, it is expected to be fixed in kernel 5.19.
+		 * https://patchwork.kernel.org/project/linux-input/patch/20220407115406.115112-1-hadess@hadess.net/
+		 */
+		if (g_udev_device_has_sysfs_attr (native, "usb_type") &&
+		    g_udev_device_has_sysfs_attr (native, "online"))
 			type = UP_DEVICE_KIND_LINE_POWER;
-		} else {
-			g_warning ("did not recognise USB path %s, please report",
+		else if (g_strstr_len (native_path, -1, "wacom_") != NULL)
+			type = UP_DEVICE_KIND_TABLET;
+		else
+			g_warning ("USB power supply %s without usb_type property, please report",
 				   native_path);
-		}
 	} else {
 		g_warning ("did not recognise type %s, please report", device_type);
 	}
