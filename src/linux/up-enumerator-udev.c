@@ -235,6 +235,10 @@ uevent_signal_handler_cb (UpEnumeratorUdev *self,
 				devices = g_hash_table_lookup (self->siblings, parent_id);
 
 				g_ptr_array_remove_fast (devices, obj);
+				if (devices->len == 0) {
+					g_debug ("No devices with parent %s left", parent_id);
+					g_hash_table_remove (self->siblings, parent_id);
+				}
 			}
 		}
 
