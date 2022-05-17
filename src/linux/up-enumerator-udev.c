@@ -181,15 +181,14 @@ uevent_signal_handler_cb (UpEnumeratorUdev *self,
 			parent_id = device_parent_id (device);
 			g_debug ("device %s has parent id: %s", device_key, parent_id);
 			if (parent_id) {
-				gboolean insert = FALSE;
-				GPtrArray *devices;
+				GPtrArray *devices = NULL;
+				char *parent_id_key = NULL;
 				int i;
 
-				devices = g_hash_table_lookup (self->siblings, parent_id);
-				if (!devices) {
-					insert = TRUE;
+				g_hash_table_lookup_extended (self->siblings, parent_id,
+				                              (gpointer*)&parent_id_key, (gpointer*)&devices);
+				if (!devices)
 					devices = g_ptr_array_new_with_free_func (g_object_unref);
-				}
 
 				for (i = 0; i < devices->len; i++) {
 					GObject *sibling = g_ptr_array_index (devices, i);
@@ -201,8 +200,13 @@ uevent_signal_handler_cb (UpEnumeratorUdev *self,
 				}
 
 				g_ptr_array_add (devices, g_object_ref (obj));
-				if (insert)
-					g_hash_table_insert (self->siblings, g_strdup (parent_id), devices);
+				if (!parent_id_key) {
+					parent_id_key = g_strdup (parent_id);
+					g_hash_table_insert (self->siblings, parent_id_key, devices);
+				}
+
+				/* Just a reference to the hash table key */
+				g_object_set_data (obj, "udev-parent-id", parent_id_key);
 			}
 
 			if (up_dev)
@@ -221,14 +225,17 @@ uevent_signal_handler_cb (UpEnumeratorUdev *self,
 		g_autoptr(GObject) obj = NULL;
 		const char *key = NULL;
 
-		g_debug ("removing device for path %s", g_udev_device_get_sysfs_path (device));
 		g_hash_table_steal_extended (self->known, device_key,
 		                             (gpointer*) &key, (gpointer*) &obj);
 
 		if (obj) {
-			g_autofree char *parent_id = device_parent_id (device);
+			char *parent_id;
 
-			/* Remove from siblings table */
+			g_debug ("removing device for path %s", g_udev_device_get_sysfs_path (device));
+
+			parent_id = g_object_get_data (obj, "udev-parent-id");
+
+			/* Remove from siblings table. */
 			if (parent_id) {
 				GPtrArray *devices;
 
@@ -244,8 +251,8 @@ uevent_signal_handler_cb (UpEnumeratorUdev *self,
 
 		if (obj && UP_IS_DEVICE (obj)) {
 			g_signal_emit_by_name (self, "device-removed", obj);
-		} else
-			g_debug ("ignoring remove event on %s", g_udev_device_get_sysfs_path (device));
+		} else if (!obj)
+			g_debug ("ignored remove event on %s", g_udev_device_get_sysfs_path (device));
 	}
 }
 
