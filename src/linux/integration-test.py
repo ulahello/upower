@@ -2037,16 +2037,39 @@ class Tests(dbusmock.DBusTestCase):
             }
         })
 
-        # For good measures, try to remove just the battery and re-add it
+    def test_remove(self):
+        'Test removing when parent ID lookup stops working'
+
+        self.testbed.add_from_file(os.path.join(edir, 'tests/wacom-dongle-waiting.device'))
+        self.testbed.add_from_file(os.path.join(edir, 'tests/wacom-dongle-active.device'))
+
+        self.start_daemon()
+
+        self.assertDevs({ 'battery_wacom_battery_11': {} })
+
+        # Destroy sysfs enough to break the parent ID lookup
+        os.unlink(os.path.join(self.testbed.get_root_dir(),
+                               'sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1/1-1.1:1.0/0003:056A:0084.001F',
+                               'subsystem'))
+
+        self.get_dbus_dev_property('/org/freedesktop/UPower/devices/battery_wacom_battery_11', 'State')
+
+        # This should remove all devices that UPower tracks
         self.testbed.uevent('/sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1/1-1.1:1.0/0003:056A:0084.001F/power_supply/wacom_battery_11',
                             'remove')
-        time.sleep(0.5)
-        self.assertDevs({})
+        self.testbed.uevent('/sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1/1-1.1:1.1/0003:056A:0084.0020/input/input125',
+                            'remove')
+        self.testbed.uevent('/sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1/1-1.1:1.1/0003:056A:0084.0020/input/input127',
+                            'remove')
+        self.testbed.uevent('/sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1/1-1.1:1.2/0003:056A:0084.0021/input/input129',
+                            'remove')
+        self.daemon_log.check_line('No devices with parent /sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1 left', timeout=2)
 
-        self.testbed.uevent('/sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1/1-1.1:1.0/0003:056A:0084.001F/power_supply/wacom_battery_11',
-                            'add')
-        time.sleep(0.5)
-        self.assertDevs({ 'battery_wacom_battery_11': {} })
+        # Ensure the object is really gone from the bus,
+        # the second case could happen if a reference is leaked.
+        self.assertDevs({})
+        with self.assertRaisesRegex(GLib.Error, 'Object does not exist at path'):
+            self.get_dbus_dev_property('/org/freedesktop/UPower/devices/battery_wacom_battery_11', 'State')
 
         self.stop_daemon()
 
