@@ -53,13 +53,14 @@ device_parent_id (GUdevDevice *dev)
 
 	subsystem = g_udev_device_get_subsystem (parent);
 
-	/* Refusing using certain subsystems as parents. */
-	if (g_strcmp0 (subsystem, "platform") == 0)
+	/* Refusing using certain subsystems as parents.
+	 * In particular, refuse input as we'll already insert that parent. */
+	if (g_strcmp0 (subsystem, "platform") == 0 ||
+	    g_strcmp0 (subsystem, "input") == 0)
 		return NULL;
 
-	/* Continue walk if the parent is a "hid" or "input" device  */
-	if (g_strcmp0 (subsystem, "hid") == 0 ||
-	    g_strcmp0 (subsystem, "input") == 0)
+	/* Continue walk if the parent is a "hid"  device  */
+	if (g_strcmp0 (subsystem, "hid") == 0)
 		return device_parent_id (parent);
 
 	/* Also skip over USB interfaces, we care about full devices */
