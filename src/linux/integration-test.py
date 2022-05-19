@@ -232,7 +232,7 @@ class Tests(dbusmock.DBusTestCase):
                 pass
             try:
                 self.assertEqual(self.daemon.wait(timeout=2.0), 0)
-            except TimeoutError:
+            except subprocess.TimeoutExpired:
                 try:
                     self.daemon.kill()
                 except OSError:
