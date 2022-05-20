@@ -231,7 +231,7 @@ class Tests(dbusmock.DBusTestCase):
             except OSError:
                 pass
             try:
-                self.assertEqual(self.daemon.wait(timeout=2.0), 0)
+                self.assertEqual(self.daemon.wait(timeout=5.0), 0)
             except subprocess.TimeoutExpired:
                 try:
                     self.daemon.kill()
