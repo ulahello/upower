@@ -152,20 +152,19 @@ class Tests(dbusmock.DBusTestCase):
         self.daemon = None
         self.start_logind({'CanHybridSleep' : 'yes'})
 
+    @classmethod
+    def stop_process(cls, proc, timeout=1):
+        proc.terminate()
+        try:
+            proc.wait(timeout)
+        except:
+            print("Killing %d (%s) after timeout of %f seconds" % (proc.pid, proc.args[0], timeout))
+            proc.kill()
+            proc.wait()
+
     def tearDown(self):
         del self.testbed
         self.stop_daemon()
-
-        if self.logind:
-            self.logind.terminate()
-            self.logind.wait()
-
-        try:
-            if self.bluez:
-                self.bluez.terminate()
-                self.bluez.wait()
-        except:
-            pass
 
     #
     # Daemon control and D-BUS I/O
@@ -294,10 +293,12 @@ class Tests(dbusmock.DBusTestCase):
     def start_logind(self, parameters=None):
         self.logind, self.logind_obj = self.spawn_server_template('logind',
                                                                   parameters or {})
+        self.addCleanup(self.stop_process, self.logind)
 
     def start_bluez(self, parameters=None):
         self.bluez, self.bluez_obj = self.spawn_server_template('bluez5',
                                                                   parameters or {})
+        self.addCleanup(self.stop_process, self.bluez)
 
     def assertEventually(self, condition, message=None, timeout=50, value=True):
         '''Assert that condition function eventually returns True.
