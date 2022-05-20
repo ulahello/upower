@@ -236,7 +236,7 @@ class Tests(dbusmock.DBusTestCase):
                 except OSError:
                     pass
                 self.assertEqual(self.daemon.wait(), 0)
-        self.daemon_log.assert_closed()
+            self.daemon_log.assert_closed()
         self.daemon = None
         self.proxy = None
 
