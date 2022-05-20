@@ -157,13 +157,11 @@ class Tests(dbusmock.DBusTestCase):
         self.stop_daemon()
 
         if self.logind:
-            self.logind.stdout.close()
             self.logind.terminate()
             self.logind.wait()
 
         try:
             if self.bluez:
-                self.bluez.stdout.close()
                 self.bluez.terminate()
                 self.bluez.wait()
         except:
@@ -295,13 +293,11 @@ class Tests(dbusmock.DBusTestCase):
 
     def start_logind(self, parameters=None):
         self.logind, self.logind_obj = self.spawn_server_template('logind',
-                                                                  parameters or {},
-                                                                  stdout=subprocess.PIPE)
+                                                                  parameters or {})
 
     def start_bluez(self, parameters=None):
         self.bluez, self.bluez_obj = self.spawn_server_template('bluez5',
-                                                                  parameters or {},
-                                                                  stdout=subprocess.PIPE)
+                                                                  parameters or {})
 
     def assertEventually(self, condition, message=None, timeout=50, value=True):
         '''Assert that condition function eventually returns True.
