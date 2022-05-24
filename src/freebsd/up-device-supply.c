@@ -204,9 +204,9 @@ up_device_supply_battery_set_properties (UpDevice *device, UpAcpiNative *native)
 		goto end;
 	}
 
-	vendor = up_make_safe_string (battif.bif.oeminfo);
-	model = up_make_safe_string (battif.bif.model);
-	serial = up_make_safe_string (battif.bif.serial);
+	vendor = up_make_safe_string (g_strdup (battif.bif.oeminfo));
+	model = up_make_safe_string (g_strdup (battif.bif.model));
+	serial = up_make_safe_string (g_strdup (battif.bif.serial));
 	technology = up_device_supply_convert_device_technology (battif.bif.type);
 
 	g_object_set (device,

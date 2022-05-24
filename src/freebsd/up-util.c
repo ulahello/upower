@@ -119,38 +119,3 @@ up_get_string_sysctl (GError **err, const gchar *format, ...)
 #endif
 }
 
-/**
- * up_util_make_safe_string:
- *
- * This is adapted from linux/up-device-supply.c.
- **/
-gchar *
-up_make_safe_string (const gchar *text)
-{
-	guint i;
-	guint idx = 0;
-	gchar *ret;
-
-	/* no point in checking */
-	if (text == NULL)
-		return NULL;
-
-	ret = g_strdup (text);
-
-	/* shunt up only safe chars */
-	for (i = 0; ret[i] != '\0'; i++) {
-		if (g_ascii_isprint (ret[i])) {
-			/* only copy if the address is going to change */
-			if (idx != i)
-				ret[idx] = ret[i];
-			idx++;
-		} else {
-			g_debug ("invalid char 0x%02X", ret[i]);
-		}
-	}
-
-	/* ensure null terminated */
-	ret[idx] = '\0';
-
-	return ret;
-}

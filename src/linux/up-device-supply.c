@@ -35,6 +35,7 @@
 #include "up-types.h"
 #include "up-constants.h"
 #include "up-device-supply.h"
+#include "up-common.h"
 
 enum {
 	PROP_0,
@@ -407,38 +408,6 @@ out:
 	return voltage;
 }
 
-/**
- * up_device_supply_make_safe_string:
- **/
-static void
-up_device_supply_make_safe_string (gchar *text)
-{
-	guint i;
-	guint idx = 0;
-
-	/* no point checking */
-	if (text == NULL)
-		return;
-
-	if (g_utf8_validate (text, -1, NULL))
-		return;
-
-	/* shunt up only safe chars */
-	for (i=0; text[i] != '\0'; i++) {
-		if (g_ascii_isprint (text[i])) {
-			/* only copy if the address is going to change */
-			if (idx != i)
-				text[idx] = text[i];
-			idx++;
-		} else {
-			g_debug ("invalid char: 0x%02X", text[i]);
-		}
-	}
-
-	/* ensure null terminated */
-	text[idx] = '\0';
-}
-
 static gboolean
 up_device_supply_units_changed (UpDeviceSupply *supply,
 				GUdevDevice    *native)
@@ -610,9 +579,9 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 		serial_number = up_device_supply_get_string (native, "serial_number");
 
 		/* some vendors fill this with binary garbage */
-		up_device_supply_make_safe_string (manufacturer);
-		up_device_supply_make_safe_string (model_name);
-		up_device_supply_make_safe_string (serial_number);
+		up_make_safe_string (manufacturer);
+		up_make_safe_string (model_name);
+		up_make_safe_string (serial_number);
 
 		g_object_set (device,
 			      "vendor", manufacturer,
@@ -898,8 +867,8 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 		serial_number = up_device_supply_get_string (native, "serial_number");
 
 		/* some vendors fill this with binary garbage */
-		up_device_supply_make_safe_string (model_name);
-		up_device_supply_make_safe_string (serial_number);
+		up_make_safe_string (model_name);
+		up_make_safe_string (serial_number);
 
 		g_object_set (device,
 			      "is-present", TRUE,
@@ -990,8 +959,8 @@ up_device_supply_sibling_discovered (UpDevice *device,
 		model_name = up_device_supply_get_string (input, "name");
 		serial_number = up_device_supply_get_string (input, "uniq");
 
-		up_device_supply_make_safe_string (model_name);
-		up_device_supply_make_safe_string (serial_number);
+		up_make_safe_string (model_name);
+		up_make_safe_string (serial_number);
 
 		g_object_set (device,
 			      "model", model_name,
