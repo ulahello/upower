@@ -190,6 +190,8 @@ class Tests(dbusmock.DBusTestCase):
         # note: Python doesn't propagate the setenv from Testbed.new(), so we
         # have to do that ourselves
         env['UMOCKDEV_DIR'] = self.testbed.get_root_dir()
+        # Hotfix for https://github.com/systemd/systemd/issues/23499
+        env['SYSTEMD_DEVICE_VERIFY_SYSFS'] = '0'
         self.daemon_log = OutputChecker()
 
         if os.getenv('VALGRIND') != None:
