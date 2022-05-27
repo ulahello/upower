@@ -21,7 +21,7 @@
 #include "up-common.h"
 #include <glib.h>
 
-void
+char*
 up_make_safe_string (char *text)
 {
 	guint i;
@@ -29,10 +29,10 @@ up_make_safe_string (char *text)
 
 	/* no point checking */
 	if (text == NULL)
-		return;
+		return NULL;
 
 	if (g_utf8_validate (text, -1, NULL))
-		return;
+		return text;
 
 	/* shunt up only safe chars */
 	for (i=0; text[i] != '\0'; i++) {
@@ -48,4 +48,6 @@ up_make_safe_string (char *text)
 
 	/* ensure null terminated */
 	text[idx] = '\0';
+
+	return text;
 }

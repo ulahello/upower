@@ -20,4 +20,4 @@
 
 #pragma once
 
-void up_make_safe_string (char *text);
+char *up_make_safe_string (char *text);
