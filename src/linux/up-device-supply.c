@@ -532,12 +532,6 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 	gchar *manufacturer = NULL;
 	gchar *model_name = NULL;
 	gchar *serial_number = NULL;
-	UpDaemon *daemon;
-	gboolean ac_online = FALSE;
-	gboolean has_ac = FALSE;
-	gboolean online;
-	UpDeviceList *devices_list;
-	GPtrArray *devices;
 	guint i;
 
 	native = G_UDEV_DEVICE (up_device_get_native (device));
@@ -706,59 +700,6 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 	 * instead of pending-charge. */
 	if (state == UP_DEVICE_STATE_PENDING_CHARGE && percentage >= UP_FULLY_CHARGED_THRESHOLD)
 		state = UP_DEVICE_STATE_FULLY_CHARGED;
-
-	/* the battery isn't charging or discharging, it's just
-	 * sitting there half full doing nothing: try to guess a state */
-	if (state == UP_DEVICE_STATE_UNKNOWN) {
-		daemon = up_device_get_daemon (device);
-
-		/* If we have any online AC, assume charging, otherwise
-		 * discharging */
-		devices_list = up_daemon_get_device_list (daemon);
-		devices = up_device_list_get_array (devices_list);
-		for (i=0; i < devices->len; i++) {
-			if (up_device_get_online ((UpDevice *) g_ptr_array_index (devices, i), &online)) {
-			       has_ac = TRUE;
-				if (online) {
-					ac_online = TRUE;
-				}
-				break;
-			}
-		}
-		g_ptr_array_unref (devices);
-		g_object_unref (devices_list);
-
-		if (has_ac) {
-			if (ac_online) {
-				if (percentage > UP_FULLY_CHARGED_THRESHOLD)
-					state = UP_DEVICE_STATE_FULLY_CHARGED;
-				else
-					state = UP_DEVICE_STATE_CHARGING;
-			} else {
-				if (percentage < 1.0f)
-					state = UP_DEVICE_STATE_EMPTY;
-				else
-					state = UP_DEVICE_STATE_DISCHARGING;
-			}
-		} else {
-			/* only guess when we have only one battery */
-			if (up_daemon_get_number_devices_of_type (daemon, UP_DEVICE_KIND_BATTERY)  == 1) {
-				if (percentage < 1.0f)
-					state = UP_DEVICE_STATE_EMPTY;
-				else
-					state = UP_DEVICE_STATE_DISCHARGING;
-			}
-
-			/* if we have multiple batteries and don't know their
-			 * state, give up and leave it as "unknown". */
-		}
-
-		/* print what we did */
-		g_debug ("guessing battery state '%s': AC present: %i, AC online: %i",
-			   up_device_state_to_string (state), has_ac, ac_online);
-
-		g_object_unref (daemon);
-	}
 
 	/* if empty, and BIOS does not know what to do */
 	if (state == UP_DEVICE_STATE_UNKNOWN && energy < 0.01) {

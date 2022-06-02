@@ -73,7 +73,7 @@ static void	up_daemon_finalize		(GObject	*object);
 static gboolean	up_daemon_get_on_battery_local	(UpDaemon	*daemon);
 static UpDeviceLevel up_daemon_get_warning_level_local(UpDaemon	*daemon);
 static void	up_daemon_update_warning_level	(UpDaemon	*daemon);
-static gboolean	up_daemon_get_on_ac_local 	(UpDaemon	*daemon);
+static gboolean	up_daemon_get_on_ac_local 	(UpDaemon	*daemon, gboolean *has_ac);
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDaemon, up_daemon, UP_TYPE_EXPORTED_DAEMON_SKELETON)
 
@@ -88,25 +88,8 @@ G_DEFINE_TYPE_WITH_PRIVATE (UpDaemon, up_daemon, UP_TYPE_EXPORTED_DAEMON_SKELETO
 static gboolean
 up_daemon_get_on_battery_local (UpDaemon *daemon)
 {
-	guint i;
-	gboolean ret;
-	gboolean result = FALSE;
-	gboolean on_battery;
-	UpDevice *device;
-	GPtrArray *array;
-
-	/* ask each device */
-	array = up_device_list_get_array (daemon->priv->power_devices);
-	for (i=0; i<array->len; i++) {
-		device = (UpDevice *) g_ptr_array_index (array, i);
-		ret = up_device_get_on_battery (device, &on_battery);
-		if (ret && on_battery) {
-			result = TRUE;
-			break;
-		}
-	}
-	g_ptr_array_unref (array);
-	return result;
+	/* Use the cached composite state cached from the display device */
+	return daemon->priv->state == UP_DEVICE_STATE_DISCHARGING;
 }
 
 /**
@@ -149,7 +132,8 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 	GPtrArray *array;
 
 	UpDeviceKind kind_total = UP_DEVICE_KIND_UNKNOWN;
-	UpDeviceState state_total = UP_DEVICE_STATE_UNKNOWN;
+	/* Abuse LAST to know if any battery had a state. */
+	UpDeviceState state_total = UP_DEVICE_STATE_LAST;
 	gdouble percentage_total = 0.0;
 	gdouble energy_total = 0.0;
 	gdouble energy_full_total = 0.0;
@@ -206,22 +190,35 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 		    power_supply == FALSE)
 			continue;
 
-		/* If one battery is charging, the composite is charging
-		 * If all batteries are discharging or pending-charge, the composite is discharging
-		 * If all batteries are fully charged, the composite is fully charged
+		/*
+		 * If one battery is charging, the composite is charging
+		 * If one batteries is discharging, the composite is discharging
+		 * If one battery is unknown, and we don't have a charging/discharging state otherwise, mark unknown
 		 * If one battery is pending-charge and no other is charging or discharging, then the composite is pending-charge
-		 * Everything else is unknown */
-		if (state == UP_DEVICE_STATE_CHARGING)
+		 * If all batteries are fully charged, the composite is fully charged
+		 * If all batteries are empty, the composite is empty
+		 * Everything else is unknown
+		 */
+		/* Keep a charging/discharging state (warn about conflict) */
+		if (state_total == UP_DEVICE_STATE_CHARGING || state_total == UP_DEVICE_STATE_DISCHARGING) {
+			if (state != state_total && (state == UP_DEVICE_STATE_CHARGING || state == UP_DEVICE_STATE_DISCHARGING))
+				g_warning ("Conflicting charge/discharge state between batteries!");
+		} else if (state == UP_DEVICE_STATE_CHARGING)
 			state_total = UP_DEVICE_STATE_CHARGING;
-		else if (state == UP_DEVICE_STATE_DISCHARGING &&
-			 state_total != UP_DEVICE_STATE_CHARGING)
+		else if (state == UP_DEVICE_STATE_DISCHARGING)
 			state_total = UP_DEVICE_STATE_DISCHARGING;
-		else if (state == UP_DEVICE_STATE_PENDING_CHARGE &&
-			 (state_total == UP_DEVICE_STATE_UNKNOWN || state_total == UP_DEVICE_STATE_PENDING_CHARGE))
+		else if (state == UP_DEVICE_STATE_UNKNOWN)
+			state_total = UP_DEVICE_STATE_UNKNOWN;
+		else if (state == UP_DEVICE_STATE_PENDING_CHARGE)
 			state_total = UP_DEVICE_STATE_PENDING_CHARGE;
 		else if (state == UP_DEVICE_STATE_FULLY_CHARGED &&
-			 state_total == UP_DEVICE_STATE_UNKNOWN)
+			 (state_total == UP_DEVICE_STATE_FULLY_CHARGED || state_total == UP_DEVICE_STATE_LAST))
 			state_total = UP_DEVICE_STATE_FULLY_CHARGED;
+		else if (state == UP_DEVICE_STATE_EMPTY &&
+			 (state_total == UP_DEVICE_STATE_EMPTY || state_total == UP_DEVICE_STATE_LAST))
+			state_total = UP_DEVICE_STATE_EMPTY;
+		else
+			state_total = UP_DEVICE_STATE_UNKNOWN;
 
 		/* sum up composite */
 		kind_total = UP_DEVICE_KIND_BATTERY;
@@ -234,6 +231,38 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 		/* Will be recalculated for multiple batteries, no worries */
 		percentage_total += percentage;
 		num_batteries++;
+	}
+
+	/* No battery means LAST state. If we have an UNKNOWN state (with
+	 * a battery) then try to infer one. */
+	if (state_total == UP_DEVICE_STATE_LAST) {
+		state_total = UP_DEVICE_STATE_UNKNOWN;
+	} else if (state_total == UP_DEVICE_STATE_UNKNOWN) {
+		gboolean has_ac, ac_online;
+
+		ac_online = up_daemon_get_on_ac_local (daemon, &has_ac);
+
+		if (has_ac) {
+			if (ac_online) {
+				if (percentage_total >= UP_FULLY_CHARGED_THRESHOLD)
+					state_total = UP_DEVICE_STATE_FULLY_CHARGED;
+				else
+					state_total = UP_DEVICE_STATE_CHARGING;
+			} else {
+				if (percentage_total < 1.0f)
+					state_total = UP_DEVICE_STATE_EMPTY;
+				else
+					state_total = UP_DEVICE_STATE_DISCHARGING;
+			}
+		} else {
+			/* only guess when we have only one battery */
+			if (up_daemon_get_number_devices_of_type (daemon, UP_DEVICE_KIND_BATTERY)  == 1) {
+				if (percentage_total < 1.0f)
+					state_total = UP_DEVICE_STATE_EMPTY;
+				else
+					state_total = UP_DEVICE_STATE_DISCHARGING;
+			}
+		}
 	}
 
 	/* Handle multiple batteries */
@@ -303,7 +332,6 @@ out:
 static UpDeviceLevel
 up_daemon_get_warning_level_local (UpDaemon *daemon)
 {
-	up_daemon_update_display_battery (daemon);
 	if (daemon->priv->kind != UP_DEVICE_KIND_UPS &&
 	    daemon->priv->kind != UP_DEVICE_KIND_BATTERY)
 		return UP_DEVICE_LEVEL_NONE;
@@ -314,7 +342,7 @@ up_daemon_get_warning_level_local (UpDaemon *daemon)
 
 	/* Check to see if the batteries have not noticed we are on AC */
 	if (daemon->priv->kind == UP_DEVICE_KIND_BATTERY &&
-	    up_daemon_get_on_ac_local (daemon))
+	    up_daemon_get_on_ac_local (daemon, NULL))
 		return UP_DEVICE_LEVEL_NONE;
 
 	return up_daemon_compute_warning_level (daemon,
@@ -331,7 +359,7 @@ up_daemon_get_warning_level_local (UpDaemon *daemon)
  * As soon as _any_ ac supply goes online, this is true
  **/
 static gboolean
-up_daemon_get_on_ac_local (UpDaemon *daemon)
+up_daemon_get_on_ac_local (UpDaemon *daemon, gboolean *has_ac)
 {
 	guint i;
 	gboolean ret;
@@ -340,11 +368,16 @@ up_daemon_get_on_ac_local (UpDaemon *daemon)
 	UpDevice *device;
 	GPtrArray *array;
 
+	if (has_ac)
+		*has_ac = FALSE;
+
 	/* ask each device */
 	array = up_device_list_get_array (daemon->priv->power_devices);
 	for (i=0; i<array->len; i++) {
 		device = (UpDevice *) g_ptr_array_index (array, i);
 		ret = up_device_get_online (device, &online);
+		if (has_ac && ret)
+			*has_ac = TRUE;
 		if (ret && online) {
 			result = TRUE;
 			break;
@@ -710,8 +743,10 @@ up_daemon_update_warning_level_idle (UpDaemon *daemon)
 	gboolean ret;
 	UpDeviceLevel warning_level;
 
+	up_daemon_update_display_battery (daemon);
+
 	/* Check if the on_battery and warning_level state has changed */
-	ret = (up_daemon_get_on_battery_local (daemon) && !up_daemon_get_on_ac_local (daemon));
+	ret = (up_daemon_get_on_battery_local (daemon) && !up_daemon_get_on_ac_local (daemon, NULL));
 	up_daemon_set_on_battery (daemon, ret);
 
 	warning_level = up_daemon_get_warning_level_local (daemon);
