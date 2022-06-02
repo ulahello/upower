@@ -677,8 +677,8 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'State'), UP_DEVICE_STATE_FULLY_CHARGED)
         self.stop_daemon()
 
-        # and make sure we still return pending-charge below 100%
-        self.testbed.set_attribute(bat0, 'capacity', '99')
+        # and make sure we still return pending-charge below the threshold
+        self.testbed.set_attribute(bat0, 'capacity', '89')
         self.start_daemon()
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'State'), UP_DEVICE_STATE_PENDING_CHARGE)
         self.stop_daemon()

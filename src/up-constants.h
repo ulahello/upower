@@ -31,6 +31,7 @@ G_BEGIN_DECLS
 #define UP_DAEMON_SHORT_TIMEOUT				  30 /* seconds */
 #define UP_DAEMON_LONG_TIMEOUT				 120 /* seconds */
 
+#define UP_FULLY_CHARGED_THRESHOLD			  90 /* % */
 #define UP_DAEMON_EPSILON				0.01 /* I can't believe it's not zero */
 
 #define SECONDS_PER_HOUR				3600 /* seconds in an hour */

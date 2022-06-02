@@ -42,8 +42,6 @@ enum {
 	PROP_IGNORE_SYSTEM_PERCENTAGE
 };
 
-#define UP_DEVICE_SUPPLY_CHARGED_THRESHOLD	90.0f	/* % */
-
 #define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_CHARGE		TRUE
 #define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_ENERGY		FALSE
 
@@ -706,7 +704,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 	/* Some devices report "Not charging" when the battery is full and AC
 	 * power is connected. In this situation we should report fully-charged
 	 * instead of pending-charge. */
-	if (state == UP_DEVICE_STATE_PENDING_CHARGE && percentage == 100.0)
+	if (state == UP_DEVICE_STATE_PENDING_CHARGE && percentage >= UP_FULLY_CHARGED_THRESHOLD)
 		state = UP_DEVICE_STATE_FULLY_CHARGED;
 
 	/* the battery isn't charging or discharging, it's just
@@ -732,7 +730,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 
 		if (has_ac) {
 			if (ac_online) {
-				if (percentage > UP_DEVICE_SUPPLY_CHARGED_THRESHOLD)
+				if (percentage > UP_FULLY_CHARGED_THRESHOLD)
 					state = UP_DEVICE_STATE_FULLY_CHARGED;
 				else
 					state = UP_DEVICE_STATE_CHARGING;
