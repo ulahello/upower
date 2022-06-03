@@ -44,6 +44,4 @@ gchar *up_get_string_sysctl (GError **err,
 			      const gchar *format,
 			      ...) G_GNUC_PRINTF(2, 3);
 
-gchar *up_make_safe_string (const gchar *text);
-
 #endif /* _UP_UTIL_H */

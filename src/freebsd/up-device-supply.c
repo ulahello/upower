@@ -39,6 +39,8 @@
 #include <glib/gi18n-lib.h>
 #include <glib-object.h>
 
+#include "up-common.h"
+
 #include "up-acpi-native.h"
 #include "up-util.h"
 
