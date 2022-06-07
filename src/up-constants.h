@@ -28,6 +28,7 @@ G_BEGIN_DECLS
 
 #define UP_DAEMON_UNKNOWN_TIMEOUT			   1 /* second */
 #define UP_DAEMON_UNKNOWN_POLL_TIME			   5 /* second */
+#define UP_DAEMON_ESTIMATE_TIMEOUT			   5 /* second */
 #define UP_DAEMON_SHORT_TIMEOUT				  30 /* seconds */
 #define UP_DAEMON_LONG_TIMEOUT				 120 /* seconds */
 
