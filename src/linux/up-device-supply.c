@@ -292,32 +292,6 @@ up_device_supply_calculate_rate (UpDeviceSupply *supply, gdouble energy)
 }
 
 /**
- * up_device_supply_convert_device_technology:
- **/
-static UpDeviceTechnology
-up_device_supply_convert_device_technology (const gchar *type)
-{
-	if (type == NULL)
-		return UP_DEVICE_TECHNOLOGY_UNKNOWN;
-	/* every case combination of Li-Ion is commonly used.. */
-	if (g_ascii_strcasecmp (type, "li-ion") == 0 ||
-	    g_ascii_strcasecmp (type, "lion") == 0)
-		return UP_DEVICE_TECHNOLOGY_LITHIUM_ION;
-	if (g_ascii_strcasecmp (type, "pb") == 0 ||
-	    g_ascii_strcasecmp (type, "pbac") == 0)
-		return UP_DEVICE_TECHNOLOGY_LEAD_ACID;
-	if (g_ascii_strcasecmp (type, "lip") == 0 ||
-	    g_ascii_strcasecmp (type, "lipo") == 0 ||
-	    g_ascii_strcasecmp (type, "li-poly") == 0)
-		return UP_DEVICE_TECHNOLOGY_LITHIUM_POLYMER;
-	if (g_ascii_strcasecmp (type, "nimh") == 0)
-		return UP_DEVICE_TECHNOLOGY_NICKEL_METAL_HYDRIDE;
-	if (g_ascii_strcasecmp (type, "life") == 0)
-		return UP_DEVICE_TECHNOLOGY_LITHIUM_IRON_PHOSPHATE;
-	return UP_DEVICE_TECHNOLOGY_UNKNOWN;
-}
-
-/**
  * up_device_supply_get_string:
  **/
 static gchar *
@@ -563,7 +537,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 
 		/* the ACPI spec is bad at defining battery type constants */
 		technology_native = up_device_supply_get_string (native, "technology");
-		g_object_set (device, "technology", up_device_supply_convert_device_technology (technology_native), NULL);
+		g_object_set (device, "technology", up_convert_device_technology (technology_native), NULL);
 
 		/* get values which may be blank */
 		manufacturer = up_device_supply_get_string (native, "manufacturer");

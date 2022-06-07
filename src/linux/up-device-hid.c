@@ -45,7 +45,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#include "up-types.h"
+#include "up-common.h"
 #include "up-device-hid.h"
 #include "up-constants.h"
 
@@ -144,20 +144,6 @@ up_device_hid_get_string (UpDeviceHid *hid, int sindex)
 }
 
 /**
- * up_device_hid_convert_device_technology:
- **/
-static UpDeviceTechnology
-up_device_hid_convert_device_technology (const gchar *type)
-{
-	if (type == NULL)
-		return UP_DEVICE_TECHNOLOGY_UNKNOWN;
-	if (g_ascii_strcasecmp (type, "pb") == 0 ||
-	    g_ascii_strcasecmp (type, "pbac") == 0)
-		return UP_DEVICE_TECHNOLOGY_LEAD_ACID;
-	return UP_DEVICE_TECHNOLOGY_UNKNOWN;
-}
-
-/**
  * up_device_hid_set_values:
  **/
 static gboolean
@@ -190,7 +176,7 @@ up_device_hid_set_values (UpDeviceHid *hid, guint32 code, gint32 value)
 		break;
 	case UP_DEVICE_HID_CHEMISTRY:
 		type = up_device_hid_get_string (hid, value);
-		g_object_set (device, "technology", up_device_hid_convert_device_technology (type), NULL);
+		g_object_set (device, "technology", up_convert_device_technology (type), NULL);
 		break;
 	case UP_DEVICE_HID_RECHARGEABLE:
 		g_object_set (device, "is-rechargeable", (value != 0), NULL);

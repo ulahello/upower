@@ -20,4 +20,7 @@
 
 #pragma once
 
+#include "up-types.h"
+
 char *up_make_safe_string (char *text);
+UpDeviceTechnology up_convert_device_technology (const gchar *type);
