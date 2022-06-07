@@ -766,7 +766,7 @@ class Tests(dbusmock.DBusTestCase):
         self.stop_daemon()
 
     def test_battery_energy_charge_mixed(self):
-        '''battery which reports current energy, but full charge'''
+        '''battery which reports both current charge and energy'''
 
         self.testbed.add_device('power_supply', 'BAT0', None,
                                 ['type', 'Battery',
@@ -774,7 +774,8 @@ class Tests(dbusmock.DBusTestCase):
                                  'status', 'Discharging',
                                  'charge_full', '10500000',
                                  'charge_full_design', '11000000',
-                                 'energy_now', '50400000',
+                                 'charge_now', '4200000',
+                                 'energy_now', '9999999',
                                  'voltage_now', '12000000'], [])
 
         self.start_daemon()
@@ -786,7 +787,7 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'IsPresent'), True)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'State'), UP_DEVICE_STATE_DISCHARGING)
-        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Energy'), 50.4)
+        self.assertAlmostEqual(self.get_dbus_dev_property(bat0_up, 'Energy'), 50.4)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'EnergyFull'), 126.0)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'EnergyFullDesign'), 132.0)
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Voltage'), 12.0)

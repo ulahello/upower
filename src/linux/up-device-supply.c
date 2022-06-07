@@ -37,37 +37,15 @@
 #include "up-device-supply.h"
 #include "up-common.h"
 
-enum {
-	PROP_0,
-	PROP_IGNORE_SYSTEM_PERCENTAGE
-};
-
-#define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_CHARGE		TRUE
-#define UP_DEVICE_SUPPLY_COLDPLUG_UNITS_ENERGY		FALSE
-
-/* number of old energy values to keep cached */
-#define UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH		4
-
 struct UpDeviceSupplyPrivate
 {
 	gboolean		 has_coldplug_values;
-	gboolean		 coldplug_units;
-	gdouble			*energy_old;
-	GTimeVal		*energy_old_timespec;
-	guint			 energy_old_first;
-	gdouble			 rate_old;
-	gint64			 fast_repoll_until;
-	gboolean		 disable_battery_poll; /* from configuration */
 	gboolean		 shown_invalid_voltage_warning;
-	gboolean		 ignore_system_percentage;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (UpDeviceSupply, up_device_supply, UP_TYPE_DEVICE)
 
 static gboolean		 up_device_supply_refresh	 	(UpDevice *device,
-								 UpRefreshReason reason);
-static void		 up_device_supply_update_poll_frequency	(UpDevice       *device,
-								 UpDeviceState   state,
 								 UpRefreshReason reason);
 static UpDeviceKind	 up_device_supply_guess_type		(GUdevDevice *native,
 								 const char *native_path);
@@ -102,21 +80,10 @@ up_device_supply_refresh_line_power (UpDeviceSupply *supply,
 static void
 up_device_supply_reset_values (UpDeviceSupply *supply)
 {
-	UpDevice *device = UP_DEVICE (supply);
-	guint i;
-
 	supply->priv->has_coldplug_values = FALSE;
-	supply->priv->coldplug_units = UP_DEVICE_SUPPLY_COLDPLUG_UNITS_ENERGY;
-	supply->priv->rate_old = 0;
-
-	for (i = 0; i < UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH; ++i) {
-		supply->priv->energy_old[i] = 0.0f;
-		supply->priv->energy_old_timespec[i].tv_sec = 0;
-	}
-	supply->priv->energy_old_first = 0;
 
 	/* reset to default */
-	g_object_set (device,
+	g_object_set (supply,
 		      "vendor", NULL,
 		      "model", NULL,
 		      "serial", NULL,
@@ -141,41 +108,6 @@ up_device_supply_reset_values (UpDeviceSupply *supply)
 		      "technology", UP_DEVICE_TECHNOLOGY_UNKNOWN,
 		      "charge-cycles", -1,
 		      NULL);
-}
-
-/**
- * up_device_supply_get_on_battery:
- **/
-static gboolean
-up_device_supply_get_on_battery (UpDevice *device, gboolean *on_battery)
-{
-	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
-	UpDeviceKind type;
-	UpDeviceState state;
-	gboolean is_power_supply;
-	gboolean is_present;
-
-	g_return_val_if_fail (UP_IS_DEVICE_SUPPLY (supply), FALSE);
-	g_return_val_if_fail (on_battery != NULL, FALSE);
-
-	g_object_get (device,
-		      "type", &type,
-		      "state", &state,
-		      "is-present", &is_present,
-		      "power-supply", &is_power_supply,
-		      NULL);
-
-	if (!is_power_supply)
-		return FALSE;
-	if (type != UP_DEVICE_KIND_BATTERY)
-		return FALSE;
-	if (state == UP_DEVICE_STATE_UNKNOWN)
-		return FALSE;
-	if (!is_present)
-		return FALSE;
-
-	*on_battery = (state == UP_DEVICE_STATE_DISCHARGING);
-	return TRUE;
 }
 
 /**
@@ -205,93 +137,6 @@ up_device_supply_get_online (UpDevice *device, gboolean *online)
 }
 
 /**
- * up_device_supply_push_new_energy:
- *
- * Store the new energy in the list of old energies of the supply, so
- * it can be used to determine the energy rate.
- */
-static gboolean
-up_device_supply_push_new_energy (UpDeviceSupply *supply, gdouble energy)
-{
-	guint first = supply->priv->energy_old_first;
-	guint new_position = (first + UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH - 1) %
-		UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH;
-
-	/* check if the energy value has changed and, if that's the case,
-	 * store the new values in the buffer. */
-	if (supply->priv->energy_old[first] != energy) {
-		supply->priv->energy_old[new_position] = energy;
-		g_get_current_time (&supply->priv->energy_old_timespec[new_position]);
-		supply->priv->energy_old_first = new_position;
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
-/**
- * up_device_supply_calculate_rate:
- **/
-static gdouble
-up_device_supply_calculate_rate (UpDeviceSupply *supply, gdouble energy)
-{
-	gdouble rate = 0.0f;
-	gdouble sum_x = 0.0f; /* sum of the squared times difference */
-	GTimeVal now;
-	guint i;
-	guint valid_values = 0;
-
-	/* get the time difference from now and use linear regression to determine
-	 * the discharge rate of the battery. */
-	g_get_current_time (&now);
-
-	/* store the data on the new energy received */
-	up_device_supply_push_new_energy (supply, energy);
-
-	if (energy < 0.1f)
-		return 0.0f;
-
-	if (supply->priv->energy_old[supply->priv->energy_old_first] < 0.1f)
-		return 0.0f;
-
-	/* don't use the new point obtained since it may cause instability in
-	 * the estimate */
-	i = supply->priv->energy_old_first;
-	now = supply->priv->energy_old_timespec[i];
-	do {
-		/* only use this value if it seems valid */
-		if (supply->priv->energy_old_timespec[i].tv_sec && supply->priv->energy_old[i]) {
-			/* This is the square of t_i^2 */
-			sum_x += (now.tv_sec - supply->priv->energy_old_timespec[i].tv_sec) *
-				(now.tv_sec - supply->priv->energy_old_timespec[i].tv_sec);
-
-			/* Sum the module of the energy difference */
-			rate += fabs ((supply->priv->energy_old_timespec[i].tv_sec - now.tv_sec) *
-				      (energy - supply->priv->energy_old[i]));
-			valid_values++;
-		}
-
-		/* get the next element in the circular buffer */
-		i = (i + 1) % UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH;
-	} while (i != supply->priv->energy_old_first);
-
-	/* Check that at least 3 points were involved in computation */
-	if (sum_x == 0.0f || valid_values < 3)
-		return supply->priv->rate_old;
-
-	/* Compute the discharge per hour, and not per second */
-	rate /= sum_x / SECONDS_PER_HOUR_F;
-
-	/* if the rate is zero, use the old rate. It will usually happens if no
-	 * data is in the buffer yet. If the rate is too high, i.e. more than,
-	 * 100W don't use it. */
-	if (rate == 0.0f || rate > 100.0f)
-		return supply->priv->rate_old;
-
-	return rate;
-}
-
-/**
  * up_device_supply_get_string:
  **/
 static gchar *
@@ -316,83 +161,6 @@ up_device_supply_get_string (GUdevDevice *native, const gchar *key)
 	}
 out:
 	return value;
-}
-
-/**
- * up_device_supply_get_design_voltage:
- **/
-static gdouble
-up_device_supply_get_design_voltage (UpDeviceSupply *device,
-				     GUdevDevice *native)
-{
-	gdouble voltage;
-	gchar *device_type = NULL;
-
-	/* design maximum */
-	voltage = g_udev_device_get_sysfs_attr_as_double_uncached (native, "voltage_max_design") / 1000000.0;
-	if (voltage > 1.00f) {
-		g_debug ("using max design voltage");
-		goto out;
-	}
-
-	/* design minimum */
-	voltage = g_udev_device_get_sysfs_attr_as_double_uncached (native, "voltage_min_design") / 1000000.0;
-	if (voltage > 1.00f) {
-		g_debug ("using min design voltage");
-		goto out;
-	}
-
-	/* current voltage */
-	voltage = g_udev_device_get_sysfs_attr_as_double_uncached (native, "voltage_present") / 1000000.0;
-	if (voltage > 1.00f) {
-		g_debug ("using present voltage");
-		goto out;
-	}
-
-	/* current voltage, alternate form */
-	voltage = g_udev_device_get_sysfs_attr_as_double_uncached (native, "voltage_now") / 1000000.0;
-	if (voltage > 1.00f) {
-		g_debug ("using present voltage (alternate)");
-		goto out;
-	}
-
-	/* is this a USB device? */
-	device_type = up_device_supply_get_string (native, "type");
-	if (device_type != NULL && g_ascii_strcasecmp (device_type, "USB") == 0) {
-		g_debug ("USB device, so assuming 5v");
-		voltage = 5.0f;
-		goto out;
-	}
-
-	/* no valid value found; display a warning the first time for each
-	 * device */
-	if (!device->priv->shown_invalid_voltage_warning) {
-		device->priv->shown_invalid_voltage_warning = TRUE;
-		g_warning ("no valid voltage value found for device %s, assuming 10V",
-			   g_udev_device_get_sysfs_path (native));
-	}
-	/* completely guess, to avoid getting zero values */
-	g_debug ("no voltage values for device %s, using 10V as approximation",
-		 g_udev_device_get_sysfs_path (native));
-	voltage = 10.0f;
-out:
-	g_free (device_type);
-	return voltage;
-}
-
-static gboolean
-up_device_supply_units_changed (UpDeviceSupply *supply,
-				GUdevDevice    *native)
-{
-	if (supply->priv->coldplug_units == UP_DEVICE_SUPPLY_COLDPLUG_UNITS_CHARGE)
-		if (g_udev_device_has_sysfs_attr_uncached (native, "charge_now") ||
-		    g_udev_device_has_sysfs_attr_uncached (native, "charge_avg"))
-			return FALSE;
-	if (supply->priv->coldplug_units == UP_DEVICE_SUPPLY_COLDPLUG_UNITS_ENERGY)
-		if (g_udev_device_has_sysfs_attr_uncached (native, "energy_now") ||
-		    g_udev_device_has_sysfs_attr_uncached (native, "energy_avg"))
-			return FALSE;
-	return TRUE;
 }
 
 UpDeviceState
@@ -479,283 +247,6 @@ sysfs_get_capacity_level (GUdevDevice   *native,
 
 	g_free (str);
 	return ret;
-}
-
-static gboolean
-up_device_supply_refresh_battery (UpDeviceSupply *supply,
-				  UpRefreshReason reason)
-{
-	gchar *technology_native = NULL;
-	gdouble voltage_design;
-	UpDeviceState old_state;
-	UpDeviceState state;
-	UpDevice *device = UP_DEVICE (supply);
-	GUdevDevice *native;
-	gboolean is_present;
-	gdouble energy;
-	gdouble energy_full;
-	gdouble energy_full_design;
-	gdouble energy_rate;
-	gdouble capacity = 100.0f;
-	gdouble percentage = 0.0f;
-	gdouble voltage;
-	gint64 time_to_empty;
-	gint64 time_to_full;
-	gdouble temp;
-	int charge_cycles = -1;
-	gchar *manufacturer = NULL;
-	gchar *model_name = NULL;
-	gchar *serial_number = NULL;
-	guint i;
-
-	native = G_UDEV_DEVICE (up_device_get_native (device));
-
-	/* have we just been removed? */
-	if (g_udev_device_has_sysfs_attr_uncached (native, "present")) {
-		is_present = g_udev_device_get_sysfs_attr_as_boolean_uncached (native, "present");
-	} else {
-		/* when no present property exists, handle as present */
-		is_present = TRUE;
-	}
-	g_object_set (device, "is-present", is_present, NULL);
-	if (!is_present) {
-		up_device_supply_reset_values (supply);
-		goto out;
-	}
-
-	/* get the current charge */
-	energy = g_udev_device_get_sysfs_attr_as_double_uncached (native, "energy_now") / 1000000.0;
-	if (energy < 0.01)
-		energy = g_udev_device_get_sysfs_attr_as_double_uncached (native, "energy_avg") / 1000000.0;
-
-	/* used to convert A to W later */
-	voltage_design = up_device_supply_get_design_voltage (supply, native);
-
-	/* initial values */
-	if (!supply->priv->has_coldplug_values ||
-	    up_device_supply_units_changed (supply, native)) {
-
-		/* the ACPI spec is bad at defining battery type constants */
-		technology_native = up_device_supply_get_string (native, "technology");
-		g_object_set (device, "technology", up_convert_device_technology (technology_native), NULL);
-
-		/* get values which may be blank */
-		manufacturer = up_device_supply_get_string (native, "manufacturer");
-		model_name = up_device_supply_get_string (native, "model_name");
-		serial_number = up_device_supply_get_string (native, "serial_number");
-
-		/* some vendors fill this with binary garbage */
-		up_make_safe_string (manufacturer);
-		up_make_safe_string (model_name);
-		up_make_safe_string (serial_number);
-
-		g_object_set (device,
-			      "vendor", manufacturer,
-			      "model", model_name,
-			      "serial", serial_number,
-			      "is-rechargeable", TRUE, /* assume true for laptops */
-			      "has-history", TRUE,
-			      "has-statistics", TRUE,
-			      NULL);
-
-		/* these don't change at runtime */
-		energy_full = g_udev_device_get_sysfs_attr_as_double_uncached (native, "energy_full") / 1000000.0;
-		energy_full_design = g_udev_device_get_sysfs_attr_as_double_uncached (native, "energy_full_design") / 1000000.0;
-
-		/* convert charge to energy */
-		if (energy_full < 0.01) {
-			energy_full = g_udev_device_get_sysfs_attr_as_double_uncached (native, "charge_full") / 1000000.0;
-			energy_full_design = g_udev_device_get_sysfs_attr_as_double_uncached (native, "charge_full_design") / 1000000.0;
-			energy_full *= voltage_design;
-			energy_full_design *= voltage_design;
-			supply->priv->coldplug_units = UP_DEVICE_SUPPLY_COLDPLUG_UNITS_CHARGE;
-		}
-
-		/* the last full should not be bigger than the design */
-		if (energy_full > energy_full_design)
-			g_warning ("energy_full (%f) is greater than energy_full_design (%f)",
-				     energy_full, energy_full_design);
-
-		/* some systems don't have this */
-		if (energy_full < 0.01 && energy_full_design > 0.01) {
-			g_warning ("correcting energy_full (%f) using energy_full_design (%f)",
-				     energy_full, energy_full_design);
-			energy_full = energy_full_design;
-		}
-
-		/* calculate how broken our battery is */
-		if (energy_full > 0) {
-			capacity = (energy_full / energy_full_design) * 100.0f;
-			if (capacity < 0)
-				capacity = 0.0;
-			if (capacity > 100.0)
-				capacity = 100.0;
-		}
-		g_object_set (device, "capacity", capacity, NULL);
-
-		/* we only coldplug once, as these values will never change */
-		supply->priv->has_coldplug_values = TRUE;
-	} else {
-		/* get the old full */
-		g_object_get (device,
-			      "energy-full", &energy_full,
-			      "energy-full-design", &energy_full_design,
-			      NULL);
-	}
-
-	state = up_device_supply_get_state (native);
-
-	/* this is the new value in uW */
-	if (g_udev_device_has_sysfs_attr (native, "power_now")) {
-		energy_rate = fabs (g_udev_device_get_sysfs_attr_as_double_uncached (native, "power_now") / 1000000.0);
-	} else {
-		gdouble charge_full;
-
-		/* convert charge to energy */
-		if (energy < 0.01) {
-			energy = g_udev_device_get_sysfs_attr_as_double_uncached (native, "charge_now") / 1000000.0;
-			if (energy < 0.01)
-				energy = g_udev_device_get_sysfs_attr_as_double_uncached (native, "charge_avg") / 1000000.0;
-			energy *= voltage_design;
-		}
-
-		charge_full = g_udev_device_get_sysfs_attr_as_double_uncached (native, "charge_full") / 1000000.0;
-		if (charge_full < 0.01)
-			charge_full = g_udev_device_get_sysfs_attr_as_double_uncached (native, "charge_full_design") / 1000000.0;
-
-		/* If charge_full exists, then current_now is always reported in uA.
-		 * In the legacy case, where energy only units exist, and power_now isn't present
-		 * current_now is power in uW. */
-		energy_rate = fabs (g_udev_device_get_sysfs_attr_as_double_uncached (native, "current_now") / 1000000.0);
-		if (charge_full != 0)
-			energy_rate *= voltage_design;
-	}
-
-	/* some batteries don't update last_full attribute */
-	if (energy > energy_full) {
-		g_warning ("energy %f bigger than full %f", energy, energy_full);
-		energy_full = energy;
-	}
-
-	/* present voltage */
-	voltage = g_udev_device_get_sysfs_attr_as_double_uncached (native, "voltage_now") / 1000000.0;
-	if (voltage < 0.01)
-		voltage = g_udev_device_get_sysfs_attr_as_double_uncached (native, "voltage_avg") / 1000000.0;
-
-	/* ACPI gives out the special 'Ones' value for rate when it's unable
-	 * to calculate the true rate. We should set the rate zero, and wait
-	 * for the BIOS to stabilise. */
-	if (energy_rate == 0xffff)
-		energy_rate = 0;
-
-	/* Ensure less than 300W, above the 240W possible with USB Power Delivery */
-	if (energy_rate > 300)
-		energy_rate = 0;
-
-	/* the hardware reporting failed -- try to calculate this */
-	if (energy_rate < 0.01)
-		energy_rate = up_device_supply_calculate_rate (supply, energy);
-
-	/* get a precise percentage */
-        if (!supply->priv->ignore_system_percentage &&
-            g_udev_device_has_sysfs_attr_uncached (native, "capacity")) {
-		percentage = g_udev_device_get_sysfs_attr_as_double_uncached (native, "capacity");
-		percentage = CLAMP(percentage, 0.0f, 100.0f);
-                /* for devices which provide capacity, but not {energy,charge}_now */
-                if (energy < 0.1f && energy_full > 0.0f)
-                    energy = energy_full * percentage / 100;
-        } else if (energy_full > 0.0f) {
-		percentage = 100.0 * energy / energy_full;
-		percentage = CLAMP(percentage, 0.0f, 100.0f);
-	}
-
-	/* Some devices report "Not charging" when the battery is full and AC
-	 * power is connected. In this situation we should report fully-charged
-	 * instead of pending-charge. */
-	if (state == UP_DEVICE_STATE_PENDING_CHARGE && percentage >= UP_FULLY_CHARGED_THRESHOLD)
-		state = UP_DEVICE_STATE_FULLY_CHARGED;
-
-	/* if empty, and BIOS does not know what to do */
-	if (state == UP_DEVICE_STATE_UNKNOWN && percentage < 1) {
-		g_warning ("Setting %s state empty as unknown and very low",
-			   g_udev_device_get_sysfs_path (native));
-		state = UP_DEVICE_STATE_EMPTY;
-	}
-
-	/* some batteries give out massive rate values when nearly empty */
-	if (energy < 0.1f)
-		energy_rate = 0.0f;
-
-	/* calculate a quick and dirty time remaining value */
-	time_to_empty = 0;
-	time_to_full = 0;
-	if (energy_rate > 0) {
-		if (state == UP_DEVICE_STATE_DISCHARGING)
-			time_to_empty = 3600 * (energy / energy_rate);
-		else if (state == UP_DEVICE_STATE_CHARGING)
-			time_to_full = 3600 * ((energy_full - energy) / energy_rate);
-		/* TODO: need to factor in battery charge metrics */
-	}
-
-	/* check the remaining time is under a set limit, to deal with broken
-	   primary batteries rate */
-	if (time_to_empty > (240 * 60 * 60)) /* ten days for discharging */
-		time_to_empty = 0;
-	if (time_to_full > (20 * 60 * 60)) /* 20 hours for charging */
-		time_to_full = 0;
-
-	/* get temperature */
-	temp = g_udev_device_get_sysfs_attr_as_double_uncached (native, "temp") / 10.0;
-
-	/* charge_cycles is -1 if:
-	 * cycle_count is -1 (unknown)
-	 * cycle_count is 0 (shouldn't be used by conforming implementations)
-	 * cycle_count is absent (unsupported) */
-	if (g_udev_device_has_sysfs_attr_uncached (native, "cycle_count")) {
-		charge_cycles = g_udev_device_get_sysfs_attr_as_int_uncached (native, "cycle_count");
-		if (charge_cycles == 0)
-			charge_cycles = -1;
-	}
-
-	/* check if the energy value has changed and, if that's the case,
-	 * store the new values in the buffer. */
-	if (up_device_supply_push_new_energy (supply, energy))
-		supply->priv->rate_old = energy_rate;
-
-	/* we changed state */
-	g_object_get (device, "state", &old_state, NULL);
-	if (old_state != state) {
-		for (i = 0; i < UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH; ++i) {
-			supply->priv->energy_old[i] = 0.0f;
-			supply->priv->energy_old_timespec[i].tv_sec = 0;
-
-		}
-		supply->priv->energy_old_first = 0;
-	}
-
-	g_object_set (device,
-		      "energy", energy,
-		      "energy-full", energy_full,
-		      "energy-full-design", energy_full_design,
-		      "energy-rate", energy_rate,
-		      "percentage", percentage,
-		      "state", state,
-		      "voltage", voltage,
-		      "time-to-empty", time_to_empty,
-		      "time-to-full", time_to_full,
-		      "temperature", temp,
-		      "charge-cycles", charge_cycles,
-		      NULL);
-
-	/* Setup unknown poll again if needed */
-	up_device_supply_update_poll_frequency (device, state, reason);
-
-out:
-	g_free (technology_native);
-	g_free (manufacturer);
-	g_free (model_name);
-	g_free (serial_number);
-	return TRUE;
 }
 
 static gboolean
@@ -1026,53 +517,14 @@ up_device_supply_coldplug (UpDevice *device)
 		     "power-supply", is_power_supply,
 		     NULL);
 
-	if (type != UP_DEVICE_KIND_LINE_POWER &&
-	    type != UP_DEVICE_KIND_BATTERY)
-		g_object_set (device, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
-	else if (type == UP_DEVICE_KIND_BATTERY &&
-		 (!supply->priv->disable_battery_poll || !is_power_supply))
+	/* Handled by separate battery class */
+	if (is_power_supply)
+		g_assert (type == UP_DEVICE_KIND_LINE_POWER);
+
+	if (type != UP_DEVICE_KIND_LINE_POWER)
 		g_object_set (device, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
 
 	return TRUE;
-}
-
-static void
-up_device_supply_update_poll_frequency (UpDevice        *device,
-					UpDeviceState    state,
-					UpRefreshReason  reason)
-{
-	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
-
-	if (supply->priv->disable_battery_poll)
-		return;
-
-	/* We start fast-polling if the reason to update was not a normal POLL
-	 * and one of the following holds true:
-	 *  1. The current stat is unknown; we hope that this is transient
-	 *     and re-poll.
-	 *  2. A change occured on a line power supply. This likely means that
-	 *     batteries switch between charging/discharging which does not
-	 *     always result in a separate uevent.
-	 *
-	 * For simplicity, we do the fast polling for a specific period of time.
-	 * If the reason to do fast-polling was an unknown state, then it would
-	 * also be reasonable to stop as soon as we got a proper state.
-	 */
-	if (reason != UP_REFRESH_POLL &&
-	    (state == UP_DEVICE_STATE_UNKNOWN ||
-	     reason == UP_REFRESH_LINE_POWER)) {
-		g_debug ("unknown_poll: setting up fast re-poll");
-		g_object_set (device, "poll-timeout", UP_DAEMON_UNKNOWN_TIMEOUT, NULL);
-		supply->priv->fast_repoll_until = g_get_monotonic_time () + UP_DAEMON_UNKNOWN_POLL_TIME * G_USEC_PER_SEC;
-
-	} else if (supply->priv->fast_repoll_until == 0) {
-		/* Not fast-repolling, no need to check whether to stop */
-
-	} else if (supply->priv->fast_repoll_until < g_get_monotonic_time ()) {
-		g_debug ("unknown_poll: stopping fast repoll (giving up)");
-		supply->priv->fast_repoll_until = 0;
-		g_object_set (device, "poll-timeout", UP_DAEMON_SHORT_TIMEOUT, NULL);
-	}
 }
 
 static gboolean
@@ -1081,16 +533,12 @@ up_device_supply_refresh (UpDevice *device, UpRefreshReason reason)
 	gboolean updated;
 	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (device);
 	UpDeviceKind type;
-	gboolean is_power_supply = FALSE;
 
 	g_object_get (device,
 		      "type", &type,
-		      "power-supply", &is_power_supply,
 		      NULL);
 	if (type == UP_DEVICE_KIND_LINE_POWER) {
 		updated = up_device_supply_refresh_line_power (supply, reason);
-	} else if (type == UP_DEVICE_KIND_BATTERY && is_power_supply) {
-		updated = up_device_supply_refresh_battery (supply, reason);
 	} else {
 		updated = up_device_supply_refresh_device (supply, reason);
 	}
@@ -1108,22 +556,9 @@ up_device_supply_refresh (UpDevice *device, UpRefreshReason reason)
 static void
 up_device_supply_init (UpDeviceSupply *supply)
 {
-	UpConfig *config;
-
 	supply->priv = up_device_supply_get_instance_private (supply);
 
-	/* allocate the stats for the battery charging & discharging */
-	supply->priv->energy_old = g_new (gdouble, UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH);
-	supply->priv->energy_old_timespec = g_new (GTimeVal, UP_DEVICE_SUPPLY_ENERGY_OLD_LENGTH);
-
 	supply->priv->shown_invalid_voltage_warning = FALSE;
-
-	config = up_config_new ();
-	/* Seems that we don't get change uevents from the
-	 * kernel on some BIOS types, but if polling
-	 * is disabled in the configuration, do nothing */
-	supply->priv->disable_battery_poll = up_config_get_boolean (config, "NoPollBatteries");
-	g_object_unref (config);
 }
 
 /**
@@ -1140,44 +575,7 @@ up_device_supply_finalize (GObject *object)
 	supply = UP_DEVICE_SUPPLY (object);
 	g_return_if_fail (supply->priv != NULL);
 
-	g_free (supply->priv->energy_old);
-	g_free (supply->priv->energy_old_timespec);
-
 	G_OBJECT_CLASS (up_device_supply_parent_class)->finalize (object);
-}
-
-static void
-up_device_supply_set_property (GObject        *object,
-			       guint           property_id,
-			       const GValue   *value,
-			       GParamSpec     *pspec)
-{
-	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (object);
-
-	switch (property_id) {
-	case PROP_IGNORE_SYSTEM_PERCENTAGE:
-		supply->priv->ignore_system_percentage = g_value_get_boolean (value);
-		break;
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-	}
-}
-
-static void
-up_device_supply_get_property (GObject        *object,
-			       guint           property_id,
-			       GValue         *value,
-			       GParamSpec     *pspec)
-{
-	UpDeviceSupply *supply = UP_DEVICE_SUPPLY (object);
-
-	switch (property_id) {
-	case PROP_IGNORE_SYSTEM_PERCENTAGE:
-		g_value_set_flags (value, supply->priv->ignore_system_percentage);
-		break;
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
-	}
 }
 
 /**
@@ -1190,17 +588,9 @@ up_device_supply_class_init (UpDeviceSupplyClass *klass)
 	UpDeviceClass *device_class = UP_DEVICE_CLASS (klass);
 
 	object_class->finalize = up_device_supply_finalize;
-	object_class->set_property = up_device_supply_set_property;
-	object_class->get_property = up_device_supply_get_property;
-	device_class->get_on_battery = up_device_supply_get_on_battery;
+
 	device_class->get_online = up_device_supply_get_online;
 	device_class->coldplug = up_device_supply_coldplug;
 	device_class->sibling_discovered = up_device_supply_sibling_discovered;
 	device_class->refresh = up_device_supply_refresh;
-
-	g_object_class_install_property (object_class, PROP_IGNORE_SYSTEM_PERCENTAGE,
-					 g_param_spec_boolean ("ignore-system-percentage",
-							       "Ignore system percentage",
-							       "Ignore system provided battery percentage",
-							       FALSE, G_PARAM_READWRITE));
 }

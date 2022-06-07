@@ -26,6 +26,7 @@
 #include "up-enumerator-udev.h"
 
 #include "up-device-supply.h"
+#include "up-device-supply-battery.h"
 #include "up-device-hid.h"
 #include "up-device-wup.h"
 
@@ -93,10 +94,19 @@ device_new (UpEnumeratorUdev *self, GUdevDevice *native)
 
 	subsys = g_udev_device_get_subsystem (native);
 	if (g_strcmp0 (subsys, "power_supply") == 0) {
-		return g_initable_new (UP_TYPE_DEVICE_SUPPLY, NULL, NULL,
+		UpDevice *device;
+
+		device = g_initable_new (UP_TYPE_DEVICE_SUPPLY_BATTERY, NULL, NULL,
 		                       "daemon", daemon,
 		                       "native", native,
 		                       "ignore-system-percentage", GPOINTER_TO_INT (is_macbook (NULL)),
+		                       NULL);
+		if (device)
+			return device;
+
+		return g_initable_new (UP_TYPE_DEVICE_SUPPLY, NULL, NULL,
+		                       "daemon", daemon,
+		                       "native", native,
 		                       NULL);
 
 	} else if (g_strcmp0 (subsys, "tty") == 0) {
