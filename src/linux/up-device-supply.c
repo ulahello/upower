@@ -395,7 +395,7 @@ up_device_supply_units_changed (UpDeviceSupply *supply,
 	return TRUE;
 }
 
-static UpDeviceState
+UpDeviceState
 up_device_supply_get_state (GUdevDevice *native)
 {
 	UpDeviceState state;

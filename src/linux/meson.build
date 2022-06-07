@@ -10,6 +10,8 @@ upshared += { 'linux': static_library('upshared',
     sources: [
         'up-device-supply.c',
         'up-device-supply.h',
+        'up-device-supply-battery.c',
+        'up-device-supply-battery.h',
         'up-device-hid.c',
         'up-device-hid.h',
         'up-device-wup.c',
