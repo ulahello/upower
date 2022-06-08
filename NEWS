@@ -1,3 +1,17 @@
+Version 0.99.19
+---------------
+Released: 2022-06-08
+
+Changes:
+- Move state guessing into DisplayDevice
+- Always use 90% threshold to consider a battery full
+- Various test improvements
+
+Bug fixes:
+- Fix mice showing up as keyboards (#189)
+- Allow unit test inspector to fail (#187)
+- Fix test cases when daemon shuts down too slowly (#188)
+
 Version 0.99.18
 ---------------
 Released: 2022-05-17
