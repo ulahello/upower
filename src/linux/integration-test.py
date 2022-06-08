@@ -1759,6 +1759,47 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
+    def test_bluetooth_mouse_with_keyboard(self):
+        '''mouse with a few keys (but not a keyboard)'''
+
+        dev = self.testbed.add_device('bluetooth',
+                                      'usb2/bluetooth/hci0/hci0:1',
+                                      None,
+                                      [], [])
+
+        parent = dev
+        self.testbed.add_device(
+            'input',
+            'input3/event3',
+            parent,
+            [], ['DEVNAME', 'input/event3', 'ID_INPUT_KEYBOARD', '1', 'ID_INPUT_MOUSE', '1'])
+
+        self.testbed.add_device(
+            'power_supply',
+            'power_supply/hid-00:22:33:44:55:66-battery',
+            parent,
+            ['type', 'Battery',
+             'scope', 'Device',
+             'present', '1',
+             'online', '1',
+             'status', 'Discharging',
+             'capacity', '40',
+             'model_name', 'Monster Mouse'],
+            [])
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        kbdbat0_up = devs[0]
+
+        self.assertEqual(self.get_dbus_dev_property(kbdbat0_up, 'Model'), 'Monster Mouse')
+        self.assertEqual(self.get_dbus_dev_property(kbdbat0_up, 'Percentage'), 40)
+        self.assertEqual(self.get_dbus_dev_property(kbdbat0_up, 'PowerSupply'), False)
+        self.assertEqual(self.get_dbus_dev_property(kbdbat0_up, 'Type'), UP_DEVICE_KIND_MOUSE)
+        self.assertEqual(self.get_dbus_property('OnBattery'), False)
+        self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
+        self.stop_daemon()
+
     def test_bluetooth_mouse_and_keyboard(self):
         '''keyboard/mouse combo battery'''
 
