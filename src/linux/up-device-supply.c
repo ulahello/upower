@@ -841,12 +841,21 @@ up_device_supply_sibling_discovered (UpDevice *device,
 		const char *prop;
 		UpDeviceKind type;
 	} types[] = {
-		/* In order of type priority, we never downgrade here (loop aborts). */
+		/* In order of type priority (*within* one input node). */
 		{ "ID_INPUT_TABLET", UP_DEVICE_KIND_TABLET },
-		{ "ID_INPUT_KEYBOARD", UP_DEVICE_KIND_KEYBOARD },
 		{ "ID_INPUT_TOUCHPAD", UP_DEVICE_KIND_TOUCHPAD },
 		{ "ID_INPUT_MOUSE", UP_DEVICE_KIND_MOUSE },
 		{ "ID_INPUT_JOYSTICK", UP_DEVICE_KIND_GAMING_INPUT },
+		{ "ID_INPUT_KEYBOARD", UP_DEVICE_KIND_KEYBOARD },
+	};
+	/* The type priority if we have multiple siblings,
+	 * i.e. we select the first of the current type of the found type. */
+	UpDeviceKind priority[] = {
+		UP_DEVICE_KIND_KEYBOARD,
+		UP_DEVICE_KIND_TABLET,
+		UP_DEVICE_KIND_TOUCHPAD,
+		UP_DEVICE_KIND_MOUSE,
+		UP_DEVICE_KIND_GAMING_INPUT,
 	};
 
 	if (!G_UDEV_IS_DEVICE (sibling))
@@ -887,12 +896,22 @@ up_device_supply_sibling_discovered (UpDevice *device,
 	new_type = UP_DEVICE_KIND_KEYBOARD;
 
 	for (i = 0; i < G_N_ELEMENTS (types); i++) {
-		if (types[i].type == cur_type ||
-		    g_udev_device_get_property_as_boolean (input, types[i].prop)) {
+		if (g_udev_device_get_property_as_boolean (input, types[i].prop)) {
 			new_type = types[i].type;
 			break;
 		}
 	}
+
+	for (i = 0; i < G_N_ELEMENTS (priority); i++) {
+		if (priority[i] == cur_type || priority[i] == new_type) {
+			new_type = priority[i];
+			break;
+		}
+	}
+
+	/* TODO: Add a heuristic here (and during initial discovery) that uses
+	 *       the model name.
+	 */
 
 	if (cur_type != new_type)
 		g_object_set (device, "type", new_type, NULL);
