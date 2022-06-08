@@ -843,7 +843,6 @@ up_device_supply_sibling_discovered (UpDevice *device,
 	} types[] = {
 		/* In order of type priority, we never downgrade here (loop aborts). */
 		{ "ID_INPUT_TABLET", UP_DEVICE_KIND_TABLET },
-		{ "ID_INPUT_TABLET_PAD", UP_DEVICE_KIND_TABLET },
 		{ "ID_INPUT_KEYBOARD", UP_DEVICE_KIND_KEYBOARD },
 		{ "ID_INPUT_TOUCHPAD", UP_DEVICE_KIND_TOUCHPAD },
 		{ "ID_INPUT_MOUSE", UP_DEVICE_KIND_MOUSE },
