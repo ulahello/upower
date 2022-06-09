@@ -649,6 +649,8 @@ class Tests(dbusmock.DBusTestCase):
              (TBD        , CHARGING   , DISCHARGING, TBD        , TBD        , P_CHARGE   , ANY),
              (ANY        , CHARGING   , DISCHARGING, ANY        , ANY        , ANY        , ANY),
         ]
+
+        self.daemon_log.clear()
         for i in range(len(states)):
             for j in range(len(states)):
                 # The table should be mirrored
@@ -657,9 +659,19 @@ class Tests(dbusmock.DBusTestCase):
                 self.testbed.set_attribute(bat0, 'status', states[i])
                 self.testbed.set_attribute(bat1, 'status', states[j])
                 self.testbed.uevent(bat0, 'change')
+                # We can't guarantee that both uevents are processed without
+                # the idle handler running. So, lets wait for the idle handler
+                # to calculate the composite battery state.
+                self.daemon_log.check_line('Calculating percentage', timeout=2.0)
                 self.testbed.uevent(bat1, 'change')
-                # The uevent can race with the DBus request
-                time.sleep(0.5)
+
+                if display_device_state[i][j] == CONFLICT:
+                    self.daemon_log.check_line_re("Conflicting.*state", timeout=2.0)
+                else:
+                    # TODO: Add a helper in OutputChecker to do this
+                    lines = self.daemon_log.check_line('Calculating percentage', timeout=2.0)
+                    for l in lines:
+                        self.assertNotRegex(l, b"Conflicting.*state")
 
                 if display_device_state[i][j] >= 0:
                     self.assertEqual(self.get_dbus_display_property('State'), display_device_state[i][j],
@@ -675,10 +687,7 @@ class Tests(dbusmock.DBusTestCase):
                         UP_DEVICE_STATE_PENDING_DISCHARGE),
                         msg=f"Invalid aggregate state for states {states[i]} and {states[j]}"
                     )
-                if display_device_state[i][j] == CONFLICT:
-                    self.daemon_log.check_line_re("Conflicting.*state")
-                else:
-                    self.daemon_log.check_no_line_re("Conflicting.*state")
+
         self.stop_daemon()
 
     def test_map_pending_charge_to_fully_charged(self):
