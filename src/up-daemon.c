@@ -260,26 +260,16 @@ out:
 
 		ac_online = up_daemon_get_on_ac_local (daemon, &has_ac);
 
-		if (has_ac) {
-			if (ac_online) {
-				if (percentage_total >= UP_FULLY_CHARGED_THRESHOLD)
-					state_total = UP_DEVICE_STATE_FULLY_CHARGED;
-				else
-					state_total = UP_DEVICE_STATE_CHARGING;
-			} else {
-				if (percentage_total < 1.0f)
-					state_total = UP_DEVICE_STATE_EMPTY;
-				else
-					state_total = UP_DEVICE_STATE_DISCHARGING;
-			}
+		if (has_ac && ac_online) {
+			if (percentage_total >= UP_FULLY_CHARGED_THRESHOLD)
+				state_total = UP_DEVICE_STATE_FULLY_CHARGED;
+			else
+				state_total = UP_DEVICE_STATE_CHARGING;
 		} else {
-			/* only guess when we have only one battery */
-			if (up_daemon_get_number_devices_of_type (daemon, UP_DEVICE_KIND_BATTERY)  == 1) {
-				if (percentage_total < 1.0f)
-					state_total = UP_DEVICE_STATE_EMPTY;
-				else
-					state_total = UP_DEVICE_STATE_DISCHARGING;
-			}
+			if (percentage_total < 1.0f)
+				state_total = UP_DEVICE_STATE_EMPTY;
+			else
+				state_total = UP_DEVICE_STATE_DISCHARGING;
 		}
 	}
 
