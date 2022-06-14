@@ -676,7 +676,7 @@ up_device_supply_refresh_battery (UpDeviceSupply *supply,
 		state = UP_DEVICE_STATE_FULLY_CHARGED;
 
 	/* if empty, and BIOS does not know what to do */
-	if (state == UP_DEVICE_STATE_UNKNOWN && energy < 0.01) {
+	if (state == UP_DEVICE_STATE_UNKNOWN && percentage < 1) {
 		g_warning ("Setting %s state empty as unknown and very low",
 			   g_udev_device_get_sysfs_path (native));
 		state = UP_DEVICE_STATE_EMPTY;
