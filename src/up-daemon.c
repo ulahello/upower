@@ -233,6 +233,24 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 		num_batteries++;
 	}
 
+	/* Handle multiple batteries */
+	if (num_batteries <= 1)
+		goto out;
+
+	g_debug ("Calculating percentage and time to full/to empty for %i batteries", num_batteries);
+
+	/* use percentage weighted for each battery capacity
+	 * fall back to averaging the batteries.
+	 * ASSUMPTION: If one battery has energy data, then all batteries do
+	 */
+	if (energy_full_total > 0.0)
+		percentage_total = 100.0 * energy_total / energy_full_total;
+	else
+		percentage_total = percentage_total / num_batteries;
+
+out:
+	g_ptr_array_unref (array);
+
 	/* No battery means LAST state. If we have an UNKNOWN state (with
 	 * a battery) then try to infer one. */
 	if (state_total == UP_DEVICE_STATE_LAST) {
@@ -265,26 +283,14 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 		}
 	}
 
-	/* Handle multiple batteries */
-	if (num_batteries <= 1)
-		goto out;
-
-	g_debug ("Calculating percentage and time to full/to empty for %i batteries", num_batteries);
-
-	/* use percentage weighted for each battery capacity */
-	if (energy_full_total > 0.0)
-		percentage_total = 100.0 * energy_total / energy_full_total;
-
-	/* calculate a quick and dirty time remaining value */
+	/* calculate a quick and dirty time remaining value
+	 * NOTE: Keep in sync with per-battery estimation code! */
 	if (energy_rate_total > 0) {
 		if (state_total == UP_DEVICE_STATE_DISCHARGING)
 			time_to_empty_total = SECONDS_PER_HOUR * (energy_total / energy_rate_total);
 		else if (state_total == UP_DEVICE_STATE_CHARGING)
 			time_to_full_total = SECONDS_PER_HOUR * ((energy_full_total - energy_total) / energy_rate_total);
 	}
-
-out:
-	g_ptr_array_unref (array);
 
 	/* Did anything change? */
 	if (daemon->priv->kind == kind_total &&
