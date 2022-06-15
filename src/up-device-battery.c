@@ -323,10 +323,6 @@ up_device_battery_report (UpDeviceBattery *self,
 	if (values->percentage <= 0)
 		values->percentage = values->energy.cur / priv->energy_full * 100;
 
-	/* QUIRK: Some devices keep reporting PENDING_CHARGE even when full */
-	if (values->state == UP_DEVICE_STATE_PENDING_CHARGE && values->percentage >= UP_FULLY_CHARGED_THRESHOLD)
-		values->state = UP_DEVICE_STATE_FULLY_CHARGED;
-
 	/* NOTE: We used to do more for the UNKNOWN state. However, some of the
 	 * logic relies on only one battery device to be present. Plus, it
 	 * requires knowing the AC state.
@@ -342,6 +338,20 @@ up_device_battery_report (UpDeviceBattery *self,
 
 	/* Do estimations */
 	up_device_battery_estimate (self, &values->state);
+
+	/* QUIRK: Do a FULL/EMPTY guess if the state is still unknown
+	 *        Maybe limit to when we have good estimates
+	 *        (would require rate/current information) */
+	if (values->state == UP_DEVICE_STATE_UNKNOWN) {
+		if (values->percentage >= UP_FULLY_CHARGED_THRESHOLD)
+			values->state = UP_DEVICE_STATE_FULLY_CHARGED;
+		else if (values->percentage < 1.0)
+			values->state = UP_DEVICE_STATE_EMPTY;
+	}
+
+	/* QUIRK: Some devices keep reporting PENDING_CHARGE even when full */
+	if (values->state == UP_DEVICE_STATE_PENDING_CHARGE && values->percentage >= UP_FULLY_CHARGED_THRESHOLD)
+		values->state = UP_DEVICE_STATE_FULLY_CHARGED;
 
 	/* Set the main properties (setting "update-time" last) */
 	g_object_set (self,

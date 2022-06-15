@@ -653,6 +653,40 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_display_property('State'), UP_DEVICE_STATE_PENDING_CHARGE)
         self.stop_daemon()
 
+    def test_empty_guessing(self):
+        '''One empty batter not reporting a state'''
+
+        self.testbed.add_device('power_supply', 'BAT0', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Unknown',
+                                 'charge_full', '10500000',
+                                 'charge_full_design', '11000000',
+                                 'capacity', '0',
+                                 'voltage_now', '12000000'], [])
+
+        self.start_daemon()
+        self.assertDevs({ 'battery_BAT0': { 'State' : UP_DEVICE_STATE_EMPTY } })
+        self.assertEqual(self.get_dbus_display_property('State'), UP_DEVICE_STATE_EMPTY)
+        self.stop_daemon()
+
+    def test_full_guessing(self):
+        '''One full batter not reporting a state'''
+
+        self.testbed.add_device('power_supply', 'BAT0', None,
+                                ['type', 'Battery',
+                                 'present', '1',
+                                 'status', 'Unknown',
+                                 'charge_full', '10500000',
+                                 'charge_full_design', '11000000',
+                                 'capacity', '99',
+                                 'voltage_now', '12000000'], [])
+
+        self.start_daemon()
+        self.assertDevs({ 'battery_BAT0': { 'State' : UP_DEVICE_STATE_FULLY_CHARGED } })
+        self.assertEqual(self.get_dbus_display_property('State'), UP_DEVICE_STATE_FULLY_CHARGED)
+        self.stop_daemon()
+
     def test_display_state_aggregation(self):
         bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
                                        ['type', 'Battery',
