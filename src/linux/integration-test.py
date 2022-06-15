@@ -631,7 +631,14 @@ class Tests(dbusmock.DBusTestCase):
                                         'capacity', '40',
                                         'voltage_now', '12000000'], [])
 
-        self.start_daemon(warns=True)
+        config = tempfile.NamedTemporaryFile(delete=False, mode='w')
+        # The unknown poll can cause issues for test synchronization
+        config.write("[UPower]\n")
+        config.write("NoPollBatteries=true\n")
+        config.close()
+        self.addCleanup(os.unlink, config.name)
+
+        self.start_daemon(config.name, warns=True)
         devs = self.proxy.EnumerateDevices()
         self.assertEqual(len(devs), 2)
 
@@ -664,6 +671,8 @@ class Tests(dbusmock.DBusTestCase):
             for j in range(len(states)):
                 # The table should be mirrored
                 assert display_device_state[i][j] == display_device_state[j][i]
+
+                print(f'Test states are {states[i]} and {states[j]} expected state is {states[display_device_state[i][j]]}')
 
                 self.testbed.set_attribute(bat0, 'status', states[i])
                 self.testbed.set_attribute(bat1, 'status', states[j])
