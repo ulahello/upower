@@ -595,6 +595,46 @@ class Tests(dbusmock.DBusTestCase):
             self.assertEqual(self.get_dbus_display_property('State'), UP_DEVICE_STATE_CHARGING)
             self.stop_daemon()
 
+    def test_battery_state_guessing(self):
+        energy_now = 48000000
+        ac = self.testbed.add_device('power_supply', 'AC', None,
+                                     ['type', 'Mains', 'online', '0'], [])
+        bat0 = self.testbed.add_device('power_supply', f'BAT0', None,
+                                       ['type', 'Battery',
+                                        'present', '1',
+                                        'status', 'unknown',
+                                        'energy_full', '60000000',
+                                        'energy_full_design', '80000000',
+                                        'energy_now', str(energy_now),
+                                        'voltage_now', '12000000'], [])
+
+        self.start_daemon()
+        self.assertDevs({ 'battery_BAT0': { 'State' : UP_DEVICE_STATE_UNKNOWN }, 'line_power_AC' : {} })
+        # Discharge for 20s:
+        for i in range(25):
+            time.sleep(1)
+            energy_now -= 10.0 / 3600
+            self.testbed.set_attribute(bat0, 'energy_now', str(int(energy_now)))
+
+        self.assertDevs({ 'battery_BAT0': { 'State' : UP_DEVICE_STATE_DISCHARGING }, 'line_power_AC' : {} })
+
+        # History is discarded, we have an unknown state
+        # (the "online" state does not actually matter for the test)
+        self.testbed.set_attribute(bat0, 'online', '1')
+        self.testbed.uevent(ac, 'change')
+        time.sleep(1)
+        self.assertDevs({ 'battery_BAT0': { 'State' : UP_DEVICE_STATE_UNKNOWN }, 'line_power_AC' : {} })
+
+        # Charge for a while
+        for i in range(25):
+            time.sleep(1)
+            energy_now += 10.0 / 3600
+            self.testbed.set_attribute(bat0, 'energy_now', str(int(energy_now)))
+
+        self.assertDevs({ 'battery_BAT0': { 'State' : UP_DEVICE_STATE_CHARGING }, 'line_power_AC' : {} })
+
+        self.stop_daemon()
+
     def test_display_pending_charge_one_battery(self):
         '''One battery pending-charge'''
 
