@@ -534,6 +534,10 @@ up_daemon_startup (UpDaemon *daemon,
 
 	/* get battery state */
 	up_daemon_update_warning_level (daemon);
+
+	/* Run mainloop now to avoid state changes on DBus */
+	while (g_main_context_iteration (NULL, FALSE)) { }
+
 	g_debug ("daemon now not coldplug");
 
 out:
