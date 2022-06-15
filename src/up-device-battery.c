@@ -90,7 +90,7 @@ up_device_battery_charge_to_energy (UpDeviceBattery *self, gdouble charge)
 }
 
 static void
-up_device_battery_estimate (UpDeviceBattery *self)
+up_device_battery_estimate (UpDeviceBattery *self, UpDeviceState *effective_state)
 {
 	UpDeviceBatteryPrivate *priv = up_device_battery_get_instance_private (self);
 	UpBatteryValues *ref = NULL;
@@ -106,7 +106,11 @@ up_device_battery_estimate (UpDeviceBattery *self)
 	priv->have_good_estimates = FALSE;
 
 	cur = &priv->hw_data[priv->hw_data_last];
-	if (cur->state != UP_DEVICE_STATE_CHARGING && cur->state != UP_DEVICE_STATE_DISCHARGING) {
+	*effective_state = cur->state;
+
+	if (*effective_state != UP_DEVICE_STATE_CHARGING &&
+	    *effective_state != UP_DEVICE_STATE_DISCHARGING &&
+	    *effective_state != UP_DEVICE_STATE_UNKNOWN) {
 		priv->have_good_estimates = TRUE;
 		goto out;
 	}
@@ -115,7 +119,7 @@ up_device_battery_estimate (UpDeviceBattery *self)
 		int pos = (priv->hw_data_last - i + G_N_ELEMENTS (priv->hw_data)) % G_N_ELEMENTS (priv->hw_data);
 		gint64 td;
 
-		/* Stop searching if the state changed. */
+		/* Stop searching if the hardware state changed. */
 		if (priv->hw_data[pos].state != cur->state)
 			break;
 
@@ -147,14 +151,30 @@ up_device_battery_estimate (UpDeviceBattery *self)
 	/* energy is in Wh, rate in W */
 	energy_rate = (cur->energy.cur - ref->energy.cur) / (ref_td / ((gdouble) 3600 * G_USEC_PER_SEC));
 
+	/* Try to guess charge/discharge state based on rate.
+	 * Note that the history is discarded when the AC is plugged, as such
+	 * we should only err on the side of showing CHARGING for too long.
+	 */
+	if (*effective_state == UP_DEVICE_STATE_UNKNOWN) {
+		/* Consider a rate of 0.5W as "no change", otherwise set CHARGING/DISCHARGING */
+		if (abs(energy_rate) < 0.5) {
+			priv->have_good_estimates = TRUE;
+			goto out;
+		} else if (energy_rate < 0.0) {
+			*effective_state = UP_DEVICE_STATE_DISCHARGING;
+		} else {
+			*effective_state = UP_DEVICE_STATE_CHARGING;
+		}
+	}
+
 	/* The rate is defined to be positive during both charge and discharge. */
-	if (cur->state == UP_DEVICE_STATE_DISCHARGING)
+	if (*effective_state == UP_DEVICE_STATE_DISCHARGING)
 		energy_rate *= -1.0;
 
 	/* This hopefully gives us sane values, but lets print a message if not. */
 	if (energy_rate < 0.1 || energy_rate > 300) {
 		g_message ("The estimated %scharge rate is %fW, which is not realistic",
-			   cur->state == UP_DEVICE_STATE_DISCHARGING ? "dis" : "",
+			   *effective_state == UP_DEVICE_STATE_DISCHARGING ? "dis" : "",
 			   energy_rate);
 		energy_rate = 0;
 		goto out;
@@ -162,7 +182,7 @@ up_device_battery_estimate (UpDeviceBattery *self)
 
 	/* Here we could factor in collected data about charge rates */
 	/* FIXME: Use charge-stop-threshold here */
-	if (cur->state == UP_DEVICE_STATE_CHARGING)
+	if (*effective_state == UP_DEVICE_STATE_CHARGING)
 		time_to_full = 3600 * (priv->energy_full - cur->energy.cur) / energy_rate;
 	else
 		time_to_empty = 3600 * cur->energy.cur / energy_rate;
@@ -235,8 +255,8 @@ up_device_battery_report (UpDeviceBattery *self,
 		return;
 	}
 
-	/* Discard all old measurements (from before suspend). */
-	if (reason == UP_REFRESH_RESUME)
+	/* Discard all old measurements that can't be used for estimations. */
+	if (reason == UP_REFRESH_RESUME || reason == UP_REFRESH_LINE_POWER)
 		priv->hw_data_len = 0;
 
 	g_assert (priv->units != UP_BATTERY_UNIT_UNDEFINED);
@@ -321,7 +341,7 @@ up_device_battery_report (UpDeviceBattery *self,
 	priv->hw_data[priv->hw_data_last] = *values;
 
 	/* Do estimations */
-	up_device_battery_estimate (self);
+	up_device_battery_estimate (self, &values->state);
 
 	/* Set the main properties (setting "update-time" last) */
 	g_object_set (self,
