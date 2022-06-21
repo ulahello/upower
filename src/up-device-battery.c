@@ -419,9 +419,6 @@ up_device_battery_update_info (UpDeviceBattery *self, UpBatteryInfo *info)
 			              "has-statistics", TRUE,
 			              NULL);
 
-			/* FIXME: The history needs to be re-loaded at this
-			 *        point as the ID may have changed!
-			 */
 			priv->present = TRUE;
 			priv->units = info->units;
 		}
