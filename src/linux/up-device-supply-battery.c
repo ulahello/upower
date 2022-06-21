@@ -80,13 +80,6 @@ up_device_supply_battery_get_design_voltage (UpDeviceSupplyBattery *self,
 		return voltage;
 	}
 
-	/* current voltage */
-	voltage = g_udev_device_get_sysfs_attr_as_double_uncached (native, "voltage_present") / 1000000.0;
-	if (voltage > 1.00f) {
-		g_debug ("using present voltage");
-		return voltage;
-	}
-
 	/* current voltage, alternate form */
 	voltage = g_udev_device_get_sysfs_attr_as_double_uncached (native, "voltage_now") / 1000000.0;
 	if (voltage > 1.00f) {
