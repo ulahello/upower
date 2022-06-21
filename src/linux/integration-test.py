@@ -25,6 +25,7 @@ import shutil
 import subprocess
 import unittest
 import time
+import re
 from output_checker import OutputChecker
 from packaging.version import parse as parse_version
 
@@ -683,13 +684,17 @@ class Tests(dbusmock.DBusTestCase):
                 self.daemon_log.check_line('Calculating percentage', timeout=2.0)
                 self.testbed.uevent(bat1, 'change')
 
+                # TODO: Make this more elegant somehow
+                lines = self.daemon_log.check_line('Calculating percentage', timeout=2.0)
+                for l in lines:
+                     found = bool(re.match(b".*Conflicting.*state.*", l))
+                     if found:
+                         break
+
                 if display_device_state[i][j] == CONFLICT:
-                    self.daemon_log.check_line_re("Conflicting.*state", timeout=2.0)
+                    self.assertTrue(found)
                 else:
-                    # TODO: Add a helper in OutputChecker to do this
-                    lines = self.daemon_log.check_line('Calculating percentage', timeout=2.0)
-                    for l in lines:
-                        self.assertNotRegex(l, b"Conflicting.*state")
+                    self.assertFalse(found)
 
                 if display_device_state[i][j] >= 0:
                     self.assertEqual(self.get_dbus_display_property('State'), display_device_state[i][j],
