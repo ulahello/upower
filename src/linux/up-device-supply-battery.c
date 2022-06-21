@@ -176,9 +176,7 @@ up_device_supply_battery_refresh (UpDevice *device,
 	up_device_battery_update_info (battery, &info);
 
 	/*
-	 * Load runtime information.
-	 * NOTE: If we assume that a udev event is guaranteed to happen, then
-	 *       we can restrict this to updates other than UP_REFRESH_POLL.
+	 * Load dynamic information.
 	 */
 	values.units = info.units;
 
