@@ -1265,6 +1265,48 @@ class Tests(dbusmock.DBusTestCase):
 
         self.stop_daemon()
 
+    def test_battery_id_change(self):
+        '''check that we save/load the history correctly when the ID changes'''
+
+        bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
+                                       ['type', 'Battery',
+                                        'manufacturer', 'FDO',
+                                        'model_name', 'Fake Battery',
+                                        'serial_number', '001',
+                                        'present', '1',
+                                        'status', 'Discharging',
+                                        'energy_full', '60000000',
+                                        'energy_full_design', '80000000',
+                                        'energy_now', '50000000',
+                                        'voltage_now', '12000000'], [])
+
+        self.start_daemon()
+
+        self.daemon_log.check_line(f"using id: Fake_Battery-80-001", timeout=1)
+
+        # Change the serial of the battery
+        self.testbed.set_attribute(bat0, 'energy_full_design', '90000000')
+        self.testbed.set_attribute(bat0, 'serial_number', '002')
+        self.testbed.uevent(bat0, 'change')
+
+        # This saves the old history, and then opens a new one
+        self.daemon_log.check_line_re(f"saved .*/history-time-empty-Fake_Battery-80-001.dat", timeout=1)
+        self.daemon_log.check_line(f"using id: Fake_Battery-90-002", timeout=1)
+
+        # Only happens once
+        self.daemon_log.check_no_line(f"using id:", wait=1.0)
+
+        # Remove the battery
+        self.testbed.set_attribute(bat0, 'present', '0')
+        self.testbed.uevent(bat0, 'change')
+
+        # This saves the old history, and does *not* open a new one
+        self.daemon_log.check_line_re(f"saved .*/history-time-empty-Fake_Battery-90-002.dat", timeout=1)
+        self.daemon_log.check_no_line(f"using id:", wait=1.0)
+
+        self.stop_daemon()
+
+
     def test_percentage_low_icon_set(self):
         '''Without battery level, PercentageLow is limit for icon change'''
 
