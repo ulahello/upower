@@ -36,6 +36,7 @@ stages:
   - check-source
   - build
   - test
+  - deploy
 
 image: $FEDORA_IMAGE
 
@@ -115,6 +116,26 @@ check_abi:
     variables:
       - $CI_PIPELINE_SOURCE == "schedule"
 
+# Create docs artifact for the website.
+# Note that the last successful artifact build is always kept, so 1 day as
+# expiry is completely fine.
+docs:
+  stage: deploy
+  dependencies:
+   - build
+  script:
+   - ninja -C _build/ UPower-doc
+  artifacts:
+    name: "docs"
+    when: always
+    expire_in: 1 day
+    paths:
+      - "_build/doc/html"
+  only:
+    - master
+  except:
+    variables:
+      - $CI_PIPELINE_SOURCE == "schedule"
 
 # CONTAINERS creation stage
 container_fedora_build:
