@@ -926,6 +926,8 @@ up_daemon_resume_poll (UpDaemon *daemon)
 	g_debug ("Polling will be resumed");
 
 	daemon->priv->poll_paused = FALSE;
+
+	g_source_set_ready_time (daemon->priv->poll_source, 0);
 }
 
 void
