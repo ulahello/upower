@@ -1,3 +1,12 @@
+Version 0.99.20
+---------------
+Released: 2022-07-13
+
+Bug fixes:
+- Ensure polling is resumed after suspend (#198)
+- Bugfixes to state guessing code (#146)
+- Stability improvements of automated tests
+
 Version 0.99.19
 ---------------
 Released: 2022-06-08

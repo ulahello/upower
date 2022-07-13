@@ -1,5 +1,5 @@
 project('upower', 'c',
-    version: '0.99.19',
+    version: '0.99.20',
     license: 'GPLv2+',
     default_options: [
         'buildtype=debugoptimized',
