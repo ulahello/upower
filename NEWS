@@ -1,3 +1,21 @@
+Version 1.90.0
+--------------
+Released: 2022-07-21
+
+Note that the version number bump was made to allow bugfixes for older
+releases while also making new releases that contain with more in-depth
+code changes. The old (soft) API/ABI guarantees are currently unchanged.
+
+Changes:
+- Refactor internal battery handling into separate classes
+- Guess charging/discharging state based on energy rate (#196)
+
+Bug fixes:
+- Fix polling after resume (#198)
+- Fix battery state guessing (#146)
+- Reload history when battery ID changes
+- Test fixes
+
 Version 0.99.19
 ---------------
 Released: 2022-06-08
