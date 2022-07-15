@@ -48,7 +48,7 @@ typedef struct {
 
 	/* dynamic values */
 	gint64 fast_repoll_until;
-	gboolean have_good_estimates;
+	gboolean repoll_needed;
 } UpDeviceBatteryPrivate;
 
 G_DEFINE_TYPE_EXTENDED (UpDeviceBattery, up_device_battery, UP_TYPE_DEVICE, 0,
@@ -99,18 +99,14 @@ up_device_battery_estimate_power (UpDeviceBattery *self, UpBatteryValues *cur)
 	gint64 ref_td = 999 * G_USEC_PER_SEC; /* We need to be able to do math with this */
 	gint i;
 
-	priv->have_good_estimates = FALSE;
-
 	/* Same item, but it is copied in already. */
 	g_assert (cur->ts_us != priv->hw_data[priv->hw_data_last].ts_us);
 	reported_state = cur->state;
 
 	if (cur->state != UP_DEVICE_STATE_CHARGING &&
 	    cur->state != UP_DEVICE_STATE_DISCHARGING &&
-	    cur->state != UP_DEVICE_STATE_UNKNOWN) {
-		priv->have_good_estimates = TRUE;
+	    cur->state != UP_DEVICE_STATE_UNKNOWN)
 		return;
-	}
 
 	for (i = 0; i < priv->hw_data_len; i++) {
 		int pos = (priv->hw_data_last - i + G_N_ELEMENTS (priv->hw_data)) % G_N_ELEMENTS (priv->hw_data);
@@ -142,8 +138,10 @@ up_device_battery_estimate_power (UpDeviceBattery *self, UpBatteryValues *cur)
 	 *
 	 * For now, this is better than what we used to do.
 	 */
-	if (!ref)
+	if (!ref) {
+		priv->repoll_needed = TRUE;
 		return;
+	}
 
 	/* energy is in Wh, rate in W */
 	energy_rate = (cur->energy.cur - ref->energy.cur) / (ref_td / ((gdouble) 3600 * G_USEC_PER_SEC));
@@ -154,14 +152,12 @@ up_device_battery_estimate_power (UpDeviceBattery *self, UpBatteryValues *cur)
 	 */
 	if (cur->state == UP_DEVICE_STATE_UNKNOWN) {
 		/* Consider a rate of 0.5W as "no change", otherwise set CHARGING/DISCHARGING */
-		if (abs(energy_rate) < 0.5) {
-			priv->have_good_estimates = TRUE;
+		if (abs(energy_rate) < 0.5)
 			return;
-		} else if (energy_rate < 0.0) {
+		else if (energy_rate < 0.0)
 			cur->state = UP_DEVICE_STATE_DISCHARGING;
-		} else {
+		else
 			cur->state = UP_DEVICE_STATE_CHARGING;
-		}
 	}
 
 	/* The rate is defined to be positive during both charge and discharge. */
@@ -174,10 +170,8 @@ up_device_battery_estimate_power (UpDeviceBattery *self, UpBatteryValues *cur)
 			   cur->state == UP_DEVICE_STATE_DISCHARGING ? "dis" : "",
 			   energy_rate);
 		energy_rate = 0;
-		return;
 	}
 
-	priv->have_good_estimates = TRUE;
 	cur->energy.rate = energy_rate;
 }
 
@@ -192,7 +186,8 @@ up_device_battery_update_poll_frequency (UpDeviceBattery *self,
 	if (priv->disable_battery_poll)
 		return;
 
-	slow_poll_timeout = priv->have_good_estimates ? UP_DAEMON_SHORT_TIMEOUT : UP_DAEMON_ESTIMATE_TIMEOUT;
+	slow_poll_timeout = priv->repoll_needed ? UP_DAEMON_ESTIMATE_TIMEOUT : UP_DAEMON_SHORT_TIMEOUT;
+	priv->repoll_needed = FALSE;
 
 	/* We start fast-polling if the reason to update was not a normal POLL
 	 * and one of the following holds true:
@@ -326,16 +321,19 @@ up_device_battery_report (UpDeviceBattery *self,
 	priv->hw_data_len = MIN (priv->hw_data_len + 1, G_N_ELEMENTS (priv->hw_data));
 	priv->hw_data[priv->hw_data_last] = *values;
 
-	/* Calculate time to full/empty
-	 *
-	 * Here we could factor in collected data about charge rates
-	 * FIXME: Use charge-stop-threshold here
-	 */
-	if (values->energy.rate > 0) {
+	if (values->energy.rate > 0.01) {
+		/* Calculate time to full/empty
+		 *
+		 * Here we could factor in collected data about charge rates
+		 * FIXME: Use charge-stop-threshold here
+		 */
 		if (values->state == UP_DEVICE_STATE_CHARGING)
 			time_to_full = 3600 * (priv->energy_full - values->energy.cur) / values->energy.rate;
 		else
 			time_to_empty = 3600 * values->energy.cur / values->energy.rate;
+	} else {
+		if (values->state == UP_DEVICE_STATE_CHARGING || values->state == UP_DEVICE_STATE_DISCHARGING)
+			priv->repoll_needed = TRUE;
 	}
 
 	/* QUIRK: Do a FULL/EMPTY guess if the state is still unknown
