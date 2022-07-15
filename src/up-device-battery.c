@@ -46,6 +46,9 @@ typedef struct {
 	gdouble energy_design;
 	gint charge_cycles;
 
+	gboolean trust_power_measurement;
+	gint64 last_power_discontinuity;
+
 	/* dynamic values */
 	gint64 fast_repoll_until;
 	gboolean repoll_needed;
@@ -160,7 +163,7 @@ up_device_battery_estimate_power (UpDeviceBattery *self, UpBatteryValues *cur)
 			cur->state = UP_DEVICE_STATE_CHARGING;
 	}
 
-	/* The rate is defined to be positive during both charge and discharge. */
+	/* QUIRK: No good reason, but define rate to be positive. */
 	if (cur->state == UP_DEVICE_STATE_DISCHARGING)
 		energy_rate *= -1.0;
 
@@ -236,13 +239,19 @@ up_device_battery_report (UpDeviceBattery *self,
 		return;
 	}
 
-	/* Discard all old measurements that can't be used for estimations. */
-	if (reason == UP_REFRESH_RESUME || reason == UP_REFRESH_LINE_POWER)
-		priv->hw_data_len = 0;
-
 	g_assert (priv->units != UP_BATTERY_UNIT_UNDEFINED);
 
 	values->ts_us = g_get_monotonic_time ();
+
+	/* Discard all old measurements that can't be used for estimations.
+	 *
+	 * XXX: Should a state change also trigger an update of the timestamp
+	 *      that is used to discard power/current measurements?
+	 */
+	if (reason == UP_REFRESH_RESUME || reason == UP_REFRESH_LINE_POWER) {
+		priv->hw_data_len = 0;
+		priv->last_power_discontinuity = values->ts_us;
+	}
 
 	/* QUIRK:
 	 *
@@ -312,8 +321,27 @@ up_device_battery_report (UpDeviceBattery *self,
 	 * about the AC state and we only have "one" battery.
 	 */
 
-	/* Do power estimations based on energy/charge data */
-	up_device_battery_estimate_power (self, values);
+	/* QUIRK: No good reason, but define rate to be positive.
+	 *
+	 * It would be sane/reasonable to define it to be negative when
+	 * discharging. Only odd thing is that most common hardware appears
+	 * to always report positive values, which appeared in DBus unmodified.
+	 */
+	if (values->state == UP_DEVICE_STATE_DISCHARGING && values->energy.rate < 0)
+		values->energy.rate = -values->energy.rate;
+
+	/* NOTE: We got a (likely sane) reading.
+	 * Assume power/current readings are accurate from now on. */
+	if (values->energy.rate > 0.01)
+		priv->trust_power_measurement = TRUE;
+
+	if (priv->trust_power_measurement) {
+		/* QUIRK: Do not trust readings after a discontinuity happened */
+		if (priv->last_power_discontinuity + UP_DAEMON_DISTRUST_RATE_TIMEOUT * G_USEC_PER_SEC > values->ts_us)
+			values->energy.rate = 0.0;
+	} else {
+		up_device_battery_estimate_power (self, values);
+	}
 
 
 	/* Push into our ring buffer */
@@ -467,6 +495,7 @@ up_device_battery_update_info (UpDeviceBattery *self, UpBatteryInfo *info)
 		/* NOTE: Assume a normal refresh will follow immediately (do not update timestamp). */
 	} else {
 		priv->present = FALSE;
+		priv->trust_power_measurement = FALSE;
 		priv->hw_data_len = 0;
 		priv->units = UP_BATTERY_UNIT_UNDEFINED;
 
