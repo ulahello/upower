@@ -125,7 +125,7 @@ up_device_battery_estimate_power (UpDeviceBattery *self, UpBatteryValues *cur)
 			continue;
 
 		/* Stop searching if the new reference is further away from the long timeout. */
-		if (abs(UP_DAEMON_LONG_TIMEOUT * G_USEC_PER_SEC - abs (td)) > abs(UP_DAEMON_SHORT_TIMEOUT * G_USEC_PER_SEC - ref_td))
+		if (ABS(UP_DAEMON_LONG_TIMEOUT * G_USEC_PER_SEC - ABS (td)) > ABS(UP_DAEMON_SHORT_TIMEOUT * G_USEC_PER_SEC - ref_td))
 			break;
 
 		ref_td = td;
