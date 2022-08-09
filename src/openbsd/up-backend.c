@@ -312,7 +312,7 @@ up_backend_update_battery_state(UpDevice* device)
 	gdouble percentage;
 	gboolean ret, is_present;
 	struct sensordev sdev;
-	UpDeviceState cur_state, new_state;
+	UpDeviceState cur_state, new_state = UP_DEVICE_STATE_UNKNOWN;
 	gint64 cur_time_to_empty, new_time_to_empty;
 	struct apm_power_info a;
 
