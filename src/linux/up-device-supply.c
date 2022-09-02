@@ -215,7 +215,6 @@ sysfs_get_capacity_level (GUdevDevice   *native,
 		{ "Full",     100.0, UP_DEVICE_LEVEL_FULL },
 		{ "Unknown",   50.0, UP_DEVICE_LEVEL_UNKNOWN }
 	};
-	guint len;
 
 	g_return_val_if_fail (level != NULL, -1.0);
 
@@ -226,14 +225,12 @@ sysfs_get_capacity_level (GUdevDevice   *native,
 	}
 
 	*level = UP_DEVICE_LEVEL_UNKNOWN;
-	str = g_strdup (g_udev_device_get_sysfs_attr_uncached (native, "capacity_level"));
+	str = g_strchomp (g_strdup (g_udev_device_get_sysfs_attr_uncached (native, "capacity_level")));
 	if (!str) {
 		g_debug ("Failed to read capacity_level!");
 		return ret;
 	}
 
-	len = strlen(str);
-	str[len -1] = '\0';
 	for (i = 0; i < G_N_ELEMENTS(levels); i++) {
 		if (strcmp (levels[i].str, str) == 0) {
 			ret = levels[i].percentage;
