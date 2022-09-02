@@ -117,12 +117,13 @@ up_backend_uevent_signal_handler_cb (GUdevClient *client, const gchar *action,
 }
 
 static gboolean
-is_battery_iface_proxy (GDBusProxy *interface_proxy)
+is_interesting_iface_proxy (GDBusProxy *interface_proxy)
 {
 	const char *iface;
 
 	iface = g_dbus_proxy_get_interface_name (interface_proxy);
-	return g_str_equal (iface, "org.bluez.Battery1");
+	return g_str_equal (iface, "org.bluez.Battery1") ||
+		g_str_equal (iface, "org.bluez.Device1");
 }
 
 static gboolean
@@ -149,7 +150,7 @@ bluez_proxies_changed (GDBusObjectManagerClient *manager,
 	GObject *object;
 	UpDeviceBluez *bluez;
 
-	if (!is_battery_iface_proxy (interface_proxy))
+	if (!is_interesting_iface_proxy (interface_proxy))
 		return;
 
 	object = up_device_list_lookup (backend->priv->device_list, G_OBJECT (object_proxy));
