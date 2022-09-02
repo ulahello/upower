@@ -367,19 +367,21 @@ up_device_supply_sibling_discovered (UpDevice *device,
 		      "serial", &serial_number,
 		      NULL);
 
-	if (model_name == NULL && serial_number == NULL) {
+	if (model_name == NULL) {
 		model_name = up_device_supply_get_string (input, "name");
-		serial_number = up_device_supply_get_string (input, "uniq");
-
 		up_make_safe_string (model_name);
-		up_make_safe_string (serial_number);
-
 		g_object_set (device,
 			      "model", model_name,
+			      NULL);
+		g_free (model_name);
+	}
+
+	if (serial_number == NULL) {
+		serial_number = up_device_supply_get_string (input, "uniq");
+		up_make_safe_string (serial_number);
+		g_object_set (device,
 			      "serial", serial_number,
 			      NULL);
-
-		g_free (model_name);
 		g_free (serial_number);
 	}
 
