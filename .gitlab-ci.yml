@@ -106,7 +106,7 @@ test:
     - make install
     - cd ..
   script:
-    - meson test -C _build --print-errorlogs --no-stdsplit
+    - catchsegv meson test -C _build --print-errorlogs --no-stdsplit
     - .ci/fail_skipped_tests.py _build/meson-logs/testlog.junit.xml
 
   artifacts:
