@@ -438,8 +438,11 @@ up_daemon_enumerate_devices (UpExportedDaemon *skeleton,
 	object_paths = g_ptr_array_new_with_free_func (g_free);
 	array = up_device_list_get_array (daemon->priv->power_devices);
 	for (i = 0; i < array->len; i++) {
+		const char *object_path;
 		device = (UpDevice *) g_ptr_array_index (array, i);
-		g_ptr_array_add (object_paths, g_strdup (up_device_get_object_path (device)));
+		object_path = up_device_get_object_path (device);
+		if (object_path != NULL)
+			g_ptr_array_add (object_paths, g_strdup (object_path));
 	}
 	g_ptr_array_unref (array);
 	g_ptr_array_add (object_paths, NULL);
