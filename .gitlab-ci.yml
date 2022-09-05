@@ -53,6 +53,12 @@ test_nut_hwdb:
 
 build:
   stage: build
+  before_script:
+    - git clone https://github.com/zatrazz/glibc-tools.git
+    - cd glibc-tools
+    - ./configure
+    - make
+    - cd ..
   script:
     - meson _build -Dintrospection=enabled -Dman=true -Dgtk-doc=true -Didevice=enabled
     - ninja -C _build
@@ -95,6 +101,10 @@ test:
   stage: test
   dependencies:
    - build
+  before_script:
+    - cd glibc-tools
+    - make install
+    - cd ..
   script:
     - meson test -C _build --print-errorlogs --no-stdsplit
     - .ci/fail_skipped_tests.py _build/meson-logs/testlog.junit.xml
