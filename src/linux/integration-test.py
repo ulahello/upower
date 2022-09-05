@@ -1386,7 +1386,8 @@ class Tests(dbusmock.DBusTestCase):
             'input',
             'usb1/bluetooth/hci0/hci0:01/input2/mouse3',
             None,
-            [], ['DEVNAME', 'input/mouse3', 'ID_INPUT_MOUSE', '1'])
+            ['uniq', '11:22:33:44:aa:bb'],
+            ['DEVNAME', 'input/mouse3', 'ID_INPUT_MOUSE', '1'])
 
         mousebat0 = self.testbed.add_device(
             'power_supply',
