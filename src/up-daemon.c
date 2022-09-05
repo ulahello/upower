@@ -970,13 +970,13 @@ up_daemon_device_added_cb (UpBackend *backend, UpDevice *device, UpDaemon *daemo
 
 	/* emit */
 	object_path = up_device_get_object_path (device);
-	g_debug ("emitting added: %s", object_path);
-
-	/* don't crash the session */
 	if (object_path == NULL) {
-		g_warning ("INTERNAL STATE CORRUPT (device-added): not sending NULL, device:%p", device);
+		g_debug ("Device %s was unregistered before it was on the bus",
+			 up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device)));
 		return;
 	}
+
+	g_debug ("emitting added: %s", object_path);
 	up_daemon_update_warning_level (daemon);
 	up_exported_daemon_emit_device_added (UP_EXPORTED_DAEMON (daemon), object_path);
 }
