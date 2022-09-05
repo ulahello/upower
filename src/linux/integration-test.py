@@ -197,6 +197,8 @@ class Tests(dbusmock.DBusTestCase):
 
         if os.getenv('VALGRIND') != None:
             daemon_path = ['valgrind', self.daemon_path, '-v']
+        elif os.getenv('CATCH') != None:
+            daemon_path = ['catchsegv', self.daemon_path, '-v']
         else:
             daemon_path = [self.daemon_path, '-v']
         self.daemon = subprocess.Popen(daemon_path,
