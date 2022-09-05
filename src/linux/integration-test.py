@@ -1390,7 +1390,7 @@ class Tests(dbusmock.DBusTestCase):
 
         mousebat0 = self.testbed.add_device(
             'power_supply',
-            'usb1/bluetooth/hci0/hci0:01/1/power_supply/hid-00:11:22:33:44:55-battery',
+            'usb1/bluetooth/hci0/hci0:01/1/power_supply/hid-11:22:33:44:aa:bb-battery',
             None,
             ['type', 'Battery',
              'scope', 'Device',
@@ -1450,10 +1450,10 @@ class Tests(dbusmock.DBusTestCase):
         # on wakeup we'll get a new one which ought to replace the previous;
         # emulate that kernel bug
         os.unlink(os.path.join(self.testbed.get_sys_dir(), 'class',
-                               'power_supply', 'hid-00:11:22:33:44:55-battery'))
+                               'power_supply', 'hid-11:22:33:44:aa:bb-battery'))
         mb1 = self.testbed.add_device(
             'power_supply',
-            'usb1/bluetooth/hci0/hci0:01/2/power_supply/hid-00:11:22:33:44:55-battery',
+            'usb1/bluetooth/hci0/hci0:01/2/power_supply/hid-11:22:33:44:aa:bb-battery',
             None,
             ['type', 'Battery',
              'scope', 'Device',
@@ -2010,7 +2010,7 @@ class Tests(dbusmock.DBusTestCase):
                                       [], [])
 
         # Add a device to bluez
-        address = '11:22:33:44:55:66'
+        address = '11:22:33:44:AA:BB'
 
         path = self.bluez_obj.AddDevice(adapter_name, address, alias)
 
@@ -2031,7 +2031,7 @@ class Tests(dbusmock.DBusTestCase):
 
         self.start_daemon()
 
-        # process = subprocess.Popen(['gdbus', 'introspect', '--system', '--dest', 'org.bluez', '--object-path', '/org/bluez/hci0/dev_11_22_33_44_55_66'])
+        # process = subprocess.Popen(['gdbus', 'introspect', '--system', '--dest', 'org.bluez', '--object-path', '/org/bluez/hci0/dev_11_22_33_44_AA_BB'])
 
         # Wait for UPower to process the new device
         time.sleep(0.5)
