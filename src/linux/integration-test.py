@@ -1422,6 +1422,21 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_display_property('WarningLevel'), UP_DEVICE_LEVEL_NONE)
         self.stop_daemon()
 
+    def test_dup_bluetooth_mouse(self):
+        '''BT mouse that also supports HID++'''
+
+        # power_supply interface
+        self._add_bt_mouse()
+
+        # BlueZ BATT service
+        alias = 'Arc Touch Mouse SE'
+        battery_level = 99
+        device_properties = {
+            'Appearance': dbus.UInt16(0x03c2, variant_level=1)
+        }
+        devs = self._add_bluez_battery_device(alias, device_properties, battery_level)
+        self.assertEqual(len(devs), 1)
+
     def test_bluetooth_mouse_reconnect(self):
         '''bluetooth mouse powerdown/reconnect'''
 
