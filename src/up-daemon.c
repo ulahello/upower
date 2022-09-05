@@ -111,7 +111,8 @@ up_daemon_get_number_devices_of_type (UpDaemon *daemon, UpDeviceKind type)
 		g_object_get (device,
 			      "type", &type_tmp,
 			      NULL);
-		if (type == type_tmp)
+		if (type == type_tmp &&
+		    up_device_get_object_path (device) != NULL)
 			count++;
 	}
 	g_ptr_array_unref (array);
