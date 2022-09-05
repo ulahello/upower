@@ -169,7 +169,7 @@ up_device_battery_estimate_power (UpDeviceBattery *self, UpBatteryValues *cur)
 
 	/* This hopefully gives us sane values, but lets print a message if not. */
 	if (energy_rate < 0.1 || energy_rate > 300) {
-		g_message ("The estimated %scharge rate is %fW, which is not realistic",
+		g_debug ("The estimated %scharge rate is %fW, which is not realistic",
 			   cur->state == UP_DEVICE_STATE_DISCHARGING ? "dis" : "",
 			   energy_rate);
 		energy_rate = 0;
