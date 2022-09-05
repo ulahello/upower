@@ -424,12 +424,24 @@ up_device_compute_object_path (UpDevice *device)
 }
 
 static void
-up_device_register_device (UpDevice *device)
+up_device_register (UpDevice *device)
 {
 	char *object_path = up_device_compute_object_path (device);
 	g_debug ("object path = %s", object_path);
 	up_device_export_skeleton (device, object_path);
 	g_free (object_path);
+}
+
+void
+up_device_unregister (UpDevice *device)
+{
+	g_autofree char *object_path = NULL;
+
+	object_path = g_strdup (g_dbus_interface_skeleton_get_object_path (G_DBUS_INTERFACE_SKELETON (device)));
+	if (object_path != NULL) {
+		g_dbus_interface_skeleton_unexport (G_DBUS_INTERFACE_SKELETON (device));
+		g_debug ("Unexported UpDevice with path %s", object_path);
+	}
 }
 
 /**
@@ -492,7 +504,7 @@ up_device_initable_init (GInitable     *initable,
 
 register_device:
 	/* put on the bus */
-	up_device_register_device (device);
+	up_device_register (device);
 
 	return TRUE;
 }
