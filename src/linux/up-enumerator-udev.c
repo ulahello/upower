@@ -18,6 +18,8 @@
  *
  */
 
+#include "config.h"
+
 #include <string.h>
 
 #include <gudev/gudev.h>
@@ -29,6 +31,9 @@
 #include "up-device-supply-battery.h"
 #include "up-device-hid.h"
 #include "up-device-wup.h"
+#ifdef HAVE_IDEVICE
+#include "up-device-idevice.h"
+#endif /* HAVE_IDEVICE */
 
 struct _UpEnumeratorUdev {
 	UpEnumerator parent;
