@@ -120,6 +120,19 @@ device_new (UpEnumeratorUdev *self, GUdevDevice *native)
 		                       "native", native,
 		                       NULL);
 
+	} else if (g_strcmp0 (subsys, "usb") == 0) {
+#ifdef HAVE_IDEVICE
+		UpDevice *device;
+
+		device = g_initable_new (UP_TYPE_DEVICE_IDEVICE, NULL, NULL,
+		                         "daemon", daemon,
+		                         "native", native,
+		                         NULL);
+		if (device)
+			return device;
+#endif /* HAVE_IDEVICE */
+
+		return NULL;
 	} else if (g_strcmp0 (subsys, "usbmisc") == 0) {
 #ifdef HAVE_IDEVICE
 		UpDevice *device;
@@ -289,8 +302,8 @@ up_enumerator_udev_initable_init (UpEnumerator *enumerator)
 	guint i;
 	const gchar **subsystems;
 	/* List "input" first just to avoid some sibling hotplugging later */
-	const gchar *subsystems_no_wup[] = {"input", "power_supply", "usbmisc", NULL};
-	const gchar *subsystems_wup[] = {"input", "power_supply", "usbmisc", "tty", NULL};
+	const gchar *subsystems_no_wup[] = {"input", "power_supply", "usb", "usbmisc", NULL};
+	const gchar *subsystems_wup[] = {"input", "power_supply", "usb", "usbmisc", "tty", NULL};
 
 	config = up_config_new ();
 	if (up_config_get_boolean (config, "EnableWattsUpPro"))

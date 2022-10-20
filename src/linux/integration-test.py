@@ -2291,6 +2291,14 @@ class Tests(dbusmock.DBusTestCase):
                             'remove')
         self.testbed.uevent('/sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1/1-1.1:1.2/0003:056A:0084.0021/input/input129',
                             'remove')
+        self.testbed.uevent('/sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1/1-1.1:1.0',
+                            'remove')
+        self.testbed.uevent('/sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1/1-1.1:1.1',
+                            'remove')
+        self.testbed.uevent('/sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1/1-1.1:1.2',
+                            'remove')
+        self.testbed.uevent('/sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1',
+                            'remove')
         self.daemon_log.check_line('No devices with parent /sys/devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1 left', timeout=2)
 
         # Ensure the object is really gone from the bus,
