@@ -68,7 +68,8 @@ build:
   # avoid recompiling in test stage
   artifacts:
     name: untracked
-    paths: [$(pwd)]
+    paths:
+     - "${CI_PROJECT_DIR}"
     expire_in: 3h30min
 
 
