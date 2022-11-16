@@ -219,6 +219,7 @@ up_device_idevice_refresh (UpDevice *device, UpRefreshReason reason)
 	idevice_t dev = idevice->priv->dev;
 	lockdownd_client_t client = NULL;
 	lockdownd_error_t lerr;
+	char *name = NULL;
 	plist_t dict, node;
 	guint64 percentage;
 	guint8 charging, has_battery;
@@ -241,6 +242,15 @@ up_device_idevice_refresh (UpDevice *device, UpRefreshReason reason)
 		g_debug ("Could not start lockdownd client: %s (%d)",
 			 lockdownd_error_to_string (lerr), lerr);
 		goto out;
+	}
+
+	if (lockdownd_get_device_name (client, &name) == LOCKDOWN_E_SUCCESS) {
+		/* Prefer the user-chosen name for the device when available */
+		g_object_set (device,
+			      "vendor", NULL,
+			      "model", name,
+			      NULL);
+		free (name);
 	}
 
 	if (lockdownd_get_value (client, "com.apple.mobile.battery", NULL, &dict) != LOCKDOWN_E_SUCCESS)
