@@ -193,7 +193,7 @@ up_device_idevice_coldplug (UpDevice *device)
 		      "type", kind,
 		      "serial", uuid,
 		      "vendor", g_udev_device_get_property (native, "ID_VENDOR"),
-		      "model", g_udev_device_get_property (native, "ID_MODEL"),
+		      "model", model,
 		      "power-supply", FALSE,
 		      "is-present", FALSE,
 		      "is-rechargeable", TRUE,
