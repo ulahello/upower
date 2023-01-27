@@ -966,9 +966,6 @@ up_daemon_device_added_cb (UpBackend *backend, UpDevice *device, UpDaemon *daemo
 	g_signal_connect (device, "notify",
 			  G_CALLBACK (up_daemon_device_changed_cb), daemon);
 
-	/* Ensure we poll the new device if needed */
-	g_source_set_ready_time (daemon->priv->poll_source, 0);
-
 	/* emit */
 	object_path = up_device_get_object_path (device);
 	if (object_path == NULL) {
@@ -976,6 +973,9 @@ up_daemon_device_added_cb (UpBackend *backend, UpDevice *device, UpDaemon *daemo
 			 up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device)));
 		return;
 	}
+
+	/* Ensure we poll the new device if needed */
+	g_source_set_ready_time (daemon->priv->poll_source, 0);
 
 	g_debug ("emitting added: %s", object_path);
 	up_daemon_update_warning_level (daemon);
