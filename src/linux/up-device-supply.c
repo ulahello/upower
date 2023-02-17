@@ -262,6 +262,10 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 	if (!supply->priv->has_coldplug_values) {
 		gchar *model_name;
 		gchar *serial_number;
+		gboolean is_present = TRUE;
+
+		if (g_udev_device_has_sysfs_attr_uncached (native, "present"))
+			is_present = g_udev_device_get_sysfs_attr_as_boolean_uncached (native, "present");
 
 		/* get values which may be blank */
 		model_name = up_device_supply_get_string (native, "model_name");
@@ -272,7 +276,7 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 		up_make_safe_string (serial_number);
 
 		g_object_set (device,
-			      "is-present", TRUE,
+			      "is-present", is_present,
 			      "model", model_name,
 			      "serial", serial_number,
 			      "is-rechargeable", TRUE,
