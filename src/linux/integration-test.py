@@ -1404,6 +1404,42 @@ class Tests(dbusmock.DBusTestCase):
 
         return mousebat0
 
+    def test_absent_device_battery(self):
+        '''absent battery'''
+
+        self.testbed.add_device('bluetooth',
+                                'usb1/bluetooth/hci0/hci0:01',
+                                None,
+                                [], [])
+
+        self.testbed.add_device(
+            'input',
+            'usb1/bluetooth/hci0/hci0:01/input2/mouse3',
+            None,
+            ['uniq', '11:22:33:44:aa:bb'],
+            ['DEVNAME', 'input/mouse3', 'ID_INPUT_MOUSE', '1'])
+
+        mousebat0 = self.testbed.add_device(
+            'power_supply',
+            'usb1/bluetooth/hci0/hci0:01/1/power_supply/hid-11:22:33:44:aa:bb-battery',
+            None,
+            ['type', 'Battery',
+             'scope', 'Device',
+             'online', '1',
+             'present', '0',
+             'status', 'Discharging',
+             'capacity', '0',
+             'model_name', 'Fancy BT mouse'],
+            [])
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        mousebat0_up = devs[0]
+
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Model'), 'Fancy BT mouse')
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'IsPresent'), False)
+
     def test_bluetooth_mouse(self):
         '''bluetooth mouse battery'''
 
