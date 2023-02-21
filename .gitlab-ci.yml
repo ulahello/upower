@@ -133,7 +133,8 @@ docs:
   dependencies:
    - build
   script:
-   - ninja -C _build/ UPower-doc
+    - meson _build -Dintrospection=enabled -Dman=true -Dgtk-doc=true -Didevice=enabled
+    - ninja -C _build/ UPower-doc
   artifacts:
     name: "docs"
     when: always
