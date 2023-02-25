@@ -275,7 +275,7 @@ up_device_bluez_update (UpDeviceBluez *bluez,
 		} else {
 			char *str = g_variant_print (value, TRUE);
 
-			g_warning ("Unhandled key: %s value: %s", key, str);
+			g_debug ("Unhandled key: %s value: %s", key, str);
 			g_free (str);
 		}
 		g_variant_unref (value);
