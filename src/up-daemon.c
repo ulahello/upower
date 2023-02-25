@@ -1001,13 +1001,14 @@ up_daemon_device_removed_cb (UpBackend *backend, UpDevice *device, UpDaemon *dae
 
 	/* emit */
 	object_path = up_device_get_object_path (device);
-	g_debug ("emitting device-removed: %s", object_path);
 
 	/* don't crash the session */
 	if (object_path == NULL) {
-		g_warning ("INTERNAL STATE CORRUPT (device-removed): not sending NULL, device:%p", device);
+		g_debug ("not emitting device-removed for unregistered device: %s",
+			 up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device)));
 		return;
 	}
+	g_debug ("emitting device-removed: %s", object_path);
 	up_exported_daemon_emit_device_removed (UP_EXPORTED_DAEMON (daemon), object_path);
 
 	/* In case a battery was removed */
