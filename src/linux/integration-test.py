@@ -2222,6 +2222,96 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Type'), UP_DEVICE_KIND_BLUETOOTH_GENERIC)
         self.stop_daemon()
 
+    def test_bluetooth_hidpp_mouse(self):
+        '''Logitech Bluetooth LE mouse with HID++ kernel support'''
+
+        udevs = []
+
+        # Add HID++ kernel device
+        parent = self.testbed.add_device('usb',
+                                         'pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2',
+                                         None,
+                                         [], [])
+        udevs.insert(0, parent)
+        parent = self.testbed.add_device('hid',
+                                         '0003:046D:C52B.0009',
+                                         parent,
+                                         [], [])
+        udevs.insert(0, parent)
+        dev = self.testbed.add_device('hid',
+                                      '0003:046D:4101.000A',
+                                      parent,
+                                      [], [])
+        udevs.insert(0, dev)
+
+        parent = dev
+        _dev = self.testbed.add_device(
+            'input',
+            'input/input22',
+            parent,
+            [], ['DEVNAME', 'input/mouse3', 'ID_INPUT_MOUSE', '1'])
+        udevs.insert(0, _dev)
+
+        _dev = self.testbed.add_device(
+            'power_supply',
+            'power_supply/hidpp_battery_3',
+            parent,
+            ['type', 'Battery',
+             'scope', 'Device',
+             'present', '1',
+             'online', '1',
+             'status', 'Discharging',
+             'capacity', '30',
+             'serial_number', '11:22:33:44:aa:bb',
+             'model_name', 'Logitech HID++ name'],
+            [])
+        udevs.insert(0, _dev)
+
+        # Add Bluetooth LE device
+        alias = 'Logitech Bluetooth Name'
+        battery_level = 99
+        device_properties = {
+            'Appearance': dbus.UInt16(0x03c2, variant_level=1)
+        }
+
+        devs = self._add_bluez_battery_device(alias, device_properties, battery_level)
+        bluez_dev_path = '/org/bluez/hci0/dev_11_22_33_44_AA_BB'
+        self.assertEqual(len(devs), 1)
+        bat0_up = devs[0]
+
+        # Check we have the Bluetooth name
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Model'), alias)
+        # Check we have the kernel percentage
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Percentage'), 30)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'PowerSupply'), False)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, 'Type'), UP_DEVICE_KIND_MOUSE)
+
+        bluez_dev = self.dbus_con.get_object('org.bluez', bluez_dev_path)
+        bluez_dev.UpdateProperties(DEVICE_IFACE, { 'ServicesResolved': dbus.Boolean(False, variant_level=1) })
+
+        # Remove device from kernel
+        # process = subprocess.Popen(['find', os.path.join(self.testbed.get_root_dir())])
+        for path in udevs:
+            self.testbed.uevent(path, 'remove')
+            self.testbed.remove_device(path)
+
+        # Remove device from bluez
+        bluez_manager = self.dbus_con.get_object('org.bluez', '/')
+        bluez_manager.EmitSignal(dbusmock.OBJECT_MANAGER_IFACE, 'InterfacesRemoved',
+                   'oas', [
+                       dbus.ObjectPath(bluez_dev_path, variant_level=1),
+                       [BATTERY_IFACE],
+                   ])
+
+        adapter = self.dbus_con.get_object('org.bluez', '/org/bluez/hci0')
+        adapter.RemoveDevice(bluez_dev_path)
+
+        time.sleep(0.5)
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 0)
+
+        self.stop_daemon()
+
     def test_charge_cycles(self):
         '''Charge cycles'''
 
