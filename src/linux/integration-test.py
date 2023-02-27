@@ -1628,18 +1628,18 @@ class Tests(dbusmock.DBusTestCase):
                                          None,
                                          [], [])
         parent = self.testbed.add_device('hid',
-                                         '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009',
+                                         '0003:046D:C52B.0009',
                                          parent,
                                          [], [])
         dev = self.testbed.add_device('hid',
-                                      '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009/0003:046D:4101.000A',
+                                      '0003:046D:4101.000A',
                                       parent,
                                       [], [])
 
         parent = dev
         batt_dev = self.testbed.add_device(
             'power_supply',
-            '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009/0003:046D:4101.000A/power_supply/hidpp_battery_3',
+            'power_supply/hidpp_battery_3',
             parent,
             ['type', 'Battery',
              'scope', 'Device',
@@ -1669,7 +1669,7 @@ class Tests(dbusmock.DBusTestCase):
 
         self.testbed.add_device(
             'input',
-            '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009/0003:046D:4101.000A/input/input22',
+            'input/input22',
             parent,
             [], ['DEVNAME', 'input/mouse3', 'ID_INPUT_TOUCHPAD', '1', 'ID_INPUT_MOUSE', '1'])
         self.testbed.uevent(batt_dev, 'change')
@@ -1685,24 +1685,24 @@ class Tests(dbusmock.DBusTestCase):
                                          None,
                                          [], [])
         parent = self.testbed.add_device('hid',
-                                         '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009',
+                                         '0003:046D:C52B.0009',
                                          parent,
                                          [], [])
         dev = self.testbed.add_device('hid',
-                                      '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009/0003:046D:4101.000A',
+                                      '0003:046D:4101.000A',
                                       parent,
                                       [], [])
 
         parent = dev
         self.testbed.add_device(
             'input',
-            '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009/0003:046D:4101.000A/input/input22',
+            'input/input22',
             parent,
             [], ['DEVNAME', 'input/mouse3', 'ID_INPUT_TOUCHPAD', '1', 'ID_INPUT_MOUSE', '1'])
 
         dev = self.testbed.add_device(
             'power_supply',
-            '/devices/pci0000:00/0000:00:14.0/usb3/3-10/3-10:1.2/0003:046D:C52B.0009/0003:046D:4101.000A/power_supply/hidpp_battery_3',
+            'power_supply/hidpp_battery_3',
             parent,
             ['type', 'Battery',
              'scope', 'Device',
