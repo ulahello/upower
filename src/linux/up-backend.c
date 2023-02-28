@@ -155,16 +155,22 @@ update_duplicate_bluez_device (UpBackend *backend,
 {
 	g_autoptr(UpDevice) other_device = NULL;
 	UpDevice *bluez_device = NULL;
+	UpDevice *non_bluez_device = NULL;
 	g_autofree char *name = NULL;
 	g_autofree char *serial = NULL;
 
 	other_device = find_duplicate_device (backend, added_device);
 	if (!other_device)
 		return;
-	bluez_device = UP_IS_DEVICE_BLUEZ (added_device) ?
-		added_device : other_device;
+	if (UP_IS_DEVICE_BLUEZ (added_device)) {
+		bluez_device = added_device;
+		non_bluez_device = other_device;
+	} else {
+		bluez_device = other_device;
+		non_bluez_device = added_device;
+	}
 	g_object_bind_property (bluez_device, "model",
-				other_device, "model",
+				non_bluez_device, "model",
 				G_BINDING_SYNC_CREATE);
 	g_object_get (G_OBJECT (bluez_device), "serial", &serial, NULL);
 	up_device_unregister (bluez_device);
