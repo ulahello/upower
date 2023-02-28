@@ -2080,6 +2080,12 @@ class Tests(dbusmock.DBusTestCase):
         }
 
         device.AddProperties(BATTERY_IFACE, battery_properties)
+        bluez_manager = self.dbus_con.get_object('org.bluez', '/')
+        bluez_manager.EmitSignal(dbusmock.OBJECT_MANAGER_IFACE, 'InterfacesAdded',
+                   'oa{sa{sv}}', [
+                       dbus.ObjectPath(path, variant_level=1),
+                       {BATTERY_IFACE: battery_properties},
+                   ])
 
         self.start_daemon()
 
