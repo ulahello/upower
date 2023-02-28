@@ -151,6 +151,7 @@ class Tests(dbusmock.DBusTestCase):
 
         self.proxy = None
         self.daemon = None
+        self.bluez = None
         self.start_logind({'CanHybridSleep' : 'yes'})
 
     @classmethod
@@ -2049,7 +2050,8 @@ class Tests(dbusmock.DBusTestCase):
         self.stop_daemon()
 
     def _add_bluez_battery_device(self, alias, device_properties, battery_level):
-        self.start_bluez()
+        if not self.bluez:
+            self.start_bluez()
 
         # Add an adapter to both bluez and udev
         adapter_name = 'hci0'
@@ -2087,7 +2089,8 @@ class Tests(dbusmock.DBusTestCase):
                        {BATTERY_IFACE: battery_properties},
                    ])
 
-        self.start_daemon()
+        if not self.daemon:
+            self.start_daemon()
 
         # process = subprocess.Popen(['gdbus', 'introspect', '--system', '--dest', 'org.bluez', '--object-path', '/org/bluez/hci0/dev_11_22_33_44_AA_BB'])
 
@@ -2231,6 +2234,9 @@ class Tests(dbusmock.DBusTestCase):
     def test_bluetooth_hidpp_mouse(self):
         '''Logitech Bluetooth LE mouse with HID++ kernel support'''
 
+        self.start_bluez()
+        self.start_daemon()
+
         udevs = []
 
         # Add HID++ kernel device
@@ -2272,6 +2278,8 @@ class Tests(dbusmock.DBusTestCase):
              'model_name', 'Logitech HID++ name'],
             [])
         udevs.insert(0, _dev)
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
 
         # Add Bluetooth LE device
         alias = 'Logitech Bluetooth Name'
