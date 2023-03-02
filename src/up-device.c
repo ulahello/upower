@@ -423,7 +423,7 @@ up_device_compute_object_path (UpDevice *device)
 	return object_path;
 }
 
-static void
+void
 up_device_register (UpDevice *device)
 {
 	char *object_path = up_device_compute_object_path (device);
