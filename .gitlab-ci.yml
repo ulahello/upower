@@ -32,6 +32,11 @@ variables:
     git
   LAST_ABI_BREAK: "9058d45685d1c7c08d52fb64c393fed9eeed542b"
 
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_PIPELINE_SOURCE == 'push'
+
 stages:
   - check-source
   - build
