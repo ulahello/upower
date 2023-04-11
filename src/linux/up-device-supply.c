@@ -334,6 +334,7 @@ up_device_supply_sibling_discovered (UpDevice *device,
 		UpDeviceKind type;
 	} types[] = {
 		/* In order of type priority (*within* one input node). */
+		{ "SOUND_INITIALIZED", UP_DEVICE_KIND_OTHER_AUDIO },
 		{ "ID_INPUT_TABLET", UP_DEVICE_KIND_TABLET },
 		{ "ID_INPUT_TOUCHPAD", UP_DEVICE_KIND_TOUCHPAD },
 		{ "ID_INPUT_MOUSE", UP_DEVICE_KIND_MOUSE },
@@ -343,11 +344,25 @@ up_device_supply_sibling_discovered (UpDevice *device,
 	/* The type priority if we have multiple siblings,
 	 * i.e. we select the first of the current type of the found type. */
 	UpDeviceKind priority[] = {
+		UP_DEVICE_KIND_OTHER_AUDIO,
 		UP_DEVICE_KIND_KEYBOARD,
 		UP_DEVICE_KIND_TABLET,
 		UP_DEVICE_KIND_TOUCHPAD,
 		UP_DEVICE_KIND_MOUSE,
 		UP_DEVICE_KIND_GAMING_INPUT,
+	};
+	/* Form-factors set in rules.d/78-sound-card.rules in systemd */
+	struct {
+		const char *form_factor;
+		UpDeviceKind kind;
+	} sound_types[] = {
+		{ "webcam", UP_DEVICE_KIND_VIDEO },
+		{ "speaker", UP_DEVICE_KIND_SPEAKERS },
+		{ "headphone", UP_DEVICE_KIND_HEADPHONES },
+		{ "headset", UP_DEVICE_KIND_HEADSET },
+		/* unhandled:
+		 * - handset
+		 * - microphone */
 	};
 
 	if (!G_UDEV_IS_DEVICE (sibling))
@@ -360,7 +375,13 @@ up_device_supply_sibling_discovered (UpDevice *device,
 	if (cur_type == UP_DEVICE_KIND_LINE_POWER)
 		return;
 
-	if (g_strcmp0 (g_udev_device_get_subsystem (input), "input") != 0)
+	if (g_strcmp0 (g_udev_device_get_subsystem (input), "input") != 0 &&
+	    g_strcmp0 (g_udev_device_get_subsystem (input), "sound") != 0)
+		return;
+
+	/* Only process "card" devices, as those are tagged with form-factor */
+	if (g_str_equal (g_udev_device_get_subsystem (input), "sound") &&
+	    !g_str_has_prefix (g_udev_device_get_name (input), "card"))
 		return;
 
 	g_object_get (device,
@@ -400,6 +421,17 @@ up_device_supply_sibling_discovered (UpDevice *device,
 		if (priority[i] == cur_type || priority[i] == new_type) {
 			new_type = priority[i];
 			break;
+		}
+	}
+
+	/* Match audio sub-type */
+	if (new_type == UP_DEVICE_KIND_OTHER_AUDIO) {
+		const char *form_factor = g_udev_device_get_property (input, "SOUND_FORM_FACTOR");
+		for (i = 0; i < G_N_ELEMENTS (sound_types); i++) {
+			if (g_strcmp0 (form_factor, sound_types[i].form_factor) == 0) {
+				new_type = sound_types[i].kind;
+				break;
+			}
 		}
 	}
 
