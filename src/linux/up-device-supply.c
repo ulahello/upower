@@ -324,7 +324,6 @@ up_device_supply_sibling_discovered (UpDevice *device,
 				     GObject  *sibling)
 {
 	GUdevDevice *input;
-	g_autofree char *device_type = NULL;
 	UpDeviceKind cur_type, new_type;
 	char *model_name;
 	char *serial_number;
