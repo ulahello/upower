@@ -2409,6 +2409,28 @@ class Tests(dbusmock.DBusTestCase):
             }
         })
 
+    def test_headset_detection(self):
+        'Detect USB wireless headsets and other audio devices'
+
+        self.testbed.add_from_file(os.path.join(edir, 'tests/usb-headset.device'))
+        self.start_daemon()
+
+        self.assertDevs({
+            'battery_hidpp_battery_0': {
+                'NativePath': 'hidpp_battery_0',
+                'Model': 'G935 Gaming Headset',
+                'Type': UP_DEVICE_KIND_HEADSET,
+                'PowerSupply': False,
+                'HasHistory': True,
+                'Percentage': 3.0,
+                'IsPresent': True,
+                'State': UP_DEVICE_STATE_DISCHARGING,
+                'IsRechargeable': True,
+            }
+        })
+
+        self.stop_daemon()
+
     def test_remove(self):
         'Test removing when parent ID lookup stops working'
 
