@@ -290,7 +290,7 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(names, sorted(expected.keys()))
 
         for n in names:
-            props = self.get_dbus_dev_properties(n)
+            props = self.get_dbus_dev_properties('/org/freedesktop/UPower/devices/' + n)
             for k, v in expected[n].items():
                 self.assertEqual(props[k], v, msg=f'Property "{k}" of "{n}" should be {v} but is {props[k]}')
 
