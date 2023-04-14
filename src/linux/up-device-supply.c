@@ -406,8 +406,7 @@ up_device_supply_sibling_discovered (UpDevice *device,
 		g_free (serial_number);
 	}
 
-	/* Fall back to "keyboard" if we don't find anything. */
-	new_type = UP_DEVICE_KIND_KEYBOARD;
+	new_type = UP_DEVICE_KIND_UNKNOWN;
 
 	for (i = 0; i < G_N_ELEMENTS (types); i++) {
 		if (g_udev_device_get_property_as_boolean (input, types[i].prop)) {
@@ -437,6 +436,10 @@ up_device_supply_sibling_discovered (UpDevice *device,
 	/* TODO: Add a heuristic here (and during initial discovery) that uses
 	 *       the model name.
 	 */
+
+	/* Fall back to "keyboard" if we didn't find anything. */
+	if (new_type == UP_DEVICE_KIND_UNKNOWN)
+		new_type = UP_DEVICE_KIND_KEYBOARD;
 
 	if (cur_type != new_type)
 		g_object_set (device, "type", new_type, NULL);
