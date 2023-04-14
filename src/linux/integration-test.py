@@ -285,9 +285,9 @@ class Tests(dbusmock.DBusTestCase):
 
     def assertDevs(self, expected):
         devs = self.proxy.EnumerateDevices()
-        names = (n.split('/')[-1] for n in devs)
+        names = sorted(n.split('/')[-1] for n in devs)
 
-        self.assertEqual(sorted(names), sorted(expected.keys()))
+        self.assertEqual(names, sorted(expected.keys()))
 
         for n in names:
             props = self.get_dbus_dev_properties(n)
