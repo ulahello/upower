@@ -155,7 +155,7 @@ up_device_battery_estimate_power (UpDeviceBattery *self, UpBatteryValues *cur)
 	 */
 	if (cur->state == UP_DEVICE_STATE_UNKNOWN) {
 		/* Consider a rate of 0.5W as "no change", otherwise set CHARGING/DISCHARGING */
-		if (abs(energy_rate) < 0.5)
+		if (ABS(energy_rate) < 0.5)
 			return;
 		else if (energy_rate < 0.0)
 			cur->state = UP_DEVICE_STATE_DISCHARGING;
