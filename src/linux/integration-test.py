@@ -2500,6 +2500,28 @@ class Tests(dbusmock.DBusTestCase):
 
         self.stop_daemon()
 
+    def test_sibling_priority_no_overwrite(self):
+        'Test siblings using the fallback device do not overwrite previous guesses'
+
+        self.start_daemon()
+        self.testbed.add_from_file(os.path.join(edir, 'tests/wacom-pen-digitiser.device'))
+
+        self.assertDevs({
+            'battery_wacom_battery_0': {
+                'NativePath': 'wacom_battery_0',
+                'Model': 'Wacom HID 52D5',
+                'Type': UP_DEVICE_KIND_TABLET,
+                'PowerSupply': False,
+                'HasHistory': True,
+                'Percentage': 100.0,
+                'IsPresent': True,
+                'State': UP_DEVICE_STATE_FULLY_CHARGED,
+                'IsRechargeable': True,
+            }
+        })
+
+        self.stop_daemon()
+
     #
     # libupower-glib tests (through introspection)
     #
