@@ -631,7 +631,7 @@ class Tests(dbusmock.DBusTestCase):
         # self.assertDevs({ 'battery_BAT0': { 'State' : UP_DEVICE_STATE_UNKNOWN }, 'line_power_AC' : {} })
 
         # Charge for a while
-        for i in range(25):
+        for i in range(40):
             time.sleep(1)
             # 1W charge over 1 second
             energy_now += 1.0 * 1000000 / 3600
