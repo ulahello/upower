@@ -615,7 +615,8 @@ class Tests(dbusmock.DBusTestCase):
         # Discharge for 20s:
         for i in range(25):
             time.sleep(1)
-            energy_now -= 10.0 / 3600
+            # 1W usage over 1 second
+            energy_now -= 1.0 * 1000000 / 3600
             self.testbed.set_attribute(bat0, 'energy_now', str(int(energy_now)))
 
         self.assertDevs({ 'battery_BAT0': { 'State' : UP_DEVICE_STATE_DISCHARGING }, 'line_power_AC' : {} })
@@ -630,7 +631,8 @@ class Tests(dbusmock.DBusTestCase):
         # Charge for a while
         for i in range(25):
             time.sleep(1)
-            energy_now += 10.0 / 3600
+            # 1W charge over 1 second
+            energy_now += 1.0 * 1000000 / 3600
             self.testbed.set_attribute(bat0, 'energy_now', str(int(energy_now)))
 
         self.assertDevs({ 'battery_BAT0': { 'State' : UP_DEVICE_STATE_CHARGING }, 'line_power_AC' : {} })
