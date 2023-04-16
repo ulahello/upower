@@ -107,6 +107,13 @@ test:
     - ./configure
     - make install
     - cd ..
+    - git clone https://github.com/martinpitt/umockdev.git
+    - cd umockdev
+    - dnf install -y 'dnf-command(builddep)'
+    - dnf builddep -y umockdev
+    - meson _build -Dprefix=/usr
+    - ninja -C _build install
+    - cd ..
   script:
     - meson _build -Dintrospection=enabled -Dman=true -Dgtk-doc=true -Didevice=enabled
     - ninja -C _build
