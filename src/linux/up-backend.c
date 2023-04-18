@@ -155,7 +155,6 @@ update_added_duplicate_device (UpBackend *backend,
 	g_autoptr(UpDevice) other_device = NULL;
 	UpDevice *bluez_device = NULL;
 	UpDevice *unreg_device = NULL;
-	g_autofree char *name = NULL;
 	g_autofree char *serial = NULL;
 
 	other_device = find_duplicate_device (backend, added_device);
