@@ -1478,6 +1478,17 @@ class Tests(dbusmock.DBusTestCase):
         devs = self._add_bluez_battery_device(alias, device_properties, battery_level)
         self.assertEqual(len(devs), 1)
 
+    def test_dup_logitech_unifying_usb(self):
+        'De-duplicate Logitech HID++ USB/Unifying mice'
+
+        self.testbed.add_from_file(os.path.join(edir, 'tests/logitech-g903.device'))
+        self.start_daemon()
+
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+
+        self.stop_daemon()
+
     def test_bluetooth_mouse_reconnect(self):
         '''bluetooth mouse powerdown/reconnect'''
 
