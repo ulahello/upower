@@ -126,6 +126,8 @@ find_duplicate_device (UpBackend *backend,
 	guint i;
 
 	g_object_get (G_OBJECT (device), "serial", &serial, NULL);
+	if (!serial)
+		return NULL;
 
 	array = up_device_list_get_array (backend->priv->device_list);
 	for (i = 0; i < array->len; i++) {
