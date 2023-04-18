@@ -30,6 +30,7 @@ variables:
     python3-pip
     python3-packaging
     git
+    clang
   LAST_ABI_BREAK: "9058d45685d1c7c08d52fb64c393fed9eeed542b"
 
 workflow:
