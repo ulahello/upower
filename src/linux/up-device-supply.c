@@ -255,6 +255,7 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 	GUdevDevice *native;
 	gdouble percentage = 0.0f;
 	UpDeviceLevel level = UP_DEVICE_LEVEL_NONE;
+	gboolean is_present = TRUE;
 
 	native = G_UDEV_DEVICE (up_device_get_native (device));
 
@@ -262,10 +263,6 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 	if (!supply->priv->has_coldplug_values) {
 		gchar *model_name;
 		gchar *serial_number;
-		gboolean is_present = TRUE;
-
-		if (g_udev_device_has_sysfs_attr_uncached (native, "present"))
-			is_present = g_udev_device_get_sysfs_attr_as_boolean_uncached (native, "present");
 
 		/* get values which may be blank */
 		model_name = up_device_supply_get_string (native, "model_name");
@@ -276,7 +273,6 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 		up_make_safe_string (serial_number);
 
 		g_object_set (device,
-			      "is-present", is_present,
 			      "model", model_name,
 			      "serial", serial_number,
 			      "is-rechargeable", TRUE,
@@ -291,6 +287,10 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 		g_free (serial_number);
 	}
 
+	/* Some devices change whether they're present or not */
+	if (g_udev_device_has_sysfs_attr_uncached (native, "present"))
+		is_present = g_udev_device_get_sysfs_attr_as_boolean_uncached (native, "present");
+
 	/* get a precise percentage */
 	percentage = g_udev_device_get_sysfs_attr_as_double_uncached (native, "capacity");
 	if (percentage == 0.0f)
@@ -299,7 +299,10 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 	if (percentage < 0.0) {
 		/* Probably talking to the device over Bluetooth */
 		state = UP_DEVICE_STATE_UNKNOWN;
-		g_object_set (device, "state", state, NULL);
+		g_object_set (device,
+			      "state", state,
+			      "is-present", is_present,
+			      NULL);
 		return FALSE;
 	}
 
@@ -314,6 +317,7 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 		      "percentage", percentage,
 		      "battery-level", level,
 		      "state", state,
+		      "is-present", is_present,
 		      NULL);
 
 	return TRUE;
