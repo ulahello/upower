@@ -399,10 +399,33 @@ bluez_vanished (GDBusConnection *connection,
 }
 
 static void
+up_device_disconnected_cb (GObject    *gobject,
+			   GParamSpec *pspec,
+			   gpointer    user_data)
+{
+	g_autofree char *path = NULL;
+	gboolean disconnected;
+
+	g_object_get (gobject,
+		      "native-path", &path,
+		      "disconnected", &disconnected,
+		      NULL);
+	if (disconnected) {
+		g_debug("Device %s became disconnected, hiding device", path);
+		up_device_unregister (UP_DEVICE (gobject));
+	} else {
+		g_debug ("Device %s became connected, showing device", path);
+		up_device_register (UP_DEVICE (gobject));
+	}
+}
+
+static void
 udev_device_added_cb (UpBackend *backend, UpDevice *device)
 {
 	g_debug ("Got new device from udev enumerator: %p", device);
 	update_added_duplicate_device (backend, device);
+	g_signal_connect (device, "notify::disconnected",
+			  G_CALLBACK (up_device_disconnected_cb), backend);
 	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
 }
 
