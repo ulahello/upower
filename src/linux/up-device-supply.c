@@ -594,13 +594,23 @@ up_device_supply_coldplug (UpDevice *device)
 	/* try to detect using the device type */
 	type = up_device_supply_guess_type (native, native_path);
 
-	/* if reading the device type did not work, use the previous method */
+	/* if reading the device type did not work, use heuristic */
 	if (type == UP_DEVICE_KIND_UNKNOWN) {
 		if (g_udev_device_has_sysfs_attr_uncached (native, "online")) {
+			g_debug ("'online' attribute was found. "
+				 "Assume it is a line power supply.");
 			type = UP_DEVICE_KIND_LINE_POWER;
 		} else {
-			/* this is a good guess as UPS and CSR are not in the kernel */
-			type = UP_DEVICE_KIND_BATTERY;
+			/*
+			 * This might be a battery or a UPS, but it might also
+			 * be something else that we really don't know how to
+			 * handle (e.g. BMS, exposed by Android-centric vendor
+			 * kernels in parallel to actual battery).
+			 *
+			 * As such, we have no choice but to assume that we
+			 * can't handle this device, and ignore it.
+			 */
+			return FALSE;
 		}
 	}
 

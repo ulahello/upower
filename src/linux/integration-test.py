@@ -2646,6 +2646,60 @@ class Tests(dbusmock.DBusTestCase):
 
         self.stop_daemon()
 
+    def test_ignore_unknown_power_supply_type(self):
+        '''
+        Ignore devices with unknown power supply type and doesn't look like a charger.
+        '''
+
+        # Sample data taken from Fairphone 4, running Linux kernel 4.19 w/
+        # vendor patches (abbreviated).
+
+        # Actual battery.
+        battery = self.testbed.add_device('power_supply', 'battery', None,
+                ['capacity', '77',
+                 'charging_enabled', '1',
+                 'health', 'Good',
+                 'present', '1',
+                 'status', 'Charging',
+                 'technology', 'Li-ion',
+                 'type', 'Battery',
+                 'voltage_max', '4400000',
+                 'voltage_now', '4268584'], [])
+
+        # BMS (should be ignored)
+        bms = self.testbed.add_device('power_supply', 'bms', None,
+                ['type', 'BMS',
+                 'capacity', '77',
+                 'capacity_raw', '7685',
+                 'current_avg', '-1677247',
+                 'current_now', '-1543885',
+                 'power_avg', '29886557',
+                 'power_now', '52842898',
+                 'real_capacity', '77',
+                 'temp', '300',
+                 'voltage_avg', '4322887',
+                 'voltage_max', '4400000',
+                 'voltage_min', '3400000',
+                 'voltage_now', '4298363',
+                 'voltage_ocv', '4102200'], [])
+
+        # "Charge pump master" (not sure what it is either, should be ignored)
+        charge_pump_master = self.testbed.add_device(
+            'power_supply', 'charge_pump_master', None,
+                ['chip_version', '3',
+                 'min_icl', '1000000',
+                 'model_name', 'SMB1398_V2',
+                 'parallel_mode', '1',
+                 'parallel_output_mode', '2',
+                 'type', 'Nothing attached'], [])
+
+        self.start_daemon(warns=True)
+        devs = self.proxy.EnumerateDevices()
+        # Only the battery should be listed, not the BMS or charge pump master.
+        self.assertEqual(len(devs), 1)
+
+        self.stop_daemon()
+
     #
     # libupower-glib tests (through introspection)
     #

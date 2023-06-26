@@ -265,15 +265,10 @@ up_device_supply_coldplug (UpDevice *device)
 	if (scope != NULL && g_ascii_strcasecmp (scope, "system") != 0)
 		g_warning ("Assuming system scope even though scope is %s", scope);
 
-	/* type should be a battery, but also accept unknown if "online" does not exist */
+	/* type must be a battery. */
 	type = g_udev_device_get_sysfs_attr (native, "type");
-	if (!type || g_ascii_strcasecmp (type, "battery") != 0) {
-		if (g_udev_device_has_sysfs_attr (native, "online"))
-			return FALSE;
-
-		/* this is a good guess as UPS and CSR are not in the kernel */
-		g_warning ("Assuming battery as sysfs attribute 'type' is %s", type);
-	}
+	if (!type || g_ascii_strcasecmp (type, "battery") != 0)
+		return FALSE;
 
 	return TRUE;
 }
