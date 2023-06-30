@@ -209,6 +209,8 @@ uevent_signal_handler_cb (UpEnumeratorUdev *self,
 {
 	const char *device_key = g_udev_device_get_sysfs_path (device);
 
+	g_debug ("Received uevent %s on device %s", action, device_key);
+
 	/* Work around the fact that we don't get a REMOVE event in some cases. */
 	if (g_strcmp0 (g_udev_device_get_subsystem (device), "power_supply") == 0)
 		device_key = g_udev_device_get_name (device);
