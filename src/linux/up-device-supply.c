@@ -320,8 +320,8 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 }
 
 static void
-up_device_supply_sibling_discovered (UpDevice *device,
-				     GObject  *sibling)
+up_device_supply_sibling_discovered_guess_type (UpDevice *device,
+						GObject  *sibling)
 {
 	GUdevDevice *input;
 	UpDeviceKind cur_type, new_type;
@@ -363,9 +363,6 @@ up_device_supply_sibling_discovered (UpDevice *device,
 		 * - handset
 		 * - microphone */
 	};
-
-	if (!G_UDEV_IS_DEVICE (sibling))
-		return;
 
 	input = G_UDEV_DEVICE (sibling);
 
@@ -454,6 +451,50 @@ up_device_supply_sibling_discovered (UpDevice *device,
 			 up_device_kind_to_string(new_type));
 		g_object_set (device, "type", new_type, NULL);
 	}
+}
+
+static void
+up_device_supply_sibling_discovered_handle_wireless_status (UpDevice *device,
+							    GObject  *obj)
+{
+	const char *status;
+	GUdevDevice *sibling = G_UDEV_DEVICE (obj);
+
+	status = g_udev_device_get_sysfs_attr_uncached (sibling, "wireless_status");
+	if (!status)
+		return;
+
+	if (!g_str_equal (status, "connected") &&
+	    !g_str_equal (status, "disconnected")) {
+		g_warning ("Unhandled wireless_status value '%s' on %s",
+			   status, g_udev_device_get_sysfs_path (sibling));
+		return;
+	}
+
+	g_debug ("Detected wireless_status '%s' on %s",
+		 status, g_udev_device_get_sysfs_path (sibling));
+
+	g_object_set (G_OBJECT (device),
+		      "disconnected", g_str_equal (status, "disconnected"),
+		      NULL);
+}
+
+static void
+up_device_supply_sibling_discovered (UpDevice *device,
+				     GObject  *sibling)
+{
+	GUdevDevice *native;
+
+	if (!G_UDEV_IS_DEVICE (sibling))
+		return;
+
+	native = G_UDEV_DEVICE (up_device_get_native (device));
+	g_message ("up_device_supply_sibling_discovered (device: %s, sibling: %s)",
+		   g_udev_device_get_sysfs_path (native),
+		   g_udev_device_get_sysfs_path (G_UDEV_DEVICE (sibling)));
+
+	up_device_supply_sibling_discovered_guess_type (device, sibling);
+	up_device_supply_sibling_discovered_handle_wireless_status (device, sibling);
 }
 
 static UpDeviceKind
