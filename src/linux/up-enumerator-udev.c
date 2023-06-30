@@ -161,6 +161,18 @@ device_new (UpEnumeratorUdev *self, GUdevDevice *native)
 	}
 }
 
+/* As GUdevDevice are static and do not update when the sysfs device
+ * changes, this helps get a GUdevDevice with updated properties */
+static GUdevDevice *
+get_latest_udev_device (UpEnumeratorUdev *self,
+                        GObject          *obj)
+{
+	const char *sysfs_path;
+
+	sysfs_path = g_udev_device_get_sysfs_path (G_UDEV_DEVICE (obj));
+	return g_udev_client_query_by_sysfs_path (self->udev, sysfs_path);
+}
+
 static void
 uevent_signal_handler_cb (UpEnumeratorUdev *self,
                           const gchar      *action,
@@ -222,8 +234,11 @@ uevent_signal_handler_cb (UpEnumeratorUdev *self,
 				for (i = 0; i < devices->len; i++) {
 					GObject *sibling = g_ptr_array_index (devices, i);
 
-					if (up_dev)
-						up_device_sibling_discovered (up_dev, sibling);
+					if (up_dev) {
+						g_autoptr(GUdevDevice) d = get_latest_udev_device (self, sibling);
+						if (d)
+							up_device_sibling_discovered (up_dev, G_OBJECT (d));
+					}
 					if (UP_IS_DEVICE (sibling))
 						up_device_sibling_discovered (UP_DEVICE (sibling), obj);
 				}
