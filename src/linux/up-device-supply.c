@@ -438,11 +438,21 @@ up_device_supply_sibling_discovered (UpDevice *device,
 	 */
 
 	/* Fall back to "keyboard" if we didn't find anything. */
-	if (new_type == UP_DEVICE_KIND_UNKNOWN)
+	if (new_type == UP_DEVICE_KIND_UNKNOWN) {
+		if (cur_type != UP_DEVICE_KIND_UNKNOWN) {
+			g_debug ("Not overwriting existing type '%s'",
+				 up_device_kind_to_string(cur_type));
+			return;
+		}
 		new_type = UP_DEVICE_KIND_KEYBOARD;
+	}
 
-	if (cur_type != new_type)
+	if (cur_type != new_type) {
+		g_debug ("Type changed from %s to %s",
+			 up_device_kind_to_string(cur_type),
+			 up_device_kind_to_string(new_type));
 		g_object_set (device, "type", new_type, NULL);
+	}
 }
 
 static UpDeviceKind
