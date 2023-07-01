@@ -425,7 +425,8 @@ up_device_supply_sibling_discovered (UpDevice *device,
 	/* Match audio sub-type */
 	if (new_type == UP_DEVICE_KIND_OTHER_AUDIO) {
 		const char *form_factor = g_udev_device_get_property (input, "SOUND_FORM_FACTOR");
-		for (i = 0; i < G_N_ELEMENTS (sound_types); i++) {
+		g_debug ("Guessing audio sub-type from SOUND_FORM_FACTOR='%s'", form_factor);
+		for (i = 0; form_factor != NULL && i < G_N_ELEMENTS (sound_types); i++) {
 			if (g_strcmp0 (form_factor, sound_types[i].form_factor) == 0) {
 				new_type = sound_types[i].kind;
 				break;
