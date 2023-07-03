@@ -1259,6 +1259,12 @@ up_device_finalize (GObject *object)
 
 	device = UP_DEVICE (object);
 
+	if (device->priv->proxy_device != NULL) {
+		g_signal_handlers_disconnect_by_func (device->priv->proxy_device,
+						      up_device_changed_cb,
+						      device);
+	}
+
 	g_clear_object (&device->priv->proxy_device);
 	g_clear_pointer (&device->priv->offline_props, g_hash_table_unref);
 
