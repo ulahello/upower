@@ -2462,6 +2462,39 @@ class Tests(dbusmock.DBusTestCase):
 
         self.stop_daemon()
 
+    def test_headset_wireless_status(self):
+        'Hide devices when wireless_status is disconnected'
+
+        self.testbed.add_from_file(os.path.join(edir, 'tests/steelseries-headset.device'))
+        card = '/sys/devices/pci0000:00/0000:00:14.0/usb1/1-5/1-5:1.0/sound/card1'
+        self.testbed.set_property(card, 'SOUND_INITIALIZED', '1')
+        self.testbed.set_property(card, 'SOUND_FORM_FACTOR', 'headset')
+        intf = '/sys/devices/pci0000:00/0000:00:14.0/usb1/1-5/1-5:1.3'
+        self.testbed.set_attribute(intf, 'wireless_status', 'connected')
+
+        self.start_daemon()
+
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        headset_up = devs[0]
+        self.assertEqual(self.get_dbus_dev_property(headset_up, 'Percentage'), 69.0)
+
+        self.testbed.set_attribute(intf, 'wireless_status', 'disconnected')
+        self.testbed.uevent(intf, 'change')
+
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 0)
+
+        self.testbed.set_attribute(intf, 'wireless_status', 'connected')
+        self.testbed.uevent(intf, 'change')
+
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        headset_up = devs[0]
+        self.assertEqual(self.get_dbus_dev_property(headset_up, 'Percentage'), 69.0)
+
+        self.stop_daemon()
+
     def test_remove(self):
         'Test removing when parent ID lookup stops working'
 
