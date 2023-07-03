@@ -489,9 +489,9 @@ up_device_supply_sibling_discovered (UpDevice *device,
 		return;
 
 	native = G_UDEV_DEVICE (up_device_get_native (device));
-	g_message ("up_device_supply_sibling_discovered (device: %s, sibling: %s)",
-		   g_udev_device_get_sysfs_path (native),
-		   g_udev_device_get_sysfs_path (G_UDEV_DEVICE (sibling)));
+	g_debug ("up_device_supply_sibling_discovered (device: %s, sibling: %s)",
+		 g_udev_device_get_sysfs_path (native),
+		 g_udev_device_get_sysfs_path (G_UDEV_DEVICE (sibling)));
 
 	up_device_supply_sibling_discovered_guess_type (device, sibling);
 	up_device_supply_sibling_discovered_handle_wireless_status (device, sibling);
