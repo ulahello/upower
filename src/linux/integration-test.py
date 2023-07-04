@@ -1445,6 +1445,20 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'Model'), 'Fancy BT mouse')
         self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'IsPresent'), False)
 
+        self.testbed.set_attribute(mousebat0, 'capacity', '100')
+        self.testbed.set_attribute(mousebat0, 'present', '1')
+        self.testbed.uevent(mousebat0, 'change')
+
+        self.assertEventually(lambda: self.get_dbus_dev_property(mousebat0_up, 'IsPresent'), value=True)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'IsPresent'), True)
+
+        self.testbed.set_attribute(mousebat0, 'capacity', '0')
+        self.testbed.set_attribute(mousebat0, 'present', '0')
+        self.testbed.uevent(mousebat0, 'change')
+
+        self.assertEventually(lambda: self.get_dbus_dev_property(mousebat0_up, 'IsPresent'), value=False)
+        self.assertEqual(self.get_dbus_dev_property(mousebat0_up, 'IsPresent'), False)
+
     def test_bluetooth_mouse(self):
         '''bluetooth mouse battery'''
 
