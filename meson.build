@@ -69,7 +69,7 @@ gobject_introspection = dependency('gobject-introspection-1.0', required: get_op
 
 
 if os_backend == 'linux'
-  gudev_dep = dependency('gudev-1.0', version: '>= 235')
+  gudev_dep = dependency('gudev-1.0', version: '>= 238')
   idevice_dep = dependency('libimobiledevice-1.0',
                            version : '>= 0.9.7',
                            required : get_option('idevice'))
