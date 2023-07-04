@@ -197,9 +197,9 @@ class Tests(dbusmock.DBusTestCase):
         self.daemon_log = OutputChecker()
 
         if os.getenv('VALGRIND') != None:
-            daemon_path = ['valgrind', self.daemon_path, '-v']
+            daemon_path = ['valgrind', self.daemon_path, '-v', '-r']
         else:
-            daemon_path = [self.daemon_path, '-v']
+            daemon_path = [self.daemon_path, '-v', '-r']
         self.daemon = subprocess.Popen(daemon_path,
                                        env=env, stdout=self.daemon_log.fd,
                                        stderr=subprocess.STDOUT)
@@ -2493,6 +2493,27 @@ class Tests(dbusmock.DBusTestCase):
         headset_up = devs[0]
         self.assertEqual(self.get_dbus_dev_property(headset_up, 'Percentage'), 69.0)
 
+        self.stop_daemon()
+
+    def test_daemon_restart(self):
+
+        self.testbed.add_from_file(os.path.join(edir, 'tests/usb-headset.device'))
+        bat = '/sys/devices/pci0000:00/0000:00:14.0/usb1/1-8/1-8:1.3/0003:046D:0A87.0004/power_supply/hidpp_battery_0'
+
+        upower_path = os.path.dirname(os.path.dirname(self.daemon_path)) + '/tools/upower'
+        self.start_daemon()
+        process = subprocess.Popen([upower_path, '-m'])
+
+        for i in range(10):
+            # Replace daemon
+            self.start_daemon()
+
+            self.testbed.uevent(bat, 'change')
+
+            # Check that upower is still running
+            self.assertIsNone(process.returncode)
+
+        process.terminate()
         self.stop_daemon()
 
     def test_remove(self):
