@@ -1,3 +1,18 @@
+Version 1.90.2
+--------------
+Released: 2023-07-06
+
+Note that this is the last release of UPower with lid handling. OS components
+that rely on the lid status should get it from logind instead. See:
+https://www.freedesktop.org/software/systemd/man/org.freedesktop.login1.html
+
+- Fix wireless devices not disappearing from Settings when disconnected
+- Require a newer libgudev to avoid bugs related to newline stripping
+  when reading sysfs attributes
+- Add installed-tests files for use with gnome-desktop-testing
+- Fix integration test to work with system installed upower binary and
+  under jhbuild
+
 Version 1.90.1
 --------------
 Released: 2023-07-04
