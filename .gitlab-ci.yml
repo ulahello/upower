@@ -60,6 +60,14 @@ test_nut_hwdb:
 
 build:
   stage: build
+  before_script:
+    - git clone https://gitlab.gnome.org/GNOME/libgudev.git
+    - cd libgudev
+    - dnf install -y 'dnf-command(builddep)'
+    - dnf builddep -y libgudev
+    - meson _build -Dprefix=/usr
+    - ninja -C _build install
+    - cd ..
   script:
     - meson _build -Dintrospection=enabled -Dman=true -Dgtk-doc=true -Didevice=enabled
     - ninja -C _build
@@ -116,6 +124,11 @@ test:
     - meson _build -Dprefix=/usr
     - ninja -C _build install
     - cd ..
+    - cd libgudev
+    - dnf builddep -y libgudev
+    - meson _build -Dprefix=/usr
+    - ninja -C _build install
+    - cd ..
   script:
     - meson _build -Dintrospection=enabled -Dman=true -Dgtk-doc=true -Didevice=enabled
     - ninja -C _build
@@ -133,6 +146,13 @@ test:
 
 check_abi:
   stage: test
+  before_script:
+    - cd libgudev
+    - dnf install -y 'dnf-command(builddep)'
+    - dnf builddep -y libgudev
+    - meson _build -Dprefix=/usr
+    - ninja -C _build install
+    - cd ..
   script:
     - check-abi --suppr .ci/upower.suppr --parameters="-Dman=false -Dgtk-doc=false -Didevice=enabled"  ${LAST_ABI_BREAK} $(git rev-parse HEAD)
   except:
