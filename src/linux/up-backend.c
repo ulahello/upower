@@ -403,6 +403,7 @@ up_device_disconnected_cb (GObject    *gobject,
 			   GParamSpec *pspec,
 			   gpointer    user_data)
 {
+	UpBackend *backend = user_data;
 	g_autofree char *path = NULL;
 	gboolean disconnected;
 
@@ -412,10 +413,14 @@ up_device_disconnected_cb (GObject    *gobject,
 		      NULL);
 	if (disconnected) {
 		g_debug("Device %s became disconnected, hiding device", path);
-		up_device_unregister (UP_DEVICE (gobject));
+		if (up_device_is_registered (UP_DEVICE (gobject))) {
+			g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, gobject);
+			up_device_unregister (UP_DEVICE (gobject));
+		}
 	} else {
 		g_debug ("Device %s became connected, showing device", path);
-		up_device_register (UP_DEVICE (gobject));
+		if (up_device_register (UP_DEVICE (gobject)))
+			g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, gobject);
 	}
 }
 
