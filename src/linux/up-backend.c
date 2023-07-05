@@ -148,7 +148,8 @@ find_duplicate_device (UpBackend *backend,
 	return ret;
 }
 
-static void
+/* Returns TRUE if the added_device should be visible */
+static gboolean
 update_added_duplicate_device (UpBackend *backend,
 			       UpDevice  *added_device)
 {
@@ -159,7 +160,7 @@ update_added_duplicate_device (UpBackend *backend,
 
 	other_device = find_duplicate_device (backend, added_device);
 	if (!other_device)
-		return;
+		return TRUE;
 
 	if (UP_IS_DEVICE_BLUEZ (added_device))
 		bluez_device = added_device;
@@ -189,15 +190,19 @@ update_added_duplicate_device (UpBackend *backend,
 			g_object_get (G_OBJECT (added_device), "serial", &serial, NULL);
 			g_debug ("Device %s is a duplicate, but we don't know if most interesting",
 				 serial);
-			return;
+			return TRUE;
 		}
 
 		unreg_device = tested_device;
 	}
 
 	g_object_get (G_OBJECT (unreg_device), "serial", &serial, NULL);
-	up_device_unregister (unreg_device);
+	if (up_device_is_registered (unreg_device)) {
+		g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, unreg_device);
+		up_device_unregister (unreg_device);
+	}
 	g_debug ("Hiding duplicate device %s", serial);
+	return unreg_device != added_device;
 }
 
 static void
@@ -211,7 +216,8 @@ update_removed_duplicate_device (UpBackend *backend,
 		return;
 
 	/* Re-add the old duplicate device that got hidden */
-	up_device_register (other_device);
+	if (up_device_register (other_device))
+		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, other_device);
 }
 
 static gboolean
@@ -278,7 +284,8 @@ bluez_interface_removed (GDBusObjectManager *manager,
 		return;
 
 	g_debug ("emitting device-removed: %s", g_dbus_object_get_object_path (bus_object));
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, UP_DEVICE (object));
+	if (up_device_is_registered (UP_DEVICE (object)))
+		g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, UP_DEVICE (object));
 
 	g_object_unref (object);
 }
@@ -308,8 +315,8 @@ bluez_interface_added (GDBusObjectManager *manager,
 	                         NULL);
 	if (device) {
 		g_debug ("emitting device-added: %s", g_dbus_object_get_object_path (bus_object));
-		update_added_duplicate_device (backend, device);
-		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
+		if (update_added_duplicate_device (backend, device))
+			g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
 	}
 }
 
@@ -389,7 +396,8 @@ bluez_vanished (GDBusConnection *connection,
 
 			object = G_DBUS_OBJECT (up_device_get_native (device));
 			g_debug ("emitting device-removed: %s", g_dbus_object_get_object_path (object));
-			g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, device);
+			if (up_device_is_registered (device))
+				g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, device);
 		}
 	}
 
@@ -428,10 +436,10 @@ static void
 udev_device_added_cb (UpBackend *backend, UpDevice *device)
 {
 	g_debug ("Got new device from udev enumerator: %p", device);
-	update_added_duplicate_device (backend, device);
 	g_signal_connect (device, "notify::disconnected",
 			  G_CALLBACK (up_device_disconnected_cb), backend);
-	g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
+	if (update_added_duplicate_device (backend, device))
+		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
 }
 
 static void
