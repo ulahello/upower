@@ -454,6 +454,12 @@ up_device_unregister (UpDevice *device)
 	}
 }
 
+gboolean
+up_device_is_registered (UpDevice *device)
+{
+	return g_dbus_interface_skeleton_get_object_path (G_DBUS_INTERFACE_SKELETON (device)) != NULL;
+}
+
 /**
  * up_device_refresh:
  *
