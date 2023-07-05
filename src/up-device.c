@@ -429,16 +429,17 @@ up_device_compute_object_path (UpDevice *device)
 	return object_path;
 }
 
-void
+gboolean
 up_device_register (UpDevice *device)
 {
 	g_autofree char *computed_object_path = NULL;
 
 	if (g_dbus_interface_skeleton_get_object_path (G_DBUS_INTERFACE_SKELETON (device)) != NULL)
-		return;
+		return FALSE;
 	computed_object_path = up_device_compute_object_path (device);
 	g_debug ("Exported UpDevice with path %s", computed_object_path);
 	up_device_export_skeleton (device, computed_object_path);
+	return TRUE;
 }
 
 void
