@@ -2494,24 +2494,40 @@ class Tests(dbusmock.DBusTestCase):
         intf = '/sys/devices/pci0000:00/0000:00:14.0/usb1/1-5/1-5:1.3'
         self.testbed.set_attribute(intf, 'wireless_status', 'connected')
 
+        num_devices = 0
+
         self.start_daemon()
 
         devs = self.proxy.EnumerateDevices()
-        self.assertEqual(len(devs), 1)
+        num_devices = len(devs)
+        self.assertEqual(num_devices, 1)
         headset_up = devs[0]
         self.assertEqual(self.get_dbus_dev_property(headset_up, 'Percentage'), 69.0)
 
+        client = UPowerGlib.Client.new()
+
+        def device_added_cb(client, device):
+            nonlocal num_devices
+            num_devices += 1
+        def device_removed_cb(client, path):
+            nonlocal num_devices
+            num_devices -= 1
+
+        client.connect('device-added', device_added_cb)
+        client.connect('device-removed', device_removed_cb)
+
         self.testbed.set_attribute(intf, 'wireless_status', 'disconnected')
         self.testbed.uevent(intf, 'change')
+        self.wait_for_mainloop()
 
-        devs = self.proxy.EnumerateDevices()
-        self.assertEqual(len(devs), 0)
+        self.assertEqual(num_devices, 0)
 
         self.testbed.set_attribute(intf, 'wireless_status', 'connected')
         self.testbed.uevent(intf, 'change')
+        self.wait_for_mainloop()
 
+        self.assertEqual(num_devices, 1)
         devs = self.proxy.EnumerateDevices()
-        self.assertEqual(len(devs), 1)
         headset_up = devs[0]
         self.assertEqual(self.get_dbus_dev_property(headset_up, 'Percentage'), 69.0)
 
