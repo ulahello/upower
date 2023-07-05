@@ -324,6 +324,11 @@ class Tests(dbusmock.DBusTestCase):
         else:
             self.fail(message or 'timed out waiting for ' + str(condition))
 
+    def wait_for_mainloop(self):
+        ml = GLib.MainLoop()
+        GLib.timeout_add(100, ml.quit)
+        ml.run()
+
     #
     # Actual test cases
     #
