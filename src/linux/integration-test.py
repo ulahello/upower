@@ -2471,6 +2471,7 @@ class Tests(dbusmock.DBusTestCase):
 
         self.testbed.add_from_file(os.path.join(edir, 'tests/steelseries-headset.device'))
         card = '/sys/devices/pci0000:00/0000:00:14.0/usb1/1-5/1-5:1.0/sound/card1'
+        self.wait_for_mainloop()
 
         devs = self.proxy.EnumerateDevices()
         self.assertEqual(len(devs), 1)
