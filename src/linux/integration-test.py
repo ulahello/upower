@@ -108,6 +108,7 @@ class Tests(dbusmock.DBusTestCase):
         elif os.environ.get('UNDER_JHBUILD', False):
             jhbuild_prefix = os.environ['JHBUILD_PREFIX']
             cls.daemon_path = os.path.join(jhbuild_prefix, 'libexec', 'upowerd')
+            cls.upower_path = os.path.join(jhbuild_prefix, 'bin', 'upower')
             print('Testing binaries from JHBuild')
             cls.local_daemon = False
         else:
