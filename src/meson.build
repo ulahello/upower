@@ -142,4 +142,21 @@ if os_backend == 'linux' and gobject_introspection.found()
              timeout: 80,
             )
     endforeach
+
+    install_data( [
+        'linux/integration-test.py',
+        'linux/output_checker.py',
+      ],
+      install_dir: get_option('prefix') / get_option('libexecdir') / 'upower'
+    )
+    install_subdir('linux/tests/',
+      install_dir: get_option('prefix') / get_option('libexecdir') / 'upower'
+    )
+
+    configure_file(
+      input: 'upower-integration.test.in',
+      output: 'upower-integration.test',
+      install_dir: get_option('datadir') / 'installed-tests' / 'upower',
+      configuration: cdata
+    )
 endif
