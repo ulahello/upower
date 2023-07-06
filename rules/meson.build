@@ -7,12 +7,14 @@ hwdb = [
     '95-upower-hid.hwdb',
 ]
 
-install_data(
-    rules,
-    install_dir: udevrulesdir,
-)
+if os_backend == 'linux'
+    install_data(
+        rules,
+        install_dir: udevrulesdir,
+    )
 
-install_data(
-    hwdb,
-    install_dir: udevhwdbdir,
-)
+    install_data(
+        hwdb,
+        install_dir: udevhwdbdir,
+    )
+endif

@@ -81,23 +81,23 @@ if os_backend == 'linux'
     endif
     cdata.set10('HAVE_IDEVICE', true)
   endif
+
+  udevrulesdir = get_option('udevrulesdir')
+  if udevrulesdir == 'auto'
+    udev_dep = dependency('udev', required: true)
+    udevrulesdir = udev_dep.get_variable(pkgconfig: 'udev_dir') / 'rules.d'
+  endif
+
+  udevhwdbdir = get_option('udevhwdbdir')
+  if udevhwdbdir == 'auto'
+    udev_dep = dependency('udev', required: true)
+    udevhwdbdir = udev_dep.get_variable(pkgconfig: 'udev_dir') / 'hwdb.d'
+  endif
 endif
 
 historydir = get_option('historydir')
 if historydir == ''
     historydir = get_option('prefix') / get_option('localstatedir') / 'lib' / 'upower'
-endif
-
-udevrulesdir = get_option('udevrulesdir')
-if udevrulesdir == 'auto'
-    udev_dep = dependency('udev', required: true)
-    udevrulesdir = udev_dep.get_variable(pkgconfig: 'udev_dir') / 'rules.d'
-endif
-
-udevhwdbdir = get_option('udevhwdbdir')
-if udevhwdbdir == 'auto'
-    udev_dep = dependency('udev', required: true)
-    udevhwdbdir = udev_dep.get_variable(pkgconfig: 'udev_dir') / 'hwdb.d'
 endif
 
 dbusdir = get_option('datadir') / 'dbus-1'
