@@ -63,8 +63,7 @@ build:
   before_script:
     - git clone https://gitlab.gnome.org/GNOME/libgudev.git
     - cd libgudev
-    - dnf install -y 'dnf-command(builddep)'
-    - dnf builddep -y libgudev
+    - dnf install -y glibc-langpack-fr umockdev-devel
     - meson _build -Dprefix=/usr
     - ninja -C _build install
     - cd ..
@@ -119,13 +118,12 @@ test:
     - cd ..
     - git clone https://github.com/martinpitt/umockdev.git
     - cd umockdev
-    - dnf install -y 'dnf-command(builddep)'
-    - dnf builddep -y umockdev
+    - dnf install -y chrpath libpcap-devel systemd-udev vala
     - meson _build -Dprefix=/usr
     - ninja -C _build install
     - cd ..
     - cd libgudev
-    - dnf builddep -y libgudev
+    - dnf install -y glibc-langpack-fr umockdev-devel
     - meson _build -Dprefix=/usr
     - ninja -C _build install
     - cd ..
@@ -148,8 +146,7 @@ check_abi:
   stage: test
   before_script:
     - cd libgudev
-    - dnf install -y 'dnf-command(builddep)'
-    - dnf builddep -y libgudev
+    - dnf install -y glibc-langpack-fr umockdev-devel
     - meson _build -Dprefix=/usr
     - ninja -C _build install
     - cd ..
