@@ -200,7 +200,7 @@ class Tests(dbusmock.DBusTestCase):
         env['SYSTEMD_DEVICE_VERIFY_SYSFS'] = '0'
         self.daemon_log = OutputChecker()
 
-        if os.getenv('VALGRIND') != None:
+        if os.getenv('VALGRIND') is not None:
             daemon_path = ['valgrind', self.daemon_path, '-v', '-r']
         else:
             daemon_path = [self.daemon_path, '-v', '-r']
