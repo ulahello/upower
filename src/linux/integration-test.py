@@ -610,7 +610,7 @@ class Tests(dbusmock.DBusTestCase):
         energy_now = 48000000
         ac = self.testbed.add_device('power_supply', 'AC', None,
                                      ['type', 'Mains', 'online', '0'], [])
-        bat0 = self.testbed.add_device('power_supply', f'BAT0', None,
+        bat0 = self.testbed.add_device('power_supply', 'BAT0', None,
                                        ['type', 'Battery',
                                         'present', '1',
                                         'status', 'unknown',
@@ -1296,7 +1296,7 @@ class Tests(dbusmock.DBusTestCase):
 
         self.start_daemon()
 
-        self.daemon_log.check_line(f"using id: Fake_Battery-80-001", timeout=1)
+        self.daemon_log.check_line("using id: Fake_Battery-80-001", timeout=1)
 
         # Change the serial of the battery
         self.testbed.set_attribute(bat0, 'energy_full_design', '90000000')
@@ -1304,19 +1304,19 @@ class Tests(dbusmock.DBusTestCase):
         self.testbed.uevent(bat0, 'change')
 
         # This saves the old history, and then opens a new one
-        self.daemon_log.check_line_re(f"saved .*/history-time-empty-Fake_Battery-80-001.dat", timeout=1)
-        self.daemon_log.check_line(f"using id: Fake_Battery-90-002", timeout=1)
+        self.daemon_log.check_line_re("saved .*/history-time-empty-Fake_Battery-80-001.dat", timeout=1)
+        self.daemon_log.check_line("using id: Fake_Battery-90-002", timeout=1)
 
         # Only happens once
-        self.daemon_log.check_no_line(f"using id:", wait=1.0)
+        self.daemon_log.check_no_line("using id:", wait=1.0)
 
         # Remove the battery
         self.testbed.set_attribute(bat0, 'present', '0')
         self.testbed.uevent(bat0, 'change')
 
         # This saves the old history, and does *not* open a new one
-        self.daemon_log.check_line_re(f"saved .*/history-time-empty-Fake_Battery-90-002.dat", timeout=1)
-        self.daemon_log.check_no_line(f"using id:", wait=1.0)
+        self.daemon_log.check_line_re("saved .*/history-time-empty-Fake_Battery-90-002.dat", timeout=1)
+        self.daemon_log.check_no_line("using id:", wait=1.0)
 
         self.stop_daemon()
 
