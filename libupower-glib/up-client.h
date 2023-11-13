@@ -84,7 +84,8 @@ UpDevice *	 up_client_get_display_device		(UpClient *client);
 char *		 up_client_get_critical_action		(UpClient *client);
 
 /* accessors */
-GPtrArray	*up_client_get_devices			(UpClient		*client);
+GPtrArray	*up_client_get_devices			(UpClient		*client) G_DEPRECATED_FOR(up_client_get_devices2);
+GPtrArray	*up_client_get_devices2			(UpClient		*client);
 void		up_client_get_devices_async		(UpClient		*client,
 							 GCancellable		*cancellable,
 							 GAsyncReadyCallback 	 callback,

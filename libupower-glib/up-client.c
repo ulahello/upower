@@ -73,6 +73,28 @@ G_DEFINE_TYPE_WITH_CODE (UpClient, up_client, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE(G_TYPE_INITABLE, up_client_initable_iface_init)
                          G_IMPLEMENT_INTERFACE (G_TYPE_ASYNC_INITABLE, up_client_async_initable_iface_init))
 
+/**
+ * up_client_get_devices:
+ * @client: a #UpClient instance.
+ *
+ * Get a copy of the device objects. This function does not set the free
+ * function for the #GPtrArray so you need use g_object_unref on all
+ * elements when you are finished with the array.
+ *
+ * Return value: (element-type UpDevice) (transfer full): an array of #UpDevice objects or %NULL on error, free with g_ptr_array_unref()
+ *
+ * Since: 0.9.0
+ * Deprecated: 0.99.8
+ **/
+GPtrArray *
+up_client_get_devices (UpClient *client)
+{
+	GPtrArray *array = up_client_get_devices2 (client);
+	if (array)
+		g_ptr_array_set_free_func (array, NULL);
+	return array;
+}
+
 static GPtrArray *
 up_client_get_devices_full (UpClient      *client,
 			    GCancellable  *cancellable,
@@ -109,7 +131,7 @@ up_client_get_devices_full (UpClient      *client,
 }
 
 /**
- * up_client_get_devices:
+ * up_client_get_devices2:
  * @client: a #UpClient instance.
  *
  * Get a copy of the device objects.
@@ -119,7 +141,7 @@ up_client_get_devices_full (UpClient      *client,
  * Since: 0.99.8
  **/
 GPtrArray *
-up_client_get_devices (UpClient *client)
+up_client_get_devices2 (UpClient *client)
 {
 	g_autoptr(GError) error = NULL;
 	GPtrArray *ret = NULL;
