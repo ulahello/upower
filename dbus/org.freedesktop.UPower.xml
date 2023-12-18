@@ -82,7 +82,7 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
                 <doc:term>EnergyFull</doc:term><doc:definition>Amount of energy (measured in Wh) in the power source when it's considered full.</doc:definition>
               </doc:item>
               <doc:item>
-                <doc:term>EnergyRate</doc:term><doc:definition>Amount of energy being drained from the source, measured in W. If positive, the source is being discharged, if negative it's being charged.</doc:definition>
+                <doc:term>EnergyRate</doc:term><doc:definition>Discharging/charging rate of the source, measured in Watt.</doc:definition>
               </doc:item>
               <doc:item>
                 <doc:term>TimeToEmpty</doc:term><doc:definition>Number of seconds until the power source is considered empty.</doc:definition>
