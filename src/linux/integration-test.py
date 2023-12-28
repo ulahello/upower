@@ -2162,7 +2162,9 @@ class Tests(dbusmock.DBusTestCase):
 
         alias = 'Satechi M1 Mouse'
         battery_level = 99
-        device_properties = None
+        device_properties = {
+            'Class': dbus.UInt32(0, variant_level=1)
+        }
 
         devs = self._add_bluez_battery_device(alias, device_properties, battery_level)
         self.assertEqual(len(devs), 1)
