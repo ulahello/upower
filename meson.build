@@ -8,8 +8,8 @@ project('upower', 'c',
     ],
     meson_version: '>= 0.56.0')
 
-soversion = 4
-current = 0
+soversion = 3
+current = 1
 revision = 0
 libversion = '@0@.@1@.@2@'.format(soversion, current, revision)
 
