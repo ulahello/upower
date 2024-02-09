@@ -31,7 +31,7 @@ variables:
     python3-packaging
     git
     clang
-  LAST_ABI_BREAK: "a94c94fe6bc7c4e92d0ec34bc64d53de68fc4f32"
+  LAST_ABI_BREAK: "9058d45685d1c7c08d52fb64c393fed9eeed542b"
 
 workflow:
   rules:
