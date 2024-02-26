@@ -173,14 +173,28 @@ ensure_history (UpDevice *device)
 {
 	UpDevicePrivate *priv = up_device_get_instance_private (device);
 	g_autofree char *id = NULL;
-
+	g_warning ("ensure a history for device %s",up_device_get_id (device));
 	if (priv->history)
 		return;
-
+	g_warning ("New a history for device %s",up_device_get_id (device));
 	priv->history = up_history_new ();
 	id = up_device_get_id (device);
 	if (id)
 		up_history_set_id (priv->history, id);
+}
+
+static gboolean
+up_device_history_filter (UpDevice *device, UpHistory *history)
+{
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
+	UpExportedDevice *skeleton = UP_EXPORTED_DEVICE (device);
+
+	if (up_exported_device_get_state (skeleton) == UP_DEVICE_STATE_UNKNOWN) {
+		g_debug ("device %s has unknown state, not saving history",
+			   up_exported_device_get_native_path (skeleton));
+		return FALSE;
+	}
+	return TRUE;
 }
 
 static void
@@ -190,6 +204,9 @@ update_history (UpDevice *device)
 	UpExportedDevice *skeleton = UP_EXPORTED_DEVICE (device);
 
 	ensure_history (device);
+
+	if (!up_device_history_filter (device, priv->history))
+		return;
 
 	/* save new history */
 	up_history_set_state (priv->history, up_exported_device_get_state (skeleton));
@@ -208,18 +225,22 @@ up_device_notify (GObject *object, GParamSpec *pspec)
 	/* Not finished setting up the object? */
 	if (priv->daemon == NULL)
 		return;
-
+	g_warning ("REceived notify %s -> %s",pspec->name, up_device_get_id(device));
 	G_OBJECT_CLASS (up_device_parent_class)->notify (object, pspec);
 
 	if (g_strcmp0 (pspec->name, "type") == 0 ||
 	    g_strcmp0 (pspec->name, "is-present") == 0) {
 		update_icon_name (device);
 		/* Clearing the history object will force lazily loading. */
-		g_clear_object (&priv->history);
+		if (!up_history_is_device_id (priv->history, up_device_get_id(device)))
+			g_clear_object (&priv->history);
+		g_warning ("REceived notify 'is-present");
 	} else if (g_strcmp0 (pspec->name, "vendor") == 0 ||
 		   g_strcmp0 (pspec->name, "model") == 0 ||
 		   g_strcmp0 (pspec->name, "serial") == 0) {
-		g_clear_object (&priv->history);
+		if (!up_history_is_device_id (priv->history, up_device_get_id(device)))
+			g_clear_object (&priv->history);
+		g_warning ("REceived notify 'vendor' or 'model' or 'serial'");
 	} else if (g_strcmp0 (pspec->name, "power-supply") == 0 ||
 		   g_strcmp0 (pspec->name, "time-to-empty") == 0) {
 		update_warning_level (device);
@@ -733,6 +754,8 @@ static void
 up_device_finalize (GObject *object)
 {
 	UpDevicePrivate *priv = up_device_get_instance_private (UP_DEVICE (object));
+
+	g_warning ("finalize device %s", up_device_get_id (UP_DEVICE (object)));
 
 	g_clear_object (&priv->native);
 	g_clear_object (&priv->daemon);
