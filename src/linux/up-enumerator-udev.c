@@ -226,6 +226,7 @@ uevent_signal_handler_cb (UpEnumeratorUdev *self,
 	if (g_strcmp0 (action, "change") == 0 || g_strcmp0 (action, "add") == 0) {
 		GObject *obj;
 
+		g_warning ("look up device key=%s", device_key);
 		obj = g_hash_table_lookup (self->known, device_key);
 		if (UP_IS_DEVICE (obj) && g_strcmp0 (action, "add") == 0 &&
 		    g_strcmp0 (g_udev_device_get_sysfs_path (device),

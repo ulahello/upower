@@ -435,6 +435,7 @@ up_device_battery_update_info (UpDeviceBattery *self, UpBatteryInfo *info)
 		gdouble energy_design;
 		gint charge_cycles;
 
+		g_warning ("is-present set up-device-battery line 438");
 		/* See above, we have a (new) battery plugged in. */
 		if (!priv->present) {
 			g_object_set (self,
@@ -498,6 +499,8 @@ up_device_battery_update_info (UpDeviceBattery *self, UpBatteryInfo *info)
 		priv->trust_power_measurement = FALSE;
 		priv->hw_data_len = 0;
 		priv->units = UP_BATTERY_UNIT_UNDEFINED;
+
+		g_warning ("is-present set up-device-battery line 503");
 
 		g_object_set (self,
 		              "is-present", FALSE,

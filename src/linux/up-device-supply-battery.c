@@ -145,6 +145,9 @@ up_device_supply_battery_refresh (UpDevice *device,
 	 *       we can restrict this to updates other than UP_REFRESH_POLL.
 	 * NOTE: Only energy.full and cycle_count can change for a battery.
 	 */
+
+	g_warning("device battery refresh");
+
 	info.present = TRUE;
 	if (g_udev_device_has_sysfs_attr (native, "present"))
 		info.present = g_udev_device_get_sysfs_attr_as_boolean_uncached (native, "present");

@@ -259,6 +259,8 @@ up_device_supply_refresh_device (UpDeviceSupply *supply,
 
 	native = G_UDEV_DEVICE (up_device_get_native (device));
 
+	g_warning ("Device-supply refresh for %s", g_udev_device_get_sysfs_path (native));
+
 	/* initial values */
 	if (!supply->priv->has_coldplug_values) {
 		gchar *model_name;

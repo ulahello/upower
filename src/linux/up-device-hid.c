@@ -169,6 +169,7 @@ up_device_hid_set_values (UpDeviceHid *hid, guint32 code, gint32 value)
 			g_object_set (device, "state", UP_DEVICE_STATE_DISCHARGING, NULL);
 		break;
 	case UP_DEVICE_HID_BATTERY_PRESENT:
+		g_warning ("Set is-present line 172");
 		g_object_set (device, "is-present", (value != 0), NULL);
 		break;
 	case UP_DEVICE_HID_DEVICE_NAME:
@@ -316,6 +317,7 @@ up_device_hid_coldplug (UpDevice *device)
 		vendor = g_udev_device_get_property (native, "ID_VENDOR");
 
 	/* hardcode some values */
+	g_warning ("Set is-present line 320");
 	g_object_set (device,
 		      "type", UP_DEVICE_KIND_UPS,
 		      "is-rechargeable", TRUE,
@@ -366,6 +368,8 @@ up_device_hid_refresh (UpDevice *device, UpRefreshReason reason)
 	struct hiddev_event ev[64];
 	int rd;
 	UpDeviceHid *hid = UP_DEVICE_HID (device);
+
+	g_warning ("hid refresh for");
 
 	if (hid->priv->fake_device)
 		goto update_time;
@@ -418,6 +422,7 @@ up_device_hid_get_on_battery (UpDevice *device, gboolean *on_battery)
 	g_return_val_if_fail (UP_IS_DEVICE_HID (hid), FALSE);
 	g_return_val_if_fail (on_battery != NULL, FALSE);
 
+	g_warning ("Set is-present line 421");
 	g_object_get (device,
 		      "type", &type,
 		      "state", &state,
