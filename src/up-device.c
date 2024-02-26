@@ -183,6 +183,19 @@ ensure_history (UpDevice *device)
 		up_history_set_id (priv->history, id);
 }
 
+static gboolean
+up_device_history_filter (UpDevice *device, UpHistory *history)
+{
+	UpExportedDevice *skeleton = UP_EXPORTED_DEVICE (device);
+
+	if (up_exported_device_get_state (skeleton) == UP_DEVICE_STATE_UNKNOWN) {
+		g_debug ("device %s has unknown state, not saving history",
+			   up_exported_device_get_native_path (skeleton));
+		return FALSE;
+	}
+	return TRUE;
+}
+
 static void
 update_history (UpDevice *device)
 {
@@ -190,6 +203,9 @@ update_history (UpDevice *device)
 	UpExportedDevice *skeleton = UP_EXPORTED_DEVICE (device);
 
 	ensure_history (device);
+
+	if (!up_device_history_filter (device, priv->history))
+		return;
 
 	/* save new history */
 	up_history_set_state (priv->history, up_exported_device_get_state (skeleton));
