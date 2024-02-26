@@ -60,6 +60,7 @@ typedef enum {
 
 
 GType		 up_history_get_type			(void);
+gboolean	 up_history_is_device_id_equal		(UpHistory *history,	 const gchar *id);
 UpHistory	*up_history_new				(void);
 
 GPtrArray	*up_history_get_data			(UpHistory		*history,

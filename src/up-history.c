@@ -871,6 +871,20 @@ up_history_set_time_empty_data (UpHistory *history, gint64 time_s)
 }
 
 /**
+ * up_history_is_device_id_equal:
+ **/
+gboolean
+up_history_is_device_id_equal(UpHistory *history, const gchar *id)
+{
+	g_return_val_if_fail (UP_IS_HISTORY (history), FALSE);
+
+	if (!g_strcmp0 (history->priv->id, id))
+		return TRUE;
+
+	return FALSE;
+}
+
+/**
  * up_history_class_init:
  * @klass: The UpHistoryClass
  **/
