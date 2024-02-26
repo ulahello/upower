@@ -424,6 +424,7 @@ static gboolean
 up_history_array_to_file (UpHistory *history, GPtrArray *list, const gchar *filename)
 {
 	guint i;
+	guint status;
 	UpHistoryItem *item;
 	gchar *part;
 	GString *string;
@@ -447,6 +448,19 @@ up_history_array_to_file (UpHistory *history, GPtrArray *list, const gchar *file
 			cull_count++;
 			continue;
 		}
+		g_warning ("history item len %d item no. %d item status %d", list->len, i, up_history_item_get_state (item));
+		g_warning ("histioy item time diff %d mac age %d", time_now.tv_sec-time_item,history->priv->max_data_age);
+		g_warning ("histioy last percentage %f", history->priv->percentage_last);
+
+		/* only save valid entries */
+		status = up_history_item_get_state (item);
+		if (status >= UP_DEVICE_STATE_LAST) {
+			ret = FALSE;
+			break;
+		} else if (status == UP_DEVICE_STATE_UNKNOWN) {
+			continue;
+		}
+
 		part = up_history_item_to_string (item);
 		if (part == NULL) {
 			ret = FALSE;
@@ -756,6 +770,7 @@ up_history_set_charge_data (UpHistory *history, gdouble percentage)
 		return FALSE;
 	if (history->priv->state == UP_DEVICE_STATE_UNKNOWN)
 		return FALSE;
+	g_warning ("Incoming percentage %lf last percentage %lf", percentage, history->priv->percentage_last);
 	if (history->priv->percentage_last == percentage)
 		return FALSE;
 
@@ -769,6 +784,7 @@ up_history_set_charge_data (UpHistory *history, gdouble percentage)
 
 	/* save last value */
 	history->priv->percentage_last = percentage;
+	g_warning ("After writing Incoming percentage %lf last percentage %lf", percentage, history->priv->percentage_last);
 
 	return TRUE;
 }
@@ -868,6 +884,21 @@ up_history_set_time_empty_data (UpHistory *history, gint64 time_s)
 	history->priv->time_empty_last = time_s;
 
 	return TRUE;
+}
+
+gboolean
+up_history_is_device_id(UpHistory *history, const gchar *id)
+{
+	if (history!= NULL)
+		g_warning ("History id %s id %s", history->priv->id, id);
+	g_return_val_if_fail (UP_IS_HISTORY (history), FALSE);
+	g_return_val_if_fail (id != NULL, FALSE);
+	g_warning ("history id %s id %s result %d", history->priv->id, id, g_strcmp0 (history->priv->id, id));
+
+	if (!g_strcmp0 (history->priv->id, id))
+		return TRUE;
+	
+	return FALSE;
 }
 
 /**

@@ -59,6 +59,7 @@ typedef enum {
 } UpHistoryType;
 
 
+gboolean	 up_history_is_device_id		(UpHistory *history, const gchar *id);
 GType		 up_history_get_type			(void);
 UpHistory	*up_history_new				(void);
 
