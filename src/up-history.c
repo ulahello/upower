@@ -203,7 +203,7 @@ up_history_copy_array_timespan (const GPtrArray *array, guint timespan)
 	guint i;
 	UpHistoryItem *item;
 	GPtrArray *array_new;
-	GTimeVal timeval;
+	gint64 time_now;
 
 	/* no data */
 	if (array->len == 0)
@@ -217,14 +217,14 @@ up_history_copy_array_timespan (const GPtrArray *array, guint timespan)
 
 	/* new data */
 	array_new = g_ptr_array_new ();
-	g_get_current_time (&timeval);
+	time_now = g_get_real_time ();
 	g_debug ("limiting data to last %i seconds", timespan);
 
 	/* treat the timespan like a range, and search backwards */
 	timespan *= 0.95f;
 	for (i=array->len-1; i>0; i--) {
 		item = (UpHistoryItem *) g_ptr_array_index (array, i);
-		if (timeval.tv_sec - up_history_item_get_time (item) < timespan)
+		if ((time_now / 1000000) - up_history_item_get_time (item) < timespan)
 			g_ptr_array_add (array_new, g_object_ref (item));
 	}
 out:
@@ -429,12 +429,12 @@ up_history_array_to_file (UpHistory *history, GPtrArray *list, const gchar *file
 	GString *string;
 	gboolean ret = TRUE;
 	GError *error = NULL;
-	GTimeVal time_now;
+	gint64 time_now;
 	guint time_item;
 	guint cull_count = 0;
 
 	/* get current time */
-	g_get_current_time (&time_now);
+	time_now = g_get_real_time ();
 
 	/* generate data */
 	string = g_string_new ("");
@@ -443,7 +443,7 @@ up_history_array_to_file (UpHistory *history, GPtrArray *list, const gchar *file
 
 		/* only save entries for the last 24 hours */
 		time_item = up_history_item_get_time (item);
-		if (time_now.tv_sec - time_item > history->priv->max_data_age) {
+		if ((time_now / 1000000) - time_item > history->priv->max_data_age) {
 			cull_count++;
 			continue;
 		}

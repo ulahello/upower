@@ -47,10 +47,10 @@ enum {
 
 struct _UpDeviceSupplyBattery
 {
+	UpDeviceBattery		 parent;
 	gboolean		 has_coldplug_values;
 	gboolean		 coldplug_units;
 	gdouble			*energy_old;
-	GTimeVal		*energy_old_timespec;
 	guint			 energy_old_first;
 	gdouble			 rate_old;
 	gboolean		 shown_invalid_voltage_warning;

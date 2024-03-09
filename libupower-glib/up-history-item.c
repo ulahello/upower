@@ -116,12 +116,12 @@ up_history_item_set_time (UpHistoryItem *history_item, guint time)
 void
 up_history_item_set_time_to_present (UpHistoryItem *history_item)
 {
-	GTimeVal timeval;
+	guint64 time_now;
 
 	g_return_if_fail (UP_IS_HISTORY_ITEM (history_item));
 
-	g_get_current_time (&timeval);
-	history_item->priv->time = timeval.tv_sec;
+	time_now = g_get_real_time ();
+	history_item->priv->time = time_now / 1000000;
 	g_object_notify (G_OBJECT(history_item), "time");
 }
 
