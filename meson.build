@@ -6,7 +6,7 @@ project('upower', 'c',
         'warning_level=1',
         'c_std=gnu99',
     ],
-    meson_version: '>= 0.56.0')
+    meson_version: '>= 0.60.0')
 
 soversion = 3
 current = 1

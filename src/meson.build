@@ -81,7 +81,7 @@ up_self_test = executable('up_self_test',
 # Data/Config files
 #############
 
-install_subdir('does-not-exist', install_dir: historydir, strip_directory : true)
+install_emptydir(historydir)
 
 cdata = configuration_data()
 cdata.set('libexecdir', get_option('prefix') / get_option('libexecdir'))
