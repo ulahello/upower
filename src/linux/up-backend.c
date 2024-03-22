@@ -558,20 +558,30 @@ up_backend_get_critical_action (UpBackend *backend)
 		{ "Hibernate", "CanHibernate" },
 		{ "PowerOff", NULL },
 	};
+	g_autofree gchar *action = NULL;
+	gboolean can_risky = FALSE;
 	guint i = 1;
-	char *action;
 
 	g_return_val_if_fail (backend->priv->logind_proxy != NULL, NULL);
 
-	/* Find the configured action first */
+	can_risky = up_config_get_boolean (backend->priv->config,
+					   "AllowRiskyCriticalPowerAction");
+
+	/* find the configured action first */
 	action = up_config_get_string (backend->priv->config, "CriticalPowerAction");
+
+	/* safeguard for the risky actions */
+	if (!can_risky && !g_strcmp0 (action, "Suspend")) {
+		g_free (action);
+		action = g_strdup_printf ("HybridSleep");
+	}
+
 	if (action != NULL) {
 		for (i = 0; i < G_N_ELEMENTS (actions); i++)
 			if (g_str_equal (actions[i].method, action))
 				break;
 		if (i >= G_N_ELEMENTS (actions))
 			i = 1;
-		g_free (action);
 	}
 
 	for (; i < G_N_ELEMENTS (actions); i++) {
