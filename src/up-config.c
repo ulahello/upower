@@ -97,7 +97,7 @@ up_config_init (UpConfig *config)
 	gboolean allow_risky_critical_action = FALSE;
 	g_autofree gchar *critical_action = NULL;
 	GError *error = NULL;
-	gchar *filename;
+	g_autofree gchar *filename = NULL;
 	gboolean ret;
 
 	config->priv = up_config_get_instance_private (config);
@@ -137,8 +137,6 @@ up_config_init (UpConfig *config)
 				   " risky settings.");
 		}
 	}
-
-	g_free (filename);
 }
 
 /**
