@@ -116,17 +116,6 @@ test:
     - ./configure
     - make install
     - cd ..
-    - git clone https://github.com/martinpitt/umockdev.git
-    - cd umockdev
-    - dnf install -y chrpath libpcap-devel systemd-udev vala
-    - meson _build -Dprefix=/usr
-    - ninja -C _build install
-    - cd ..
-    - cd libgudev
-    - dnf install -y glibc-langpack-fr umockdev-devel
-    - meson _build -Dprefix=/usr
-    - ninja -C _build install
-    - cd ..
   script:
     - meson _build -Dintrospection=enabled -Dman=true -Dgtk-doc=true -Didevice=enabled
     - ninja -C _build
