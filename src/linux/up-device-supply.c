@@ -345,14 +345,25 @@ up_device_supply_sibling_discovered_guess_type (UpDevice *device,
 		{ "ID_INPUT_KEYBOARD", UP_DEVICE_KIND_KEYBOARD },
 	};
 	/* The type priority if we have multiple siblings,
-	 * i.e. we select the first of the current type of the found type. */
+	 * i.e. we select the first of the current type of the found type.
+	 * Give a new priority for device type since the GAMING_INPUT may include
+	 * a keyboard, a touchpad, and... etc, for example Sony DualShock4 joystick.
+	 * A mouse and a touchpad may include a mouse and a keyboard.
+	 * Therefore, the priority is:
+	 * 1. Audio
+	 * 2. Gaming_input
+	 * 3. Keyboard
+	 * 4. Tablet
+	 * 5. Touchpad
+	 * 6. Mouse
+	*/
 	UpDeviceKind priority[] = {
 		UP_DEVICE_KIND_OTHER_AUDIO,
+		UP_DEVICE_KIND_GAMING_INPUT,
 		UP_DEVICE_KIND_KEYBOARD,
 		UP_DEVICE_KIND_TABLET,
 		UP_DEVICE_KIND_TOUCHPAD,
-		UP_DEVICE_KIND_MOUSE,
-		UP_DEVICE_KIND_GAMING_INPUT,
+		UP_DEVICE_KIND_MOUSE
 	};
 	/* Form-factors set in rules.d/78-sound-card.rules in systemd */
 	struct {
