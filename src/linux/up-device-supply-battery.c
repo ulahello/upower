@@ -128,6 +128,58 @@ get_sysfs_attr_uncached (GUdevDevice *native, const gchar *key)
 }
 
 static gboolean
+up_device_supply_battery_convert_to_double (const gchar *str_value, gdouble *value)
+{
+	gdouble conv_value;
+	gchar *end = NULL;
+
+	if (str_value == NULL || value == NULL)
+		return FALSE;
+
+	conv_value = g_ascii_strtod (str_value, &end);
+	if (end == str_value || conv_value < 0.0 || conv_value > 100.0)
+		return FALSE;
+
+	*value = conv_value;
+
+	return TRUE;
+}
+
+static gboolean
+up_device_supply_battery_get_charge_control_limits (GUdevDevice *native, UpBatteryInfo *info)
+{
+	const gchar *charge_limit;
+	g_auto(GStrv) pairs = NULL;
+	gdouble charge_control_start_threshold;
+	gdouble charge_control_end_threshold;
+
+	charge_limit = g_udev_device_get_property (native, "CHARGE_LIMIT");
+	if (charge_limit == NULL)
+		return FALSE;
+
+	pairs = g_strsplit (charge_limit, ",", 0);
+	if (g_strv_length (pairs) != 2) {
+		g_warning("Could not parse CHARGE_LIMIT, expected 'number,number', got '%s'", charge_limit);
+		return FALSE;
+	}
+
+	if (!up_device_supply_battery_convert_to_double (pairs[0], &charge_control_start_threshold)) {
+		g_warning ("failed to convert charge_control_start_threshold: %s", pairs[0]);
+		return FALSE;
+	}
+
+	if (!up_device_supply_battery_convert_to_double (pairs[1], &charge_control_end_threshold)) {
+		g_warning ("failed to convert charge_control_start_threshold: %s", pairs[0]);
+		return FALSE;
+	}
+
+	info->charge_control_start_threshold = charge_control_start_threshold;
+	info->charge_control_end_threshold = charge_control_end_threshold;
+
+	return TRUE;
+}
+
+static gboolean
 up_device_supply_battery_refresh (UpDevice *device,
 				  UpRefreshReason reason)
 {
@@ -171,6 +223,11 @@ up_device_supply_battery_refresh (UpDevice *device,
 		info.energy.design = g_udev_device_get_sysfs_attr_as_double_uncached (native, "charge_full_design") / 1000000.0;
 	}
 	info.technology = up_convert_device_technology (get_sysfs_attr_uncached (native, "technology"));
+
+	if (up_device_supply_battery_get_charge_control_limits (native, &info))
+		info.charge_control_enabled = TRUE;
+	else
+		info.charge_control_enabled = FALSE;
 
 	/* NOTE: We used to warn about full > design, but really that is prefectly fine to happen. */
 

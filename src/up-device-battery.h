@@ -84,6 +84,11 @@ typedef struct {
 	UpDeviceTechnology technology;
 	gdouble voltage_design;
 	gint charge_cycles;
+
+	/* battery charging threshold */
+	gboolean charge_control_enabled;
+	guint charge_control_start_threshold;
+	guint charge_control_end_threshold;
 } UpBatteryInfo;
 
 
