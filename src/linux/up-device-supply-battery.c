@@ -372,16 +372,61 @@ up_device_supply_battery_get_property (GObject        *object,
 	}
 }
 
+static char *
+up_device_supply_device_path (GUdevDevice *device)
+{
+	const char *root;
+
+	root = g_getenv ("UMOCKDEV_DIR");
+	if (!root || *root == '\0') {
+		return g_strdup (g_udev_device_get_sysfs_path (device));
+	}
+
+	return g_build_filename (root,
+				 g_udev_device_get_sysfs_path (device),
+				 NULL);
+}
+
+static gboolean
+up_device_supply_battery_set_battery_charge_thresholds(UpDevice *device, guint start, guint end, GError **error) {
+	GUdevDevice *native;
+	g_autofree gchar *native_path = NULL;
+	g_autofree gchar *start_filename = NULL;
+	g_autofree gchar *end_filename = NULL;
+	g_autoptr (GString) start_str = g_string_new (NULL);
+	g_autoptr (GString) end_str = g_string_new (NULL);
+
+	native = G_UDEV_DEVICE (up_device_get_native (device));
+	native_path = up_device_supply_device_path (native);
+	start_filename = g_build_filename (native_path, "charge_control_start_threshold", NULL);
+	end_filename = g_build_filename (native_path, "charge_control_end_threshold", NULL);
+
+	g_string_printf (start_str, "%d", CLAMP (start, 0, 100));
+	g_string_printf (end_str, "%d", CLAMP (end, 0, 100));
+
+	if (!g_file_set_contents_full (start_filename, start_str->str, start_str->len,
+				  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, error))
+		return FALSE;
+
+	if (!g_file_set_contents_full (end_filename, end_str->str, end_str->len,
+				  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, error))
+		return FALSE;
+
+	return TRUE;
+}
+
 static void
 up_device_supply_battery_class_init (UpDeviceSupplyBatteryClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	UpDeviceClass *device_class = UP_DEVICE_CLASS (klass);
+	UpDeviceBatteryClass *battery_class = UP_DEVICE_BATTERY_CLASS (klass);
 
 	object_class->set_property = up_device_supply_battery_set_property;
 	object_class->get_property = up_device_supply_battery_get_property;
 	device_class->coldplug = up_device_supply_coldplug;
 	device_class->refresh = up_device_supply_battery_refresh;
+	battery_class->set_battery_charge_thresholds = up_device_supply_battery_set_battery_charge_thresholds;
 
 	g_object_class_install_property (object_class, PROP_IGNORE_SYSTEM_PERCENTAGE,
 					 g_param_spec_boolean ("ignore-system-percentage",
