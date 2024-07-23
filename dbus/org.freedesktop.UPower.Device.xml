@@ -246,6 +246,29 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
     </method>
 
     <!-- ************************************************************ -->
+    <method name="EnableChargeThreshold">
+      <arg name="chargeThreshold" direction="in" type="b">
+        <doc:doc>
+          <doc:summary>
+            If it is true, the battery charge will be limited to ChargeEndThreshold and start to charge when the battery is lower than ChargeStartThreshold.
+            Moreovere, if ChargeEndThreshold and/or ChargeStartThreshold are not supported, charge limit functionality on the whole may still be supported but the firmware will choose its own thresholds.
+            If it is false, the battery will always be fully charged.
+          </doc:summary>
+        </doc:doc>
+      </arg>
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Limiting the battery charge to the configured thresholds ChargeStartThreshold and ChargeEndThreshold.
+          </doc:para>
+        </doc:description>
+        <doc:errors>
+          <doc:error name="&ERROR_GENERAL;">if an error occured while setting the battery charge limits</doc:error>
+        </doc:errors>
+      </doc:doc>
+    </method>
+
+    <!-- ************************************************************ -->
     <property name="NativePath" type="s" access="read">
       <doc:doc>
         <doc:description>
@@ -868,7 +891,6 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
         </doc:description>
       </doc:doc>
     </property>
-
   </interface>
 
 </node>
