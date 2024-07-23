@@ -52,6 +52,9 @@ typedef struct {
 	/* dynamic values */
 	gint64 fast_repoll_until;
 	gboolean repoll_needed;
+
+	/* state path */
+	const char *state_dir;
 } UpDeviceBatteryPrivate;
 
 G_DEFINE_TYPE_EXTENDED (UpDeviceBattery, up_device_battery, UP_TYPE_DEVICE, 0,
@@ -395,6 +398,16 @@ up_device_battery_report (UpDeviceBattery *self,
 	up_device_battery_update_poll_frequency (self, values->state, reason);
 }
 
+static gboolean
+up_device_battery_set_charge_thresholds(UpDeviceBattery *self, gdouble start, gdouble end, GError **error)
+{
+	UpDeviceBatteryClass *klass = UP_DEVICE_BATTERY_GET_CLASS (self);
+	if (klass->set_battery_charge_thresholds == NULL)
+		return FALSE;
+
+	return klass->set_battery_charge_thresholds(&self->parent_instance, start, end, error);
+}
+
 void
 up_device_battery_update_info (UpDeviceBattery *self, UpBatteryInfo *info)
 {
@@ -445,6 +458,8 @@ up_device_battery_update_info (UpDeviceBattery *self, UpBatteryInfo *info)
 			              "technology", info->technology,
 			              "has-history", TRUE,
 			              "has-statistics", TRUE,
+				      "charge-start-threshold", info->charge_control_start_threshold,
+				      "charge-end-threshold", info->charge_control_end_threshold,
 				      "charge-threshold-supported", info->charge_control_supported,
 			              NULL);
 
@@ -513,20 +528,109 @@ up_device_battery_update_info (UpDeviceBattery *self, UpBatteryInfo *info)
 		              "has-history", FALSE,
 		              "has-statistics", FALSE,
 		              "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC,
+			      "charge-start-threshold", 0,
+			      "charge-end-threshold", 100,
+			      "charge-threshold-enabled", FALSE,
+			      "charge-threshold-supported", FALSE,
 		              NULL);
 	}
 }
 
+static gboolean
+up_device_battery_charge_threshold_state_write(UpDeviceBattery *self, gboolean enabled, const gchar *state_file) {
+	g_autofree gchar *filename = NULL;
+	GError *error = NULL;
 
+	UpDeviceBatteryPrivate *priv = up_device_battery_get_instance_private (self);
+
+	filename = g_build_filename (priv->state_dir, state_file, NULL);
+	if (!g_file_set_contents (filename, enabled ? "1": "0" , -1, &error)) {
+		g_error ("failed to save battery charge threshold: %s", error->message);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+/**
+ * up_device_battery_set_charge_threshold:
+ **/
+static gboolean
+up_device_battery_set_charge_threshold (UpExportedDevice *skeleton,
+					GDBusMethodInvocation *invocation,
+					gboolean enabled,
+					UpDeviceBattery *self)
+{
+	gboolean ret = FALSE;
+	gboolean charge_threshold_enabled;
+	gboolean charge_threshold_supported;
+	guint charge_start_threshold = 0;
+	guint charge_end_threshold = 100;
+	g_autofree gchar *state_file = NULL;
+	g_autoptr(GError) error = NULL;
+
+	g_object_get (self,
+		      "charge-threshold-enabled", &charge_threshold_enabled,
+		      "charge-threshold-supported", &charge_threshold_supported,
+		      "charge-start-threshold", &charge_start_threshold,
+		      "charge-end-threshold", &charge_end_threshold,
+		      NULL);
+
+	if (!charge_threshold_supported) {
+		g_dbus_method_invocation_return_error (invocation,
+						       UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL,
+						       "setting battery charge thresholds is unsupported");
+		return TRUE;
+	}
+
+	state_file = g_strdup_printf("charging-threshold-status");
+	if (!up_device_battery_charge_threshold_state_write (self, enabled, state_file)) {
+		g_dbus_method_invocation_return_error (invocation,
+						       UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL,
+						       "writing charge limits state file '%s' failed", state_file);
+		return TRUE;
+	}
+
+	if (enabled)
+		ret = up_device_battery_set_charge_thresholds (self, charge_start_threshold, charge_end_threshold, &error);
+	else
+		ret = up_device_battery_set_charge_thresholds (self, 0, 100, &error);
+
+	if (!ret) {
+		g_dbus_method_invocation_return_error (invocation,
+						       UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL,
+						       "failed on setting charging threshold: %s", error->message);
+		return TRUE;
+	}
+
+	g_object_set(self,
+		     "charge-threshold-enabled", enabled,
+		     NULL);
+
+	up_exported_device_complete_enable_charge_threshold (skeleton, invocation);
+
+	return TRUE;
+}
 
 static void
 up_device_battery_init (UpDeviceBattery *self)
 {
+	UpDeviceBatteryPrivate *priv = up_device_battery_get_instance_private (self);
+
 	g_object_set (self,
 	              "type", UP_DEVICE_KIND_BATTERY,
 	              "power-supply", TRUE,
 	              "is-rechargeable", TRUE,
 	              NULL);
+
+	g_signal_connect (self, "handle-enable-charge-threshold",
+			  G_CALLBACK (up_device_battery_set_charge_threshold), self);
+
+	if (g_getenv ("UPOWER_STATE_DIR")) {
+		priv->state_dir = g_getenv ("UPOWER_STATE_DIR");
+	} else {
+		priv->state_dir = STATE_DIR;
+	}
 }
 
 static void

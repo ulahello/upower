@@ -11,6 +11,7 @@ upowerd_deps = declare_dependency(
     compile_args: [
         '-DUP_COMPILATION',
         '-DHISTORY_DIR="@0@"'.format(historydir),
+        '-DSTATE_DIR="@0@"'.format(statedir),
     ],
 )
 

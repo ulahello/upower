@@ -100,6 +100,11 @@ if historydir == ''
     historydir = get_option('prefix') / get_option('localstatedir') / 'lib' / 'upower'
 endif
 
+statedir = get_option('statedir')
+if statedir == ''
+    statedir = get_option('prefix') / get_option('localstatedir') / 'lib' / 'upower'
+endif
+
 dbusdir = get_option('datadir') / 'dbus-1'
 systemdsystemunitdir = get_option('systemdsystemunitdir')
 if systemdsystemunitdir == ''
