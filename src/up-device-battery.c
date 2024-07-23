@@ -445,6 +445,7 @@ up_device_battery_update_info (UpDeviceBattery *self, UpBatteryInfo *info)
 			              "technology", info->technology,
 			              "has-history", TRUE,
 			              "has-statistics", TRUE,
+				      "charge-threshold-supported", info->charge_control_supported,
 			              NULL);
 
 			priv->present = TRUE;

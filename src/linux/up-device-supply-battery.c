@@ -224,10 +224,13 @@ up_device_supply_battery_refresh (UpDevice *device,
 	}
 	info.technology = up_convert_device_technology (get_sysfs_attr_uncached (native, "technology"));
 
-	if (up_device_supply_battery_get_charge_control_limits (native, &info))
-		info.charge_control_enabled = TRUE;
-	else
+	if (up_device_supply_battery_get_charge_control_limits (native, &info)) {
+		info.charge_control_supported = TRUE;
 		info.charge_control_enabled = FALSE;
+	} else {
+		info.charge_control_enabled = FALSE;
+		info.charge_control_supported = FALSE;
+	}
 
 	/* NOTE: We used to warn about full > design, but really that is prefectly fine to happen. */
 
