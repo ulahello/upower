@@ -849,6 +849,26 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
       </doc:doc>
     </property>
 
+    <property name="ChargeThresholdEnabled" type="b" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            <p>If battery charge start and end limits are applied.</p>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </property>
+
+    <property name="ChargeThresholdSupported" type="b" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            <p>If setting battery charge limits is supported.</p>
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </property>
+
   </interface>
 
 </node>
