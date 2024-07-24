@@ -63,9 +63,9 @@ struct UpDaemonPrivate
 
 	/* WarningLevel configuration */
 	gboolean		 use_percentage_for_policy;
-	guint			 low_percentage;
-	guint			 critical_percentage;
-	guint			 action_percentage;
+	gdouble			 low_percentage;
+	gdouble			 critical_percentage;
+	gdouble			 action_percentage;
 	guint			 low_time;
 	guint			 critical_time;
 	guint			 action_time;
@@ -1065,14 +1065,15 @@ up_daemon_device_removed_cb (UpBackend *backend, UpDevice *device, UpDaemon *dae
 }
 
 #define LOAD_OR_DEFAULT(val, str, def) val = (load_default ? def : up_config_get_uint (daemon->priv->config, str))
+#define LOAD_OR_DEFAULT_DOUBLE(val, str, def) val = (load_default ? def : up_config_get_double (daemon->priv->config, str))
 
 static void
 load_percentage_policy (UpDaemon    *daemon,
 			gboolean     load_default)
 {
-	LOAD_OR_DEFAULT (daemon->priv->low_percentage, "PercentageLow", 20);
-	LOAD_OR_DEFAULT (daemon->priv->critical_percentage, "PercentageCritical", 5);
-	LOAD_OR_DEFAULT (daemon->priv->action_percentage, "PercentageAction", 2);
+	LOAD_OR_DEFAULT_DOUBLE (daemon->priv->low_percentage, "PercentageLow", 20.0);
+	LOAD_OR_DEFAULT_DOUBLE (daemon->priv->critical_percentage, "PercentageCritical", 5.0);
+	LOAD_OR_DEFAULT_DOUBLE (daemon->priv->action_percentage, "PercentageAction", 2.0);
 }
 
 static void
@@ -1089,9 +1090,9 @@ load_time_policy (UpDaemon    *daemon,
 static void
 policy_config_validate (UpDaemon *daemon)
 {
-	if (daemon->priv->low_percentage >= 100 ||
-	    daemon->priv->critical_percentage >= 100 ||
-	    daemon->priv->action_percentage >= 100) {
+	if (daemon->priv->low_percentage >= 100.0 ||
+	    daemon->priv->critical_percentage >= 100.0 ||
+	    daemon->priv->action_percentage >= 100.0) {
 		load_percentage_policy (daemon, TRUE);
 	} else if (!IS_DESCENDING (daemon->priv->low_percentage,
 				   daemon->priv->critical_percentage,

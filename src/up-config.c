@@ -69,6 +69,22 @@ up_config_get_uint (UpConfig *config, const gchar *key)
 }
 
 /**
+ * up_config_get_double:
+ **/
+gdouble
+up_config_get_double (UpConfig *config, const gchar *key)
+{
+	int val;
+
+	val = g_key_file_get_double (config->priv->keyfile,
+				     "UPower", key, NULL);
+	if (val < 0.0)
+		return 0.0;
+
+	return val;
+}
+
+/**
  * up_config_get_string:
  **/
 gchar *

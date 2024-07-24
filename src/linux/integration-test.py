@@ -1483,7 +1483,7 @@ class Tests(dbusmock.DBusTestCase):
         config = tempfile.NamedTemporaryFile(delete=False, mode='w')
         config.write("[UPower]\n")
         config.write("UsePercentageForPolicy=true\n")
-        config.write("PercentageAction=5\n")
+        config.write("PercentageAction=5.0\n")
         config.write("CriticalPowerAction=Hibernate\n")
         config.close()
 
@@ -1525,7 +1525,7 @@ class Tests(dbusmock.DBusTestCase):
         config = tempfile.NamedTemporaryFile(delete=False, mode='w')
         config.write("[UPower]\n")
         config.write("UsePercentageForPolicy=true\n")
-        config.write("PercentageAction=5\n")
+        config.write("PercentageAction=5.0\n")
         config.write("CriticalPowerAction=Hibernate\n")
         config.close()
 
@@ -1856,9 +1856,9 @@ class Tests(dbusmock.DBusTestCase):
         config = tempfile.NamedTemporaryFile(delete=False, mode='w')
         # Low, Critical and Action are all needed to avoid fallback to defaults
         config.write("[UPower]\n")
-        config.write("PercentageLow=20\n")
-        config.write("PercentageCritical=3\n")
-        config.write("PercentageAction=2\n")
+        config.write("PercentageLow=20.0\n")
+        config.write("PercentageCritical=3.0\n")
+        config.write("PercentageAction=2.0\n")
         config.close()
 
         self.start_daemon(cfgfile=config.name)
