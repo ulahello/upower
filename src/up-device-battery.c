@@ -408,9 +408,59 @@ up_device_battery_set_charge_thresholds(UpDeviceBattery *self, gdouble start, gd
 	return klass->set_battery_charge_thresholds(&self->parent_instance, start, end, error);
 }
 
+static gboolean
+up_device_battery_get_battery_charge_threshold_config(UpDeviceBattery *self)
+{
+	g_autofree gchar *filename = NULL;
+	g_autofree gchar *data = NULL;
+	g_autoptr(GError) error = NULL;
+	g_autofree gchar *state_filename = NULL;
+	UpDeviceBatteryPrivate *priv = up_device_battery_get_instance_private (self);
+
+	state_filename = g_strdup_printf("charging-threshold-status");
+	filename = g_build_filename (priv->state_dir, state_filename, NULL);
+	if (g_file_get_contents (filename, &data, NULL, &error) == FALSE) {
+		g_debug ("failed to read battery charge threshold: %s", error->message);
+		return FALSE;
+	}
+
+	if (g_strcmp0(data, "1") == 0)
+		return TRUE;
+
+	return FALSE;
+}
+
+static void
+up_device_battery_recover_battery_charging_threshold (UpDeviceBattery *self, UpBatteryInfo *info, gboolean *charge_threshold_enabled)
+{
+	gboolean enabled = FALSE;
+	GError *error = NULL;
+
+	if (info == NULL)
+		return;
+
+	enabled = up_device_battery_get_battery_charge_threshold_config (self);
+
+	if (info->charge_control_supported == TRUE) {
+		if (enabled == TRUE) {
+			up_device_battery_set_charge_thresholds (self,
+								 info->charge_control_start_threshold,
+								 info->charge_control_end_threshold,
+								 &error);
+			if (error != NULL) {
+				enabled = FALSE;
+				g_warning ("Fail on setting charging threshold: %s", error->message);
+				g_clear_error (&error);
+			}
+		}
+	}
+	*charge_threshold_enabled = enabled;
+}
+
 void
 up_device_battery_update_info (UpDeviceBattery *self, UpBatteryInfo *info)
 {
+	gboolean charge_threshold_enabled = FALSE;
 	UpDeviceBatteryPrivate *priv = up_device_battery_get_instance_private (self);
 
 	/* First, sanitize the information. */
@@ -450,6 +500,9 @@ up_device_battery_update_info (UpDeviceBattery *self, UpBatteryInfo *info)
 
 		/* See above, we have a (new) battery plugged in. */
 		if (!priv->present) {
+			/* Set up battery charging threshold when a new battery was plugged in */
+			up_device_battery_recover_battery_charging_threshold (self, info, &charge_threshold_enabled);
+
 			g_object_set (self,
 			              "is-present", TRUE,
 			              "vendor", info->vendor,
@@ -460,6 +513,7 @@ up_device_battery_update_info (UpDeviceBattery *self, UpBatteryInfo *info)
 			              "has-statistics", TRUE,
 				      "charge-start-threshold", info->charge_control_start_threshold,
 				      "charge-end-threshold", info->charge_control_end_threshold,
+				      "charge-threshold-enabled", charge_threshold_enabled,
 				      "charge-threshold-supported", info->charge_control_supported,
 			              NULL);
 
