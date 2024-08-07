@@ -30,6 +30,7 @@
 
 #include "up-config.h"
 #include "up-constants.h"
+#include "up-polkit.h"
 #include "up-device-list.h"
 #include "up-device.h"
 #include "up-backend.h"
@@ -39,6 +40,7 @@ struct UpDaemonPrivate
 {
 	UpConfig		*config;
 	gboolean		 debug;
+	UpPolkit		*polkit;
 	UpBackend		*backend;
 	UpDeviceList		*power_devices;
 	guint			 action_timeout_id;
@@ -1067,6 +1069,7 @@ up_daemon_init (UpDaemon *daemon)
 	daemon->priv = up_daemon_get_instance_private (daemon);
 
 	daemon->priv->critical_action_lock_fd = -1;
+	daemon->priv->polkit = up_polkit_new ();
 	daemon->priv->config = up_config_new ();
 	daemon->priv->power_devices = up_device_list_new ();
 	daemon->priv->display_device = up_device_new (daemon, NULL);
@@ -1152,6 +1155,7 @@ up_daemon_finalize (GObject *object)
 
 	g_object_unref (priv->power_devices);
 	g_object_unref (priv->display_device);
+	g_object_unref (priv->polkit);
 	g_object_unref (priv->config);
 	g_object_unref (priv->backend);
 

@@ -47,6 +47,15 @@ gio_dep = dependency('gio-2.0', version: '>=' + glib_min_version)
 gio_unix_dep = dependency('gio-unix-2.0', version: '>=' + glib_min_version)
 m_dep = cc.find_library('m', required: true)
 
+polkit = dependency('polkit-gobject-1', version: '>= 0.103')
+if polkit.found()
+  cdata.set('HAVE_POLKIT', '1')
+  if polkit.version().version_compare('>= 0.114')
+    cdata.set('HAVE_POLKIT_0_114', '1')
+  endif
+  cdata.set_quoted ('POLKIT_ACTIONDIR', polkit.get_variable(pkgconfig: 'actiondir'))
+endif
+
 xsltproc = find_program('xsltproc', disabler: true, required: get_option('gtk-doc') or get_option('man'))
 
 # Resolve OS backend
@@ -130,7 +139,7 @@ pkgconfig.generate(
     description: 'UPower is a system daemon for managing power devices',
     version: meson.project_version(),
     libraries: libupower_glib,
-    requires: [glib_dep, gobject_dep],
+    requires: [glib_dep, gobject_dep, polkit],
     subdirs: 'libupower-glib',
 )
 

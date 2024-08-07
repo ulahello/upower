@@ -23,6 +23,7 @@
 #define __UP_DEVICE_H__
 
 #include <dbus/up-device-generated.h>
+#include <polkit/polkit.h>
 #include "up-daemon.h"
 
 G_BEGIN_DECLS

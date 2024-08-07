@@ -22,6 +22,8 @@
 #define __UP_DAEMON_H__
 
 #include <dbus/up-daemon-generated.h>
+#include <polkit/polkit.h>
+
 #include "up-types.h"
 #include "up-device-list.h"
 

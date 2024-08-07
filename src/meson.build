@@ -6,7 +6,7 @@ upowerd_deps = declare_dependency(
         include_directories('../dbus'),
     ],
     dependencies: [
-        m_dep, glib_dep, gobject_dep, gio_dep, gio_unix_dep, libupower_glib_dep, upowerd_dbus_dep
+        m_dep, glib_dep, gobject_dep, gio_dep, gio_unix_dep, libupower_glib_dep, upowerd_dbus_dep, polkit
     ],
     compile_args: [
         '-DUP_COMPILATION',
@@ -46,6 +46,8 @@ upowerd_private = static_library('upowerd-private',
         'up-native.h',
         'up-common.h',
         'up-common.c',
+        'up-polkit.c',
+        'up-polkit.h',
     ],
     dependencies: [ upowerd_deps ],
     c_args: [ '-DG_LOG_DOMAIN="UPower"' ],
