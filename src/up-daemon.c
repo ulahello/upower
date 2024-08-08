@@ -806,6 +806,30 @@ up_daemon_get_charge_icon (UpDaemon     *daemon,
 }
 
 /**
+ * up_daemon_polkit_is_allowed:
+ **/
+gboolean
+up_daemon_polkit_is_allowed (UpDaemon *daemon, const gchar *action_id, GDBusMethodInvocation *invocation)
+{
+	g_autoptr (PolkitSubject) subject = NULL;
+	g_autoptr (GError) error = NULL;
+
+	subject = up_polkit_get_subject (daemon->priv->polkit, invocation);
+	if (subject == NULL) {
+		g_debug ("Can't get sender subject");
+		return FALSE;
+	}
+
+	if (!up_polkit_is_allowed (daemon->priv->polkit, subject, action_id, &error)) {
+		if (error != NULL)
+			g_debug ("Error on Polkit check authority: %s", error->message);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+/**
  * up_daemon_device_changed_cb:
  **/
 static void
