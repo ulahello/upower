@@ -121,6 +121,11 @@ if systemdsystemunitdir == ''
     systemdsystemunitdir = systemd_dep.get_variable(pkgconfig: 'systemdsystemunitdir')
 endif
 
+datadir = get_option('datadir')
+if datadir == ''
+    datadir = join_paths(prefix, get_option('datadir'))
+endif
+
 # Generate configuration file
 config_h = configure_file(output: 'config.h', configuration: cdata)
 
@@ -132,6 +137,7 @@ subdir('libupower-glib')
 subdir('src')
 subdir('tools')
 subdir('doc')
+subdir('policy')
 
 pkgconfig = import('pkgconfig')
 pkgconfig.generate(
