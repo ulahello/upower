@@ -392,6 +392,22 @@ up_device_get_daemon (UpDevice *device)
 	return g_object_ref (priv->daemon);
 }
 
+/**
+ * up_device_polkit_is_allowed
+ **/
+gboolean
+up_device_polkit_is_allowed (UpDevice *device, GDBusMethodInvocation *invocation)
+{
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
+
+	if (!up_daemon_polkit_is_allowed (priv->daemon,
+					  "org.freedesktop.UPower.enable-charging-limit",
+					  invocation))
+		return FALSE;
+
+	return TRUE;
+}
+
 static void
 up_device_export_skeleton (UpDevice *device,
 			   const gchar *object_path)

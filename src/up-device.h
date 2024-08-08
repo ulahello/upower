@@ -68,6 +68,8 @@ gboolean	 up_device_get_on_battery	(UpDevice	*device,
 						 gboolean	*on_battery);
 gboolean	 up_device_get_online		(UpDevice	*device,
 						 gboolean	*online);
+gboolean	 up_device_polkit_is_allowed	(UpDevice	*device,
+						 GDBusMethodInvocation *invocation);
 void		 up_device_sibling_discovered	(UpDevice	*device,
 						 GObject	*sibling);
 gboolean	 up_device_refresh_internal	(UpDevice	*device,
