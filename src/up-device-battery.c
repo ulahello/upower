@@ -620,8 +620,23 @@ up_device_battery_set_charge_threshold (UpExportedDevice *skeleton,
 	gboolean charge_threshold_supported;
 	guint charge_start_threshold = 0;
 	guint charge_end_threshold = 100;
+	g_autoptr (GError) error = NULL;
 	g_autofree gchar *state_file = NULL;
-	g_autoptr(GError) error = NULL;
+	UpDevice *device = UP_DEVICE (self);
+
+	if (device == NULL) {
+		g_dbus_method_invocation_return_error (invocation,
+						       UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL,
+						       "Error on getting device");
+		return FALSE;
+	}
+
+	if (!up_device_polkit_is_allowed (device, invocation)) {
+		g_dbus_method_invocation_return_error (invocation,
+						       UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL,
+						       "Operation is not allowed.");
+		return TRUE;
+	}
 
 	g_object_get (self,
 		      "charge-threshold-enabled", &charge_threshold_enabled,
