@@ -26,7 +26,9 @@
 
 #include <glib.h>
 
+#ifdef HAVE_POLKIT
 #include <polkit/polkit.h>
+#endif
 
 #include "up-polkit.h"
 #include "up-daemon.h"
@@ -35,13 +37,16 @@
 
 struct UpPolkitPrivate
 {
-	GDBusConnection	*connection;
+	GDBusConnection		*connection;
+#ifdef HAVE_POLKIT
 	PolkitAuthority		*authority;
+#endif
 };
 
 G_DEFINE_TYPE (UpPolkit, up_polkit, G_TYPE_OBJECT)
 static gpointer up_polkit_object = NULL;
 
+#ifdef HAVE_POLKIT
 /**
  * up_polkit_get_subject:
  **/
@@ -124,6 +129,7 @@ up_polkit_is_allowed (UpPolkit *polkit, PolkitSubject *subject, const gchar *act
 
 	return ret;
 }
+#endif
 
 /**
  * up_polkit_finalize:
@@ -131,6 +137,7 @@ up_polkit_is_allowed (UpPolkit *polkit, PolkitSubject *subject, const gchar *act
 static void
 up_polkit_finalize (GObject *object)
 {
+#ifdef HAVE_POLKIT
 	g_autoptr (GError) error = NULL;
 	UpPolkit *polkit;
 	g_return_if_fail (UP_IS_POLKIT (object));
@@ -140,6 +147,7 @@ up_polkit_finalize (GObject *object)
 		g_object_unref (polkit->priv->connection);
 
 	g_object_unref (polkit->priv->authority);
+#endif
 
 	G_OBJECT_CLASS (up_polkit_parent_class)->finalize (object);
 }
@@ -167,10 +175,11 @@ up_polkit_init (UpPolkit *polkit)
 	g_autoptr (GError) error = NULL;
 
 	polkit->priv = up_polkit_get_instance_private (polkit);
-
+#ifdef HAVE_POLKIT
 	polkit->priv->authority = polkit_authority_get_sync (NULL, &error);
 	if (polkit->priv->authority == NULL)
 		g_error ("failed to get polkit authority: %s", error->message);
+#endif
 }
 
 /**

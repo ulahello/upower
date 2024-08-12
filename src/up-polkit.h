@@ -22,8 +22,12 @@
 #ifndef __UP_POLKIT_H
 #define __UP_POLKIT_H
 
+#include "config.h"
+
 #include <glib-object.h>
+#ifdef HAVE_POLKIT
 #include <polkit/polkit.h>
+#endif
 
 G_BEGIN_DECLS
 
@@ -50,6 +54,7 @@ typedef struct
 GType		 up_polkit_get_type		(void);
 UpPolkit	*up_polkit_new			(void);
 
+#ifdef HAVE_POLKIT
 PolkitSubject	*up_polkit_get_subject		(UpPolkit		*polkit,
 						 GDBusMethodInvocation	*context);
 gboolean	 up_polkit_check_auth		(UpPolkit		*polkit,
@@ -60,12 +65,7 @@ gboolean	 up_polkit_is_allowed		(UpPolkit		*polkit,
 						 PolkitSubject		*subject,
 						 const gchar		*action_id,
 						 GError		 	**error);
-gboolean         up_polkit_get_uid		(UpPolkit              *polkit,
-                                                 PolkitSubject          *subject,
-                                                 uid_t                  *uid);
-gboolean         up_polkit_get_pid		(UpPolkit              *polkit,
-                                                 PolkitSubject          *subject,
-                                                 pid_t                  *pid);
+#endif
 
 G_END_DECLS
 

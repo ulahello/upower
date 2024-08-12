@@ -811,6 +811,7 @@ up_daemon_get_charge_icon (UpDaemon     *daemon,
 gboolean
 up_daemon_polkit_is_allowed (UpDaemon *daemon, const gchar *action_id, GDBusMethodInvocation *invocation)
 {
+#ifdef HAVE_POLKIT
 	g_autoptr (PolkitSubject) subject = NULL;
 	g_autoptr (GError) error = NULL;
 
@@ -825,6 +826,7 @@ up_daemon_polkit_is_allowed (UpDaemon *daemon, const gchar *action_id, GDBusMeth
 			g_debug ("Error on Polkit check authority: %s", error->message);
 		return FALSE;
 	}
+#endif
 
 	return TRUE;
 }
