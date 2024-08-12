@@ -47,7 +47,8 @@ gio_dep = dependency('gio-2.0', version: '>=' + glib_min_version)
 gio_unix_dep = dependency('gio-unix-2.0', version: '>=' + glib_min_version)
 m_dep = cc.find_library('m', required: true)
 
-polkit = dependency('polkit-gobject-1', version: '>= 0.103')
+polkit = dependency('polkit-gobject-1', version: '>= 0.103',
+                    required: get_option('polkit').disable_auto_if(host_machine.system() != 'linux'))
 if polkit.found()
   cdata.set('HAVE_POLKIT', '1')
   if polkit.version().version_compare('>= 0.114')

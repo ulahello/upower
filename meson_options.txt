@@ -36,3 +36,7 @@ option('idevice',
        type : 'feature',
        value : 'auto',
        description : 'Build with libimobiledevice')
+option('polkit',
+       type: 'feature',
+       value: 'auto',
+       description: 'PolKit support in daemon')
