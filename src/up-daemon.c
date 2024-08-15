@@ -69,6 +69,9 @@ struct UpDaemonPrivate
 	guint			 low_time;
 	guint			 critical_time;
 	guint			 action_time;
+
+	/* environment variable override */
+	const char		*state_dir_override;
 };
 
 static void	up_daemon_finalize		(GObject	*object);
@@ -976,6 +979,23 @@ up_daemon_get_debug (UpDaemon *daemon)
 }
 
 /**
+ * up_deamon_get_state_dir_env_override:
+ *
+ * Get UPOWER_STATE_DIR environment variable.
+ **/
+const gchar *
+up_deamon_get_state_dir_env_override (UpDaemon *daemon)
+{
+	return daemon->priv->state_dir_override;
+}
+
+static void
+up_daemon_get_env_override (UpDaemon *self)
+{
+	self->priv->state_dir_override = g_getenv ("UPOWER_STATE_DIR");
+}
+
+/**
  * up_daemon_device_added_cb:
  **/
 static void
@@ -1111,6 +1131,8 @@ up_daemon_init (UpDaemon *daemon)
 	load_percentage_policy (daemon, FALSE);
 	load_time_policy (daemon, FALSE);
 	policy_config_validate (daemon);
+
+	up_daemon_get_env_override (daemon);
 
 	daemon->priv->backend = up_backend_new ();
 	g_signal_connect (daemon->priv->backend, "device-added",

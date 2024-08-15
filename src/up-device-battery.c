@@ -408,6 +408,26 @@ up_device_battery_set_charge_thresholds(UpDeviceBattery *self, gdouble start, gd
 	return klass->set_battery_charge_thresholds(&self->parent_instance, start, end, error);
 }
 
+static const gchar *
+up_device_battery_get_state_dir (UpDeviceBattery *self)
+{
+	UpDevice *device = UP_DEVICE (self);
+	const gchar *state_dir_override = NULL;
+	UpDeviceBatteryPrivate *priv = up_device_battery_get_instance_private (self);
+
+	if (priv->state_dir != NULL)
+		return priv->state_dir;
+
+	state_dir_override = up_device_get_state_dir_override (device);
+
+	if (state_dir_override != NULL)
+		priv->state_dir = state_dir_override;
+	else
+		priv->state_dir = STATE_DIR;
+
+	return priv->state_dir;
+}
+
 static gboolean
 up_device_battery_get_battery_charge_threshold_config(UpDeviceBattery *self)
 {
@@ -415,10 +435,11 @@ up_device_battery_get_battery_charge_threshold_config(UpDeviceBattery *self)
 	g_autofree gchar *data = NULL;
 	g_autoptr(GError) error = NULL;
 	g_autofree gchar *state_filename = NULL;
-	UpDeviceBatteryPrivate *priv = up_device_battery_get_instance_private (self);
+	const char *state_dir = NULL;
 
 	state_filename = g_strdup_printf("charging-threshold-status");
-	filename = g_build_filename (priv->state_dir, state_filename, NULL);
+	state_dir = up_device_battery_get_state_dir (self);
+	filename = g_build_filename (state_dir, state_filename, NULL);
 	if (g_file_get_contents (filename, &data, NULL, &error) == FALSE) {
 		g_debug ("failed to read battery charge threshold: %s", error->message);
 		return FALSE;
@@ -594,10 +615,10 @@ static gboolean
 up_device_battery_charge_threshold_state_write(UpDeviceBattery *self, gboolean enabled, const gchar *state_file) {
 	g_autofree gchar *filename = NULL;
 	GError *error = NULL;
+	const gchar *state_dir;
 
-	UpDeviceBatteryPrivate *priv = up_device_battery_get_instance_private (self);
-
-	filename = g_build_filename (priv->state_dir, state_file, NULL);
+	state_dir = up_device_battery_get_state_dir (self);
+	filename = g_build_filename (state_dir, state_file, NULL);
 	if (!g_file_set_contents (filename, enabled ? "1": "0" , -1, &error)) {
 		g_error ("failed to save battery charge threshold: %s", error->message);
 		return FALSE;
@@ -684,8 +705,6 @@ up_device_battery_set_charge_threshold (UpExportedDevice *skeleton,
 static void
 up_device_battery_init (UpDeviceBattery *self)
 {
-	UpDeviceBatteryPrivate *priv = up_device_battery_get_instance_private (self);
-
 	g_object_set (self,
 	              "type", UP_DEVICE_KIND_BATTERY,
 	              "power-supply", TRUE,
@@ -694,12 +713,6 @@ up_device_battery_init (UpDeviceBattery *self)
 
 	g_signal_connect (self, "handle-enable-charge-threshold",
 			  G_CALLBACK (up_device_battery_set_charge_threshold), self);
-
-	if (g_getenv ("UPOWER_STATE_DIR")) {
-		priv->state_dir = g_getenv ("UPOWER_STATE_DIR");
-	} else {
-		priv->state_dir = STATE_DIR;
-	}
 }
 
 static void

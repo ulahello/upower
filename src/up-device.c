@@ -751,6 +751,17 @@ up_device_get_native (UpDevice *device)
 	return priv->native;
 }
 
+const gchar *
+up_device_get_state_dir_override (UpDevice *device)
+{
+	UpDevicePrivate *priv = up_device_get_instance_private (device);
+
+	if (priv->daemon == NULL)
+		return NULL;
+
+	return up_deamon_get_state_dir_env_override (priv->daemon);
+}
+
 static void
 up_device_init (UpDevice *device)
 {
