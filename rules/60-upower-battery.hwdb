@@ -25,6 +25,11 @@
 # systemd-hwdb  update
 # udevadm trigger -v -p /sys/class/power_supply/BAT
 # where BAT is the battery in question.
+#
+# CHARGE_LIMIT is in tuple format and each of the variables can be disabled by "_" character.
+# For example:
+# CHARGE_LIMIT=60,80 (charge_control_start_threshold is 60 and charge_control_end_threshold is 80.)
+# CHARGE_LIMIT=_,80 (charge_control_start_threshold will be skipped and charge_control_end_threshold is 80.)
 
 battery:*:*:dmi:*
  CHARGE_LIMIT=60,80

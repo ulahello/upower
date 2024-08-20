@@ -163,12 +163,18 @@ up_device_supply_battery_get_charge_control_limits (GUdevDevice *native, UpBatte
 		return FALSE;
 	}
 
-	if (!up_device_supply_battery_convert_to_double (pairs[0], &charge_control_start_threshold)) {
+	if (g_strcmp0 (pairs[0], "_") == 0) {
+		g_debug ("charge_control_start_threshold is disabled");
+		charge_control_start_threshold = G_MAXUINT;
+	} else if (!up_device_supply_battery_convert_to_double (pairs[0], &charge_control_start_threshold)) {
 		g_warning ("failed to convert charge_control_start_threshold: %s", pairs[0]);
 		return FALSE;
 	}
 
-	if (!up_device_supply_battery_convert_to_double (pairs[1], &charge_control_end_threshold)) {
+	if (g_strcmp0 (pairs[1], "_") == 0) {
+		g_debug ("charge_control_end_threshold is disabled");
+		charge_control_end_threshold = G_MAXUINT;
+	} else if (!up_device_supply_battery_convert_to_double (pairs[1], &charge_control_end_threshold)) {
 		g_warning ("failed to convert charge_control_start_threshold: %s", pairs[0]);
 		return FALSE;
 	}
@@ -401,16 +407,25 @@ up_device_supply_battery_set_battery_charge_thresholds(UpDevice *device, guint s
 	start_filename = g_build_filename (native_path, "charge_control_start_threshold", NULL);
 	end_filename = g_build_filename (native_path, "charge_control_end_threshold", NULL);
 
-	g_string_printf (start_str, "%d", CLAMP (start, 0, 100));
-	g_string_printf (end_str, "%d", CLAMP (end, 0, 100));
+	if (start != G_MAXUINT) {
+		g_string_printf (start_str, "%d", CLAMP (start, 0, 100));
+		if (!g_file_set_contents_full (start_filename, start_str->str, start_str->len,
+					  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, error)) {
+			return FALSE;
+		}
+	} else {
+		g_debug ("Ignore charge_control_start_threshold setting");
+	}
 
-	if (!g_file_set_contents_full (start_filename, start_str->str, start_str->len,
-				  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, error))
-		return FALSE;
-
-	if (!g_file_set_contents_full (end_filename, end_str->str, end_str->len,
-				  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, error))
-		return FALSE;
+	if (end != G_MAXUINT) {
+		g_string_printf (end_str, "%d", CLAMP (end, 0, 100));
+		if (!g_file_set_contents_full (end_filename, end_str->str, end_str->len,
+					  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, error)) {
+			return FALSE;
+		}
+	} else {
+		g_debug ("Ignore charge_control_end_threshold setting");
+	}
 
 	return TRUE;
 }
