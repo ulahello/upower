@@ -395,6 +395,7 @@ up_device_supply_device_path (GUdevDevice *device)
 
 static gboolean
 up_device_supply_battery_set_battery_charge_thresholds(UpDevice *device, guint start, guint end, GError **error) {
+	guint err_count = 0;
 	GUdevDevice *native;
 	g_autofree gchar *native_path = NULL;
 	g_autofree gchar *start_filename = NULL;
@@ -411,7 +412,7 @@ up_device_supply_battery_set_battery_charge_thresholds(UpDevice *device, guint s
 		g_string_printf (start_str, "%d", CLAMP (start, 0, 100));
 		if (!g_file_set_contents_full (start_filename, start_str->str, start_str->len,
 					  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, error)) {
-			return FALSE;
+			err_count++;
 		}
 	} else {
 		g_debug ("Ignore charge_control_start_threshold setting");
@@ -421,10 +422,16 @@ up_device_supply_battery_set_battery_charge_thresholds(UpDevice *device, guint s
 		g_string_printf (end_str, "%d", CLAMP (end, 0, 100));
 		if (!g_file_set_contents_full (end_filename, end_str->str, end_str->len,
 					  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, error)) {
-			return FALSE;
+			err_count++;
 		}
 	} else {
 		g_debug ("Ignore charge_control_end_threshold setting");
+	}
+
+	if (err_count == 2) {
+		g_set_error_literal (error, G_IO_ERROR,
+				     G_IO_ERROR_FAILED, "Failed to set charge control thresholds");
+		return FALSE;
 	}
 
 	return TRUE;
