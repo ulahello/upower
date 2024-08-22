@@ -1,3 +1,11 @@
+Version 1.90.5
+--------------
+Released: 2024-08-22
+
+- Suspend and Ignore as the CriticalPowerActions (!218 and !218)
+- Support for battery charging threshold (!208)
+- Tweak the device priority to make sure the device kind joystick can be correctly shown. (#267)
+
 Version 1.90.4
 --------------
 Released: 2024-04-08
