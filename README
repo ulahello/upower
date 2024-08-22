@@ -8,6 +8,7 @@ Requirements:
    gio-2.0              >= 2.16.1
    gudev-1.0            >= 235    (Linux)
    libimobiledevice-1.0 >= 0.9.7  (optional)
+   polkit-gobject-1 >= 124
 
 UPower is an abstraction for enumerating power devices,
 listening to device events and querying history and statistics.
