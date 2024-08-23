@@ -857,6 +857,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
         <doc:description>
           <doc:para>
             <p>When a start charge threshold is set the battery won't get charged until the charge drops under this threshold.</p>
+            <p>In general case, ChargeStartThreshold is between 0 and 100. If it is G_MAXUINT, upower will skip to set charge_control_start_threshold.</p>
           </doc:para>
         </doc:description>
       </doc:doc>
@@ -867,6 +868,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
         <doc:description>
           <doc:para>
             <p>The end charge threshold stops the battery from getting charged after the set threshold</p>
+            <p>In general case, ChargeEndThreshold is between 0 and 100. If it is G_MAXUINT, upower will skip to set charge_control_end_threshold.</p>
           </doc:para>
         </doc:description>
       </doc:doc>
