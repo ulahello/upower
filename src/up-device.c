@@ -759,7 +759,7 @@ up_device_get_state_dir_override (UpDevice *device)
 	if (priv->daemon == NULL)
 		return NULL;
 
-	return up_deamon_get_state_dir_env_override (priv->daemon);
+	return up_daemon_get_state_dir_env_override (priv->daemon);
 }
 
 static void

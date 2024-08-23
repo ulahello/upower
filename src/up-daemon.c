@@ -979,12 +979,12 @@ up_daemon_get_debug (UpDaemon *daemon)
 }
 
 /**
- * up_deamon_get_state_dir_env_override:
+ * up_daemon_get_state_dir_env_override:
  *
  * Get UPOWER_STATE_DIR environment variable.
  **/
 const gchar *
-up_deamon_get_state_dir_env_override (UpDaemon *daemon)
+up_daemon_get_state_dir_env_override (UpDaemon *daemon)
 {
 	return daemon->priv->state_dir_override;
 }

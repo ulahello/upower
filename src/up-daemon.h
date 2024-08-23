@@ -87,7 +87,7 @@ const gchar	*up_daemon_get_charge_icon	(UpDaemon		*daemon,
 						 gdouble		 percentage,
 						 UpDeviceLevel		 battery_level,
 						 gboolean		 charging);
-const gchar	*up_deamon_get_state_dir_env_override (UpDaemon *daemon);
+const gchar	*up_daemon_get_state_dir_env_override (UpDaemon *daemon);
 gboolean	 up_daemon_polkit_is_allowed	(UpDaemon		*daemon,
 						 const gchar		*action_id,
 						 GDBusMethodInvocation	*invocation);
