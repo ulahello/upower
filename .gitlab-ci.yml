@@ -25,6 +25,7 @@ variables:
     libplist-devel
     umockdev
     dbus-x11
+    polkit-devel
     python3-gobject
     python3-dbusmock
     python3-pip
