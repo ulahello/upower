@@ -43,7 +43,8 @@ struct UpPolkitPrivate
 #endif
 };
 
-G_DEFINE_TYPE (UpPolkit, up_polkit, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_CODE (UpPolkit, up_polkit, G_TYPE_OBJECT,
+                         G_ADD_PRIVATE (UpPolkit))
 static gpointer up_polkit_object = NULL;
 
 #ifdef HAVE_POLKIT
