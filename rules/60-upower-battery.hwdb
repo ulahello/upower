@@ -32,4 +32,4 @@
 # CHARGE_LIMIT=_,80 (charge_control_start_threshold will be skipped and charge_control_end_threshold is 80.)
 
 battery:*:*:dmi:*
- CHARGE_LIMIT=60,80
+ CHARGE_LIMIT=75,80
