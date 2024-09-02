@@ -45,7 +45,6 @@ struct UpPolkitPrivate
 
 G_DEFINE_TYPE_WITH_CODE (UpPolkit, up_polkit, G_TYPE_OBJECT,
                          G_ADD_PRIVATE (UpPolkit))
-static gpointer up_polkit_object = NULL;
 
 #ifdef HAVE_POLKIT
 /**
@@ -190,12 +189,6 @@ up_polkit_init (UpPolkit *polkit)
 UpPolkit *
 up_polkit_new (void)
 {
-	if (up_polkit_object != NULL) {
-		g_object_ref (up_polkit_object);
-	} else {
-		up_polkit_object = g_object_new (UP_TYPE_POLKIT, NULL);
-		g_object_add_weak_pointer (up_polkit_object, &up_polkit_object);
-	}
-	return UP_POLKIT (up_polkit_object);
+	return UP_POLKIT (g_object_new (UP_TYPE_POLKIT, NULL));
 }
 
