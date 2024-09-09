@@ -43,8 +43,7 @@ struct UpPolkitPrivate
 #endif
 };
 
-G_DEFINE_TYPE_WITH_CODE (UpPolkit, up_polkit, G_TYPE_OBJECT,
-                         G_ADD_PRIVATE (UpPolkit))
+G_DEFINE_TYPE_WITH_PRIVATE (UpPolkit, up_polkit, G_TYPE_OBJECT)
 
 #ifdef HAVE_POLKIT
 /**
