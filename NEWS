@@ -1,3 +1,12 @@
+Version 1.90.6
+--------------
+Released: 2024-09-16
+
+- Fractional battery percentage (!226)
+- CI enhancement. (!236)
+- Tweak the default battery charging threshold to 75-80. (!234)
+- Fix g_object_weak_ref: assertion 'g_atomic_int_get (&object->ref_count) >= 1' failed (#281, !233)
+
 Version 1.90.5
 --------------
 Released: 2024-08-22
