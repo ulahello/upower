@@ -1288,7 +1288,7 @@ class Tests(dbusmock.DBusTestCase):
             self.assertEqual(fp.read(), '100')
 
     def test_battery_charge_threshold_unsupported(self):
-        '''Battery with only end_threshold supported'''
+        '''Battery with only start_threshold supported'''
 
         if not self.polkit:
             self.start_polkitd({})
