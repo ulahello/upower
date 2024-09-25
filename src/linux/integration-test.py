@@ -3148,8 +3148,8 @@ class Tests(dbusmock.DBusTestCase):
     def test_sibling_priority_no_overwrite(self):
         'Test siblings using the fallback device do not overwrite previous guesses'
 
-        self.start_daemon()
         self.testbed.add_from_file(os.path.join(edir, 'tests/wacom-pen-digitiser.device'))
+        self.start_daemon()
 
         self.assertDevs({
             'battery_wacom_battery_0': {
