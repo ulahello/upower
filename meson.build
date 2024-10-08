@@ -138,6 +138,7 @@ subdir('libupower-glib')
 subdir('src')
 subdir('tools')
 subdir('doc')
+subdir('data/zsh-completion')
 subdir('policy')
 
 pkgconfig = import('pkgconfig')

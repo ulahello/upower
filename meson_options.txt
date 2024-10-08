@@ -40,3 +40,7 @@ option('polkit',
        type: 'feature',
        value: 'auto',
        description: 'PolKit support in daemon')
+option('zshcompletiondir',
+       type: 'string',
+       value: '',
+       description: 'Directory for zsh completion scripts ["no" disables]')
