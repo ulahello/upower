@@ -395,9 +395,9 @@ up_device_to_text (UpDevice *device)
 		if (up_exported_device_get_charge_end_threshold (priv->proxy_device) > 0)
 			g_string_append_printf (string, "    charge-end-threshold:          %d%%\n", up_exported_device_get_charge_end_threshold (priv->proxy_device));
 		if (up_exported_device_get_charge_threshold_enabled (priv->proxy_device))
-			g_string_append_printf (string, "    charge-threshold-enabled:          %d\n", up_exported_device_get_charge_threshold_enabled (priv->proxy_device));
+			g_string_append_printf (string, "    charge-threshold-enabled:      %s\n", up_device_bool_to_string (up_exported_device_get_charge_threshold_enabled (priv->proxy_device)));
 		if (up_exported_device_get_charge_threshold_supported (priv->proxy_device))
-			g_string_append_printf (string, "    charge-threshold-supported:          %d\n", up_exported_device_get_charge_threshold_supported (priv->proxy_device));
+			g_string_append_printf (string, "    charge-threshold-supported:    %s\n", up_device_bool_to_string (up_exported_device_get_charge_threshold_supported (priv->proxy_device)));
 	}
 	if (kind == UP_DEVICE_KIND_LINE_POWER)
 		g_string_append_printf (string, "    online:              %s\n", up_device_bool_to_string (up_exported_device_get_online (priv->proxy_device)));
