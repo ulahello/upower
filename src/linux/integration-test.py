@@ -662,6 +662,7 @@ class Tests(dbusmock.DBusTestCase):
 
         # now connect AC again
         self.testbed.set_attribute(ac, "online", "1")
+        self.testbed.set_attribute(bat0, "status", "Charging")
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
         self.assertEqual(len(devs), 2)
@@ -671,6 +672,28 @@ class Tests(dbusmock.DBusTestCase):
             self.get_dbus_display_property("WarningLevel"), UP_DEVICE_LEVEL_NONE
         )
         self.assertEqual(self.get_dbus_dev_property(ac_up, "Online"), True)
+        self.stop_daemon()
+
+        # a low power charger causes the battery is discharging and the AC is online
+        self.testbed.set_attribute(ac, "online", "1")
+        self.testbed.set_attribute(bat0, "status", "Discharging")
+        self.testbed.set_attribute(bat0, "energy_now", "1500000")
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 2)
+        self.assertEqual(self.get_dbus_property("OnBattery"), True)
+        self.assertEqual(
+            self.get_dbus_display_property("WarningLevel"), UP_DEVICE_LEVEL_CRITICAL
+        )
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, "IsPresent"), True)
+        self.assertEqual(
+            self.get_dbus_dev_property(bat0_up, "State"), UP_DEVICE_STATE_DISCHARGING
+        )
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, "Percentage"), 2.5)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, "PowerSupply"), True)
+        self.assertEqual(
+            self.get_dbus_dev_property(bat0_up, "Type"), UP_DEVICE_KIND_BATTERY
+        )
         self.stop_daemon()
 
     def test_multiple_batteries(self):
