@@ -744,6 +744,195 @@ class Tests(dbusmock.DBusTestCase):
         )
         self.stop_daemon()
 
+    def test_multiple_batteries_one_offline(self):
+        """Multiple batteries but one battery was removed"""
+
+        # one well charged, one low
+        bat0 = self.testbed.add_device(
+            "power_supply",
+            "BAT0",
+            None,
+            [
+                "type",
+                "Battery",
+                "present",
+                "1",
+                "status",
+                "Discharging",
+                "energy_full",
+                "60000000",
+                "energy_full_design",
+                "80000000",
+                "energy_now",
+                "48000000",
+                "voltage_now",
+                "12000000",
+            ],
+            [],
+        )
+
+        bat1 = self.testbed.add_device(
+            "power_supply",
+            "BAT1",
+            None,
+            [
+                "type",
+                "Battery",
+                "present",
+                "1",
+                "status",
+                "Discharging",
+                "energy_full",
+                "60000000",
+                "energy_full_design",
+                "80000000",
+                "energy_now",
+                "1500000",
+                "voltage_now",
+                "12000000",
+            ],
+            [],
+        )
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 2)
+        (bat0_up, bat1_up) = devs
+
+        # as we have one which is well-charged, the summary state is "not low
+        # battery"
+        self.assertEqual(self.get_dbus_property("OnBattery"), True)
+        self.assertEqual(
+            self.get_dbus_display_property("WarningLevel"), UP_DEVICE_LEVEL_NONE
+        )
+        self.stop_daemon()
+
+        # now set both to low
+        self.testbed.set_attribute(bat0, "energy_now", "1500000")
+        self.start_daemon()
+        self.assertEqual(self.get_dbus_property("OnBattery"), True)
+        self.assertEqual(
+            self.get_dbus_display_property("WarningLevel"), UP_DEVICE_LEVEL_CRITICAL
+        )
+        self.stop_daemon()
+
+        # now remove one
+        self.testbed.set_attribute(bat1, "present", "0")
+        self.testbed.set_attribute(bat1, "status", "unknown")
+        self.testbed.set_attribute(bat1, "energy_full", "0")
+        self.testbed.set_attribute(bat1, "energy_full_design", "0")
+        self.testbed.set_attribute(bat1, "energy_now", "0")
+        self.testbed.set_attribute(bat1, "voltage_now", "0")
+        self.start_daemon()
+        self.assertEqual(self.get_dbus_property("OnBattery"), True)
+        self.assertEqual(self.get_dbus_display_property("Percentage"), 2.5)
+        self.stop_daemon()
+
+        # then, remove both
+        self.testbed.set_attribute(bat0, "present", "0")
+        self.start_daemon()
+        self.assertEqual(self.get_dbus_display_property("Percentage"), 0.0)
+        self.assertEqual(
+            self.get_dbus_dev_property(bat0_up, "State"), UP_DEVICE_STATE_UNKNOWN
+        )
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, "Temperature"), 0.0)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, "ChargeEndThreshold"), 0)
+        self.stop_daemon()
+
+    def test_multiple_batteries_one_offline_issue292(self):
+        """Multiple batteries but one battery was removed"""
+
+        # one well charged, one low
+        bat0 = self.testbed.add_device(
+            "power_supply",
+            "BAT0",
+            None,
+            [
+                "type",
+                "Battery",
+                "present",
+                "1",
+                "status",
+                "Discharging",
+                "energy_full",
+                "60000000",
+                "energy_full_design",
+                "80000000",
+                "energy_now",
+                "48000000",
+                "voltage_now",
+                "12000000",
+            ],
+            [],
+        )
+
+        bat1 = self.testbed.add_device(
+            "power_supply",
+            "BAT1",
+            None,
+            [
+                "type",
+                "Battery",
+                "present",
+                "1",
+                "status",
+                "Discharging",
+                "energy_full",
+                "60000000",
+                "energy_full_design",
+                "80000000",
+                "energy_now",
+                "1500000",
+                "voltage_now",
+                "12000000",
+            ],
+            [],
+        )
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 2)
+
+        # as we have one which is well-charged, the summary state is "not low
+        # battery"
+        self.assertEqual(self.get_dbus_property("OnBattery"), True)
+        self.assertEqual(
+            self.get_dbus_display_property("WarningLevel"), UP_DEVICE_LEVEL_NONE
+        )
+        self.stop_daemon()
+
+        # now set both to low
+        self.testbed.set_attribute(bat0, "energy_now", "1500000")
+        self.start_daemon()
+        self.assertEqual(self.get_dbus_property("OnBattery"), True)
+        self.assertEqual(
+            self.get_dbus_display_property("WarningLevel"), UP_DEVICE_LEVEL_CRITICAL
+        )
+        self.stop_daemon()
+
+        # now remove one
+        self.start_daemon()
+        self.testbed.remove_device(bat1)
+        # some system reports only present=0 when removing batteries
+        # https://gitlab.freedesktop.org/upower/upower/-/issues/292
+        bat1 = self.testbed.add_device(
+            "power_supply", "BAT1", None, ["type", "Battery", "present", "0"], []
+        )
+
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(self.get_dbus_property("OnBattery"), True)
+        self.assertEqual(self.get_dbus_display_property("Percentage"), 2.5)
+        with self.assertRaises(Exception) as cm:
+            self.get_dbus_dev_property(devs[1], "energy_full")
+        with self.assertRaises(Exception) as cm:
+            self.get_dbus_dev_property(devs[1], "energy_full_design")
+        with self.assertRaises(Exception) as cm:
+            self.get_dbus_dev_property(devs[1], "energy_now")
+        with self.assertRaises(Exception) as cm:
+            self.get_dbus_dev_property(devs[1], "voltage_now")
+
+        self.stop_daemon()
+
     def test_unknown_battery_status_no_ac(self):
         """Unknown battery charge status, no AC"""
 
