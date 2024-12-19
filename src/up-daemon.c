@@ -156,6 +156,7 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 
 		UpDeviceState state = UP_DEVICE_STATE_UNKNOWN;
 		UpDeviceKind kind = UP_DEVICE_KIND_UNKNOWN;
+		gboolean present = FALSE;
 		gdouble percentage = 0.0;
 		gdouble energy = 0.0;
 		gdouble energy_full = 0.0;
@@ -166,6 +167,7 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 
 		device = g_ptr_array_index (array, i);
 		g_object_get (device,
+			      "is-present", &present,
 			      "type", &kind,
 			      "state", &state,
 			      "percentage", &percentage,
@@ -176,6 +178,9 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 			      "time-to-full", &time_to_full,
 			      "power-supply", &power_supply,
 			      NULL);
+
+		if (!present)
+			continue;
 
 		/* When we have a UPS, it's either a desktop, and
 		 * has no batteries, or a laptop, in which case we
