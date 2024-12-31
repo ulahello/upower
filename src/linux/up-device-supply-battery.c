@@ -292,7 +292,14 @@ up_device_supply_battery_refresh (UpDevice *device,
 		values.percentage = CLAMP(values.percentage, 0.0f, 100.0f);
 	}
 
-	values.state = up_device_supply_get_state (native);
+	/* For some battery solutions, for example axp20x-battery, the kernel reports
+	 * status = charging but the battery actually discharges when connecting a
+	 * charger. Upower reports the battery is "discharging" when current_now is
+	 * found and is a negative value.*/
+	if (g_udev_device_get_sysfs_attr_as_double_uncached (native, "current_now") < 0.0)
+		values.state = UP_DEVICE_STATE_DISCHARGING;
+	else
+		values.state = up_device_supply_get_state (native);
 
 	values.temperature = g_udev_device_get_sysfs_attr_as_double_uncached (native, "temp") / 10.0;
 
