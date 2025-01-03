@@ -354,16 +354,16 @@ up_device_supply_sibling_discovered_guess_type (UpDevice *device,
 	 * a keyboard, a touchpad, and... etc, for example Sony DualShock4 joystick.
 	 * A mouse and a touchpad may include a mouse and a keyboard.
 	 * Therefore, the priority is:
-	 * 1. Audio
-	 * 2. Gaming_input
+	 * 1. Gaming_input
+	 * 2. Audio
 	 * 3. Keyboard
 	 * 4. Tablet
 	 * 5. Touchpad
 	 * 6. Mouse
 	*/
 	UpDeviceKind priority[] = {
-		UP_DEVICE_KIND_OTHER_AUDIO,
 		UP_DEVICE_KIND_GAMING_INPUT,
+		UP_DEVICE_KIND_OTHER_AUDIO,
 		UP_DEVICE_KIND_KEYBOARD,
 		UP_DEVICE_KIND_TABLET,
 		UP_DEVICE_KIND_TOUCHPAD,
