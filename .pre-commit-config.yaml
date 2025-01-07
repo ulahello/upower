@@ -1,0 +1,26 @@
+default_stages: [commit]
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+    -   id: no-commit-to-branch
+        args: [--branch, main, --pattern, 1_.*_X]
+    -   id: check-added-large-files
+    -   id: check-byte-order-marker
+    -   id: check-executables-have-shebangs
+    -   id: forbid-new-submodules
+    -   id: check-yaml
+        exclude: '.clang-format'
+    -   id: check-json
+    -   id: pretty-format-json
+        args: ['--no-sort-keys', '--autofix']
+    -   id: check-symlinks
+    -   id: check-xml
+    -   id: end-of-file-fixer
+        types_or: [c, shell, python, proto]
+    -   id: trailing-whitespace
+        types_or: [c, shell, python, xml]
+    -   id: check-docstring-first
+    -   id: check-merge-conflict
+    -   id: mixed-line-ending
+        args: [--fix=lf]
