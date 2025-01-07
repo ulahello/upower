@@ -1,5 +1,4 @@
-SCM
-===
+## SCM
 
  - anonymous checkouts
 
@@ -48,12 +47,12 @@ SCM
     http://www.kernel.org/pub/software/scm/git/docs/
 
 
-Committing code
-===
+## Committing code
+
 
  - Commit messages should be of the form (the five lines between the
    lines starting with ===)
-
+```
 === begin example commit ===
 short explanation of the commit
 
@@ -61,7 +60,7 @@ Longer explanation explaining exactly what's changed, whether any
 external or private interfaces changed, what bugs were fixed (with bug
 tracker reference if applicable) and so forth. Be concise but not too brief.
 === end example commit ===
-
+```
  - Always add a brief description of the commit to the _first_ line of
    the commit and terminate by two newlines (it will work without the
    second newline, but that is not nice for the interfaces). 
@@ -77,8 +76,7 @@ tracker reference if applicable) and so forth. Be concise but not too brief.
  - When committing code on behalf of others use the --author option, e.g.
    git commit -a --author "Joe Coder <joe@coder.org>"
 
-Coding Style
-===
+## Coding Style
 
  - Please follow the coding style already used.
 
@@ -92,8 +90,7 @@ Coding Style
    data). Avoiding heuristics is also important for security reasons;
    if it looks funny, ignore it (or exit, or disconnect).
 
-Testing
-===
+## Testing
 
 Under Linux, with the umockdev package installed, you can run "make check"
 in the root build directory to run an automated test suite.
