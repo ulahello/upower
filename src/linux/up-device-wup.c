@@ -201,7 +201,7 @@ up_device_wup_parse_command (UpDeviceWup *wup, const gchar *data)
 		}
 	}
 
-	/* check we have enough data inthe packet */
+	/* check we have enough data in the packet */
 	tokens = g_strsplit (packet, ",", -1);
 	number_tokens = g_strv_length (tokens);
 	if (number_tokens < 3) {

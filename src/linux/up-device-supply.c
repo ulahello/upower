@@ -554,7 +554,7 @@ up_device_supply_guess_type (GUdevDevice *native,
 			g_warning ("USB power supply %s without usb_type property, please report",
 				   native_path);
 	} else {
-		g_warning ("did not recognise type %s, please report", device_type);
+		g_warning ("did not recognize type %s, please report", device_type);
 	}
 
 out:

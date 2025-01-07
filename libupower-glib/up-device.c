@@ -971,7 +971,7 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:is-rechargeable:
 	 *
-	 * If the device has a rechargable battery.
+	 * If the device has a rechargeable battery.
 	 *
 	 * Since: 0.9.0
 	 **/
@@ -1238,7 +1238,7 @@ up_device_class_init (UpDeviceClass *klass)
 	/**
 	 * UpDevice:icon-name:
 	 *
-	 * The icon name, following the Icon Naming Speficiation
+	 * The icon name, following the Icon Naming Specification
 	 *
 	 * Since: 1.0
 	 **/

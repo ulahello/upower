@@ -166,7 +166,7 @@ up_test_history_func (void)
 	ret = up_history_set_id (history, "test");
 	g_assert (ret);
 
-	/* get nonexistant data */
+	/* get nonexistent data */
 	array = up_history_get_data (history, UP_HISTORY_TYPE_CHARGE, 10, 100);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 0);

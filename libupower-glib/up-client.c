@@ -615,7 +615,7 @@ up_client_new_full (GCancellable *cancellable, GError **error)
  * Creates a new #UpClient object. If connecting to upowerd on D-Bus fails,
  * this returns %NULL and prints out a warning with the error message.
  * Consider using up_client_new_full() instead which allows you to handle errors
- * and cancelling long operations yourself.
+ * and canceling long operations yourself.
  *
  * Return value: a new UpClient object, or %NULL on failure.
  *

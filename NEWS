@@ -65,7 +65,7 @@ Released: 2023-07-04
   connected through Bluetooth would show as 2 batteries)
 - Hide duplicate Logitech wireless devices when they get connected
   through USB as well
-- Fix Bluetooth device names not synchronising, and use user-chosen
+- Fix Bluetooth device names not synchronizing, and use user-chosen
   names when available
 - Handle the "present" sysfs attribute changing
 - Fix iDevices not appearing
@@ -631,7 +631,7 @@ Bugfixes:
  - Depend on stable GUdev API (Michael Biebl)
  - Drop devkit and devkit-power-daemon symlinks (Michael Biebl)
  - Fix bitmap check in the input code (Arnaud Patard)
- - Honour ACLOCAL_FLAGS in Makefile.am (Richard Hughes)
+ - Honor ACLOCAL_FLAGS in Makefile.am (Richard Hughes)
 
 Version 0.9.8
 ~~~~~~~~~~~~~
@@ -851,7 +851,7 @@ Bugfixes:
  - Update the list of HID UPS (Arnaud Quette)
  - Use a gdouble for percentage to fix on-battery reporting (Byron Clark)
  - Bug 24262 – incorrect battery recall warning for Lenovo T61 (Martin Pitt)
- - Fix the toshiba battery recal notices by matching up the double quotes (Richard Hughes)
+ - Fix the toshiba battery recall notices by matching up the double quotes (Richard Hughes)
  - Avoid going from discharging to pending-discharge when the expansion battery
    is very low (Richard Hughes)
  - Some vendors fill the NVRAM full of junk. Don't crash the daemon if the
@@ -990,7 +990,7 @@ Bugfixes:
  - Remove the 0x prefix from some rule matches (Ronald)
  - Allow all DBus properties to be read with the new DBus (Richard Hughes)
  - Only reset the update-time if the read was successful (Richard Hughes)
- - Optimise the udev rules to skip non-usb devices (Richard Hughes)
+ - Optimize the udev rules to skip non-usb devices (Richard Hughes)
  - Ensure we get properties on devices correctly that have not yet been changed (Richard Hughes)
  - Make the suspend and hibernate scripts execute synchronously. Fixes rh#497563 (Richard Hughes)
  - Ignore method timeouts when we suspend and hibernate (Richard Hughes)
@@ -1020,7 +1020,7 @@ New Features:
  - Get rid of internal Object and instead use the GObject property system (Richard Hughes)
  - Move the library directory from libdevkit-power to devkit-power-gobject (Richard Hughes)
  - Ship a shared library. There are now three external projects using copies of
-   this, which is rediculous (Richard Hughes)
+   this, which is ridiculous (Richard Hughes)
  - Require I_KNOW_THE_DEVICEKIT_POWER_API_IS_SUBJECT_TO_CHANGE (Richard Hughes)
 
 Bugfixes:

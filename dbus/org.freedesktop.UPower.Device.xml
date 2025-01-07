@@ -148,7 +148,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
         </doc:description>
         <doc:permission>Callers will need to make sure that the daemon was started in debug mode</doc:permission>
         <doc:errors>
-          <doc:error name="&ERROR_GENERAL;">if an error occured while refreshing</doc:error>
+          <doc:error name="&ERROR_GENERAL;">if an error occurred while refreshing</doc:error>
         </doc:errors>
       </doc:doc>
     </method>
@@ -263,7 +263,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
           </doc:para>
         </doc:description>
         <doc:errors>
-          <doc:error name="&ERROR_GENERAL;">if an error occured while setting the battery charge limits</doc:error>
+          <doc:error name="&ERROR_GENERAL;">if an error occurred while setting the battery charge limits</doc:error>
         </doc:errors>
       </doc:doc>
     </method>
@@ -416,7 +416,7 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
               <doc:term>27</doc:term><doc:definition>Toy</doc:definition>
             </doc:item>
             <doc:item>
-              <doc:term>28</doc:term><doc:definition>Bluetooth Genreic</doc:definition>
+              <doc:term>28</doc:term><doc:definition>Bluetooth Generic</doc:definition>
             </doc:item>
           </doc:list>
           <doc:para>

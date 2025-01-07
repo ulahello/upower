@@ -85,7 +85,7 @@ up_polkit_check_auth (UpPolkit *polkit, PolkitSubject *subject, const gchar *act
 							    POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
 							    NULL, &error_local);
 	if (result == NULL) {
-		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "failed to check authorisation: %s", error_local->message);
+		error = g_error_new (UP_DAEMON_ERROR, UP_DAEMON_ERROR_GENERAL, "failed to check authorization: %s", error_local->message);
 		g_dbus_method_invocation_return_gerror (invocation, error);
 		return FALSE;
 	}

@@ -602,7 +602,7 @@ up_backend_apm_event_thread(gpointer object)
 	}
 #endif
 	return NULL;
-	/* shouldnt be reached ? */
+	/* shouldn't be reached ? */
 }
 
 /**

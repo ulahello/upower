@@ -86,7 +86,7 @@
     <title>libupower-glib helpers</title>
     <partintro>
       <para>
-        This part documents helper funtions in libupower-glib.
+        This part documents helper functions in libupower-glib.
       </para>
     </partintro>
     <xi:include href="xml/up-types.xml"/>

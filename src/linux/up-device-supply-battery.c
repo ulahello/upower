@@ -238,7 +238,7 @@ up_device_supply_battery_refresh (UpDevice *device,
 		info.charge_control_supported = FALSE;
 	}
 
-	/* NOTE: We used to warn about full > design, but really that is prefectly fine to happen. */
+	/* NOTE: We used to warn about full > design, but really that is perfectly fine to happen. */
 
 	/* Update the battery information (will only fire events for actual changes) */
 	up_device_battery_update_info (battery, &info);
@@ -262,7 +262,7 @@ up_device_supply_battery_refresh (UpDevice *device,
 		 * consistency (but we used to read it in the past).
 		 *
 		 * See https://bugs.freedesktop.org/show_bug.cgi?id=60104#c2
-		 * whichs reports energy_now of 15.05 Wh while our calculation
+		 * which's reports energy_now of 15.05 Wh while our calculation
 		 * will be ~16.4Wh by multiplying charge with voltage).
 		 */
 		values.energy.rate = fabs (g_udev_device_get_sysfs_attr_as_double_uncached (native, "current_now") / 1000000.0);

@@ -199,7 +199,7 @@ up_device_battery_update_poll_frequency (UpDeviceBattery *self,
 	 * and one of the following holds true:
 	 *  1. The current stat is unknown; we hope that this is transient
 	 *     and re-poll.
-	 *  2. A change occured on a line power supply. This likely means that
+	 *  2. A change occurred on a line power supply. This likely means that
 	 *     batteries switch between charging/discharging which does not
 	 *     always result in a separate uevent.
 	 *
@@ -270,7 +270,7 @@ up_device_battery_report (UpDeviceBattery *self,
 	 * incorrectly multiplied by the voltage.
 	 *
 	 * Said differently, just assuming the units did *not* change should
-	 * give us a saner value. Obviously, things will fall appart if upower
+	 * give us a saner value. Obviously, things will fall apart if upower
 	 * is restarted and this should be fixed in the kernel or firmware.
 	 *
 	 * Unfortunately, the hardware is quite old (X201s) which makes it hard

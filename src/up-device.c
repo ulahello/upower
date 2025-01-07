@@ -660,7 +660,7 @@ up_device_get_history (UpExportedDevice *skeleton,
 	else if (g_strcmp0 (type_string, "time-empty") == 0)
 		type = UP_HISTORY_TYPE_TIME_EMPTY;
 
-	/* something recognised */
+	/* something recognized */
 	if (type != UP_HISTORY_TYPE_UNKNOWN) {
 		ensure_history (device);
 		array = up_history_get_data (priv->history, type, timespan, resolution);
@@ -905,7 +905,7 @@ up_device_class_init (UpDeviceClass *klass)
 	properties[PROP_DISCONNECTED] =
 		g_param_spec_boolean ("disconnected",
 		                      "Disconnected",
-		                      "Whethe wireless device is disconnected",
+		                      "Whether wireless device is disconnected",
 		                      FALSE,
 		                      G_PARAM_STATIC_STRINGS | G_PARAM_WRITABLE | G_PARAM_READABLE);
 

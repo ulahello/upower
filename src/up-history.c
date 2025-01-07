@@ -255,7 +255,7 @@ up_history_get_data (UpHistory *history, UpHistoryType type, guint timespan, gui
 	else if (type == UP_HISTORY_TYPE_TIME_EMPTY)
 		array_data = history->priv->data_time_empty;
 
-	/* not recognised */
+	/* not recognized */
 	if (array_data == NULL)
 		return NULL;
 
