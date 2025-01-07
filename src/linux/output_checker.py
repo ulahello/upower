@@ -26,21 +26,27 @@ import threading
 import select
 import errno
 
-class OutputChecker(object):
 
+class OutputChecker(object):
     def __init__(self, out=sys.stdout):
         self._output = out
         self._pipe_fd_r, self._pipe_fd_w = os.pipe()
-        self._partial_buf = b''
+        self._partial_buf = b""
         self._lines_sem = threading.Semaphore()
         self._lines = []
         self._reader_io = io.StringIO()
 
         # Just to be sure, shouldn't be a problem even if we didn't set it
-        fcntl.fcntl(self._pipe_fd_r, fcntl.F_SETFL,
-                    fcntl.fcntl(self._pipe_fd_r, fcntl.F_GETFL) | os.O_CLOEXEC | os.O_NONBLOCK)
-        fcntl.fcntl(self._pipe_fd_w, fcntl.F_SETFL,
-                    fcntl.fcntl(self._pipe_fd_w, fcntl.F_GETFL) | os.O_CLOEXEC)
+        fcntl.fcntl(
+            self._pipe_fd_r,
+            fcntl.F_SETFL,
+            fcntl.fcntl(self._pipe_fd_r, fcntl.F_GETFL) | os.O_CLOEXEC | os.O_NONBLOCK,
+        )
+        fcntl.fcntl(
+            self._pipe_fd_w,
+            fcntl.F_SETFL,
+            fcntl.fcntl(self._pipe_fd_w, fcntl.F_GETFL) | os.O_CLOEXEC,
+        )
 
         # Start copier thread
         self._thread = threading.Thread(target=self._copy, daemon=True)
@@ -73,7 +79,7 @@ class OutputChecker(object):
                 self._lines_sem.release()
                 return
 
-            l = r.split(b'\n')
+            l = r.split(b"\n")
             l[0] = self._partial_buf + l[0]
             self._lines.extend(l[:-1])
             self._partial_buf = l[-1]
@@ -86,7 +92,7 @@ class OutputChecker(object):
         deadline = time.time() + timeout
 
         if isinstance(needle_re, str):
-            needle_re = needle_re.encode('ascii')
+            needle_re = needle_re.encode("ascii")
 
         r = re.compile(needle_re)
         ret = []
@@ -98,16 +104,23 @@ class OutputChecker(object):
                 # EOF, throw error
                 if self._pipe_fd_r == -1:
                     if failmsg:
-                        raise AssertionError("No further messages: " % failmsg) from None
+                        raise AssertionError(
+                            "No further messages: " % failmsg
+                        ) from None
                     else:
-                        raise AssertionError('No client waiting for needle %s' % (str(needle_re))) from None
+                        raise AssertionError(
+                            "No client waiting for needle %s" % (str(needle_re))
+                        ) from None
 
                 # Check if should wake up
-                if not self._lines_sem.acquire(timeout = deadline - time.time()):
+                if not self._lines_sem.acquire(timeout=deadline - time.time()):
                     if failmsg:
                         raise AssertionError(failmsg) from None
                     else:
-                        raise AssertionError('Timed out waiting for needle %s (timeout: %0.2f)' % (str(needle_re), timeout)) from None
+                        raise AssertionError(
+                            "Timed out waiting for needle %s (timeout: %0.2f)"
+                            % (str(needle_re), timeout)
+                        ) from None
                 continue
 
             ret.append(l)
@@ -116,7 +129,7 @@ class OutputChecker(object):
 
     def check_line(self, needle, timeout=0, failmsg=None):
         if isinstance(needle, str):
-            needle = needle.encode('ascii')
+            needle = needle.encode("ascii")
 
         needle_re = re.escape(needle)
 
@@ -126,7 +139,7 @@ class OutputChecker(object):
         deadline = time.time() + wait
 
         if isinstance(needle_re, str):
-            needle_re = needle_re.encode('ascii')
+            needle_re = needle_re.encode("ascii")
 
         r = re.compile(needle_re)
         ret = []
@@ -140,7 +153,7 @@ class OutputChecker(object):
                     break
 
                 # Check if should wake up
-                if not self._lines_sem.acquire(timeout = deadline - time.time()):
+                if not self._lines_sem.acquire(timeout=deadline - time.time()):
                     # Timed out, so everything is good
                     break
                 continue
@@ -150,13 +163,16 @@ class OutputChecker(object):
                 if failmsg:
                     raise AssertionError(failmsg)
                 else:
-                    raise AssertionError('Found needle %s but shouldn\'t have been there (timeout: %0.2f)' % (str(needle_re), wait))
+                    raise AssertionError(
+                        "Found needle %s but shouldn't have been there (timeout: %0.2f)"
+                        % (str(needle_re), wait)
+                    )
 
         return ret
 
     def check_no_line(self, needle, wait=0, failmsg=None):
         if isinstance(needle, str):
-            needle = needle.encode('ascii')
+            needle = needle.encode("ascii")
 
         needle_re = re.escape(needle)
 
@@ -174,7 +190,6 @@ class OutputChecker(object):
             raise AssertionError("OutputCheck: Write side has not been closed yet!")
 
     def force_close(self):
-
         fd = self._pipe_fd_r
         self._pipe_fd_r = -1
         if fd >= 0:
