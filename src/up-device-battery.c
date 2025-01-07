@@ -259,7 +259,7 @@ up_device_battery_report (UpDeviceBattery *self,
 	/* QUIRK:
 	 *
 	 * There is an old bug where some Lenovo machine switched from reporting
-	 * energy to reporting charge numbers. The code used to react by 
+	 * energy to reporting charge numbers. The code used to react by
 	 * reloading everything, however, what apparently happens is that the
 	 * *energy* value simply starts being reported through *charge*
 	 * attributes.

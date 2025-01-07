@@ -94,4 +94,3 @@ const gchar	*up_device_get_object_path		(UpDevice		*device);
 G_END_DECLS
 
 #endif /* __UP_DEVICE_H */
-

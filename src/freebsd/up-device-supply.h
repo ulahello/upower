@@ -52,4 +52,3 @@ GType		 up_device_supply_get_type		(void);
 G_END_DECLS
 
 #endif /* __UP_DEVICE_SUPPLY_H__ */
-

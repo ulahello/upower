@@ -30,4 +30,3 @@ const gchar	*up_native_get_native_path	(GObject	*object);
 G_END_DECLS
 
 #endif /* __UP_NATIVE_H__ */
-

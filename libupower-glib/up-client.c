@@ -716,4 +716,3 @@ up_client_new_finish (GAsyncResult  *res,
 
   return g_task_propagate_pointer (G_TASK (res), error);
 }
-

@@ -54,4 +54,3 @@ UpDeviceState up_device_supply_get_state (GUdevDevice *native);
 G_END_DECLS
 
 #endif /* __UP_DEVICE_SUPPLY_H__ */
-

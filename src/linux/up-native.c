@@ -59,4 +59,3 @@ up_native_get_native_path (GObject *object)
 	 * fallback for completeness */
 	return g_udev_device_get_sysfs_path (device);
 }
-

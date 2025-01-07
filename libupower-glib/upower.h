@@ -45,4 +45,3 @@
 #undef __UPOWER_H_INSIDE__
 
 #endif /* __UPOWER_H__ */
-

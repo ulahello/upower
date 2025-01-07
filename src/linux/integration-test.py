@@ -1643,7 +1643,7 @@ class Tests(dbusmock.DBusTestCase):
             " abrupt power loss due to battery exhaustion may lead to data"
             " corruption. The system will perform \"HybridSleep\" instead."
             " Use AllowRiskyCriticalPowerAction=true to enable support for"
-            " risky settings.", 
+            " risky settings.",
             timeout=UP_DAEMON_ACTION_DELAY + 0.5)
 
         # simulate that battery has 1% (less than PercentageAction)
@@ -1738,7 +1738,7 @@ class Tests(dbusmock.DBusTestCase):
             " abrupt power loss due to battery exhaustion may lead to data"
             " corruption. The system will perform \"HybridSleep\" instead."
             " Use AllowRiskyCriticalPowerAction=true to enable support for"
-            " risky settings.", 
+            " risky settings.",
             timeout=UP_DAEMON_ACTION_DELAY + 0.5)
 
 

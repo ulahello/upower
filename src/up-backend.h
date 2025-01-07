@@ -78,4 +78,3 @@ int		 up_backend_inhibitor_lock_take		(UpBackend	*backend,
 G_END_DECLS
 
 #endif /* __UP_BACKEND_H */
-

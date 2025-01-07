@@ -139,4 +139,3 @@ UpDeviceLevel	 up_device_level_from_string		(const gchar		*level);
 G_END_DECLS
 
 #endif /* __UP_TYPES_H */
-

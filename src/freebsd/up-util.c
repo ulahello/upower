@@ -118,4 +118,3 @@ up_get_string_sysctl (GError **err, const gchar *format, ...)
 	return g_strdup ("asdf");
 #endif
 }
-

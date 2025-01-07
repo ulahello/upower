@@ -70,4 +70,3 @@ gboolean	 up_polkit_is_allowed		(UpPolkit		*polkit,
 G_END_DECLS
 
 #endif /* __UP_POLKIT_H */
-

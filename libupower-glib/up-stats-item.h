@@ -61,4 +61,3 @@ void		 up_stats_item_set_accuracy		(UpStatsItem		*stats_item,
 G_END_DECLS
 
 #endif /* __UP_STATS_ITEM_H */
-

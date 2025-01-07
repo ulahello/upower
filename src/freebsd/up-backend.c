@@ -383,4 +383,3 @@ up_backend_new (void)
 {
 	return g_object_new (UP_TYPE_BACKEND, NULL);
 }
-

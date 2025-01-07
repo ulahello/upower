@@ -103,4 +103,3 @@ gboolean	 up_client_get_on_battery		(UpClient		*client);
 G_END_DECLS
 
 #endif /* __UP_CLIENT_H */
-

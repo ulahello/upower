@@ -352,4 +352,3 @@ up_history_item_new (void)
 {
 	return UP_HISTORY_ITEM (g_object_new (UP_TYPE_HISTORY_ITEM, NULL));
 }
-

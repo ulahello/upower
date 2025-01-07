@@ -51,4 +51,3 @@ GType		 up_device_hid_get_type		(void);
 G_END_DECLS
 
 #endif /* __UP_DEVICE_HID_H__ */
-

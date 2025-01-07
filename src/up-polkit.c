@@ -190,4 +190,3 @@ up_polkit_new (void)
 {
 	return UP_POLKIT (g_object_new (UP_TYPE_POLKIT, NULL));
 }
-

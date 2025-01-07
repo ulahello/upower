@@ -183,4 +183,3 @@ up_config_new (void)
 	}
 	return UP_CONFIG (up_config_object);
 }
-

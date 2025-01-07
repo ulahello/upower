@@ -69,4 +69,3 @@ gboolean	 up_history_item_set_from_string	(UpHistoryItem		*history_item,
 G_END_DECLS
 
 #endif /* __UP_HISTORY_ITEM_H */
-

@@ -685,4 +685,3 @@ up_backend_finalize (GObject *object)
 
 	G_OBJECT_CLASS (up_backend_parent_class)->finalize (object);
 }
-

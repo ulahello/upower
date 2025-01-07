@@ -218,7 +218,7 @@ up_device_hid_get_all_data (UpDeviceHid *hid)
 		rinfo.report_type = rtype;
 		rinfo.report_id = HID_REPORT_ID_FIRST;
 		while (ioctl (hid->priv->fd, HIDIOCGREPORTINFO, &rinfo) >= 0) {
-			for (i = 0; i < rinfo.num_fields; i++) { 
+			for (i = 0; i < rinfo.num_fields; i++) {
 				memset (&finfo, 0, sizeof (finfo));
 				finfo.report_type = rinfo.report_type;
 				finfo.report_id = rinfo.report_id;

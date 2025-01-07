@@ -39,4 +39,3 @@ gboolean		 up_input_get_switch_value	(UpInput	*input);
 G_END_DECLS
 
 #endif /* __UP_INPUT_H__ */
-

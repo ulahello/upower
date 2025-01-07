@@ -956,4 +956,3 @@ up_history_new (void)
 {
 	return g_object_new (UP_TYPE_HISTORY, NULL);
 }
-

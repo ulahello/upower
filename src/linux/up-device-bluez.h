@@ -52,4 +52,3 @@ void		 up_device_bluez_update			(UpDeviceBluez *bluez,
 G_END_DECLS
 
 #endif /* __UP_DEVICE_BLUEZ_H__ */
-

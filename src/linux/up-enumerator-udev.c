@@ -68,7 +68,7 @@ device_parent_id (GUdevDevice *dev)
 	/* Continue walk if the parent is a "hid"  device  */
 	if (g_strcmp0 (subsystem, "hid") == 0) {
 		/* if the parent is under /sys/devices/virtual/misc/uhid, the device should be input devices
-		 * and return the path immediately to make sure they belongs to the correct parent. 
+		 * and return the path immediately to make sure they belongs to the correct parent.
 		 * for example:
 		 * root@fedora:/sys/devices/virtual/misc/uhid# ls
 		 * 0005:046D:B01A.0005  0005:05AC:0250.000B  dev  power  subsystem  uevent */

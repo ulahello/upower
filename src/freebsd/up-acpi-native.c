@@ -228,4 +228,3 @@ static void up_acpi_native_get_property (GObject * object, guint property_id, GV
 		break;
 	}
 }
-

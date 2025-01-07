@@ -212,4 +212,3 @@ up_device_list_new (void)
 {
 	return g_object_new (UP_TYPE_DEVICE_LIST, NULL);
 }
-

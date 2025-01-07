@@ -91,4 +91,3 @@ void		 up_history_set_directory		(UpHistory		*history,
 G_END_DECLS
 
 #endif /* __UP_HISTORY_H */
-

@@ -65,4 +65,3 @@ GPtrArray	*up_device_list_get_array		(UpDeviceList		*list);
 G_END_DECLS
 
 #endif /* __UP_DEVICE_LIST_H */
-

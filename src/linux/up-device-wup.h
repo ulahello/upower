@@ -51,4 +51,3 @@ GType		 up_device_wup_get_type		(void);
 G_END_DECLS
 
 #endif /* __UP_DEVICE_WUP_H__ */
-

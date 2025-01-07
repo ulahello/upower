@@ -37,4 +37,3 @@ up_native_get_native_path (GObject *object)
 {
 	return "/sys/dummy";
 }
-
