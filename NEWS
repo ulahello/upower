@@ -1,3 +1,14 @@
+Version 1.90.7
+--------------
+Released: 2025-01-09
+
+- Find the correct parent id for input devices. (#268 #286)
+- Fix race condition in test_sibling_priority_no_overwrite. (!240)
+- Show charge-threshold-* status as yes/no. (!242)
+- Add zsh-completions for CLI. (!241)
+- Fix integration test. Extend the daemon stopping timeout to 10sec (#290)
+- Added pre-commit test and fixed code spelling, markdown, and code style issues. (!248)
+
 Version 1.90.6
 --------------
 Released: 2024-09-18
