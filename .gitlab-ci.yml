@@ -44,12 +44,19 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == 'schedule'
 
 stages:
+  - pre-commit
   - check-source
   - build
   - test
   - deploy
 
 image: $FEDORA_IMAGE
+
+pre_commit:
+  stage: pre-commit
+  script:
+    - dnf install -y pre-commit
+    - pre-commit run --all-files
 
 test_nut_hwdb:
   stage: check-source
