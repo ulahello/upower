@@ -62,6 +62,15 @@
 - see also
   <http://www.kernel.org/pub/software/scm/git/docs/>
 
+## Set up Git environment
+
+Run the following command to include the upower Git configurations.
+
+```bash
+cd contrib
+./setup
+```
+
 ## Committing code
 
 - Commit messages should be of the form (the five lines between the
@@ -106,5 +115,10 @@
 
 ## Testing
 
-Under Linux, with the umockdev package installed, you can run `ninja test`
+Under Linux, with the umockdev package installed, you can run  
+
+```console
+ninja test
+```
+
 in the root build directory to run an automated test suite.
