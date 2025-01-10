@@ -4082,6 +4082,9 @@ class Tests(dbusmock.DBusTestCase):
         bat0_up = devs[0]
 
         # Check we have the Bluetooth name
+        self.assertEventually(
+            lambda: self.get_dbus_dev_property(bat0_up, "Model"), value=alias
+        )
         self.assertEqual(self.get_dbus_dev_property(bat0_up, "Model"), alias)
         # Check we have the kernel percentage
         self.assertEqual(self.get_dbus_dev_property(bat0_up, "Percentage"), 30)
