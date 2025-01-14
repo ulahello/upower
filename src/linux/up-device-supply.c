@@ -333,6 +333,7 @@ up_device_supply_sibling_discovered_guess_type (UpDevice *device,
 {
 	GUdevDevice *input;
 	UpDeviceKind cur_type, new_type;
+	const gchar *new_model_name = NULL;
 	char *model_name;
 	char *serial_number;
 	int i;
@@ -468,7 +469,19 @@ up_device_supply_sibling_discovered_guess_type (UpDevice *device,
 		g_debug ("Type changed from %s to %s",
 			 up_device_kind_to_string(cur_type),
 			 up_device_kind_to_string(new_type));
-		g_object_set (device, "type", new_type, NULL);
+		new_model_name = g_udev_device_get_sysfs_attr (input, "name");
+		/* The model name of a device component may be different. For example, DualSense
+		 * joystick owns "Sony Interactive Entertainment DualSense Wireless Controller"
+		 * for the joystick and "Sony Interactive Entertainment DualSense Wireless Controller
+		 * Motion Sensors" for the accelerometer. If the type is change, the corresponding
+		 * model name have to be changed too. */
+		if (new_model_name != NULL)
+			g_object_set (device,
+				      "type", new_type,
+				      "model", new_model_name,
+				      NULL);
+		else
+			g_object_set (device, "type", new_type, NULL);
 	}
 }
 
