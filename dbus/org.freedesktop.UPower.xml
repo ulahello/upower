@@ -126,6 +126,12 @@ method return sender=:1.386 -> dest=:1.451 reply_serial=2
               <doc:item>
                 <doc:term>PowerOff</doc:term>
               </doc:item>
+              <doc:item>
+                <doc:term>Suspend</doc:term>
+              </doc:item>
+              <doc:item>
+                <doc:term>Ignore</doc:term>
+              </doc:item>
             </doc:list>
           </doc:para>
         </doc:description>
