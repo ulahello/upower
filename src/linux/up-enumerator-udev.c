@@ -163,6 +163,12 @@ device_new (UpEnumeratorUdev *self, GUdevDevice *native)
 		   g_strcmp0 (subsys, "sound") == 0) {
 		/* Ignore, we only resolve them to see siblings. */
 		return NULL;
+	} else if (g_strcmp0 (subsys, "leds") == 0) {
+		g_debug ("Find a LED device");
+		native_path = g_udev_device_get_sysfs_path (native);
+		if (g_strrstr (native_path, "kbd_backlight") != NULL)
+			g_warning ("native path %s (%s) hit leds device", native_path, subsys);
+		return NULL;
 	} else {
 		native_path = g_udev_device_get_sysfs_path (native);
 		g_warning ("native path %s (%s) ignoring", native_path, subsys);
@@ -361,8 +367,8 @@ up_enumerator_udev_initable_init (UpEnumerator *enumerator)
 	guint i;
 	const gchar **subsystems;
 	/* List "input" first just to avoid some sibling hotplugging later */
-	const gchar *subsystems_no_wup[] = {"input", "power_supply", "usb", "usbmisc", "sound", NULL};
-	const gchar *subsystems_wup[] = {"input", "power_supply", "usb", "usbmisc", "sound", "tty", NULL};
+	const gchar *subsystems_no_wup[] = {"input", "power_supply", "usb", "usbmisc", "sound", "leds", NULL};
+	const gchar *subsystems_wup[] = {"input", "power_supply", "usb", "usbmisc", "sound", "tty", "leds", NULL};
 
 	config = up_config_new ();
 	if (up_config_get_boolean (config, "EnableWattsUpPro"))
