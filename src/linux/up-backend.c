@@ -433,13 +433,17 @@ up_device_disconnected_cb (GObject    *gobject,
 }
 
 static void
-udev_device_added_cb (UpBackend *backend, UpDevice *device)
+udev_device_added_cb (UpBackend *backend, GObject *device)
 {
 	g_debug ("Got new device from udev enumerator: %p", device);
 	g_signal_connect (device, "notify::disconnected",
 			  G_CALLBACK (up_device_disconnected_cb), backend);
-	if (update_added_duplicate_device (backend, device))
+	if (UP_IS_DEVICE (device)) {
+		if (update_added_duplicate_device (backend, UP_DEVICE (device)))
+			g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
+	} else {
 		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
+	}
 }
 
 static void
@@ -775,7 +779,7 @@ up_backend_class_init (UpBackendClass *klass)
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpBackendClass, device_added),
 			      NULL, NULL, NULL,
-			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
+			      G_TYPE_NONE, 1, G_TYPE_OBJECT);
 	signals [SIGNAL_DEVICE_REMOVED] =
 		g_signal_new ("device-removed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,

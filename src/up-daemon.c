@@ -33,6 +33,7 @@
 #include "up-polkit.h"
 #include "up-device-list.h"
 #include "up-device.h"
+#include "up-device-kbd-backlight.h"
 #include "up-backend.h"
 #include "up-daemon.h"
 
@@ -43,6 +44,7 @@ struct UpDaemonPrivate
 	UpPolkit		*polkit;
 	UpBackend		*backend;
 	UpDeviceList		*power_devices;
+	UpDeviceList		*kbd_backlight_devices;
 	guint			 action_timeout_id;
 	guint			 refresh_batteries_id;
 	guint			 warning_level_id;
@@ -582,6 +584,7 @@ up_daemon_shutdown (UpDaemon *daemon)
 
 	/* forget about discovered devices */
 	up_device_list_clear (daemon->priv->power_devices);
+	up_device_list_clear (daemon->priv->kbd_backlight_devices);
 
 	/* release UpDaemon reference */
 	g_object_run_dispose (G_OBJECT (daemon->priv->display_device));
@@ -1015,35 +1018,52 @@ up_daemon_get_env_override (UpDaemon *self)
  * up_daemon_device_added_cb:
  **/
 static void
-up_daemon_device_added_cb (UpBackend *backend, UpDevice *device, UpDaemon *daemon)
+up_daemon_device_added_cb (UpBackend *backend, GObject *device, UpDaemon *daemon)
 {
 	const gchar *object_path;
 	UpDaemonPrivate *priv = daemon->priv;
 
 	g_return_if_fail (UP_IS_DAEMON (daemon));
-	g_return_if_fail (UP_IS_DEVICE (device));
+	g_return_if_fail (UP_IS_DEVICE (device) || UP_IS_DEVICE_KBD_BACKLIGHT (device));
 
-	/* add to device list */
-	up_device_list_insert (priv->power_devices, device);
+	g_warning ("daemon device added");
 
-	/* connect, so we get changes */
-	g_signal_connect (device, "notify",
-			  G_CALLBACK (up_daemon_device_changed_cb), daemon);
+	if (UP_IS_DEVICE (device)) {
+		/* power_supply */
+		/* add to device list */
+		up_device_list_insert (priv->power_devices, device);
 
-	/* emit */
-	object_path = up_device_get_object_path (device);
-	if (object_path == NULL) {
-		g_debug ("Device %s was unregistered before it was on the bus",
-			 up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device)));
-		return;
+		/* connect, so we get changes */
+		g_signal_connect (device, "notify",
+				  G_CALLBACK (up_daemon_device_changed_cb), daemon);
+
+		/* emit */
+		object_path = up_device_get_object_path (UP_DEVICE (device));
+		if (object_path == NULL) {
+			g_debug ("Device %s was unregistered before it was on the bus",
+				 up_exported_device_get_native_path (UP_EXPORTED_DEVICE (device)));
+			return;
+		}
+
+		/* Ensure we poll the new device if needed */
+		g_source_set_ready_time (daemon->priv->poll_source, 0);
+
+		g_debug ("emitting added: %s", object_path);
+		up_daemon_update_warning_level (daemon);
+		up_exported_daemon_emit_device_added (UP_EXPORTED_DAEMON (daemon), object_path);
+	} else {
+		/*leds*/
+		g_debug ("Add a leds to list");
+		/* emit */
+		object_path = up_device_kbd_backlight_get_object_path (UP_DEVICE_KBD_BACKLIGHT (device));
+		if (object_path == NULL) {
+			g_debug ("Device %s was unregistered before it was on the bus",
+				 up_exported_kbd_backlight_get_native_path (UP_EXPORTED_KBD_BACKLIGHT (device)));
+			return;
+		}
+		up_device_list_insert (priv->kbd_backlight_devices, G_OBJECT (device));
+		up_exported_daemon_emit_device_added (UP_EXPORTED_DAEMON (daemon), object_path);
 	}
-
-	/* Ensure we poll the new device if needed */
-	g_source_set_ready_time (daemon->priv->poll_source, 0);
-
-	g_debug ("emitting added: %s", object_path);
-	up_daemon_update_warning_level (daemon);
-	up_exported_daemon_emit_device_added (UP_EXPORTED_DAEMON (daemon), object_path);
 }
 
 /**
@@ -1135,6 +1155,7 @@ up_daemon_init (UpDaemon *daemon)
 	daemon->priv->polkit = up_polkit_new ();
 	daemon->priv->config = up_config_new ();
 	daemon->priv->power_devices = up_device_list_new ();
+	daemon->priv->kbd_backlight_devices = up_device_list_new ();
 	daemon->priv->display_device = up_device_new (daemon, NULL);
 	daemon->priv->poll_source = g_source_new (&poll_source_funcs, sizeof (GSource));
 
@@ -1219,6 +1240,7 @@ up_daemon_finalize (GObject *object)
 	g_clear_pointer (&daemon->priv->poll_source, g_source_destroy);
 
 	g_object_unref (priv->power_devices);
+	g_object_unref (priv->kbd_backlight_devices);
 	g_object_unref (priv->display_device);
 	g_object_unref (priv->polkit);
 	g_object_unref (priv->config);
