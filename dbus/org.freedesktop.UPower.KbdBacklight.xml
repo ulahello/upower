@@ -79,6 +79,21 @@
     </method>
 
     <!-- ************************************************************ -->
+    <property name="NativePath" type="s" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            OS specific native path of the power source. On Linux this
+            is the sysfs path, for
+            example <doc:tt>/sys/devices/LNXSYSTM:00/device:00/PNP0C0A:00/power_supply/BAT0</doc:tt>. Is
+            blank if the device is being driven by a user space
+            driver.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </property>
+
+    <!-- ************************************************************ -->
     <signal name="BrightnessChanged">
       <arg name="value" direction="out" type="i">
         <doc:doc>
