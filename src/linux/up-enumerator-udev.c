@@ -386,6 +386,12 @@ uevent_signal_handler_cb (UpEnumeratorUdev *self,
 
 			g_debug ("removing device for path %s", g_udev_device_get_sysfs_path (device));
 
+			if (is_kbd_backlight) {
+				g_debug ("uevent KDB backlight remove.");
+				g_signal_emit_by_name (self, "device-removed", obj);
+				return;
+			}
+
 			parent_id = g_object_get_data (obj, "udev-parent-id");
 
 			/* Remove from siblings table. */

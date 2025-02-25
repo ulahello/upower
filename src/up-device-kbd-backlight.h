@@ -44,13 +44,14 @@ struct _UpDeviceKbdBacklightClass
 };
 
 
-GType		 up_device_kbd_backlight_get_type		(void);
+GType		 	 up_device_kbd_backlight_get_type		(void);
 
-const gchar *		 up_device_kbd_backlight_get_object_path 	(UpDeviceKbdBacklight *device);
-GObject *		 up_device_kbd_backlight_get_native 		(UpDeviceKbdBacklight *device);
+const gchar *		 up_device_kbd_backlight_get_object_path 	(UpDeviceKbdBacklight	*device);
+GObject *		 up_device_kbd_backlight_get_native 		(UpDeviceKbdBacklight	*device);
 UpDeviceKbdBacklight	*up_device_kbd_backlight_new			(UpDaemon		*daemon,
 						 			 GObject		*native);
 gboolean		 up_device_kbd_backlight_register		(UpDeviceKbdBacklight	*device);
+void			 up_device_kbd_backlight_unregister		(UpDeviceKbdBacklight	*device);
 
 #if 0
 
@@ -67,7 +68,7 @@ void		 up_device_sibling_discovered	(UpDevice	*device,
 						 GObject	*sibling);
 gboolean	 up_device_refresh_internal	(UpDevice	*device,
 						 UpRefreshReason reason);
-void		 up_device_unregister		(UpDevice	*device);
+
 
 gboolean	 up_device_is_registered	(UpDevice	*device);
 #endif

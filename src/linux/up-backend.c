@@ -33,6 +33,7 @@
 #include "up-backend.h"
 #include "up-daemon.h"
 #include "up-device.h"
+#include "up-device-kbd-backlight.h"
 
 #include "up-enumerator-udev.h"
 
@@ -419,11 +420,18 @@ up_device_disconnected_cb (GObject    *gobject,
 		      "native-path", &path,
 		      "disconnected", &disconnected,
 		      NULL);
+
+	g_warning ("Disconnect signal received %s", path);
 	if (disconnected) {
 		g_debug("Device %s became disconnected, hiding device", path);
-		if (up_device_is_registered (UP_DEVICE (gobject))) {
-			g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, gobject);
-			up_device_unregister (UP_DEVICE (gobject));
+		if (UP_IS_DEVICE (gobject)) {
+			if (up_device_is_registered (UP_DEVICE (gobject))) {
+				g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, gobject);
+				up_device_unregister (UP_DEVICE (gobject));
+			}
+		} else if (UP_IS_DEVICE_KBD_BACKLIGHT (gobject)){
+			g_warning ("Unregister LED");
+			up_device_kbd_backlight_unregister (UP_DEVICE_KBD_BACKLIGHT (gobject));
 		}
 	} else {
 		g_debug ("Device %s became connected, showing device", path);
@@ -441,16 +449,20 @@ udev_device_added_cb (UpBackend *backend, GObject *device)
 	if (UP_IS_DEVICE (device)) {
 		if (update_added_duplicate_device (backend, UP_DEVICE (device)))
 			g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
-	} else {
+	} else if (UP_IS_DEVICE_KBD_BACKLIGHT (device)){
 		g_signal_emit (backend, signals[SIGNAL_DEVICE_ADDED], 0, device);
+	} else {
+		g_warning ("Unknown device type");
 	}
 }
 
 static void
-udev_device_removed_cb (UpBackend *backend, UpDevice *device)
+udev_device_removed_cb (UpBackend *backend, GObject *device)
 {
 	g_debug ("Removing device from udev enumerator: %p", device);
-	update_removed_duplicate_device (backend, device);
+
+	if (UP_IS_DEVICE (device))
+		update_removed_duplicate_device (backend, UP_DEVICE (device));
 	g_signal_emit (backend, signals[SIGNAL_DEVICE_REMOVED], 0, device);
 }
 
@@ -785,7 +797,7 @@ up_backend_class_init (UpBackendClass *klass)
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (UpBackendClass, device_removed),
 			      NULL, NULL, NULL,
-			      G_TYPE_NONE, 1, UP_TYPE_DEVICE);
+			      G_TYPE_NONE, 1, G_TYPE_OBJECT);
 }
 
 static void

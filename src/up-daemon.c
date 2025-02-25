@@ -1075,16 +1075,24 @@ up_daemon_device_removed_cb (UpBackend *backend, UpDevice *device, UpDaemon *dae
 	const gchar *object_path;
 	UpDaemonPrivate *priv = daemon->priv;
 
+
 	g_return_if_fail (UP_IS_DAEMON (daemon));
-	g_return_if_fail (UP_IS_DEVICE (device));
+	g_return_if_fail (UP_IS_DEVICE (device) || UP_IS_DEVICE_KBD_BACKLIGHT (device));
 
 	g_signal_handlers_disconnect_by_data (device, daemon);
 
-	/* remove from list (device remains valid during the function call) */
-	up_device_list_remove (priv->power_devices, device);
-
 	/* emit */
-	object_path = up_device_get_object_path (device);
+	if (UP_IS_DEVICE (device)) {
+		/* remove from list (device remains valid during the function call) */
+		up_device_list_remove (priv->power_devices, device);
+		object_path = up_device_get_object_path (device);
+	} else if (UP_IS_DEVICE_KBD_BACKLIGHT (device)) {
+		/* remove from list (device remains valid during the function call) */
+		up_device_list_remove (priv->kbd_backlight_devices, device);
+		object_path = up_device_kbd_backlight_get_object_path (UP_DEVICE_KBD_BACKLIGHT (device));
+	} else {
+		return;
+	}
 
 	/* don't crash the session */
 	if (object_path == NULL) {
@@ -1094,6 +1102,10 @@ up_daemon_device_removed_cb (UpBackend *backend, UpDevice *device, UpDaemon *dae
 	}
 	g_debug ("emitting device-removed: %s", object_path);
 	up_exported_daemon_emit_device_removed (UP_EXPORTED_DAEMON (daemon), object_path);
+
+	/* Unregister keyboard backlight dbus path */
+	if (UP_IS_DEVICE_KBD_BACKLIGHT (device))
+		up_device_kbd_backlight_unregister (UP_DEVICE_KBD_BACKLIGHT (device));
 
 	/* In case a battery was removed */
 	up_daemon_refresh_battery_devices (daemon);

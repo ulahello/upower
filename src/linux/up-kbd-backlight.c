@@ -233,9 +233,10 @@ up_kbd_backlight_finalize (GObject *object)
 	/* close file */
 	if (kbd_backlight->priv->fd >= 0)
 		close (kbd_backlight->priv->fd);
+#endif
 
 	G_OBJECT_CLASS (up_kbd_backlight_parent_class)->finalize (object);
-#endif
+
 }
 
 /**
@@ -254,7 +255,6 @@ up_kbd_backlight_class_init (UpKbdBacklightClass *klass)
 	dev_kbd_klass->get_brightness = up_kbd_backlight_get_brightness;
 	dev_kbd_klass->set_brightness = up_kbd_backlight_set_brightness;
 }
-
 
 /**
  * up_kbd_backlight_init:

@@ -36,12 +36,12 @@
 
 typedef struct
 {
-	UpDaemon		*daemon;
+	UpDaemon	*daemon;
 	/* native == NULL implies display device */
-	GObject			*native;
+	GObject		*native;
 
-	gint			 fd_hw_changed;
-	GIOChannel		*channel_hw_changed;
+	gint		 fd_hw_changed;
+	GIOChannel	*channel_hw_changed;
 } UpDeviceKbdBacklightPrivate;
 
 static void up_device_kbd_backlight_initable_iface_init (GInitableIface *iface);
@@ -60,7 +60,6 @@ enum {
 
 #define UP_DEVICES_KBD_BACKLIGHT_DBUS_PATH "/org/freedesktop/UPower/KbdBacklight"
 static GParamSpec *properties[N_PROPS];
-
 
 /**
  * up_kbd_backlight_emit_change:
@@ -140,6 +139,8 @@ up_kbd_backlight_get_max_brightness (UpExportedKbdBacklight *skeleton,
 
 /**
  * up_kbd_backlight_set_brightness:
+ *
+ * Sets the kbd backlight LED brightness.
  **/
 static gboolean
 up_kbd_backlight_set_brightness (UpExportedKbdBacklight *skeleton,
@@ -186,8 +187,8 @@ static gchar *
 up_device_kbd_backlight_compute_object_path (UpDeviceKbdBacklight *device)
 {
 	UpDeviceKbdBacklightPrivate *priv = up_device_kbd_backlight_get_instance_private (device);
-	gchar *basename;
-	gchar *id;
+	g_autofree gchar *basename = NULL;
+	g_autofree gchar *id = NULL;
 	gchar *object_path;
 	const gchar *native_path;
 	guint i;
@@ -213,12 +214,8 @@ up_device_kbd_backlight_compute_object_path (UpDeviceKbdBacklight *device)
 	}
 	object_path = g_build_filename (UP_DEVICES_KBD_BACKLIGHT_DBUS_PATH, id, NULL);
 
-	g_free (basename);
-	g_free (id);
-
 	return object_path;
 }
-
 
 static void
 up_device_kbd_backlight_export_skeleton (UpDeviceKbdBacklight *device,
@@ -238,7 +235,6 @@ up_device_kbd_backlight_export_skeleton (UpDeviceKbdBacklight *device,
 	}
 }
 
-
 gboolean
 up_device_kbd_backlight_register (UpDeviceKbdBacklight *device)
 {
@@ -251,6 +247,19 @@ up_device_kbd_backlight_register (UpDeviceKbdBacklight *device)
 	up_device_kbd_backlight_export_skeleton (device, computed_object_path);
 	return TRUE;
 }
+
+void
+up_device_kbd_backlight_unregister (UpDeviceKbdBacklight *device)
+{
+	g_autofree char *object_path = NULL;
+
+	object_path = g_strdup (g_dbus_interface_skeleton_get_object_path (G_DBUS_INTERFACE_SKELETON (device)));
+	if (object_path != NULL) {
+		g_dbus_interface_skeleton_unexport (G_DBUS_INTERFACE_SKELETON (device));
+		g_debug ("Unexported UpDeviceKbdBacklight with path %s", object_path);
+	}
+}
+
 
 const gchar *
 up_device_kbd_backlight_get_object_path (UpDeviceKbdBacklight *device)
@@ -268,8 +277,6 @@ up_device_kbd_backlight_set_property (GObject      *object,
 	UpDeviceKbdBacklight *device = UP_DEVICE_KBD_BACKLIGHT (object);
 	UpDeviceKbdBacklightPrivate *priv = up_device_kbd_backlight_get_instance_private (device);
 
-	g_debug ("kbd property set");
-
 	switch (prop_id)
 	{
 	case PROP_DAEMON:
@@ -277,7 +284,6 @@ up_device_kbd_backlight_set_property (GObject      *object,
 		break;
 
 	case PROP_NATIVE:
-		g_debug ("Set kbd native");
 		priv->native = g_value_dup_object (value);
 		if (priv->native == NULL)
 			g_warning ("KBD native is NULL");
@@ -297,8 +303,6 @@ up_device_kbd_backlight_get_property (GObject      *object,
 	UpDeviceKbdBacklight *device = UP_DEVICE_KBD_BACKLIGHT (object);
 	UpDeviceKbdBacklightPrivate *priv = up_device_kbd_backlight_get_instance_private (device);
 
-	return;
-
 	switch (prop_id)
 	{
 	default:
@@ -315,7 +319,7 @@ up_device_kbd_backlight_initable_init (GInitable     *initable,
 
 	UpDeviceKbdBacklight *device = UP_DEVICE_KBD_BACKLIGHT (initable);
 	UpDeviceKbdBacklightPrivate *priv = up_device_kbd_backlight_get_instance_private (device);
-	const gchar *native_path = "KbdDevice";
+	const gchar *native_path = NULL;
 	UpDeviceKbdBacklightClass *klass = UP_DEVICE_KBD_BACKLIGHT_GET_CLASS (device);
 	int ret;
 
@@ -380,6 +384,9 @@ up_device_kbd_backlight_finalize (GObject *object)
 	g_return_if_fail (UP_IS_DEVICE_KBD_BACKLIGHT (object));
 
 	kbd_backlight = UP_DEVICE_KBD_BACKLIGHT (object);
+
+	g_warning ("KBD LED Finalize");
+
 	//kbd_backlight->priv = up_device_kbd_backlight_get_instance_private (kbd_backlight);
 
 	//if (kbd_backlight->priv->channel_hw_changed) {
