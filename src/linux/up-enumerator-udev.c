@@ -285,7 +285,7 @@ kbd_backlight_add_helper (UpEnumeratorUdev  *self,
 
 	daemon = up_enumerator_get_daemon (UP_ENUMERATOR (self));
 
-	up_kbd = g_initable_new (UP_TYPE_KBD_BACKLIGHT, NULL, NULL,
+	up_kbd = g_initable_new (UP_TYPE_KBD_BACKLIGHT_LED, NULL, NULL,
 				 "daemon", daemon,
 				 "native", device,
 				 NULL);
@@ -370,6 +370,11 @@ uevent_signal_handler_cb (UpEnumeratorUdev *self,
 			char *parent_id;
 
 			g_debug ("removing device for path %s", g_udev_device_get_sysfs_path (device));
+
+			if (is_kbd_backlight) {
+				g_signal_emit_by_name (self, "device-removed", obj);
+				return;
+			}
 
 			parent_id = g_object_get_data (obj, "udev-parent-id");
 
