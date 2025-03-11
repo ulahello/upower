@@ -32,7 +32,7 @@
 #include <dirent.h>
 #include <errno.h>
 
-#include "up-kbd-backlight.h"
+#include "up-kbd-backlight-led.h"
 #include "up-daemon.h"
 #include "up-native.h"
 #include "up-types.h"
