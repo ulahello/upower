@@ -194,6 +194,10 @@ up_device_supply_battery_refresh (UpDevice *device,
 	GUdevDevice *native;
 	UpBatteryInfo info = { 0 };
 	UpBatteryValues values = { 0 };
+	g_autofree gchar *vendor = NULL;
+	g_autofree gchar *model = NULL;
+	g_autofree gchar *serial = NULL;
+	g_autofree gchar *technology = NULL;
 
 	native = G_UDEV_DEVICE (up_device_get_native (device));
 
@@ -211,9 +215,13 @@ up_device_supply_battery_refresh (UpDevice *device,
 		return TRUE;
 	}
 
-	info.vendor = up_make_safe_string (get_sysfs_attr_uncached (native, "manufacturer"));
-	info.model = up_make_safe_string (get_sysfs_attr_uncached (native, "model_name"));
-	info.serial = up_make_safe_string (get_sysfs_attr_uncached (native, "serial_number"));
+	vendor = up_make_safe_string (get_sysfs_attr_uncached (native, "manufacturer"));
+	model = up_make_safe_string (get_sysfs_attr_uncached (native, "model_name"));
+	serial = up_make_safe_string (get_sysfs_attr_uncached (native, "serial_number"));
+
+	info.vendor = vendor;
+	info.model = model;
+	info.serial = serial;
 
 	info.voltage_design = up_device_supply_battery_get_design_voltage (self, native);
 	info.charge_cycles = g_udev_device_get_sysfs_attr_as_int_uncached (native, "cycle_count");
@@ -228,7 +236,8 @@ up_device_supply_battery_refresh (UpDevice *device,
 		info.energy.full = g_udev_device_get_sysfs_attr_as_double_uncached (native, "charge_full") / 1000000.0;
 		info.energy.design = g_udev_device_get_sysfs_attr_as_double_uncached (native, "charge_full_design") / 1000000.0;
 	}
-	info.technology = up_convert_device_technology (get_sysfs_attr_uncached (native, "technology"));
+	technology = get_sysfs_attr_uncached (native, "technology");
+	info.technology = up_convert_device_technology (technology);
 
 	if (up_device_supply_battery_get_charge_control_limits (native, &info)) {
 		info.charge_control_supported = TRUE;
