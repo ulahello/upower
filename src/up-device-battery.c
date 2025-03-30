@@ -391,6 +391,7 @@ up_device_battery_report (UpDeviceBattery *self,
 		      "energy-rate", values->energy.rate,
 		      "time-to-empty", time_to_empty,
 		      "time-to-full", time_to_full,
+		      "capacity-level", values->capacity_level,
 		      /* XXX: Move "update-time" updates elsewhere? */
 		      "update-time", (guint64) g_get_real_time () / G_USEC_PER_SEC,
 		      NULL);
@@ -536,6 +537,8 @@ up_device_battery_update_info (UpDeviceBattery *self, UpBatteryInfo *info)
 				      "charge-end-threshold", info->charge_control_end_threshold,
 				      "charge-threshold-enabled", charge_threshold_enabled,
 				      "charge-threshold-supported", info->charge_control_supported,
+				      "voltage-min-design", info->voltage_min_design,
+				      "voltage-max-design", info->voltage_max_design,
 			              NULL);
 
 			priv->present = TRUE;
@@ -612,6 +615,9 @@ up_device_battery_update_info (UpDeviceBattery *self, UpBatteryInfo *info)
 			      "charge-end-threshold", 0,
 			      "charge-threshold-enabled", FALSE,
 			      "charge-threshold-supported", FALSE,
+			      "voltage-min-design", (gdouble) 0.0,
+			      "voltage-max-design", (gdouble) 0.0,
+			      "capacity-level", NULL,
 		              NULL);
 	}
 }
