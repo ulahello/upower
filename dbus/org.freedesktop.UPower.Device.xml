@@ -893,6 +893,56 @@ method return sender=:1.386 -> dest=:1.477 reply_serial=2
         </doc:description>
       </doc:doc>
     </property>
+
+    <property name="VoltageMinDesign" type="d" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            The minimum design voltage of the battery, as reported by the kernel.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </property>
+
+    <property name="VoltageMaxDesign" type="d" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            The maximum design voltage of the battery, as reported by the kernel.
+          </doc:para>
+        </doc:description>
+      </doc:doc>
+    </property>
+
+    <property name="CapacityLevel" type="s" access="read">
+      <doc:doc>
+        <doc:description>
+          <doc:para>
+            Coarse representation of battery capacity. The value is one of the following:
+          </doc:para>
+          <doc:list>
+            <doc:item>
+              <doc:term>Unknown</doc:term>
+            </doc:item>
+            <doc:item>
+              <doc:term>Critical</doc:term>
+            </doc:item>
+            <doc:item>
+              <doc:term>Low</doc:term>
+            </doc:item>
+            <doc:item>
+              <doc:term>Normal</doc:term>
+            </doc:item>
+            <doc:item>
+              <doc:term>High</doc:term>
+            </doc:item>
+            <doc:item>
+              <doc:term>Full</doc:term>
+            </doc:item>
+          </doc:list>
+        </doc:description>
+      </doc:doc>
+    </property>
   </interface>
 
 </node>
