@@ -198,6 +198,7 @@ up_device_supply_battery_refresh (UpDevice *device,
 	g_autofree gchar *model = NULL;
 	g_autofree gchar *serial = NULL;
 	g_autofree gchar *technology = NULL;
+	g_autofree gchar *capacity_level = NULL;
 
 	native = G_UDEV_DEVICE (up_device_get_native (device));
 
@@ -239,6 +240,9 @@ up_device_supply_battery_refresh (UpDevice *device,
 	technology = get_sysfs_attr_uncached (native, "technology");
 	info.technology = up_convert_device_technology (technology);
 
+	info.voltage_max_design = g_udev_device_get_sysfs_attr_as_double_uncached (native, "voltage_max_design") / 1000000.0;
+	info.voltage_min_design = g_udev_device_get_sysfs_attr_as_double_uncached (native, "voltage_min_design") / 1000000.0;
+
 	if (up_device_supply_battery_get_charge_control_limits (native, &info)) {
 		info.charge_control_supported = TRUE;
 		info.charge_control_enabled = FALSE;
@@ -261,6 +265,8 @@ up_device_supply_battery_refresh (UpDevice *device,
 	if (values.voltage < 0.01)
 		values.voltage = g_udev_device_get_sysfs_attr_as_double_uncached (native, "voltage_avg") / 1000000.0;
 
+	capacity_level = up_make_safe_string (get_sysfs_attr_uncached (native, "capacity_level"));
+	values.capacity_level = capacity_level;
 
 	switch (values.units) {
 	case UP_BATTERY_UNIT_CHARGE:
