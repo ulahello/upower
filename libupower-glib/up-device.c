@@ -94,6 +94,9 @@ enum {
 	PROP_CHARGE_END_THRESHOLD,
 	PROP_CHARGE_THRESHOLD_ENABLED,
 	PROP_CHARGE_THRESHOLD_SUPPORTED,
+	PROP_VOLTAGE_MIN_DESIGN,
+	PROP_VOLTAGE_MAX_DESIGN,
+	PROP_CAPACITY_LEVEL,
 	PROP_LAST
 };
 
@@ -270,6 +273,7 @@ up_device_to_text (UpDevice *device)
 	const gchar *vendor;
 	const gchar *model;
 	const gchar *serial;
+	const gchar *capacity_level;
 	UpDeviceKind kind;
 	gboolean is_display;
 	UpDeviceLevel battery_level;
@@ -341,6 +345,13 @@ up_device_to_text (UpDevice *device)
 		g_string_append_printf (string, "    energy-full:         %g Wh\n", up_exported_device_get_energy_full (priv->proxy_device));
 		if (!is_display)
 			g_string_append_printf (string, "    energy-full-design:  %g Wh\n", up_exported_device_get_energy_full_design (priv->proxy_device));
+		if (up_exported_device_get_voltage_min_design (priv->proxy_device) > 0)
+			g_string_append_printf (string, "    voltage-min-design:  %g V\n", up_exported_device_get_voltage_min_design (priv->proxy_device));
+		if (up_exported_device_get_voltage_max_design (priv->proxy_device) > 0)
+			g_string_append_printf (string, "    voltage-max-design:  %g V\n", up_exported_device_get_voltage_max_design (priv->proxy_device));
+		capacity_level = up_exported_device_get_capacity_level (priv->proxy_device);
+		if (capacity_level != NULL && capacity_level[0] != '\0')
+			g_string_append_printf (string, "    capacity-level:      %s\n", capacity_level);
 	}
 	if (kind == UP_DEVICE_KIND_BATTERY ||
 	    kind == UP_DEVICE_KIND_MONITOR)
@@ -716,6 +727,15 @@ up_device_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 	case PROP_CHARGE_THRESHOLD_SUPPORTED:
 		up_exported_device_set_charge_threshold_supported (device->priv->proxy_device, g_value_get_boolean (value));
 		break;
+	case PROP_VOLTAGE_MIN_DESIGN:
+		up_exported_device_set_voltage_min_design (device->priv->proxy_device, g_value_get_double (value));
+		break;
+	case PROP_VOLTAGE_MAX_DESIGN:
+		up_exported_device_set_voltage_max_design (device->priv->proxy_device, g_value_get_double (value));
+		break;
+	case PROP_CAPACITY_LEVEL:
+		up_exported_device_set_capacity_level (device->priv->proxy_device, g_value_get_string (value));
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -844,6 +864,15 @@ up_device_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 		break;
 	case PROP_CHARGE_THRESHOLD_SUPPORTED:
 		g_value_set_boolean (value, up_exported_device_get_charge_threshold_supported (device->priv->proxy_device));
+		break;
+	case PROP_VOLTAGE_MIN_DESIGN:
+		g_value_set_double (value, up_exported_device_get_voltage_min_design (device->priv->proxy_device));
+		break;
+	case PROP_VOLTAGE_MAX_DESIGN:
+		g_value_set_double (value, up_exported_device_get_voltage_max_design (device->priv->proxy_device));
+		break;
+	case PROP_CAPACITY_LEVEL:
+		g_value_set_string (value, up_exported_device_get_capacity_level (device->priv->proxy_device));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1317,6 +1346,47 @@ up_device_class_init (UpDeviceClass *klass)
 							       NULL, NULL,
 							       FALSE,
 							       G_PARAM_READWRITE));
+
+	/**
+	 * UpDevice:voltage_min_design:
+	 *
+	 * The minimum supported voltage of the device as reported by the kernel.
+	 *
+	 * Since: 1.90.10
+	 **/
+	g_object_class_install_property (object_class,
+					 PROP_VOLTAGE_MIN_DESIGN,
+					 g_param_spec_double ("voltage-min-design", NULL, NULL,
+							      0.0, G_MAXDOUBLE, 0.0,
+							      G_PARAM_READWRITE));
+
+
+	/**
+	 * UpDevice:voltage_max_design:
+	 *
+	 * The maximum supported voltage of the device as reported by the kernel.
+	 *
+	 * Since: 1.90.10
+	 **/
+	g_object_class_install_property (object_class,
+					 PROP_VOLTAGE_MAX_DESIGN,
+					 g_param_spec_double ("voltage-max-design", NULL, NULL,
+							      0.0, G_MAXDOUBLE, 0.0,
+							      G_PARAM_READWRITE));
+
+	/**
+	 * UpDevice:capacity-level:
+	 *
+	 * Coarse representation of battery capacity. The value is one of the following:
+	 * Unknown, Critical, Low, Normal, High, and Full.
+	 *
+	 * Since: 1.90.10
+	 **/
+	g_object_class_install_property (object_class,
+					 PROP_CAPACITY_LEVEL,
+					 g_param_spec_string ("capacity-level",
+							      NULL, NULL, NULL,
+							      G_PARAM_READWRITE));
 }
 
 static void
