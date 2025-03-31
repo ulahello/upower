@@ -1,3 +1,13 @@
+Version 1.90.8
+--------------
+Released: 2025-03-31
+
+- Fix the incorrect percentage value of a removed battery. (#292) (!246)
+- Fix device type for the gaming device. (#296 #295) (!247)
+- Determine the battery discharging status when connecting a low-power charger. (#276) (!244)
+- Fix memory leak when refreshing battery info. (#305) (!261)
+- Fix memory leak when getting device id. (!261)
+
 Version 1.90.7
 --------------
 Released: 2025-01-09
