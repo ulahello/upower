@@ -61,6 +61,10 @@ struct UpDaemonPrivate
 	gint64			 time_to_empty;
 	gint64			 time_to_full;
 
+	/* low power charger */
+	gint64			 percentage_drop_start_time;
+	gdouble			 cumulative_percentage_drop;
+
 	/* WarningLevel configuration */
 	gboolean		 use_percentage_for_policy;
 	gdouble			 low_percentage;
@@ -84,6 +88,9 @@ G_DEFINE_TYPE_WITH_PRIVATE (UpDaemon, up_daemon, UP_TYPE_EXPORTED_DAEMON_SKELETO
 
 #define UP_DAEMON_ACTION_DELAY				20 /* seconds */
 #define UP_INTERFACE_PREFIX				"org.freedesktop.UPower."
+
+#define UP_BATTERY_DISCHARGING_PERIOD			(300 * G_USEC_PER_SEC) /* 5 seconds */
+#define UP_LOW_EFFICIENCY_POWER_DROP_THRESHOLD		-3.0 /* 3% drop of battery percentage indicates a low efficiency charger */
 
 /**
  * up_daemon_get_on_battery_local:
@@ -125,6 +132,32 @@ up_daemon_get_number_devices_of_type (UpDaemon *daemon, UpDeviceKind type)
 }
 
 /**
+ * up_daemon_monitor_negative_percentage_change:
+ */
+void
+up_daemon_monitor_negative_percentage_change (UpDaemon *daemon, double percentaged_negative_change)
+{
+	guint64 elapsed_time;
+
+	if (daemon->priv->cumulative_percentage_drop < UP_LOW_EFFICIENCY_POWER_DROP_THRESHOLD)
+		return;
+
+	elapsed_time = g_get_real_time () - daemon->priv->percentage_drop_start_time;
+
+	/* if timeout and cumulative drop percentage is less than the threshold,
+	 * reset the cumulative_percentage_drop value and start time. */
+	if (elapsed_time > UP_BATTERY_DISCHARGING_PERIOD &&
+	    daemon->priv->cumulative_percentage_drop >= UP_LOW_EFFICIENCY_POWER_DROP_THRESHOLD) {
+		daemon->priv->cumulative_percentage_drop = 0.0;
+		daemon->priv->percentage_drop_start_time = 0;
+		g_debug ("Cumulative percentage drop reset. elapsed time %ld", elapsed_time);
+	} else {
+		daemon->priv->cumulative_percentage_drop += percentaged_negative_change;
+		g_debug ("Cumulative percentage drop: %f", daemon->priv->cumulative_percentage_drop);
+	}
+}
+
+/**
  * up_daemon_update_display_battery:
  *
  * Update our internal state.
@@ -148,6 +181,7 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 	gint64 time_to_full_total = 0;
 	gboolean is_present_total = FALSE;
 	guint num_batteries = 0;
+	gdouble percentaged_negative_change = 0.0;
 
 	/* Gather state from each device */
 	array = up_device_list_get_array (daemon->priv->power_devices);
@@ -312,6 +346,17 @@ out:
 	daemon->priv->time_to_empty = time_to_empty_total;
 	daemon->priv->time_to_full = time_to_full_total;
 
+	/* Evaluate the percentage negative changes */
+	percentaged_negative_change = percentage_total - daemon->priv->percentage;
+	if (percentaged_negative_change <= 0.0 && daemon->priv->percentage != 0.0) {
+		if (daemon->priv->percentage_drop_start_time == 0)
+			daemon->priv->percentage_drop_start_time = g_get_real_time ();
+
+		up_daemon_monitor_negative_percentage_change (daemon, percentaged_negative_change);
+	} else {
+		daemon->priv->cumulative_percentage_drop = 0.0;
+	}
+
 	daemon->priv->percentage = percentage_total;
 
 	g_object_set (daemon->priv->display_device,
@@ -394,12 +439,16 @@ up_daemon_get_on_ac_local (UpDaemon *daemon, gboolean *has_ac)
 		}
 	}
 
-	/* if battery is discharging and AC is online, return FALSE
-	   since a low power charger maybe plugged to the system */
-	if (priv->kind == UP_DEVICE_KIND_BATTERY &&
-	    priv->state == UP_DEVICE_STATE_DISCHARGING &&
-	    online)
-		result = FALSE;
+	if (priv->kind == UP_DEVICE_KIND_BATTERY && result) {
+		/* if AC is online and the battery continue to discharge 3%, a low efficiency
+		 * charger is considered */
+		if (priv->cumulative_percentage_drop <= UP_LOW_EFFICIENCY_POWER_DROP_THRESHOLD) {
+			g_debug ("Cumulative percentage drop is %f, assuming a low-power charger is attached.", priv->cumulative_percentage_drop);
+			result = FALSE;
+		}
+	}
+
+	g_debug ("up_daemon_get_on_ac_local returns %s", result ? "true" : "false");
 
 	g_ptr_array_unref (array);
 	return result;
