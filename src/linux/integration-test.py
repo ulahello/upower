@@ -1151,6 +1151,46 @@ class Tests(dbusmock.DBusTestCase):
         )
         self.stop_daemon()
 
+    def test_kernel_capacity_level_and_voltage_min_max_exporting(self):
+        """Exporting capacity_level, voltage_{max,min}_design attributes"""
+
+        bat0 = self.testbed.add_device(
+            "power_supply",
+            "battery",
+            None,
+            [
+                "type",
+                "Battery",
+                "voltage_min_design",
+                "3100000",
+                "voltage_max_design",
+                "4200000",
+                "charge_full_design",
+                "1740000",
+                "present",
+                "1",
+                "status",
+                "Discharging",
+                "voltage_now",
+                "3750000",
+                "capacity_level",
+                "High",
+            ],
+            [],
+        )
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 1)
+        bat0_up = devs[0]
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, "CapacityLevel"), "High")
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, "VoltageMinDesign"), 3.1)
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, "VoltageMaxDesign"), 4.2)
+        self.testbed.set_attribute(bat0, "capacity_level", "Low")
+        self.testbed.uevent(bat0, "change")
+        self.assertEqual(self.get_dbus_dev_property(bat0_up, "CapacityLevel"), "Low")
+        self.stop_daemon()
+
     def test_empty_guessing(self):
         """One empty batter not reporting a state"""
 
