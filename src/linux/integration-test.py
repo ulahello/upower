@@ -676,9 +676,12 @@ class Tests(dbusmock.DBusTestCase):
 
         # a low power charger causes the battery is discharging and the AC is online
         self.testbed.set_attribute(ac, "online", "1")
+        self.testbed.set_attribute(bat0, "energy_now", "3600000")
         self.testbed.set_attribute(bat0, "status", "Discharging")
-        self.testbed.set_attribute(bat0, "energy_now", "1500000")
         self.start_daemon()
+        time.sleep(5)
+        self.testbed.set_attribute(bat0, "energy_now", "1500000")
+        time.sleep(30)
         devs = self.proxy.EnumerateDevices()
         self.assertEqual(len(devs), 2)
         self.assertEqual(self.get_dbus_property("OnBattery"), True)
