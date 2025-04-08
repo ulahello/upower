@@ -372,14 +372,11 @@ up_daemon_get_on_ac_local (UpDaemon *daemon, gboolean *has_ac)
 	gboolean ret;
 	gboolean result = FALSE;
 	gboolean online;
-	UpDaemonPrivate *priv;
 	UpDevice *device;
 	GPtrArray *array;
 
 	if (has_ac)
 		*has_ac = FALSE;
-
-	priv = up_daemon_get_instance_private (daemon);
 
 	/* ask each device */
 	array = up_device_list_get_array (daemon->priv->power_devices);
@@ -393,14 +390,6 @@ up_daemon_get_on_ac_local (UpDaemon *daemon, gboolean *has_ac)
 			break;
 		}
 	}
-
-	/* if battery is discharging and AC is online, return FALSE
-	   since a low power charger maybe plugged to the system */
-	if (priv->kind == UP_DEVICE_KIND_BATTERY &&
-	    priv->state == UP_DEVICE_STATE_DISCHARGING &&
-	    online)
-		result = FALSE;
-
 	g_ptr_array_unref (array);
 	return result;
 }
