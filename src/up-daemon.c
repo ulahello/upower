@@ -61,6 +61,8 @@ struct UpDaemonPrivate
 	gint64			 time_to_empty;
 	gint64			 time_to_full;
 
+	gboolean		 state_all_discharging;
+
 	/* WarningLevel configuration */
 	gboolean		 use_percentage_for_policy;
 	gdouble			 low_percentage;
@@ -149,6 +151,9 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 	gboolean is_present_total = FALSE;
 	guint num_batteries = 0;
 
+	gboolean state_all_discharging = TRUE;
+	gboolean state_any_discharging = FALSE;
+
 	/* Gather state from each device */
 	array = up_device_list_get_array (daemon->priv->power_devices);
 	for (i = 0; i < array->len; i++) {
@@ -231,6 +236,14 @@ up_daemon_update_display_battery (UpDaemon *daemon)
 		else
 			state_total = UP_DEVICE_STATE_UNKNOWN;
 
+		/* Update charging state variables by considering any battery that is charging or fully charged to not
+		 * be discharging. Additionally, also update state_any_discharge for any batteries explicitly
+		 * discharging. */
+		if (state == UP_DEVICE_STATE_CHARGING || state == UP_DEVICE_STATE_FULLY_CHARGED) {
+			state_all_discharging = FALSE;
+		} else if (state == UP_DEVICE_STATE_DISCHARGING)
+			state_any_discharging = TRUE;
+
 		/* sum up composite */
 		kind_total = UP_DEVICE_KIND_BATTERY;
 		is_present_total = TRUE;
@@ -293,6 +306,9 @@ out:
 			time_to_full_total = SECONDS_PER_HOUR * ((energy_full_total - energy_total) / energy_rate_total);
 	}
 
+	/* Compute state_all_discharging by ensuring at least one battery is discharging */
+	state_all_discharging = state_all_discharging && state_any_discharging;
+
 	/* Did anything change? */
 	if (daemon->priv->kind == kind_total &&
 	    daemon->priv->state == state_total &&
@@ -301,7 +317,8 @@ out:
 	    daemon->priv->energy_rate == energy_rate_total &&
 	    daemon->priv->time_to_empty == time_to_empty_total &&
 	    daemon->priv->time_to_full == time_to_full_total &&
-	    daemon->priv->percentage == percentage_total)
+	    daemon->priv->percentage == percentage_total &&
+	    daemon->priv->state_all_discharging == state_all_discharging)
 		return FALSE;
 
 	daemon->priv->kind = kind_total;
@@ -313,6 +330,8 @@ out:
 	daemon->priv->time_to_full = time_to_full_total;
 
 	daemon->priv->percentage = percentage_total;
+
+	daemon->priv->state_all_discharging = state_all_discharging;
 
 	g_object_set (daemon->priv->display_device,
 		      "type", kind_total,
@@ -334,7 +353,7 @@ out:
 /**
  * up_daemon_get_warning_level_local:
  *
- * As soon as _all_ batteries are low, this is true
+ * As soon as _all_ batteries are low, external power is not available or not charging at least one battery, this is true
  **/
 static UpDeviceLevel
 up_daemon_get_warning_level_local (UpDaemon *daemon)
@@ -347,9 +366,10 @@ up_daemon_get_warning_level_local (UpDaemon *daemon)
 	    daemon->priv->state != UP_DEVICE_STATE_DISCHARGING)
 		return UP_DEVICE_LEVEL_NONE;
 
-	/* Check to see if the batteries have not noticed we are on AC */
+	/* Ignore battery level if we have external power and not all batteries are discharging */
 	if (daemon->priv->kind == UP_DEVICE_KIND_BATTERY &&
-	    up_daemon_get_on_ac_local (daemon, NULL))
+	    up_daemon_get_on_ac_local (daemon, NULL) &&
+	    !daemon->priv->state_all_discharging)
 		return UP_DEVICE_LEVEL_NONE;
 
 	return up_daemon_compute_warning_level (daemon,
