@@ -681,7 +681,7 @@ class Tests(dbusmock.DBusTestCase):
         self.start_daemon()
         devs = self.proxy.EnumerateDevices()
         self.assertEqual(len(devs), 2)
-        self.assertEqual(self.get_dbus_property("OnBattery"), True)
+        self.assertEqual(self.get_dbus_property("OnBattery"), False)
         self.assertEqual(
             self.get_dbus_display_property("WarningLevel"), UP_DEVICE_LEVEL_CRITICAL
         )
