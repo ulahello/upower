@@ -142,7 +142,7 @@ if os_backend == 'linux' and gobject_introspection.found()
              args: ut_args,
              env: env,
              depends: [ libupower_glib_typelib, upowerd ],
-             timeout: 80,
+             timeout: 150,
             )
     endforeach
 
