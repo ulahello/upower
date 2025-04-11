@@ -4376,6 +4376,8 @@ class Tests(dbusmock.DBusTestCase):
         self.assertEqual(len(devs), 1)
         bat0_up = devs[0]
 
+        time.sleep(5)
+
         # Check we have the Bluetooth name
         self.assertEventually(
             lambda: self.get_dbus_dev_property(bat0_up, "Model"), value=alias
