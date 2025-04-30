@@ -331,9 +331,10 @@ static void
 up_device_supply_sibling_discovered_guess_type (UpDevice *device,
 						GObject  *sibling)
 {
-	GUdevDevice *input;
+	GUdevDevice *input, *native_device, *parent_device, *parent_sibling;
 	UpDeviceKind cur_type, new_type;
-	const gchar *new_model_name = NULL;
+	gboolean is_same_parent = FALSE;
+	char *new_model_name;
 	char *model_name;
 	char *serial_number;
 	int i;
@@ -466,21 +467,33 @@ up_device_supply_sibling_discovered_guess_type (UpDevice *device,
 	}
 
 	if (cur_type != new_type) {
+		native_device = G_UDEV_DEVICE (up_device_get_native (device));
+		parent_device = g_udev_device_get_parent (native_device);
+		parent_sibling = g_udev_device_get_parent (input);
+
 		g_debug ("Type changed from %s to %s",
-			 up_device_kind_to_string(cur_type),
-			 up_device_kind_to_string(new_type));
-		new_model_name = g_udev_device_get_sysfs_attr (input, "name");
+			 up_device_kind_to_string (cur_type),
+			 up_device_kind_to_string (new_type));
+
+		/* Check if the device and the sibling have the same parent. */
+		if (!g_strcmp0 (g_udev_device_get_sysfs_path (parent_device),
+				g_udev_device_get_sysfs_path (parent_sibling)))
+			is_same_parent = TRUE;
+
+		new_model_name = up_device_supply_get_string (input, "name");
 		/* The model name of a device component may be different. For example, DualSense
 		 * joystick owns "Sony Interactive Entertainment DualSense Wireless Controller"
 		 * for the joystick and "Sony Interactive Entertainment DualSense Wireless Controller
 		 * Motion Sensors" for the accelerometer. If the type is change, the corresponding
 		 * model name have to be changed too. */
-		if (new_model_name != NULL)
+		if (new_model_name != NULL && is_same_parent) {
+			up_make_safe_string (new_model_name);
 			g_object_set (device,
 				      "type", new_type,
 				      "model", new_model_name,
 				      NULL);
-		else
+			g_free (new_model_name);
+		} else
 			g_object_set (device, "type", new_type, NULL);
 	}
 }
