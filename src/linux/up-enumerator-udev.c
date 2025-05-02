@@ -178,6 +178,12 @@ get_latest_udev_device (UpEnumeratorUdev *self,
 {
 	const char *sysfs_path;
 
+	/* return NULL when receiving a non-GUdevDevice object */
+	if (!G_UDEV_IS_DEVICE (obj)) {
+		g_debug ("Receiving a non-udev object.");
+		return NULL;
+	}
+
 	sysfs_path = g_udev_device_get_sysfs_path (G_UDEV_DEVICE (obj));
 	return g_udev_client_query_by_sysfs_path (self->udev, sysfs_path);
 }
