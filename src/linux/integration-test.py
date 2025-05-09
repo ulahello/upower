@@ -3394,6 +3394,140 @@ class Tests(dbusmock.DBusTestCase):
         )
         self.stop_daemon()
 
+    def test_hidpp_two_mouses_unifying_receiver(self):
+        """Upower shows wrong model name when a unifying receiver connects two mouses #309"""
+
+        usb_parent = self.testbed.add_device(
+            "usb",
+            "/pci0000:00/0000:00:07.2/0000:50:00.0/0000:51:02.0/0000:52:00.0/usb5/5-2/5-2.3/5-2.3.1/5-2.3.1:1.2/",
+            None,
+            [],
+            [],
+        )
+        receiver_parent = self.testbed.add_device(
+            "hid",
+            "/0003:046D:C52B.000F",
+            usb_parent,
+            [],
+            [],
+        )
+        mouse1_dev = self.testbed.add_device(
+            "hid",
+            "/0003:046D:101B.0018",
+            receiver_parent,
+            [],
+            [],
+        )
+
+        self.testbed.add_device(
+            "usbmisc",
+            "/usbmisc/hiddev1",
+            usb_parent,
+            [],
+            [],
+        )
+
+        self.testbed.add_device(
+            "input",
+            "/input/input43",
+            mouse1_dev,
+            ["name", "Fancy Logitech mouse"],
+            [
+                "DEVNAME",
+                "input/mouse3",
+                "ID_INPUT_MOUSE",
+                "1",
+                "NAME",
+                "Fancy Logitech mouse",
+            ],
+        )
+
+        self.testbed.add_device(
+            "power_supply",
+            "/power_supply/hidpp_battery_1",
+            mouse1_dev,
+            [
+                "type",
+                "Battery",
+                "scope",
+                "Device",
+                "present",
+                "1",
+                "online",
+                "1",
+                "status",
+                "Discharging",
+                "capacity",
+                "30",
+                "serial_number",
+                "123456",
+                "model_name",
+                "Fancy Logitech mouse",
+            ],
+            [],
+        )
+
+        mouse2_dev = self.testbed.add_device(
+            "hid",
+            "0003:046D:406A.0010",
+            receiver_parent,
+            [],
+            [],
+        )
+        self.testbed.add_device(
+            "input",
+            "/input/input39",
+            mouse2_dev,
+            ["name", "Super Logitech mouse M666"],
+            [
+                "DEVNAME",
+                "input/mouse4",
+                "ID_INPUT_MOUSE",
+                "1",
+                "NAME",
+                "Super Logitech mouse M666",
+            ],
+        )
+        self.testbed.add_device(
+            "power_supply",
+            "/power_supply/hidpp_battery_0",
+            mouse2_dev,
+            [
+                "type",
+                "Battery",
+                "scope",
+                "Device",
+                "present",
+                "1",
+                "online",
+                "1",
+                "status",
+                "Discharging",
+                "capacity",
+                "30",
+                "serial_number",
+                "7654321",
+                "model_name",
+                "Super Logitech mouse M666",
+            ],
+            [],
+        )
+
+        self.start_daemon()
+        devs = self.proxy.EnumerateDevices()
+        self.assertEqual(len(devs), 2)
+        mousebat0 = devs[0]
+        mousebat1 = devs[1]
+
+        self.assertEqual(
+            self.get_dbus_dev_property(mousebat0, "Model"), "Fancy Logitech mouse"
+        )
+        self.assertEqual(
+            self.get_dbus_dev_property(mousebat1, "Model"), "Super Logitech mouse M666"
+        )
+
+        self.stop_daemon()
+
     def test_usb_joypad(self):
         """DualShock 4 joypad connected via USB"""
 
