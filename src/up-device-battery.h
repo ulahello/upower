@@ -38,6 +38,9 @@ struct _UpDeviceBatteryClass
 							   guint      start,
 							   guint      end,
 							   GError   **error);
+	gboolean	(* set_battery_charge_type)	   (UpDevice *device,
+							    const gchar *charge_type,
+							    GError **error);
 };
 
 typedef enum {

@@ -460,6 +460,50 @@ up_device_supply_battery_set_battery_charge_thresholds(UpDevice *device, guint s
 	return TRUE;
 }
 
+static gboolean
+up_device_supply_battery_is_charge_type_exist (const gchar *udev_path, const gchar *charge_type, GError **error) {
+	g_autofree gchar *content = NULL;
+	gsize length = 0;
+
+	if (!g_file_get_contents (udev_path, &content, &length, error))
+		return FALSE;
+
+	if (g_strrstr (content, charge_type) != NULL)
+		return TRUE;
+
+	g_set_error_literal (error, G_IO_ERROR,
+			     G_IO_ERROR_FAILED, "Unsupported charge type");
+	return FALSE;
+}
+
+static gboolean
+up_device_supply_battery_set_battery_charge_type (UpDevice *device, const gchar *charge_type, GError **error) {
+	GUdevDevice *native;
+	g_autofree gchar *native_path = NULL;
+	g_autofree gchar *type_filename = NULL;
+
+	native = G_UDEV_DEVICE (up_device_get_native (device));
+
+	/* return, if the attribute "charge_type" is not found */
+	if (!g_udev_device_has_sysfs_attr (native, "charge_types"))
+		return TRUE;
+
+	native_path = up_device_supply_device_path (native);
+	type_filename = g_build_filename (native_path, "charge_types", NULL);
+
+	if (!up_device_supply_battery_is_charge_type_exist (type_filename, charge_type, error))
+		return FALSE;
+
+	if (!g_file_set_contents_full (type_filename, charge_type, -1,
+		G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, error)) {
+		g_set_error_literal (error, G_IO_ERROR,
+				     G_IO_ERROR_FAILED, "Failed to set charge_types");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static void
 up_device_supply_battery_class_init (UpDeviceSupplyBatteryClass *klass)
 {
@@ -472,6 +516,7 @@ up_device_supply_battery_class_init (UpDeviceSupplyBatteryClass *klass)
 	device_class->coldplug = up_device_supply_coldplug;
 	device_class->refresh = up_device_supply_battery_refresh;
 	battery_class->set_battery_charge_thresholds = up_device_supply_battery_set_battery_charge_thresholds;
+	battery_class->set_battery_charge_type = up_device_supply_battery_set_battery_charge_type;
 
 	g_object_class_install_property (object_class, PROP_IGNORE_SYSTEM_PERCENTAGE,
 					 g_param_spec_boolean ("ignore-system-percentage",
