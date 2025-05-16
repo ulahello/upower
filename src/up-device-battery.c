@@ -409,6 +409,16 @@ up_device_battery_set_charge_thresholds(UpDeviceBattery *self, gdouble start, gd
 	return klass->set_battery_charge_thresholds(&self->parent_instance, start, end, error);
 }
 
+static gboolean
+up_device_battery_set_charge_type(UpDeviceBattery *self, const gchar *charge_type, GError **error)
+{
+	UpDeviceBatteryClass *klass = UP_DEVICE_BATTERY_GET_CLASS (self);
+	if (klass->set_battery_charge_type == NULL)
+		return FALSE;
+
+	return klass->set_battery_charge_type(&self->parent_instance, charge_type, error);
+}
+
 static const gchar *
 up_device_battery_get_state_dir (UpDeviceBattery *self)
 {
@@ -469,6 +479,7 @@ up_device_battery_recover_battery_charging_threshold (UpDeviceBattery *self, UpB
 								 info->charge_control_start_threshold,
 								 info->charge_control_end_threshold,
 								 &error);
+			up_device_battery_set_charge_type (self, "Custom", &error);
 			if (error != NULL) {
 				enabled = FALSE;
 				g_warning ("Fail on setting charging threshold: %s", error->message);
@@ -692,10 +703,13 @@ up_device_battery_set_charge_threshold (UpExportedDevice *skeleton,
 		return TRUE;
 	}
 
-	if (enabled)
+	if (enabled) {
 		ret = up_device_battery_set_charge_thresholds (self, charge_start_threshold, charge_end_threshold, &error);
-	else
+		ret = up_device_battery_set_charge_type (self, "Custom", &error);
+	} else {
 		ret = up_device_battery_set_charge_thresholds (self, 0, 100, &error);
+		ret = up_device_battery_set_charge_type (self, "Fast", &error);
+	}
 
 	if (!ret) {
 		g_dbus_method_invocation_return_error (invocation,
