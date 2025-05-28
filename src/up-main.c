@@ -210,6 +210,7 @@ main (gint argc, gchar **argv)
 	if (!g_option_context_parse (context, &argc, &argv, &error)) {
 		g_warning ("Failed to parse command-line options: %s", error->message);
 		g_error_free (error);
+		g_option_context_free (context);
 		return 1;
 	}
 	g_option_context_free (context);
