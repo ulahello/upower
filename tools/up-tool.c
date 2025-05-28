@@ -219,8 +219,13 @@ main (int argc, char **argv)
 
 	context = g_option_context_new ("UPower tool");
 	g_option_context_add_main_entries (context, entries, NULL);
-	g_option_context_parse (context, &argc, &argv, NULL);
+	ret = g_option_context_parse (context, &argc, &argv, &error);
 	g_option_context_free (context);
+	if (!ret) {
+		g_print ("Failed to parse command-line options: %s\n", error->message);
+		g_error_free (error);
+		return EXIT_FAILURE;
+	}
 
 	loop = g_main_loop_new (NULL, FALSE);
 	client = up_client_new_full (NULL, &error);
