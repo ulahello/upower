@@ -35,7 +35,7 @@
       <emphasis><refentrytitle>upower</refentrytitle></emphasis> is a
       simple command line client for the
       <citerefentry><refentrytitle>UPower</refentrytitle><manvolnum>7</manvolnum></citerefentry>
-      daemon. TODO: not fully documented.
+      daemon.
     </para>
   </refsect1>
 
@@ -43,7 +43,23 @@
     <title>OPTIONS</title>
     <variablelist>
       <varlistentry>
-        <term><option>--monitor</option></term>
+        <term><option>-d</option>, <option>--dump</option></term>
+        <listitem>
+          <para>
+            Dump all parameters for all devices.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-e</option>, <option>--enumerate</option></term>
+        <listitem>
+          <para>
+            Enumerate the object paths of all devices on the system.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-m</option>, <option>--monitor</option></term>
         <listitem>
           <para>
             Connect to the UPower daemon and print a line
@@ -61,7 +77,23 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>--help</option></term>
+        <term><option>-i</option>, <option>--show-info</option> <varname>OBJECT_PATH</varname></term>
+        <listitem>
+          <para>
+            Show information about the given device.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-v</option>, <option>--version</option></term>
+        <listitem>
+          <para>
+            Print version information for the client and daemon.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-h</option>, <option>--help</option></term>
         <listitem>
           <para>
             Show help options.
